@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>曲名开字母辅助器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0c10;
+            --fg: #e8eaed;
+            --muted: #7a7d85;
+            --accent: #f97316;
+            --accent-dim: rgba(249, 115, 22, 0.15);
+            --card: #12151c;
+            --border: #252a36;
+            --danger: #ef4444;
+            --warning: #eab308;
+            --info: #06b6d4;
+            --success: #10b981;
+        }
+        
+        * { font-family: 'Noto Sans SC', sans-serif; box-sizing: border-box; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        body { background: var(--bg); color: var(--fg); min-height: 100vh; overflow-x: hidden; }
+        
+        .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+        .bg-pattern { 
+            background-image: 
+                linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(249, 115, 22, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .bg-glow { 
+            background: 
+                radial-gradient(ellipse 60% 50% at 20% 0%, rgba(249, 115, 22, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
+        }
+        
+        .page { position: absolute; inset: 0; padding: 20px; overflow-y: auto; transition: opacity 0.4s ease, transform 0.4s ease; }
+        .page.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+        .page.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) { .page { transition: opacity 0.2s ease; } .page.hidden { transform: none; } }
+        
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+        .input-area { 
+            background: rgba(0, 0, 0, 0.5); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            color: var(--fg); 
+            transition: border-color 0.25s, box-shadow 0.25s; 
+        }
+        .input-area:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-dim); }
+        .input-area::placeholder { color: var(--muted); }
+        textarea.input-area { resize: vertical; line-height: 1.8; }
+        
+        .btn { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+            padding: 14px 28px; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            font-size: 15px; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            border: none; 
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%); color: #000; }
+        .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 8px 30px var(--accent-dim); }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--fg); }
+        .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-ghost { background: var(--accent-dim); color: var(--accent); }
+        .btn-ghost:hover { background: rgba(249, 115, 22, 0.25); }
+        .btn-danger { background: rgba(239, 68, 68, 0.12); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-warning { background: rgba(234, 179, 8, 0.12); color: var(--warning); border: 1px solid rgba(234, 179, 8, 0.3); }
+        .btn-warning:hover { background: var(--warning); color: #000; }
+        .btn-sm { padding: 10px 18px; font-size: 13px; }
+        
+        .checkbox-wrap { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; padding: 12px 14px; border-radius: 10px; transition: background 0.2s; }
+        .checkbox-wrap:hover { background: rgba(255, 255, 255, 0.03); }
+        .checkbox-wrap input { display: none; }
+        .checkbox-box { 
+            width: 24px; 
+            height: 24px; 
+            border: 2px solid var(--border); 
+            border-radius: 7px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: all 0.2s; 
+            flex-shrink: 0; 
+        }
+        .checkbox-wrap:hover .checkbox-box { border-color: var(--accent); }
+        .checkbox-wrap input:checked + .checkbox-box { background: var(--accent); border-color: var(--accent); }
+        .checkbox-box svg { opacity: 0; transform: scale(0.5); transition: all 0.15s; }
+        .checkbox-wrap input:checked + .checkbox-box svg { opacity: 1; transform: scale(1); }
+        
+        .result-display { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border); border-radius: 12px; line-height: 2.1; letter-spacing: 0.3px; }
+        .char-revealed { color: var(--accent); font-weight: 600; }
+        .char-hidden { color: var(--muted); }
+        .char-space { color: rgba(122, 125, 133, 0.4); }
+        .line-number { color: var(--muted); margin-right: 6px; }
+        .guessed-line { color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+        .remark-line { color: var(--warning); opacity: 0.85; margin-top: 8px; }
+        
+        .sorted-chars { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; min-height: 50px; align-content: center; }
+        .char-tag { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-width: 30px; 
+            height: 30px; 
+            padding: 0 8px; 
+            background: var(--accent-dim); 
+            border: 1px solid rgba(249, 115, 22, 0.3); 
+            border-radius: 6px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            color: var(--accent); 
+        }
+        
+        .stat-card { text-align: center; padding: 20px; }
+        .stat-value { font-size: 32px; font-weight: 700; }
+        .stat-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+        
+        .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+        .back-btn { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            color: var(--fg); 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+        
+        .timer-display { font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 700; color: var(--accent); text-align: center; padding: 24px; background: rgba(0, 0, 0, 0.4); border-radius: 16px; letter-spacing: 3px; }
+        .timer-display.paused { color: var(--warning); }
+        .timer-controls { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+        
+        .settlement-header { text-align: center; padding: 32px 20px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+        .settlement-title { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+        .settlement-subtitle { color: var(--muted); font-size: 15px; }
+        
+        .toast { 
+            position: fixed; 
+            bottom: 28px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(120px); 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            padding: 14px 28px; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            z-index: 1000; 
+            opacity: 0; 
+            transition: all 0.35s ease; 
+            pointer-events: none; 
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.success { border-color: var(--accent); color: var(--accent); }
+        .toast.error { border-color: var(--danger); color: var(--danger); }
+        .toast.info { border-color: var(--info); color: var(--info); }
+        
+        .collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 14px; cursor: pointer; border-radius: 10px; transition: background 0.2s; }
+        .collapse-header:hover { background: rgba(255, 255, 255, 0.03); }
+        .collapse-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+        .collapse-content.open { max-height: 600px; }
+        .collapse-arrow { transition: transform 0.25s; }
+        .collapse-header.expanded .collapse-arrow { transform: rotate(180deg); }
+        
+        .song-line { display: flex; align-items: baseline; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        .song-line:hover { background: rgba(255, 255, 255, 0.05); }
+        .song-line.hidden-song { display: none; }
+        .song-line.revealed-full { background: rgba(16, 184, 129, 0.15); border: 1px solid rgba(16, 184, 129, 0.3); }
+        .song-line .masked-title { display: inline; }
+        .song-line .full-title { display: none; }
+        .song-line.revealed-full .masked-title { display: none; }
+        .song-line.revealed-full .full-title { display: inline; color: var(--success); font-weight: 600; }
+        .full-reveal-hint { font-size: 12px; color: var(--success); margin-left: 10px; opacity: 0.8; }
+        
+        .hide-stats { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.25); border-radius: 10px; margin-bottom: 14px; font-size: 14px; }
+        .hide-stats .count { color: var(--warning); font-weight: 700; }
+        
+        .notice-box { background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+        .notice-box .title { color: var(--info); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .notice-box .content { color: var(--muted); font-size: 14px; line-height: 1.7; }
+        
+        .help-box { background: rgba(249, 115, 22, 0.08); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+        .help-box .title { color: var(--accent); font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .help-box .content { color: var(--fg); font-size: 13px; line-height: 1.9; }
+        .help-box .step { display: flex; gap: 10px; margin-bottom: 8px; }
+        .help-box .step-num { 
+            width: 22px; 
+            height: 22px; 
+            background: var(--accent-dim); 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: var(--accent); 
+            flex-shrink: 0; 
+        }
+        
+        /* 恢复游戏弹窗 */
+        .modal-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.8); 
+            backdrop-filter: blur(8px); 
+            z-index: 2000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 0.3s ease; 
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-content { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 20px; 
+            padding: 28px; 
+            max-width: 420px; 
+            width: 90%; 
+            transform: scale(0.9); 
+            transition: transform 0.3s ease; 
+        }
+        .modal-overlay.show .modal-content { transform: scale(1); }
+        .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; text-align: center; }
+        .modal-text { color: var(--muted); font-size: 14px; line-height: 1.7; margin-bottom: 24px; text-align: center; }
+        .modal-info { 
+            background: rgba(249, 115, 22, 0.1); 
+            border: 1px solid rgba(249, 115, 22, 0.2); 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin-bottom: 24px; 
+        }
+        .modal-info-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .modal-info-item:last-child { border-bottom: none; }
+        .modal-info-label { color: var(--muted); font-size: 13px; }
+        .modal-info-value { font-weight: 600; font-size: 14px; }
+        .modal-buttons { display: flex; gap: 12px; }
+        .modal-buttons .btn { flex: 1; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        
+        @media (max-width: 640px) {
+            .timer-display { font-size: 40px; }
+            .stat-value { font-size: 26px; }
+        }
+    </style>
+</head>
+<body class="relative">
+    <div class="bg-layer bg-pattern"></div>
+    <div class="bg-layer bg-glow"></div>
+    <div id="toast" class="toast"></div>
+    
+    <!-- 恢复游戏弹窗 -->
+    <div id="restoreModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title" style="color: var(--accent);">发现未完成的游戏</div>
+            <div class="modal-text">检测到您上次有未完成的游戏，是否继续？</div>
+            <div class="modal-info">
+                <div class="modal-info-item">
+                    <span class="modal-info-label">曲目数量</span>
+                    <span class="modal-info-value" id="restoreSongCount">0 首</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">已开字符</span>
+                    <span class="modal-info-value" id="restoreCharCount">0 个</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">已用时间</span>
+                    <span class="modal-info-value" id="restoreTime">00:00:00</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">揭示率</span>
+                    <span class="modal-info-value" id="restorePercent">0%</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="restoreNewGame" class="btn btn-secondary">开始新游戏</button>
+                <button id="restoreContinue" class="btn btn-primary">继续游戏</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 第一页：编辑 -->
+    <div id="page1" class="page active">
+        <div class="max-w-2xl mx-auto">
+            <header class="mb-6">
+                <h1 class="text-3xl font-bold mb-2">曲名开字母辅助器</h1>
+                <p class="text-sm" style="color: var(--muted);">手动输入曲名，开始你的猜歌游戏</p>
+            </header>
+            
+            <!-- 个人声明 -->
+            <div class="notice-box">
+                <div class="title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    个人声明
+                </div>
+                <div class="content">
+                    自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！
+                </div>
+            </div>
+            
+            <!-- 使用方法 -->
+            <div class="help-box">
+                <div class="title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    使用方法
+                </div>
+                <div class="content">
+                    <div class="step">
+                        <span class="step-num">1</span>
+                        <span>在下方输入框中粘贴曲名列表（支持带序号或不带序号的格式）</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">2</span>
+                        <span>可选：填写备注信息、设置排列方式、选择空格是否隐藏</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">3</span>
+                        <span>点击「解析并开始游戏」进入游戏界面</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">4</span>
+                        <span>在字符输入框中输入已开启的字符，下方会实时显示隐藏结果</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">5</span>
+                        <span>点击曲名行可以显示/隐藏完整曲名，猜对的曲目可点击「隐藏已猜出的曲目」</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">6</span>
+                        <span>游戏结束后点击「结束游戏」查看结算信息</span>
+                    </div>
+                    <div class="step" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <span class="step-num" style="background: rgba(6, 182, 212, 0.15); color: var(--info);">!</span>
+                        <span style="color: var(--info);">如果不小心关闭页面，下次打开会自动提示恢复游戏</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-6 mb-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                            <path d="M9 18V5l12-2v13"/>
+                            <circle cx="6" cy="18" r="3"/>
+                            <circle cx="18" cy="16" r="3"/>
+                        </svg>
+                        曲名序列
+                    </h2>
+                    <button id="clearSongs" class="btn btn-ghost btn-sm">清空</button>
+                </div>
+                <textarea id="songInput" class="input-area mono w-full p-4" style="min-height: 260px;" placeholder="粘贴曲名列表，支持以下格式：&#10;&#10;1.Distorted Fate&#10;2.Xterfusion&#10;3.INTERNET YAMERO&#10;&#10;或每行一首曲名（无需序号）"></textarea>
+            </div>
+            
+            <div class="card p-6 mb-5">
+                <div class="collapse-header" id="sortToggle">
+                    <h2 class="font-semibold flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                            <line x1="4" y1="6" x2="20" y2="6"/>
+                            <line x1="4" y1="12" x2="16" y2="12"/>
+                            <line x1="4" y1="18" x2="12" y2="18"/>
+                        </svg>
+                        排列选项
+                    </h2>
+                    <svg class="collapse-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+                <div id="sortContent" class="collapse-content">
+                    <div class="pt-4">
+                        <div class="flex flex-wrap gap-6 mb-4">
+                            <label id="randomSortLabel" class="checkbox-wrap">
+                                <input type="checkbox" id="randomSort">
+                                <span class="checkbox-box">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                </span>
+                                <span>随机排列</span>
+                            </label>
+                            <label id="lengthSortLabel" class="checkbox-wrap">
+                                <input type="checkbox" id="lengthSort">
+                                <span class="checkbox-box">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                </span>
+                                <span>按长度排列</span>
+                            </label>
+                        </div>
+                        <button id="applySort" class="btn btn-secondary btn-sm w-full">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                            </svg>
+                            应用排列
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-6 mb-5">
+                <h2 class="font-semibold flex items-center gap-2 mb-4">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+                    </svg>
+                    备注信息
+                </h2>
+                <input type="text" id="remarkInput" class="input-area w-full p-4" placeholder="输入备注，如：曲目范围 Lv.15+ 等（可选）">
+            </div>
+            
+            <div class="card p-6 mb-5">
+                <h2 class="font-semibold flex items-center gap-2 mb-4">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    游戏选项
+                </h2>
+                <label class="checkbox-wrap">
+                    <input type="checkbox" id="spaceAsStar">
+                    <span class="checkbox-box">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </span>
+                    <span>空格视为星号（空格也会被隐藏）</span>
+                </label>
+            </div>
+            
+            <button id="parseBtn" class="btn btn-primary w-full text-base py-4">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                解析并开始游戏
+            </button>
+            
+            <div id="statusHint" class="mt-5 text-center text-sm" style="color: var(--muted);"></div>
+        </div>
+    </div>
+    
+    <!-- 第二页：游戏进行中 -->
+    <div id="page2" class="page hidden">
+        <div class="max-w-2xl mx-auto">
+            <div class="page-header">
+                <button id="backBtn" class="back-btn" aria-label="返回编辑">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-2xl font-bold">猜测进行中</h1>
+                    <p class="text-xs" style="color: var(--muted);">点击曲名可显示完整名称，再次点击隐藏</p>
+                </div>
+            </div>
+            
+            <!-- 计时器 -->
+            <div class="card p-6 mb-5">
+                <div id="timerDisplay" class="timer-display">00:00:00</div>
+                <div class="timer-controls">
+                    <button id="pauseBtn" class="btn btn-warning">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="6" y="4" width="4" height="16"/>
+                            <rect x="14" y="4" width="4" height="16"/>
+                        </svg>
+                        暂停
+                    </button>
+                    <button id="endGameBtn" class="btn btn-danger">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        结束游戏
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card p-6 mb-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        开启字符
+                    </h2>
+                    <button id="resetChars" class="btn btn-ghost btn-sm">重置</button>
+                </div>
+                <input type="text" id="charInput" class="input-area mono w-full p-4 text-xl text-center" style="letter-spacing: 0.25em;" placeholder="输入任意字符..." autocomplete="off" spellcheck="false">
+                <div class="mt-4">
+                    <div class="text-xs mb-2" style="color: var(--muted);">已排序的开启字符：</div>
+                    <div id="sortedCharsDisplay" class="sorted-chars mono">
+                        <span style="color: var(--muted);">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mb-5">
+                <div class="card stat-card">
+                    <div id="statSongs" class="stat-value mono" style="color: var(--accent);">0</div>
+                    <div class="stat-label">曲名数</div>
+                </div>
+                <div class="card stat-card">
+                    <div id="statChars" class="stat-value mono" style="color: var(--warning);">0</div>
+                    <div class="stat-label">已开字符</div>
+                </div>
+                <div class="card stat-card">
+                    <div id="statPercent" class="stat-value mono">0%</div>
+                    <div class="stat-label">揭示率</div>
+                </div>
+            </div>
+            
+            <div class="card p-5 mb-5">
+                <div class="flex items-center justify-between">
+                    <div id="hideStats" class="hide-stats flex-1" style="display: none;">
+                        <span>已隐藏</span>
+                        <span class="count" id="hiddenCount">0</span>
+                        <span>首曲目</span>
+                    </div>
+                    <button id="hideRevealed" class="btn btn-warning w-full">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                        隐藏已猜出的曲目
+                    </button>
+                </div>
+                <p class="text-xs mt-3" style="color: var(--muted);">点击曲目显示完整曲名后，点击此按钮将其从列表中移除</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
+                        </svg>
+                        解析结果
+                    </h2>
+                    <button id="copyBtn" class="btn btn-secondary btn-sm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        复制结果
+                    </button>
+                </div>
+                <div id="resultDisplay" class="result-display mono p-4 min-h-[300px] max-h-[450px] overflow-auto whitespace-pre-wrap"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 第三页：结算 -->
+    <div id="page3" class="page hidden">
+        <div class="max-w-2xl mx-auto">
+            <div class="settlement-header">
+                <div class="settlement-title">游戏结束</div>
+                <div class="settlement-subtitle">结算信息已生成，可复制分享</div>
+            </div>
+            
+            <div class="card p-6 mb-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        结算信息
+                    </h2>
+                    <button id="copySettlement" class="btn btn-secondary btn-sm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        复制
+                    </button>
+                </div>
+                <textarea id="settlementText" class="input-area mono w-full p-4" style="min-height: 200px; resize: vertical;" readonly></textarea>
+            </div>
+            
+            <div class="card p-6 mb-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
+                        </svg>
+                        完整题面
+                    </h2>
+                    <button id="copyQuestions" class="btn btn-secondary btn-sm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        复制
+                    </button>
+                </div>
+                <textarea id="questionsText" class="input-area mono w-full p-4" style="min-height: 220px; resize: vertical;" readonly></textarea>
+            </div>
+            
+            <div class="flex gap-4">
+                <button id="newGameBtn" class="btn btn-primary flex-1">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                    </svg>
+                    开始新游戏
+                </button>
+                <button id="backToEditBtn" class="btn btn-secondary flex-1">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    返回编辑
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ========== 字符类型判断 ==========
+        function isLetter(c) {
+            const code = c.charCodeAt(0);
+            return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+        }
+        
+        function isHiragana(c) {
+            const code = c.charCodeAt(0);
+            return code >= 0x3040 && code <= 0x309F;
+        }
+        
+        function isKatakana(c) {
+            const code = c.charCodeAt(0);
+            return code >= 0x30A0 && code <= 0x30FF;
+        }
+        
+        function isJapanese(c) {
+            return isHiragana(c) || isKatakana(c);
+        }
+        
+        function isHanzi(c) {
+            const code = c.charCodeAt(0);
+            return (code >= 0x4E00 && code <= 0x9FFF) || (code >= 0x3400 && code <= 0x4DBF);
+        }
+        
+        // ========== 字符排序规则 ==========
+        const charPriority = {
+            digit: 1, upperLetter: 2, lowerLetter: 3, hiragana: 4, katakana: 5,
+            punctuation: 6, hanzi: 7, other: 99
+        };
+        
+        function getCharType(c) {
+            const code = c.charCodeAt(0);
+            if (code >= 48 && code <= 57) return 'digit';
+            if (code >= 65 && code <= 90) return 'upperLetter';
+            if (code >= 97 && code <= 122) return 'lowerLetter';
+            if (code >= 0x3040 && code <= 0x309F) return 'hiragana';
+            if (code >= 0x30A0 && code <= 0x30FF) return 'katakana';
+            const puncts = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~！＂＃＄％＆＇（）＊＋，－．／：；＜＝＞？＠［＼］＾＿｀｛｜｝～「」『』【】（）、。・…—';
+            if (puncts.includes(c)) return 'punctuation';
+            if ((code >= 0x4E00 && code <= 0x9FFF) || (code >= 0x3400 && code <= 0x4DBF)) return 'hanzi';
+            return 'other';
+        }
+        
+        function sortChars(chars) {
+            return chars.sort((a, b) => {
+                const pA = charPriority[getCharType(a)];
+                const pB = charPriority[getCharType(b)];
+                return pA !== pB ? pA - pB : a.localeCompare(b, 'ja');
+            });
+        }
+        
+        // ========== 状态 ==========
+        const STORAGE_KEY = 'songLetterHelper_v9';
+        
+        let state = {
+            currentPage: 1,
+            songInputText: '',
+            songs: [],
+            remark: '',
+            sortType: 'none',
+            openedChars: '',
+            spaceAsStar: false,
+            revealedFullIndices: [],
+            hiddenIndices: [],
+            timerSeconds: 0,
+            timerRunning: false,
+            timerPaused: false,
+            gameStartTime: null,
+            totalPauseTime: 0,
+            pauseStartTime: null,
+            guessedSongs: [],
+            currentRevealPercent: 0
+        };
+        
+        let elements = {};
+        let timerInterval = null;
+        
+        // ========== 工具函数 ==========
+        function showToast(message, type = 'success') {
+            const toast = elements.toast;
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function parseSongs(text) {
+            if (!text.trim()) return [];
+            const lines = text.trim().split('\n');
+            const result = [];
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                const match = trimmed.match(/^\d+[.)\s:：]+(.+)$/);
+                result.push(match ? match[1].trim() : trimmed);
+            }
+            return result;
+        }
+        
+        function revealChar(char, openedSet, spaceAsStar) {
+            if (char === ' ' || char === '　') {
+                return spaceAsStar ? '*' : char;
+            }
+            if (openedSet.has(char)) return char;
+            const lower = char.toLowerCase();
+            for (const c of openedSet) {
+                if (c.toLowerCase() === lower) return char;
+            }
+            return '*';
+        }
+        
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+        
+        function formatTimeReadable(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            
+            if (h > 0) {
+                return `${h}小时${m}分钟${s}秒`;
+            } else if (m > 0) {
+                return `${m}分钟${s}秒`;
+            } else {
+                return `${s}秒`;
+            }
+        }
+        
+        function formatAverageTime(seconds) {
+            if (seconds < 60) {
+                return `${seconds.toFixed(1)}秒`;
+            } else if (seconds < 3600) {
+                const m = Math.floor(seconds / 60);
+                const s = Math.round(seconds % 60);
+                return s > 0 ? `${m}分${s}秒` : `${m}分钟`;
+            } else {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.round((seconds % 3600) / 60);
+                return m > 0 ? `${h}小时${m}分钟` : `${h}小时`;
+            }
+        }
+        
+        // ========== 存储函数 ==========
+        function saveState() {
+            state.songInputText = elements.songInput.value;
+            state.remark = elements.remarkInput.value;
+            state.sortType = elements.randomSort.checked ? 'random' : (elements.lengthSort.checked ? 'length' : 'none');
+            state.openedChars = elements.charInput.value;
+            state.spaceAsStar = elements.spaceAsStar.checked;
+            
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.warn('无法保存状态:', e);
+            }
+        }
+        
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state = { ...state, ...parsed };
+                    return true;
+                }
+            } catch (e) {
+                console.warn('无法加载状态:', e);
+            }
+            return false;
+        }
+        
+        function clearGameState() {
+            state.currentPage = 1;
+            state.songs = [];
+            state.openedChars = '';
+            state.revealedFullIndices = [];
+            state.hiddenIndices = [];
+            state.timerSeconds = 0;
+            state.timerRunning = false;
+            state.timerPaused = false;
+            state.gameStartTime = null;
+            state.totalPauseTime = 0;
+            state.pauseStartTime = null;
+            state.guessedSongs = [];
+            state.currentRevealPercent = 0;
+            
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.warn('无法保存状态:', e);
+            }
+        }
+        
+        // ========== 计时器函数 ==========
+        function startTimer() {
+            if (timerInterval) return;
+            
+            state.timerRunning = true;
+            state.timerPaused = false;
+            state.gameStartTime = Date.now() - (state.timerSeconds * 1000) - state.totalPauseTime;
+            
+            timerInterval = setInterval(() => {
+                if (!state.timerPaused) {
+                    state.timerSeconds = Math.floor((Date.now() - state.gameStartTime - state.totalPauseTime) / 1000);
+                    updateTimerDisplay();
+                    saveState();
+                }
+            }, 1000);
+            
+            updatePauseButton();
+        }
+        
+        function pauseTimer() {
+            if (!state.timerRunning) return;
+            
+            if (state.timerPaused) {
+                state.timerPaused = false;
+                state.totalPauseTime += Date.now() - state.pauseStartTime;
+                state.pauseStartTime = null;
+            } else {
+                state.timerPaused = true;
+                state.pauseStartTime = Date.now();
+            }
+            
+            updatePauseButton();
+            saveState();
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            state.timerRunning = false;
+            state.timerPaused = false;
+        }
+        
+        function resetTimer() {
+            stopTimer();
+            state.timerSeconds = 0;
+            state.totalPauseTime = 0;
+            state.pauseStartTime = null;
+            state.gameStartTime = null;
+            updateTimerDisplay();
+        }
+        
+        function updateTimerDisplay() {
+            const display = document.getElementById('timerDisplay');
+            display.textContent = formatTime(state.timerSeconds);
+            display.classList.toggle('paused', state.timerPaused);
+        }
+        
+        function updatePauseButton() {
+            const btn = document.getElementById('pauseBtn');
+            if (state.timerPaused) {
+                btn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    继续
+                `;
+            } else {
+                btn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                    暂停
+                `;
+            }
+        }
+        
+        // ========== 结算函数 ==========
+        function showSettlement() {
+            stopTimer();
+            
+            const totalSongs = state.songs.length;
+            const guessedCount = state.hiddenIndices.length;
+            const openedChars = state.openedChars.length;
+            const guessedPercent = state.currentRevealPercent;
+            
+            const avgTimePerSong = totalSongs > 0 ? state.timerSeconds / totalSongs : 0;
+            const avgTimePerChar = openedChars > 0 ? state.timerSeconds / openedChars : 0;
+            
+            let settlementText = `本局开字母结算：\n`;
+            settlementText += `用时：${formatTimeReadable(state.timerSeconds)}\n`;
+            settlementText += `曲目总数：${totalSongs}首`;
+            if (avgTimePerSong > 0) {
+                settlementText += `（平均${formatAverageTime(avgTimePerSong)}/题）`;
+            }
+            settlementText += `\n`;
+            settlementText += `开启字符数：${openedChars}个`;
+            if (avgTimePerChar > 0) {
+                settlementText += `（平均${formatAverageTime(avgTimePerChar)}/个）`;
+            }
+            settlementText += `\n`;
+            settlementText += `揭开字符率：${guessedPercent}%`;
+            
+            document.getElementById('settlementText').value = settlementText;
+            
+            let questionsText = state.songs.map((song, idx) => `${idx + 1}.${song}`).join('\n');
+            if (state.remark.trim()) {
+                questionsText += `\n[${state.remark.trim()}]`;
+            }
+            
+            document.getElementById('questionsText').value = questionsText;
+            
+            // 清除游戏状态
+            clearGameState();
+            
+            switchToPage(3);
+        }
+        
+        // ========== 页面切换 ==========
+        function switchToPage(pageNum, isRestore = false) {
+            state.currentPage = pageNum;
+            saveState();
+            
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+                p.classList.add('hidden');
+            });
+            
+            const pageEl = document.getElementById('page' + pageNum);
+            pageEl.classList.remove('hidden');
+            pageEl.classList.add('active');
+            
+            if (pageNum === 1) {
+                updateStatusHint();
+                resetTimer();
+            } else if (pageNum === 2) {
+                renderResult();
+                if (isRestore) {
+                    // 恢复游戏时，计时器保持暂停状态
+                    state.timerRunning = true;
+                    state.timerPaused = true;
+                    state.pauseStartTime = Date.now();
+                    updateTimerDisplay();
+                    updatePauseButton();
+                } else {
+                    startTimer();
+                }
+            } else if (pageNum === 3) {
+                stopTimer();
+            }
+        }
+        
+        // ========== 渲染结果 ==========
+        function renderResult() {
+            const openedSet = new Set(elements.charInput.value);
+            const sortedOpened = sortChars(Array.from(openedSet));
+            const spaceAsStar = state.spaceAsStar;
+            
+            if (sortedOpened.length === 0) {
+                document.getElementById('sortedCharsDisplay').innerHTML = '<span style="color: var(--muted);">-</span>';
+            } else {
+                document.getElementById('sortedCharsDisplay').innerHTML = sortedOpened.map(c => 
+                    `<span class="char-tag">${escapeHtml(c)}</span>`
+                ).join('');
+            }
+            
+            if (state.songs.length === 0) {
+                document.getElementById('resultDisplay').innerHTML = '<span style="color: var(--muted);">无曲名数据</span>';
+                updateStats(0, 0);
+                return;
+            }
+            
+            let html = `<div class="guessed-line">guessed：${escapeHtml(sortedOpened.join(''))}</div>`;
+            let totalNonSpace = 0, revealedNonSpace = 0;
+            
+            state.songs.forEach((song, idx) => {
+                const isHidden = state.hiddenIndices.includes(idx);
+                const isRevealedFull = state.revealedFullIndices.includes(idx);
+                
+                const revealedArr = [];
+                for (const char of song) {
+                    const r = revealChar(char, openedSet, spaceAsStar);
+                    revealedArr.push(r);
+                    if (char !== ' ' && char !== '　') {
+                        totalNonSpace++;
+                        if (r !== '*') revealedNonSpace++;
+                    }
+                }
+                const maskedStr = revealedArr.join('');
+                
+                const hiddenClass = isHidden ? 'hidden-song' : '';
+                const revealedClass = isRevealedFull ? 'revealed-full' : '';
+                
+                html += `<div class="song-line ${hiddenClass} ${revealedClass}" data-index="${idx}">
+                    <span class="masked-title"><span class="line-number">${idx + 1}.</span>${formatLineHtml(maskedStr, spaceAsStar)}</span>
+                    <span class="full-title"><span class="line-number">${idx + 1}.</span>${escapeHtml(song)}</span>
+                    ${isRevealedFull ? '<span class="full-reveal-hint">(点击隐藏)</span>' : ''}
+                </div>`;
+            });
+            
+            if (state.remark.trim()) {
+                html += `<div class="remark-line">[${escapeHtml(state.remark.trim())}]</div>`;
+            }
+            
+            document.getElementById('resultDisplay').innerHTML = html;
+            
+            document.querySelectorAll('.song-line').forEach(line => {
+                line.addEventListener('click', () => {
+                    const idx = parseInt(line.dataset.index);
+                    toggleRevealFull(idx);
+                });
+            });
+            
+            const visibleCount = state.songs.length - state.hiddenIndices.length;
+            const percent = totalNonSpace > 0 ? Math.round(revealedNonSpace / totalNonSpace * 100) : 0;
+            
+            state.currentRevealPercent = percent;
+            
+            updateStats(visibleCount, percent);
+            updateHideStats();
+        }
+        
+        function formatLineHtml(text, spaceAsStar) {
+            return text.split('').map(char => {
+                if (char === ' ' || char === '　') {
+                    return spaceAsStar ? '<span class="char-hidden">*</span>' : '<span class="char-space"> </span>';
+                }
+                if (char === '*') return '<span class="char-hidden">*</span>';
+                return `<span class="char-revealed">${escapeHtml(char)}</span>`;
+            }).join('');
+        }
+        
+        function toggleRevealFull(idx) {
+            const i = state.revealedFullIndices.indexOf(idx);
+            if (i >= 0) {
+                state.revealedFullIndices.splice(i, 1);
+            } else {
+                state.revealedFullIndices.push(idx);
+            }
+            saveState();
+            renderResult();
+        }
+        
+        function updateStats(songCount, percent) {
+            document.getElementById('statSongs').textContent = songCount;
+            document.getElementById('statChars').textContent = elements.charInput.value.length;
+            document.getElementById('statPercent').textContent = percent + '%';
+        }
+        
+        function updateHideStats() {
+            const hideStatsEl = document.getElementById('hideStats');
+            const hiddenCountEl = document.getElementById('hiddenCount');
+            
+            if (state.hiddenIndices.length > 0) {
+                hideStatsEl.style.display = 'flex';
+                hiddenCountEl.textContent = state.hiddenIndices.length;
+            } else {
+                hideStatsEl.style.display = 'none';
+            }
+        }
+        
+        function updateStatusHint() {
+            const hint = document.getElementById('statusHint');
+            if (state.songs.length > 0) {
+                hint.textContent = `已解析 ${state.songs.length} 首曲名，返回编辑后再次解析将重置游戏`;
+                hint.style.color = 'var(--accent)';
+            } else {
+                hint.textContent = '';
+            }
+        }
+        
+        function updateCheckboxStates() {
+            const randomChecked = elements.randomSort.checked;
+            const lengthChecked = elements.lengthSort.checked;
+            elements.lengthSortLabel.classList.toggle('opacity-40', randomChecked);
+            elements.lengthSortLabel.classList.toggle('pointer-events-none', randomChecked);
+            elements.randomSortLabel.classList.toggle('opacity-40', lengthChecked);
+            elements.randomSortLabel.classList.toggle('pointer-events-none', lengthChecked);
+        }
+        
+        // ========== 隐藏功能 ==========
+        function hideRevealedSongs() {
+            if (state.revealedFullIndices.length === 0) {
+                showToast('没有已猜出的曲目，请先点击曲目显示完整曲名', 'info');
+                return;
+            }
+            
+            for (const idx of state.revealedFullIndices) {
+                if (!state.hiddenIndices.includes(idx)) {
+                    state.hiddenIndices.push(idx);
+                    state.guessedSongs.push({
+                        index: idx,
+                        time: state.timerSeconds
+                    });
+                }
+            }
+            
+            const count = state.revealedFullIndices.length;
+            state.revealedFullIndices = [];
+            
+            saveState();
+            renderResult();
+            showToast(`已隐藏 ${count} 首已猜出的曲目`);
+        }
+        
+        // ========== 恢复游戏弹窗 ==========
+        function showRestoreModal() {
+            document.getElementById('restoreSongCount').textContent = (state.songs.length - state.hiddenIndices.length) + ' 首';
+            document.getElementById('restoreCharCount').textContent = state.openedChars.length + ' 个';
+            document.getElementById('restoreTime').textContent = formatTime(state.timerSeconds);
+            document.getElementById('restorePercent').textContent = state.currentRevealPercent + '%';
+            
+            document.getElementById('restoreModal').classList.add('show');
+        }
+        
+        function hideRestoreModal() {
+            document.getElementById('restoreModal').classList.remove('show');
+        }
+        
+        // ========== 初始化 ==========
+        function init() {
+            elements = {
+                toast: document.getElementById('toast'),
+                songInput: document.getElementById('songInput'),
+                remarkInput: document.getElementById('remarkInput'),
+                charInput: document.getElementById('charInput'),
+                randomSort: document.getElementById('randomSort'),
+                lengthSort: document.getElementById('lengthSort'),
+                randomSortLabel: document.getElementById('randomSortLabel'),
+                lengthSortLabel: document.getElementById('lengthSortLabel'),
+                sortToggle: document.getElementById('sortToggle'),
+                sortContent: document.getElementById('sortContent'),
+                spaceAsStar: document.getElementById('spaceAsStar'),
+                hideRevealed: document.getElementById('hideRevealed')
+            };
+            
+            loadState();
+            
+            elements.songInput.value = state.songInputText || '';
+            elements.remarkInput.value = state.remark || '';
+            elements.spaceAsStar.checked = state.spaceAsStar || false;
+            
+            if (state.sortType === 'random') {
+                elements.randomSort.checked = true;
+            } else if (state.sortType === 'length') {
+                elements.lengthSort.checked = true;
+            }
+            
+            updateCheckboxStates();
+            
+            // 检查是否有未完成的游戏
+            if (state.currentPage === 2 && state.songs.length > 0) {
+                // 有未完成的游戏，显示恢复弹窗
+                showRestoreModal();
+            } else {
+                // 没有未完成的游戏，正常显示编辑页
+                updateStatusHint();
+                switchToPage(1);
+            }
+            
+            bindEvents();
+        }
+        
+        function bindEvents() {
+            elements.randomSort.addEventListener('change', () => {
+                if (elements.randomSort.checked) elements.lengthSort.checked = false;
+                updateCheckboxStates();
+                saveState();
+            });
+            
+            elements.lengthSort.addEventListener('change', () => {
+                if (elements.lengthSort.checked) elements.randomSort.checked = false;
+                updateCheckboxStates();
+                saveState();
+            });
+            
+            elements.sortToggle.addEventListener('click', () => {
+                const isOpen = elements.sortContent.classList.contains('open');
+                elements.sortContent.classList.toggle('open');
+                elements.sortToggle.classList.toggle('expanded', !isOpen);
+            });
+            
+            document.getElementById('applySort').addEventListener('click', () => {
+                let songs = parseSongs(elements.songInput.value);
+                if (songs.length === 0) {
+                    showToast('请先输入曲名', 'error');
+                    return;
+                }
+                if (elements.randomSort.checked) {
+                    for (let i = songs.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [songs[i], songs[j]] = [songs[j], songs[i]];
+                    }
+                    showToast('已随机排列');
+                } else if (elements.lengthSort.checked) {
+                    songs.sort((a, b) => a.length - b.length);
+                    showToast('已按长度排列');
+                } else {
+                    showToast('请先选择排列方式', 'error');
+                    return;
+                }
+                elements.songInput.value = songs.map((s, i) => `${i + 1}.${s}`).join('\n');
+                saveState();
+            });
+            
+            document.getElementById('clearSongs').addEventListener('click', () => {
+                elements.songInput.value = '';
+                saveState();
+                showToast('已清空曲名');
+            });
+            
+            elements.spaceAsStar.addEventListener('change', saveState);
+            
+            document.getElementById('parseBtn').addEventListener('click', () => {
+                const songs = parseSongs(elements.songInput.value);
+                if (songs.length === 0) {
+                    showToast('请输入至少一首曲名', 'error');
+                    return;
+                }
+                
+                resetTimer();
+                state.songs = songs;
+                state.remark = elements.remarkInput.value.trim();
+                state.spaceAsStar = elements.spaceAsStar.checked;
+                state.openedChars = '';
+                state.hiddenIndices = [];
+                state.revealedFullIndices = [];
+                state.guessedSongs = [];
+                state.currentRevealPercent = 0;
+                elements.charInput.value = '';
+                
+                saveState();
+                showToast('游戏开始！');
+                switchToPage(2);
+            });
+            
+            document.getElementById('backBtn').addEventListener('click', () => {
+                if (confirm('返回编辑将结束当前游戏，确定吗？')) {
+                    stopTimer();
+                    clearGameState();
+                    switchToPage(1);
+                }
+            });
+            
+            elements.songInput.addEventListener('input', saveState);
+            elements.remarkInput.addEventListener('input', saveState);
+            
+            elements.charInput.addEventListener('input', () => {
+                state.openedChars = elements.charInput.value;
+                saveState();
+                renderResult();
+            });
+            
+            document.getElementById('resetChars').addEventListener('click', () => {
+                elements.charInput.value = '';
+                state.openedChars = '';
+                saveState();
+                renderResult();
+                showToast('已重置所有开启字符');
+            });
+            
+            elements.hideRevealed.addEventListener('click', hideRevealedSongs);
+            
+            document.getElementById('pauseBtn').addEventListener('click', pauseTimer);
+            
+            document.getElementById('endGameBtn').addEventListener('click', () => {
+                if (confirm('确定要结束游戏吗？')) {
+                    showSettlement();
+                }
+            });
+            
+            document.getElementById('copyBtn').addEventListener('click', async () => {
+                if (state.songs.length === 0) {
+                    showToast('没有可复制的内容', 'error');
+                    return;
+                }
+                
+                const openedSet = new Set(elements.charInput.value);
+                const sortedOpened = sortChars(Array.from(openedSet));
+                const spaceAsStar = state.spaceAsStar;
+                
+                let text = `guessed：${sortedOpened.join('')}\n`;
+                
+                state.songs.forEach((song, idx) => {
+                    if (state.hiddenIndices.includes(idx)) return;
+                    
+                    if (state.revealedFullIndices.includes(idx)) {
+                        text += `${idx + 1}.${song}\n`;
+                    } else {
+                        const revealed = [];
+                        for (const char of song) {
+                            revealed.push(revealChar(char, openedSet, spaceAsStar));
+                        }
+                        text += `${idx + 1}.${revealed.join('')}\n`;
+                    }
+                });
+                
+                if (state.remark.trim()) {
+                    text += `[${state.remark.trim()}]`;
+                }
+                
+                try {
+                    await navigator.clipboard.writeText(text.trim());
+                    showToast('已复制到剪贴板');
+                } catch (e) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text.trim();
+                    textarea.style.cssText = 'position:fixed;left:-9999px;';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast('已复制到剪贴板');
+                    } catch (err) {
+                        showToast('复制失败，请手动复制', 'error');
+                    }
+                    document.body.removeChild(textarea);
+                }
+            });
+            
+            document.getElementById('copySettlement').addEventListener('click', async () => {
+                const text = document.getElementById('settlementText').value;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    showToast('已复制结算信息');
+                } catch (e) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.cssText = 'position:fixed;left:-9999px;';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast('已复制结算信息');
+                    } catch (err) {
+                        showToast('复制失败', 'error');
+                    }
+                    document.body.removeChild(textarea);
+                }
+            });
+            
+            document.getElementById('copyQuestions').addEventListener('click', async () => {
+                const text = document.getElementById('questionsText').value;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    showToast('已复制完整题面');
+                } catch (e) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.cssText = 'position:fixed;left:-9999px;';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast('已复制完整题面');
+                    } catch (err) {
+                        showToast('复制失败', 'error');
+                    }
+                    document.body.removeChild(textarea);
+                }
+            });
+            
+            document.getElementById('newGameBtn').addEventListener('click', () => {
+                resetTimer();
+                state.songs = [];
+                state.hiddenIndices = [];
+                state.revealedFullIndices = [];
+                state.guessedSongs = [];
+                state.openedChars = '';
+                state.currentRevealPercent = 0;
+                elements.charInput.value = '';
+                switchToPage(1);
+            });
+            
+            document.getElementById('backToEditBtn').addEventListener('click', () => {
+                switchToPage(1);
+            });
+            
+            // 恢复游戏弹窗按钮
+            document.getElementById('restoreContinue').addEventListener('click', () => {
+                hideRestoreModal();
+                // 恢复输入框状态
+                elements.charInput.value = state.openedChars || '';
+                // 继续游戏，计时器保持暂停
+                switchToPage(2, true);
+                showToast('已恢复游戏，计时器已暂停，点击「继续」继续计时');
+            });
+            
+            document.getElementById('restoreNewGame').addEventListener('click', () => {
+                hideRestoreModal();
+                // 清除游戏状态
+                clearGameState();
+                // 重置输入框
+                elements.charInput.value = '';
+                updateStatusHint();
+                switchToPage(1);
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
