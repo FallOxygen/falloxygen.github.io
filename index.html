@@ -81,6 +81,13 @@
         .btn-warning:hover { background: var(--warning); color: #000; }
         .btn-sm { padding: 10px 18px; font-size: 13px; }
         
+        .tabs { display: flex; gap: 4px; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; text-align: center; border: none; background: transparent; }
+        .tab-btn:hover { color: var(--fg); }
+        .tab-btn.active { background: var(--accent-dim); color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
         .checkbox-wrap { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; padding: 12px 14px; border-radius: 10px; transition: background 0.2s; }
         .checkbox-wrap:hover { background: rgba(255, 255, 255, 0.03); }
         .checkbox-wrap input { display: none; }
@@ -99,6 +106,10 @@
         .checkbox-wrap input:checked + .checkbox-box { background: var(--accent); border-color: var(--accent); }
         .checkbox-box svg { opacity: 0; transform: scale(0.5); transition: all 0.15s; }
         .checkbox-wrap input:checked + .checkbox-box svg { opacity: 1; transform: scale(1); }
+        .checkbox-wrap.disabled { opacity: 0.4; pointer-events: none; }
+        
+        .count-input { width: 60px; padding: 8px 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); text-align: center; font-size: 14px; }
+        .count-input:focus { outline: none; border-color: var(--accent); }
         
         .result-display { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border); border-radius: 12px; line-height: 2.1; letter-spacing: 0.3px; }
         .char-revealed { color: var(--accent); font-weight: 600; }
@@ -214,6 +225,32 @@
             flex-shrink: 0; 
         }
         
+        /* 新增样式：上传区域 */
+        .upload-zone { border: 2px dashed var(--border); border-radius: 14px; padding: 36px; text-align: center; cursor: pointer; transition: all 0.25s; }
+        .upload-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
+        .upload-zone.dragover { border-color: var(--accent); background: var(--accent-dim); }
+        
+        .game-list { max-height: 300px; overflow-y: auto; padding-right: 8px; }
+        .game-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; transition: background 0.15s; }
+        .game-item:hover { background: rgba(255, 255, 255, 0.03); }
+        .game-name { font-weight: 500; flex: 1; }
+        .game-count { font-size: 12px; color: var(--muted); background: rgba(255, 255, 255, 0.05); padding: 3px 10px; border-radius: 6px; margin-right: 14px; }
+        
+        .mode-switch { display: flex; gap: 10px; margin-bottom: 16px; }
+        .mode-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.2s; }
+        .mode-btn:hover { color: var(--fg); }
+        .mode-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        
+        .file-info { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 10px; margin-bottom: 16px; }
+        .file-info .filename { flex: 1; font-weight: 500; }
+        
+        .filter-section { margin-bottom: 18px; }
+        .filter-label { font-size: 13px; color: var(--muted); margin-bottom: 10px; display: block; }
+        .filter-options { display: flex; flex-wrap: wrap; gap: 10px; }
+        .filter-chip { padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.15s; }
+        .filter-chip:hover { color: var(--fg); border-color: var(--accent); }
+        .filter-chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        
         /* 恢复游戏弹窗 */
         .modal-overlay { 
             position: fixed; 
@@ -307,7 +344,7 @@
         <div class="max-w-2xl mx-auto">
             <header class="mb-6">
                 <h1 class="text-3xl font-bold mb-2">曲名开字母辅助器</h1>
-                <p class="text-sm" style="color: var(--muted);">手动输入曲名，开始你的猜歌游戏</p>
+                <p class="text-sm" style="color: var(--muted);">导入曲库或手动输入，开始你的猜歌游戏</p>
             </header>
             
             <!-- 个人声明 -->
@@ -321,65 +358,159 @@
                     个人声明
                 </div>
                 <div class="content">
-                    自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！
+                    自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！还有那个导入在线曲库是屎山代码，大家用的时候注意一下抽取的曲名哈！
                 </div>
             </div>
             
-            <!-- 使用方法 -->
-            <div class="help-box">
-                <div class="title">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                        <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                    使用方法
-                </div>
-                <div class="content">
-                    <div class="step">
-                        <span class="step-num">1</span>
-                        <span>在下方输入框中粘贴曲名列表（支持带序号或不带序号的格式）</span>
-                    </div>
-                    <div class="step">
-                        <span class="step-num">2</span>
-                        <span>可选：填写备注信息、设置排列方式、选择空格是否隐藏</span>
-                    </div>
-                    <div class="step">
-                        <span class="step-num">3</span>
-                        <span>点击「解析并开始游戏」进入游戏界面</span>
-                    </div>
-                    <div class="step">
-                        <span class="step-num">4</span>
-                        <span>在字符输入框中输入已开启的字符，下方会实时显示隐藏结果</span>
-                    </div>
-                    <div class="step">
-                        <span class="step-num">5</span>
-                        <span>点击曲名行可以显示/隐藏完整曲名，猜对的曲目可点击「隐藏已猜出的曲目」</span>
-                    </div>
-                    <div class="step">
-                        <span class="step-num">6</span>
-                        <span>游戏结束后点击「结束游戏」查看结算信息</span>
-                    </div>
-                    <div class="step" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
-                        <span class="step-num" style="background: rgba(6, 182, 212, 0.15); color: var(--info);">!</span>
-                        <span style="color: var(--info);">如果不小心关闭页面，下次打开会自动提示恢复游戏</span>
-                    </div>
-                </div>
+            <!-- 标签页切换 -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="import">导入曲库</button>
+                <button class="tab-btn" data-tab="manual">手动输入</button>
             </div>
             
-            <div class="card p-6 mb-5">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-semibold flex items-center gap-2">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
-                            <path d="M9 18V5l12-2v13"/>
-                            <circle cx="6" cy="18" r="3"/>
-                            <circle cx="18" cy="16" r="3"/>
+            <!-- 导入曲库标签页 -->
+            <div id="tab-import" class="tab-content active">
+                <div class="card p-6 mb-5">
+                    <div id="uploadZone" class="upload-zone">
+                        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--muted); margin: 0 auto 14px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
-                        曲名序列
-                    </h2>
-                    <button id="clearSongs" class="btn btn-ghost btn-sm">清空</button>
+                        <div style="color: var(--fg); font-weight: 600; margin-bottom: 6px;">点击上传或拖拽 TXT 文件</div>
+                        <div style="color: var(--muted); font-size: 13px;">支持标准格式的曲库文件</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                    
+                    <!-- 在线曲库导入按钮 -->
+                    <button id="importOnlineBtn" class="btn btn-secondary w-full mt-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="2" y1="12" x2="22" y2="12"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                        导入在线曲库
+                    </button>
                 </div>
-                <textarea id="songInput" class="input-area mono w-full p-4" style="min-height: 260px;" placeholder="粘贴曲名列表，支持以下格式：&#10;&#10;1.Distorted Fate&#10;2.Xterfusion&#10;3.INTERNET YAMERO&#10;&#10;或每行一首曲名（无需序号）"></textarea>
+                
+                <div id="parsedSection" style="display: none;">
+                    <div class="card p-6 mb-5">
+                        <div class="file-info">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            <span id="fileName" class="filename">-</span>
+                            <span id="fileStats" style="color: var(--muted); font-size: 13px;"></span>
+                            <button id="clearFile" class="btn btn-danger btn-sm">移除</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 mb-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="font-semibold flex items-center gap-2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                    <line x1="8" y1="21" x2="16" y2="21"/>
+                                    <line x1="12" y1="17" x2="12" y2="21"/>
+                                </svg>
+                                选择游戏范围
+                            </h2>
+                            <div class="flex gap-2">
+                                <button id="selectAll" class="btn btn-ghost btn-sm">全选</button>
+                                <button id="selectNone" class="btn btn-secondary btn-sm">清空</button>
+                            </div>
+                        </div>
+                        <div id="gameList" class="game-list"></div>
+                    </div>
+                    
+                    <div class="card p-6 mb-5">
+                        <h2 class="font-semibold flex items-center gap-2 mb-4">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                            </svg>
+                            曲目过滤
+                        </h2>
+                        <div class="filter-section">
+                            <span class="filter-label">只有</span>
+                            <div class="filter-options" data-filter-type="only">
+                                <button class="filter-chip" data-filter="letter">字母</button>
+                                <button class="filter-chip" data-filter="japanese">日文</button>
+                                <button class="filter-chip" data-filter="hanzi">汉字</button>
+                                <button class="filter-chip" data-filter="symbol">符号</button>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <span class="filter-label">包含</span>
+                            <div class="filter-options" data-filter-type="include">
+                                <button class="filter-chip" data-filter="letter">字母</button>
+                                <button class="filter-chip" data-filter="japanese">日文</button>
+                                <button class="filter-chip" data-filter="hanzi">汉字</button>
+                                <button class="filter-chip" data-filter="symbol">符号</button>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <span class="filter-label">没有</span>
+                            <div class="filter-options" data-filter-type="exclude">
+                                <button class="filter-chip" data-filter="letter">字母</button>
+                                <button class="filter-chip" data-filter="japanese">日文</button>
+                                <button class="filter-chip" data-filter="hanzi">汉字</button>
+                                <button class="filter-chip" data-filter="symbol">符号</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between mt-4 pt-4" style="border-top: 1px solid var(--border);">
+                            <span id="filterCount" style="color: var(--muted); font-size: 13px;">符合条件的曲目: 0 首</span>
+                            <button id="clearFilters" class="btn btn-secondary btn-sm">清除过滤</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 mb-5">
+                        <h2 class="font-semibold flex items-center gap-2 mb-4">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                            抽取设置
+                        </h2>
+                        <div class="mode-switch">
+                            <button id="modeEqual" class="mode-btn active">总数量模式</button>
+                            <button id="modeCustom" class="mode-btn">定制数量模式</button>
+                        </div>
+                        <div id="equalMode" class="mb-4">
+                            <label class="block text-sm mb-2" style="color: var(--muted);">总抽取数量</label>
+                            <input type="number" id="totalCount" class="count-input w-full" style="width: 100%;" min="1" placeholder="输入总数">
+                            <p class="text-xs mt-2" style="color: var(--muted);">将从选中的范围内随机抽取指定数量的曲目</p>
+                        </div>
+                        <div id="customMode" style="display: none;">
+                            <p class="text-sm mb-3" style="color: var(--muted);">为每个游戏范围指定抽取数量：</p>
+                            <div id="customCounts" class="space-y-2 max-h-[280px] overflow-y-auto"></div>
+                        </div>
+                        <button id="generateBtn" class="btn btn-primary w-full mt-4">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                            生成曲目列表
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 手动输入标签页 -->
+            <div id="tab-manual" class="tab-content">
+                <div class="card p-6 mb-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-semibold flex items-center gap-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                                <path d="M9 18V5l12-2v13"/>
+                                <circle cx="6" cy="18" r="3"/>
+                                <circle cx="18" cy="16" r="3"/>
+                            </svg>
+                            曲名序列
+                        </h2>
+                        <button id="clearSongs" class="btn btn-ghost btn-sm">清空</button>
+                    </div>
+                    <textarea id="songInput" class="input-area mono w-full p-4" style="min-height: 260px;" placeholder="粘贴曲名列表，支持以下格式：&#10;&#10;1.Distorted Fate&#10;2.Xterfusion&#10;3.INTERNET YAMERO&#10;&#10;或每行一首曲名（无需序号）"></textarea>
+                </div>
             </div>
             
             <div class="card p-6 mb-5">
@@ -443,7 +574,7 @@
                 <h2 class="font-semibold flex items-center gap-2 mb-4">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
                         <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                     </svg>
                     游戏选项
                 </h2>
@@ -651,6 +782,23 @@
     </div>
     
     <script>
+        // ========== 支持的游戏列表 ==========
+        const SUPPORTED_GAMES = [
+            "Phigros", "Arcaea", "Orzmic", "Milthm", "Berry Melody", "Lanota", 
+            "Rotaeno", "Cytus II", "KALPA", "Muse Dash", "Paradigm:Reboot", 
+            "TAKUMI³", "PJSK", "maimai", "CHUNITHM", "オンゲキ", "Notanote", 
+            "Rizline", "DanceRail3", "vivid/stasis", "Groove Coaster", "ChainBeeT", 
+            "Liminality", "RYCEAM", "Dynamix", "Deemo II", "WACCA", "OverRapid", 
+            "SDVX", "太鼓达人", "Circle of Sparks", "Polytone", "SEVEN's CODE", 
+            "SHINOBI SLASH", "Simple", "Sparkline", "Siglota", "Twirdora", 
+            "Tone Sphere", "WAVEAT", "Beatmania IIDX", "BanG Dream!", 
+            "DJMAX RESPECT V", "BOF", "米哈游", "东方Project", "UNDERTALE", 
+            "Minecraft", "osu", "Malody", "(慎选)曲师曲目大杂烩", "ADOFAI"
+        ];
+        
+        // 在线曲库地址
+        const ONLINE_LIBRARY_URL = 'https://raw.githubusercontent.com/FallOxygen/falloxygen.github.io/main/libraries/Songs.txt';
+        
         // ========== 字符类型判断 ==========
         function isLetter(c) {
             const code = c.charCodeAt(0);
@@ -674,6 +822,47 @@
         function isHanzi(c) {
             const code = c.charCodeAt(0);
             return (code >= 0x4E00 && code <= 0x9FFF) || (code >= 0x3400 && code <= 0x4DBF);
+        }
+        
+        function isSymbol(c) {
+            if (c === ' ' || c === '　') return false;
+            return !isLetter(c) && !isJapanese(c) && !isHanzi(c);
+        }
+        
+        function checkFilter(song, filterType, filterValue) {
+            const hasLetter = [...song].some(isLetter);
+            const hasJapanese = [...song].some(isJapanese);
+            const hasHanzi = [...song].some(isHanzi);
+            const hasSymbol = [...song].some(isSymbol);
+            
+            const onlyLetter = [...song].every(c => isLetter(c) || c === ' ' || c === '　');
+            const onlyJapanese = [...song].every(c => isJapanese(c) || c === ' ' || c === '　');
+            const onlyHanzi = [...song].every(c => isHanzi(c) || c === ' ' || c === '　');
+            const onlySymbol = [...song].every(c => isSymbol(c) || c === ' ' || c === '　');
+            
+            switch (filterValue) {
+                case 'letter':
+                    if (filterType === 'only') return onlyLetter;
+                    if (filterType === 'include') return hasLetter;
+                    if (filterType === 'exclude') return !hasLetter;
+                    break;
+                case 'japanese':
+                    if (filterType === 'only') return onlyJapanese;
+                    if (filterType === 'include') return hasJapanese;
+                    if (filterType === 'exclude') return !hasJapanese;
+                    break;
+                case 'hanzi':
+                    if (filterType === 'only') return onlyHanzi;
+                    if (filterType === 'include') return hasHanzi;
+                    if (filterType === 'exclude') return !hasHanzi;
+                    break;
+                case 'symbol':
+                    if (filterType === 'only') return onlySymbol;
+                    if (filterType === 'include') return hasSymbol;
+                    if (filterType === 'exclude') return !hasSymbol;
+                    break;
+            }
+            return true;
         }
         
         // ========== 字符排序规则 ==========
@@ -703,11 +892,55 @@
             });
         }
         
+        // ========== IndexedDB ==========
+        const DB_NAME = 'SongLetterHelperDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'library';
+        let db = null;
+        
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+        
+        function saveToDB(key, data) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put({ id: key, data: data });
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        function loadFromDB(key) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result ? request.result.data : null);
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
         // ========== 状态 ==========
-        const STORAGE_KEY = 'songLetterHelper_v9';
+        const STORAGE_KEY = 'songLetterHelper_v10';
         
         let state = {
             currentPage: 1,
+            activeTab: 'import',
             songInputText: '',
             songs: [],
             remark: '',
@@ -723,9 +956,17 @@
             totalPauseTime: 0,
             pauseStartTime: null,
             guessedSongs: [],
-            currentRevealPercent: 0
+            currentRevealPercent: 0,
+            // 新增：曲库相关
+            fileName: '',
+            selectedGames: [],
+            customCounts: {},
+            extractMode: 'equal',
+            totalCount: 10,
+            filters: { only: [], include: [], exclude: [] }
         };
         
+        let gameData = {};
         let elements = {};
         let timerInterval = null;
         
@@ -811,6 +1052,25 @@
             state.sortType = elements.randomSort.checked ? 'random' : (elements.lengthSort.checked ? 'length' : 'none');
             state.openedChars = elements.charInput.value;
             state.spaceAsStar = elements.spaceAsStar.checked;
+            state.totalCount = parseInt(elements.totalCount.value) || 10;
+            state.extractMode = elements.modeEqual.classList.contains('active') ? 'equal' : 'custom';
+            
+            const checked = elements.gameList.querySelectorAll('input[type="checkbox"]:checked');
+            state.selectedGames = Array.from(checked).map(cb => cb.dataset.game);
+            
+            if (state.extractMode === 'custom') {
+                state.customCounts = {};
+                elements.customCountsDiv.querySelectorAll('.custom-count-input').forEach(input => {
+                    state.customCounts[input.dataset.game] = parseInt(input.value) || 0;
+                });
+            }
+            
+            state.filters = { only: [], include: [], exclude: [] };
+            document.querySelectorAll('.filter-chip.active').forEach(chip => {
+                const type = chip.parentElement.dataset.filterType;
+                const value = chip.dataset.filter;
+                state.filters[type].push(value);
+            });
             
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1009,6 +1269,243 @@
             }
         }
         
+        function switchTab(tabName) {
+            state.activeTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === 'tab-' + tabName);
+            });
+            saveState();
+        }
+        
+        // ========== 曲库解析 ==========
+        function parseLibrary(text) {
+            const lines = text.split('\n');
+            const data = {};
+            let currentGame = null;
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                
+                const tagMatch = trimmed.match(/^\[(.+)\]$/);
+                if (tagMatch) {
+                    const tagName = tagMatch[1].trim();
+                    if (SUPPORTED_GAMES.includes(tagName)) {
+                        currentGame = tagName;
+                        if (!data[currentGame]) data[currentGame] = [];
+                        continue;
+                    }
+                }
+                
+                if (currentGame && trimmed) {
+                    const songMatch = trimmed.match(/^\d+[.)\s:：]+(.+)$/);
+                    const songName = songMatch ? songMatch[1].trim() : trimmed;
+                    if (songName) data[currentGame].push(songName);
+                }
+            }
+            
+            for (const game in data) {
+                if (data[game].length === 0) delete data[game];
+            }
+            
+            return data;
+        }
+        
+        function renderGameList() {
+            const games = Object.keys(gameData).sort((a, b) => {
+                return SUPPORTED_GAMES.indexOf(a) - SUPPORTED_GAMES.indexOf(b);
+            });
+            
+            elements.gameList.innerHTML = games.map(game => {
+                const count = gameData[game].length;
+                const checked = state.selectedGames.includes(game) ? 'checked' : '';
+                return `
+                    <div class="game-item">
+                        <label class="checkbox-wrap flex-1">
+                            <input type="checkbox" data-game="${escapeHtml(game)}" ${checked}>
+                            <span class="checkbox-box">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </span>
+                            <span class="game-name">${escapeHtml(game)}</span>
+                            <span class="game-count">${count} 首</span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+            
+            updateFileStats();
+            updateCustomCounts();
+            updateFilterCount();
+        }
+        
+        function updateFileStats() {
+            const totalGames = Object.keys(gameData).length;
+            const totalSongs = Object.values(gameData).reduce((sum, arr) => sum + arr.length, 0);
+            document.getElementById('fileStats').textContent = `${totalGames} 个游戏 / ${totalSongs} 首曲目`;
+        }
+        
+        function updateCustomCounts() {
+            const games = Object.keys(gameData);
+            elements.customCountsDiv.innerHTML = games.map(game => {
+                const count = gameData[game].length;
+                const savedCount = state.customCounts[game] || 0;
+                const checked = state.selectedGames.includes(game);
+                return `
+                    <div class="flex items-center gap-3 p-2 rounded-lg ${checked ? '' : 'opacity-40'}">
+                        <span class="flex-1 text-sm">${escapeHtml(game)}</span>
+                        <span class="text-xs" style="color: var(--muted);">共 ${count} 首</span>
+                        <input type="number" class="count-input custom-count-input" data-game="${escapeHtml(game)}" 
+                               value="${savedCount}" min="0" max="${count}" ${checked ? '' : 'disabled'}>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ========== 过滤功能 ==========
+        function getFilteredSongs(songs) {
+            const { only, include, exclude } = state.filters;
+            return songs.filter(song => {
+                for (const f of only) {
+                    if (!checkFilter(song, 'only', f)) return false;
+                }
+                for (const f of include) {
+                    if (!checkFilter(song, 'include', f)) return false;
+                }
+                for (const f of exclude) {
+                    if (!checkFilter(song, 'exclude', f)) return false;
+                }
+                return true;
+            });
+        }
+        
+        function updateFilterCount() {
+            const selectedGames = Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.dataset.game);
+            
+            let allSongs = [];
+            for (const game of selectedGames) {
+                if (gameData[game]) {
+                    allSongs = allSongs.concat(gameData[game]);
+                }
+            }
+            
+            const filtered = getFilteredSongs(allSongs);
+            document.getElementById('filterCount').textContent = `符合条件的曲目: ${filtered.length} 首`;
+        }
+        
+        // ========== 抽取功能 ==========
+        function generateSongs() {
+            const selectedGames = Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.dataset.game);
+            
+            if (selectedGames.length === 0) {
+                showToast('请至少选择一个游戏范围', 'error');
+                return;
+            }
+            
+            const gameSongMap = {};
+            for (const game of selectedGames) {
+                if (gameData[game]) {
+                    gameSongMap[game] = getFilteredSongs([...gameData[game]]);
+                }
+            }
+            
+            const totalFiltered = Object.values(gameSongMap).reduce((sum, arr) => sum + arr.length, 0);
+            if (totalFiltered === 0) {
+                showToast('没有符合条件的曲目', 'error');
+                return;
+            }
+            
+            let resultSongs = [];
+            
+            if (state.extractMode === 'equal') {
+                const totalCount = parseInt(elements.totalCount.value) || 0;
+                if (totalCount <= 0) {
+                    showToast('请输入有效的总数量', 'error');
+                    return;
+                }
+                
+                for (const game in gameSongMap) {
+                    const arr = gameSongMap[game];
+                    for (let i = arr.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [arr[i], arr[j]] = [arr[j], arr[i]];
+                    }
+                }
+                
+                const games = Object.keys(gameSongMap);
+                const indices = {};
+                games.forEach(g => indices[g] = 0);
+                
+                let gameIdx = 0;
+                const usedSongs = new Set();
+                
+                while (resultSongs.length < totalCount) {
+                    let found = false;
+                    const startIdx = gameIdx;
+                    
+                    do {
+                        const game = games[gameIdx];
+                        const songs = gameSongMap[game];
+                        const idx = indices[game];
+                        
+                        if (idx < songs.length) {
+                            const song = songs[idx];
+                            if (!usedSongs.has(song)) {
+                                resultSongs.push(song);
+                                usedSongs.add(song);
+                                found = true;
+                            }
+                            indices[game]++;
+                        }
+                        
+                        gameIdx = (gameIdx + 1) % games.length;
+                    } while (!found && gameIdx !== startIdx);
+                    
+                    if (!found) break;
+                }
+                
+                showToast(`已抽取 ${resultSongs.length} 首曲目`);
+                
+            } else {
+                const usedSongs = new Set();
+                
+                for (const game of selectedGames) {
+                    const count = state.customCounts[game] || 0;
+                    if (count <= 0) continue;
+                    
+                    const songs = gameSongMap[game] ? [...gameSongMap[game]] : [];
+                    for (let i = songs.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [songs[i], songs[j]] = [songs[j], songs[i]];
+                    }
+                    
+                    let added = 0;
+                    for (const song of songs) {
+                        if (added >= count) break;
+                        if (!usedSongs.has(song)) {
+                            resultSongs.push(song);
+                            usedSongs.add(song);
+                            added++;
+                        }
+                    }
+                }
+                
+                showToast(`已抽取 ${resultSongs.length} 首曲目`);
+            }
+            
+            elements.songInput.value = resultSongs.map((s, i) => `${i + 1}.${s}`).join('\n');
+            state.songInputText = elements.songInput.value;
+            saveState();
+            
+            switchTab('manual');
+        }
+        
         // ========== 渲染结果 ==========
         function renderResult() {
             const openedSet = new Set(elements.charInput.value);
@@ -1131,10 +1628,8 @@
         function updateCheckboxStates() {
             const randomChecked = elements.randomSort.checked;
             const lengthChecked = elements.lengthSort.checked;
-            elements.lengthSortLabel.classList.toggle('opacity-40', randomChecked);
-            elements.lengthSortLabel.classList.toggle('pointer-events-none', randomChecked);
-            elements.randomSortLabel.classList.toggle('opacity-40', lengthChecked);
-            elements.randomSortLabel.classList.toggle('pointer-events-none', lengthChecked);
+            elements.lengthSortLabel.classList.toggle('disabled', randomChecked);
+            elements.randomSortLabel.classList.toggle('disabled', lengthChecked);
         }
         
         // ========== 隐藏功能 ==========
@@ -1176,8 +1671,86 @@
             document.getElementById('restoreModal').classList.remove('show');
         }
         
+        // ========== 文件处理 ==========
+        async function handleFile(file) {
+            if (!file.name.endsWith('.txt')) {
+                showToast('请上传 TXT 格式文件', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const text = e.target.result;
+                processLibraryText(text, file.name);
+            };
+            
+            reader.onerror = () => showToast('文件读取失败', 'error');
+            reader.readAsText(file);
+        }
+        
+        // 处理曲库文本
+        async function processLibraryText(text, fileName = '在线曲库') {
+            const data = parseLibrary(text);
+            
+            if (Object.keys(data).length === 0) {
+                showToast('未能识别任何有效游戏标签', 'error');
+                return;
+            }
+            
+            gameData = data;
+            state.fileName = fileName;
+            state.selectedGames = [];
+            state.customCounts = {};
+            
+            document.getElementById('fileName').textContent = fileName;
+            elements.parsedSection.style.display = 'block';
+            
+            renderGameList();
+            saveState();
+            
+            try {
+                await saveToDB('gameData', gameData);
+            } catch (e) {
+                console.warn('保存曲库到IndexedDB失败:', e);
+            }
+            
+            const gameCount = Object.keys(gameData).length;
+            const songCount = Object.values(gameData).reduce((sum, arr) => sum + arr.length, 0);
+            showToast(`成功解析 ${gameCount} 个游戏、${songCount} 首曲目`);
+        }
+        
+        // 导入在线曲库
+        async function importOnlineLibrary() {
+            const btn = document.getElementById('importOnlineBtn');
+            const originalContent = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/>
+                </svg>
+                正在导入...
+            `;
+            
+            try {
+                const response = await fetch(ONLINE_LIBRARY_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                await processLibraryText(text, '在线曲库');
+            } catch (error) {
+                console.error('导入在线曲库失败:', error);
+                showToast('导入在线曲库失败，请检查网络连接', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        }
+        
         // ========== 初始化 ==========
-        function init() {
+        async function init() {
             elements = {
                 toast: document.getElementById('toast'),
                 songInput: document.getElementById('songInput'),
@@ -1190,14 +1763,36 @@
                 sortToggle: document.getElementById('sortToggle'),
                 sortContent: document.getElementById('sortContent'),
                 spaceAsStar: document.getElementById('spaceAsStar'),
-                hideRevealed: document.getElementById('hideRevealed')
+                hideRevealed: document.getElementById('hideRevealed'),
+                uploadZone: document.getElementById('uploadZone'),
+                fileInput: document.getElementById('fileInput'),
+                parsedSection: document.getElementById('parsedSection'),
+                gameList: document.getElementById('gameList'),
+                modeEqual: document.getElementById('modeEqual'),
+                modeCustom: document.getElementById('modeCustom'),
+                equalMode: document.getElementById('equalMode'),
+                customMode: document.getElementById('customMode'),
+                customCountsDiv: document.getElementById('customCounts'),
+                totalCount: document.getElementById('totalCount'),
+                generateBtn: document.getElementById('generateBtn'),
+                selectAll: document.getElementById('selectAll'),
+                selectNone: document.getElementById('selectNone'),
+                clearFile: document.getElementById('clearFile'),
+                importOnlineBtn: document.getElementById('importOnlineBtn')
             };
+            
+            try {
+                await openDB();
+            } catch (e) {
+                console.error('IndexedDB打开失败:', e);
+            }
             
             loadState();
             
             elements.songInput.value = state.songInputText || '';
             elements.remarkInput.value = state.remark || '';
             elements.spaceAsStar.checked = state.spaceAsStar || false;
+            elements.totalCount.value = state.totalCount || 10;
             
             if (state.sortType === 'random') {
                 elements.randomSort.checked = true;
@@ -1206,6 +1801,40 @@
             }
             
             updateCheckboxStates();
+            
+            // 尝试加载已保存的曲库数据
+            try {
+                const savedGameData = await loadFromDB('gameData');
+                if (savedGameData && Object.keys(savedGameData).length > 0) {
+                    gameData = savedGameData;
+                    document.getElementById('fileName').textContent = state.fileName || '已加载曲库';
+                    elements.parsedSection.style.display = 'block';
+                    renderGameList();
+                    
+                    // 恢复过滤状态
+                    state.filters.only.forEach(f => {
+                        document.querySelector(`.filter-options[data-filter-type="only"] .filter-chip[data-filter="${f}"]`)?.classList.add('active');
+                    });
+                    state.filters.include.forEach(f => {
+                        document.querySelector(`.filter-options[data-filter-type="include"] .filter-chip[data-filter="${f}"]`)?.classList.add('active');
+                    });
+                    state.filters.exclude.forEach(f => {
+                        document.querySelector(`.filter-options[data-filter-type="exclude"] .filter-chip[data-filter="${f}"]`)?.classList.add('active');
+                    });
+                    
+                    // 恢复抽取模式
+                    if (state.extractMode === 'custom') {
+                        elements.modeEqual.classList.remove('active');
+                        elements.modeCustom.classList.add('active');
+                        elements.equalMode.style.display = 'none';
+                        elements.customMode.style.display = 'block';
+                    }
+                }
+            } catch (e) {
+                console.warn('加载曲库数据失败:', e);
+            }
+            
+            switchTab(state.activeTab || 'import');
             
             // 检查是否有未完成的游戏
             if (state.currentPage === 2 && state.songs.length > 0) {
@@ -1221,6 +1850,11 @@
         }
         
         function bindEvents() {
+            // 标签页切换
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+            });
+            
             elements.randomSort.addEventListener('change', () => {
                 if (elements.randomSort.checked) elements.lengthSort.checked = false;
                 updateCheckboxStates();
@@ -1269,6 +1903,112 @@
             });
             
             elements.spaceAsStar.addEventListener('change', saveState);
+            
+            // 文件上传相关
+            elements.uploadZone.addEventListener('click', () => elements.fileInput.click());
+            
+            elements.uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                elements.uploadZone.classList.add('dragover');
+            });
+            
+            elements.uploadZone.addEventListener('dragleave', () => {
+                elements.uploadZone.classList.remove('dragover');
+            });
+            
+            elements.uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                elements.uploadZone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) handleFile(file);
+            });
+            
+            elements.fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) handleFile(file);
+            });
+            
+            // 在线曲库导入
+            elements.importOnlineBtn.addEventListener('click', importOnlineLibrary);
+            
+            elements.clearFile.addEventListener('click', async () => {
+                gameData = {};
+                state.selectedGames = [];
+                state.fileName = '';
+                elements.parsedSection.style.display = 'none';
+                elements.fileInput.value = '';
+                try { await saveToDB('gameData', {}); } catch (e) {}
+                saveState();
+                showToast('已移除曲库');
+            });
+            
+            elements.selectAll.addEventListener('click', () => {
+                elements.gameList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+                updateCustomCounts();
+                updateFilterCount();
+                saveState();
+            });
+            
+            elements.selectNone.addEventListener('click', () => {
+                elements.gameList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                updateCustomCounts();
+                updateFilterCount();
+                saveState();
+            });
+            
+            elements.gameList.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') {
+                    updateCustomCounts();
+                    updateFilterCount();
+                    saveState();
+                }
+            });
+            
+            // 过滤器
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    chip.classList.toggle('active');
+                    updateFilterCount();
+                    saveState();
+                });
+            });
+            
+            document.getElementById('clearFilters').addEventListener('click', () => {
+                document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+                state.filters = { only: [], include: [], exclude: [] };
+                updateFilterCount();
+                saveState();
+            });
+            
+            // 抽取模式切换
+            elements.modeEqual.addEventListener('click', () => {
+                elements.modeEqual.classList.add('active');
+                elements.modeCustom.classList.remove('active');
+                elements.equalMode.style.display = 'block';
+                elements.customMode.style.display = 'none';
+                state.extractMode = 'equal';
+                saveState();
+            });
+            
+            elements.modeCustom.addEventListener('click', () => {
+                elements.modeCustom.classList.add('active');
+                elements.modeEqual.classList.remove('active');
+                elements.customMode.style.display = 'block';
+                elements.equalMode.style.display = 'none';
+                state.extractMode = 'custom';
+                updateCustomCounts();
+                saveState();
+            });
+            
+            elements.generateBtn.addEventListener('click', generateSongs);
+            
+            elements.customCountsDiv.addEventListener('input', (e) => {
+                if (e.target.classList.contains('custom-count-input')) {
+                    saveState();
+                }
+            });
+            
+            elements.totalCount.addEventListener('input', saveState);
             
             document.getElementById('parseBtn').addEventListener('click', () => {
                 const songs = parseSongs(elements.songInput.value);
@@ -1438,18 +2178,14 @@
             // 恢复游戏弹窗按钮
             document.getElementById('restoreContinue').addEventListener('click', () => {
                 hideRestoreModal();
-                // 恢复输入框状态
                 elements.charInput.value = state.openedChars || '';
-                // 继续游戏，计时器保持暂停
                 switchToPage(2, true);
                 showToast('已恢复游戏，计时器已暂停，点击「继续」继续计时');
             });
             
             document.getElementById('restoreNewGame').addEventListener('click', () => {
                 hideRestoreModal();
-                // 清除游戏状态
                 clearGameState();
-                // 重置输入框
                 elements.charInput.value = '';
                 updateStatusHint();
                 switchToPage(1);
