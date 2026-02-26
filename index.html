@@ -358,7 +358,7 @@
                     个人声明
                 </div>
                 <div class="content">
-                    自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！还有那个导入在线曲库是屎山代码，大家用的时候注意一下抽取的曲名哈！有什么问题和建议可以到 https://b23.tv/Ykreczp 去评论喵！
+                    自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！还有那个导入在线曲库是屎山代码，大家用的时候注意一下抽取的曲名哈！
                 </div>
             </div>
             
@@ -1120,8 +1120,10 @@
             if (timerInterval) return;
             
             state.timerRunning = true;
-            state.timerPaused = false;
-            state.gameStartTime = Date.now() - (state.timerSeconds * 1000) - state.totalPauseTime;
+            // 只有在非暂停状态下才重新计算开始时间
+            if (!state.timerPaused) {
+                state.gameStartTime = Date.now() - (state.timerSeconds * 1000) - state.totalPauseTime;
+            }
             
             timerInterval = setInterval(() => {
                 if (!state.timerPaused) {
@@ -1138,10 +1140,14 @@
             if (!state.timerRunning) return;
             
             if (state.timerPaused) {
+                // 从暂停恢复
+                if (state.pauseStartTime !== null) {
+                    state.totalPauseTime += Date.now() - state.pauseStartTime;
+                }
                 state.timerPaused = false;
-                state.totalPauseTime += Date.now() - state.pauseStartTime;
                 state.pauseStartTime = null;
             } else {
+                // 进入暂停
                 state.timerPaused = true;
                 state.pauseStartTime = Date.now();
             }
@@ -1253,17 +1259,29 @@
                 updateStatusHint();
                 resetTimer();
             } else if (pageNum === 2) {
-                renderResult();
                 if (isRestore) {
-                    // 恢复游戏时，计时器保持暂停状态
+                    // 恢复游戏时正确设置字符输入
+                    if (state.openedChars) {
+                        elements.charInput.value = state.openedChars;
+                    }
+                    
+                    // 恢复游戏时正确初始化计时器
                     state.timerRunning = true;
                     state.timerPaused = true;
+                    // 计算游戏开始时间，使得当前时间减去开始时间再减去总暂停时间等于已记录的秒数
+                    // Date.now() - gameStartTime - totalPauseTime = timerSeconds * 1000
+                    state.gameStartTime = Date.now() - state.timerSeconds * 1000 - state.totalPauseTime;
+                    // 设置当前暂停开始时间（从现在开始暂停）
                     state.pauseStartTime = Date.now();
+                    
                     updateTimerDisplay();
                     updatePauseButton();
+                    // 启动定时器（定时器内部会检查 timerPaused 状态）
+                    startTimer();
                 } else {
                     startTimer();
                 }
+                renderResult();
             } else if (pageNum === 3) {
                 stopTimer();
             }
@@ -1791,6 +1809,8 @@
             
             elements.songInput.value = state.songInputText || '';
             elements.remarkInput.value = state.remark || '';
+            // 修复：立即同步 charInput 的值，防止后续 saveState 调用将其覆盖为空
+            elements.charInput.value = state.openedChars || '';
             elements.spaceAsStar.checked = state.spaceAsStar || false;
             elements.totalCount.value = state.totalCount || 10;
             
