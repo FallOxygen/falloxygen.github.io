@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown & LaTeX 渲染器</title>
+    <!-- 引入 Marked.js 用于 Markdown 解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 引入 MathJax 用于 LaTeX 渲染 -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+        }
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        textarea, #output {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        textarea {
+            font-family: monospace;
+            font-size: 14px;
+            background-color: #fff;
+        }
+        #output {
+            background-color: #fff;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        #output img {
+            max-width: 100%;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            align-self: flex-start;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        /* 为代码块添加样式 */
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            overflow: auto;
+            border-radius: 4px;
+            border: 1px solid #ddd; /* 添加边框 */
+            position: relative; /* 为语言标签定位 */
+        }
+        /* 代码块语言标签 */
+        pre .code-language {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #888;
+            color: white;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            border-radius: 0 4px 0 4px;
+        }
+        code {
+            font-family: monospace;
+        }
+        /* 为行内代码添加样式 */
+        p code, li code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        /* 表格样式 */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        /* 引用块样式 */
+        blockquote {
+            border-left: 4px solid #ccc;
+            padding-left: 15px;
+            margin-left: 0;
+            margin-right: 0;
+            font-style: italic;
+            background-color: #f9f9f9; /* 添加背景色 */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <h2>输入区 (Markdown & LaTeX)</h2>
+        <textarea id="input" placeholder="请输入您的 Markdown 文本和 LaTeX 公式..."># 示例文档
+
+这是一个 **粗体** 文本和 *斜体* 文本。行内公式 $E = mc^2$ 与 Markdown 语法并存。
+
+## 代码块
+
+\```python
+def hello():
+    print("Hello, World!")
+    # 包含 $ 符号的注释，但不会被误认为是 LaTeX
+    # result = a + b # $x = y$ 这是注释里的 $ 符号
+\```
+
+\```javascript
+function greet(name) {
+    console.log(`Hello, ${name}!`);
+}
+\```
+
+\```java
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+\```
+
+## 行内代码示例
+
+请查看 `main.py` 文件中的 `hello()` 函数，其中可能包含 $x$ 变量。
+
+## 列表
+
+- 项目 1，包含行内公式 $a^2 + b^2 = c^2$
+- 项目 2
+  - 子项目 2.1，公式 $F=ma$
+
+## 表格
+
+| 语言 | 作者 | 年份 |
+|------|------|------|
+| Python | Guido van Rossum | 1991 |
+| JavaScript | Brendan Eich | 1995 |
+| Java | James Gosling | 1995 |
+
+## 引用
+
+> 这是一个引用块。
+> 它可以包含多行文本。
+> 甚至可以包含 $E=mc^2$ 公式。
+
+## 链接和图片
+
+[访问百度](https://www.baidu.com)，其公式 $E=mc^2$ 很有名。
+
+## LaTeX 公式
+
+### 行内公式 (多种语法)
+
+- 美元符号: $E = mc^2$ 和 $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+- 反斜杠括号: \( \alpha + \beta = \gamma \) 和 \( \sin^2\theta + \cos^2\theta = 1 \)
+
+### 行间公式 (多种语法)
+
+美元符号:
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+反斜杠方括号:
+\[
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+\]
+
+### 更多公式
+
+- 二次公式: $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+- 欧拉恒等式: $e^{i\pi} + 1 = 0$
+- 带下标的公式: $F_n = F_{n-1} + F_{n-2}$
+- 带上标的公式: $E = mc^2$
+- 复杂公式: $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$
+- 嵌套在其他 Markdown 语法中 $a_{ij}^{(k)}$。
+- 行间复杂公式:
+$$
+\oint_C \vec{B} \cdot \mathrm{d}\vec{l} = \mu_0 \left( I_\text{enc} + \varepsilon_0 \frac{\mathrm{d} \Phi_E}{\mathrm{d}t} \right)
+$$
+- 使用 \[ \] 的行间公式:
+\[
+\mathcal{L} = \frac{1}{4\pi} \left[ \frac{G M}{r^2} \right]
+\]
+</textarea>
+        <button onclick="render()">渲染</button>
+    </div>
+
+    <div class="panel">
+        <h2>输出区 (渲染效果)</h2>
+        <div id="output"></div>
+    </div>
+</div>
+
+<script>
+    // 辅助函数：转义HTML特殊字符（用于行内代码等，不用于代码块）
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') {
+             console.warn('escapeHtml received non-string input:', typeof unsafe, unsafe);
+             return '';
+        }
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "<")
+            .replace(/>/g, ">")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // --- 核心修复：完全绕过 marked 的代码块解析 ---
+
+    // 1. 定义代码块的正则表达式
+    const codeBlockRegex = /```([\s\S]*?)\n([\s\S]*?)```/g; // 匹配 ```lang\ncontent\n```
+
+    // 配置 Marked 以启用 GFM、breaks，并使用默认渲染器（不重写 code 方法）
+    marked.setOptions({
+        gfm: true,
+        breaks: true,
+        smartLists: true,
+        smartypants: true,
+        mangle: false,
+        headerIds: false,
+        renderer: new marked.Renderer(), // 使用默认渲染器
+    });
+
+    // 正则表达式，用于匹配多种 LaTeX 公式语法
+    const blockRegex = [
+        /\$\$([\s\S]+?)\$\$/g,
+        /\\\[\s*([\s\S]+?)\s*\\\]/g
+    ];
+    
+    const inlineRegex = [
+        /\\\(\s*([^$]+?)\s*\\\)/g,
+        /\$([^\$]+?)\$/g
+    ];
+
+    function render() {
+        const inputText = document.getElementById('input').value;
+        const outputDiv = document.getElementById('output');
+
+        try {
+            let text = inputText;
+            // --- 1. 提取代码块 ---
+            const codeBlockPlaceholders = [];
+            let codeBlockPlaceholderIndex = 0;
+
+            text = text.replace(codeBlockRegex, (match, language, content) => {
+                const lang = language.trim();
+                const placeholder = `<!--CODE_BLOCK_${codeBlockPlaceholderIndex}-->`;
+                // 存储原始语言和内容，以便后续处理
+                codeBlockPlaceholders[codeBlockPlaceholderIndex] = { lang, content: content.trimEnd() };
+                codeBlockPlaceholderIndex++;
+                return placeholder;
+            });
+
+            // --- 2. 提取 LaTeX 公式 ---
+            const latexPlaceholders = [];
+            let latexPlaceholderIndex = 0;
+
+            blockRegex.forEach((regex, idx) => {
+                text = text.replace(regex, (match, content) => {
+                    const placeholder = `<!--LATEX_BLOCK_${latexPlaceholderIndex}-->`;
+                    latexPlaceholders[latexPlaceholderIndex] = { type: 'block', content: content.trim() };
+                    latexPlaceholderIndex++;
+                    return placeholder;
+                });
+            });
+
+            inlineRegex.forEach((regex, idx) => {
+                text = text.replace(regex, (match, content) => {
+                    const placeholder = `<!--LATEX_INLINE_${latexPlaceholderIndex}-->`;
+                    latexPlaceholders[latexPlaceholderIndex] = { type: 'inline', content: content.trim() };
+                    latexPlaceholderIndex++;
+                    return placeholder;
+                });
+            });
+
+            // --- 3. 使用 Marked 解析 Markdown (不含代码块和 LaTeX) ---
+            let parsedHTML = marked.parse(text);
+
+            // 将解析后的HTML设置到输出区域
+            outputDiv.innerHTML = parsedHTML;
+
+            // --- 4. 后处理：将代码块占位符替换为渲染后的代码块 ---
+            codeBlockPlaceholders.forEach((codeBlock, index) => {
+                const commentPlaceholder = `CODE_BLOCK_${index}`;
+                const commentNode = findCommentNode(outputDiv, commentPlaceholder);
+                if (commentNode) {
+                    // --- 关键修复：不再对代码内容进行 HTML 转义 ---
+                    // 代码块内容应原样显示
+                    const rawContent = codeBlock.content;
+
+                    const codeElement = document.createElement('code');
+                    codeElement.className = `language-${codeBlock.lang}`;
+                    // 使用 textContent 来设置内容，这会自动处理特殊字符，但不会将其作为 HTML 解析
+                    // 这是安全的，因为它是文本节点，不是 HTML
+                    codeElement.textContent = rawContent;
+
+                    const preElement = document.createElement('pre');
+                    // 添加语言标签
+                    if (codeBlock.lang) {
+                        const langSpan = document.createElement('span');
+                        langSpan.className = 'code-language';
+                        langSpan.textContent = codeBlock.lang;
+                        preElement.appendChild(langSpan);
+                    }
+                    preElement.appendChild(codeElement);
+
+                    commentNode.parentNode.insertBefore(preElement, commentNode);
+                    commentNode.parentNode.removeChild(commentNode);
+                }
+            });
+
+            // --- 5. 后处理：将 LaTeX 占位符替换为渲染标记 ---
+            latexPlaceholders.forEach((latex, index) => {
+                const commentPlaceholder = `LATEX_${latex.type.toUpperCase()}_${index}`;
+                const commentNode = findCommentNode(outputDiv, commentPlaceholder);
+                if (commentNode) {
+                    let newElement;
+                    if (latex.type === 'inline') {
+                        newElement = document.createElement('span');
+                        newElement.className = 'math inline';
+                        newElement.textContent = `\\(${latex.content}\\)`;
+                    } else {
+                        newElement = document.createElement('div');
+                        newElement.className = 'math block';
+                        newElement.textContent = `\\[${latex.content}\\]`;
+                    }
+                    commentNode.parentNode.insertBefore(newElement, commentNode);
+                    commentNode.parentNode.removeChild(commentNode);
+                }
+            });
+
+            // --- 6. 强制 MathJax 重新处理 ---
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise([outputDiv]).catch(function (err) {
+                    console.error('MathJax 渲染错误:', err);
+                });
+            } else {
+                console.warn('MathJax 未加载，LaTeX 公式将不会被渲染。');
+            }
+        } catch (error) {
+            console.error('渲染过程中发生错误:', error);
+            outputDiv.innerHTML = '<p style="color:red;">渲染错误: ' + error.message + '</p>';
+        }
+    }
+
+    // 辅助函数：在 DOM 树中查找指定内容的注释节点
+    function findCommentNode(node, content) {
+        if (node.nodeType === Node.COMMENT_NODE && node.textContent === content) {
+            return node;
+        }
+        if (node.hasChildNodes()) {
+            for (let child of node.childNodes) {
+                const found = findCommentNode(child, content);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    window.onload = function() {
+        render();
+    };
+</script>
+
+</body>
+</html>
