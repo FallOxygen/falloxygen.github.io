@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Letter Opener</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0c10; --fg: #e8eaed; --muted: #7a7d85; --accent: #f97316; --accent-dim: rgba(249,115,22,0.15); --card: #12151c; --border: #252a36; --danger: #ef4444; --warning: #eab308; --info: #06b6d4; --success: #10b981; }
+    * { font-family: 'Noto Sans SC', sans-serif; box-sizing: border-box; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: var(--bg); color: var(--fg); min-height: 100vh; overflow-x: hidden; }
+    .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .bg-pattern { background-image: linear-gradient(rgba(249,115,22,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(249,115,22,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+    .bg-glow { background: radial-gradient(ellipse 60% 50% at 20% 0%, rgba(249,115,22,0.12) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6,182,212,0.08) 0%, transparent 50%); }
+    .page { position: absolute; inset: 0; padding: 20px; padding-top: 56px; overflow-y: auto; transition: opacity 0.4s ease, transform 0.4s ease; }
+    .page.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+    .page.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .page { transition: opacity 0.2s ease; } .page.hidden { transform: none; } }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+    .input-area { background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; color: var(--fg); transition: border-color 0.25s, box-shadow 0.25s; }
+    .input-area:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-dim); }
+    .input-area::placeholder { color: var(--muted); }
+    textarea.input-area { resize: vertical; line-height: 1.8; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease; border: none; white-space: nowrap; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%); color: #000; }
+    .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 8px 30px var(--accent-dim); }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--fg); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-ghost { background: var(--accent-dim); color: var(--accent); }
+    .btn-ghost:hover { background: rgba(249,115,22,0.25); }
+    .btn-danger { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+    .btn-danger:hover { background: var(--danger); color: white; }
+    .btn-warning { background: rgba(234,179,8,0.12); color: var(--warning); border: 1px solid rgba(234,179,8,0.3); }
+    .btn-warning:hover { background: var(--warning); color: #000; }
+    .btn-sm { padding: 8px 16px; font-size: 13px; }
+    .tabs { display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,0.3); border-radius: 12px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; text-align: center; border: none; background: transparent; }
+    .tab-btn:hover { color: var(--fg); }
+    .tab-btn.active { background: var(--accent-dim); color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .checkbox-wrap { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; padding: 12px 14px; border-radius: 10px; transition: background 0.2s; }
+    .checkbox-wrap:hover { background: rgba(255,255,255,0.03); }
+    .checkbox-wrap input { display: none; }
+    .checkbox-box { width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 7px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+    .checkbox-wrap:hover .checkbox-box { border-color: var(--accent); }
+    .checkbox-wrap input:checked + .checkbox-box { background: var(--accent); border-color: var(--accent); }
+    .checkbox-box svg { opacity: 0; transform: scale(0.5); transition: all 0.15s; }
+    .checkbox-wrap input:checked + .checkbox-box svg { opacity: 1; transform: scale(1); }
+    .checkbox-wrap.disabled { opacity: 0.4; pointer-events: none; }
+    .count-input { width: 60px; padding: 8px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); text-align: center; font-size: 14px; }
+    .count-input:focus { outline: none; border-color: var(--accent); }
+    .result-display { background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; line-height: 2.1; letter-spacing: 0.3px; }
+    .char-revealed { color: var(--accent); font-weight: 600; }
+    .char-hidden { color: var(--muted); }
+    .char-space { color: rgba(122,125,133,0.4); }
+    .line-number { color: var(--muted); margin-right: 6px; }
+    .guessed-line { color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+    .remark-line { color: var(--warning); opacity: 0.85; margin-top: 8px; }
+    .sorted-chars { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px; background: rgba(0,0,0,0.4); border-radius: 10px; min-height: 50px; align-content: center; }
+    .char-tag { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px; background: var(--accent-dim); border: 1px solid rgba(249,115,22,0.3); border-radius: 6px; font-size: 14px; font-weight: 600; color: var(--accent); }
+    .stat-card { text-align: center; padding: 20px; }
+    .stat-value { font-size: 32px; font-weight: 700; }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .back-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--card); border: 1px solid var(--border); color: var(--fg); cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .timer-display { font-family: 'JetBrains Mono', monospace; font-size: 52px; font-weight: 700; color: var(--accent); text-align: center; padding: 24px; background: rgba(0,0,0,0.4); border-radius: 16px; letter-spacing: 3px; }
+    .timer-display.paused { color: var(--warning); }
+    .timer-controls { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+    .settlement-header { text-align: center; padding: 32px 20px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+    .settlement-title { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+    .settlement-subtitle { color: var(--muted); font-size: 15px; }
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--card); border: 1px solid var(--border); padding: 14px 28px; border-radius: 12px; font-size: 14px; z-index: 1000; opacity: 0; transition: all 0.35s ease; pointer-events: none; max-width: 90vw; text-align: center; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--accent); color: var(--accent); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+    .toast.info { border-color: var(--info); color: var(--info); }
+    .collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 14px; cursor: pointer; border-radius: 10px; transition: background 0.2s; }
+    .collapse-header:hover { background: rgba(255,255,255,0.03); }
+    .collapse-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .collapse-content.open { max-height: 800px; }
+    .collapse-arrow { transition: transform 0.25s; flex-shrink: 0; }
+    .collapse-header.expanded .collapse-arrow { transform: rotate(180deg); }
+    .song-line { display: flex; align-items: baseline; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+    .song-line:hover { background: rgba(255,255,255,0.05); }
+    .song-line.hidden-song { display: none; }
+    .song-line.revealed-full { background: rgba(16,184,129,0.15); border: 1px solid rgba(16,184,129,0.3); }
+    .song-line .masked-title { display: inline; }
+    .song-line .full-title { display: none; }
+    .song-line.revealed-full .masked-title { display: none; }
+    .song-line.revealed-full .full-title { display: inline; color: var(--success); font-weight: 600; }
+    .full-reveal-hint { font-size: 12px; color: var(--success); margin-left: 10px; opacity: 0.8; }
+    .hide-stats { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.25); border-radius: 10px; margin-bottom: 14px; font-size: 14px; }
+    .hide-stats .count { color: var(--warning); font-weight: 700; }
+    .notice-box { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+    .notice-box .title { color: var(--info); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .notice-box .content { color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .help-box { background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+    .help-box .title { color: var(--accent); font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .help-box .content { color: var(--fg); font-size: 13px; line-height: 1.9; }
+    .game-list { max-height: 300px; overflow-y: auto; padding-right: 8px; }
+    .game-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; transition: background 0.15s; }
+    .game-item:hover { background: rgba(255,255,255,0.03); }
+    .game-name { font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .game-count { font-size: 12px; color: var(--muted); background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 6px; margin-left: 14px; flex-shrink: 0; }
+    .mode-switch { display: flex; gap: 10px; margin-bottom: 16px; }
+    .mode-btn { flex: 1; padding: 12px 8px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.2s; }
+    .mode-btn:hover { color: var(--fg); }
+    .mode-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .file-info { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); border-radius: 10px; margin-bottom: 16px; }
+    .file-info .filename { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .filter-section { margin-bottom: 18px; }
+    .filter-label { font-size: 13px; color: var(--muted); margin-bottom: 10px; display: block; }
+    .filter-options { display: flex; flex-wrap: wrap; gap: 10px; }
+    .filter-chip { padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.15s; }
+    .filter-chip:hover { color: var(--fg); border-color: var(--accent); }
+    .filter-chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; max-width: 420px; width: 90%; transform: scale(0.9); transition: transform 0.3s ease; }
+    .modal-overlay.show .modal-content { transform: scale(1); }
+    .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; text-align: center; }
+    .modal-text { color: var(--muted); font-size: 14px; line-height: 1.7; margin-bottom: 24px; text-align: center; }
+    .modal-info { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px; }
+    .modal-info-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .modal-info-item:last-child { border-bottom: none; }
+    .modal-info-label { color: var(--muted); font-size: 13px; }
+    .modal-info-value { font-weight: 600; font-size: 14px; }
+    .modal-buttons { display: flex; gap: 12px; }
+    .modal-buttons .btn { flex: 1; }
+    .lang-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: flex-end; align-items: center; padding: 8px 16px; gap: 4px; background: rgba(10,12,16,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .lang-btn { padding: 5px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--muted); transition: all 0.2s; }
+    .lang-btn:hover { color: var(--fg); border-color: var(--border); }
+    .lang-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .format-example { background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.7; overflow-x: auto; margin: 10px 0; color: var(--fg); }
+    .format-note { color: var(--muted); font-size: 13px; line-height: 1.8; margin-top: 8px; }
+    .format-note strong { color: var(--warning); font-weight: 600; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+    @media (max-width: 640px) {
+      .timer-display { font-size: 36px; padding: 18px; }
+      .stat-value { font-size: 24px; }
+      .btn { padding: 10px 16px; font-size: 13px; gap: 6px; }
+      .page { padding: 14px; padding-top: 52px; }
+      .lang-bar { padding: 6px 10px; }
+      .lang-btn { padding: 4px 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body class="relative">
+  <div class="bg-layer bg-pattern"></div>
+  <div class="bg-layer bg-glow"></div>
+
+  <div class="lang-bar">
+    <button class="lang-btn" data-lang="zh">中文</button>
+    <button class="lang-btn active" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="ja">日本語</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Restore Modal -->
+  <div id="restoreModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-title" style="color: var(--accent);" data-i18n="modalTitle">Found Unfinished Game</div>
+      <div class="modal-text" data-i18n="modalText">An unfinished game was detected. Continue?</div>
+      <div class="modal-info">
+        <div class="modal-info-item">
+          <span class="modal-info-label" data-i18n="modalSongCount">Songs</span>
+          <span class="modal-info-value" id="restoreSongCount">0</span>
+        </div>
+        <div class="modal-info-item">
+          <span class="modal-info-label" data-i18n="modalCharCount">Opened Chars</span>
+          <span class="modal-info-value" id="restoreCharCount">0</span>
+        </div>
+        <div class="modal-info-item">
+          <span class="modal-info-label" data-i18n="modalTime">Time</span>
+          <span class="modal-info-value" id="restoreTime">00:00:00</span>
+        </div>
+        <div class="modal-info-item">
+          <span class="modal-info-label" data-i18n="modalPercent">Reveal Rate</span>
+          <span class="modal-info-value" id="restorePercent">0%</span>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="restoreNewGame" class="btn btn-secondary"><span data-i18n="modalNewGame">New Game</span></button>
+        <button id="restoreContinue" class="btn btn-primary"><span data-i18n="modalContinue">Continue</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page 1: Editor -->
+  <div id="page1" class="page active">
+    <div class="max-w-2xl mx-auto">
+      <header class="mb-6">
+        <h1 class="text-3xl font-bold mb-2" data-i18n="appTitle">Song Letter Opener</h1>
+        <p class="text-sm" style="color: var(--muted);" data-i18n="appSubtitle">Import the online library or enter songs manually to start your guessing game</p>
+      </header>
+      <div class="notice-box">
+        <div class="title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span data-i18n="noticeTitle">Notice</span>
+        </div>
+        <div class="content" data-i18n="noticeContent">First time deploying a website, apologies for any rough edges! If copy doesn't work, try another browser. The online library import is a bit of spaghetti code, so please double-check the extracted song names!</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="import" data-i18n="tabImport">Online Library</button>
+        <button class="tab-btn" data-tab="manual" data-i18n="tabManual">Manual Input</button>
+      </div>
+
+      <!-- Import Tab (online only) -->
+      <div id="tab-import" class="tab-content active">
+        <div class="card p-6 mb-5">
+          <!-- Format Help -->
+          <div class="help-box">
+            <div class="collapse-header" id="formatToggle">
+              <div class="title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span data-i18n="formatTitle">Online Library Format</span>
+              </div>
+              <svg class="collapse-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div id="formatContent" class="collapse-content">
+              <div class="pt-3">
+                <p class="format-note" data-i18n="formatDesc">The online library file uses the following structure:</p>
+                <pre class="format-example mono">[Phigros]
+1.Distorted Fate
+2.DESTRUCTION 3,2,1
+3.Glaciaxion
+
+[Arcaea]
+1.Sheriruth
+2.Arcahv</pre>
+                <p class="format-note" data-i18n="formatNote"> defines a game section. The name must exactly match a supported game.</p>
+                <p class="format-note" data-i18n="formatNote2"> are listed one per line. Optional numbering (1. 2) 3) 1: etc.) will be stripped. Empty lines are ignored.</p>
+              </div>
+            </div>
+          </div>
+
+          <button id="importOnlineBtn" class="btn btn-primary w-full">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span data-i18n="uploadOnline">Import Online Library</span>
+          </button>
+        </div>
+
+        <div id="parsedSection" style="display: none;">
+          <div class="card p-6 mb-5">
+            <div class="file-info">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span id="fileName" class="filename">-</span>
+              <span id="fileStats" style="color: var(--muted); font-size: 13px;"></span>
+              <button id="clearFile" class="btn btn-danger btn-sm"><span data-i18n="fileRemove">Remove</span></button>
+            </div>
+          </div>
+          <div class="card p-6 mb-5">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span data-i18n="selectRange">Select Game Range</span>
+              </h2>
+              <div class="flex gap-2">
+                <button id="selectAll" class="btn btn-ghost btn-sm"><span data-i18n="selectAll">Select All</span></button>
+                <button id="selectNone" class="btn btn-secondary btn-sm"><span data-i18n="selectNone">Clear</span></button>
+              </div>
+            </div>
+            <div id="gameList" class="game-list"></div>
+          </div>
+          <div class="card p-6 mb-5">
+            <h2 class="font-semibold flex items-center gap-2 mb-4">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              <span data-i18n="filterTitle">Song Filter</span>
+            </h2>
+            <div class="filter-section">
+              <span class="filter-label" data-i18n="filterOnly">Only</span>
+              <div class="filter-options" data-filter-type="only">
+                <button class="filter-chip" data-filter="letter" data-i18n="filterLetter">Letters</button>
+                <button class="filter-chip" data-filter="japanese" data-i18n="filterJapanese">Japanese</button>
+                <button class="filter-chip" data-filter="hanzi" data-i18n="filterHanzi">Hanzi</button>
+                <button class="filter-chip" data-filter="symbol" data-i18n="filterSymbol">Symbols</button>
+              </div>
+            </div>
+            <div class="filter-section">
+              <span class="filter-label" data-i18n="filterInclude">Contains</span>
+              <div class="filter-options" data-filter-type="include">
+                <button class="filter-chip" data-filter="letter" data-i18n="filterLetter">Letters</button>
+                <button class="filter-chip" data-filter="japanese" data-i18n="filterJapanese">Japanese</button>
+                <button class="filter-chip" data-filter="hanzi" data-i18n="filterHanzi">Hanzi</button>
+                <button class="filter-chip" data-filter="symbol" data-i18n="filterSymbol">Symbols</button>
+              </div>
+            </div>
+            <div class="filter-section">
+              <span class="filter-label" data-i18n="filterExclude">Excludes</span>
+              <div class="filter-options" data-filter-type="exclude">
+                <button class="filter-chip" data-filter="letter" data-i18n="filterLetter">Letters</button>
+                <button class="filter-chip" data-filter="japanese" data-i18n="filterJapanese">Japanese</button>
+                <button class="filter-chip" data-filter="hanzi" data-i18n="filterHanzi">Hanzi</button>
+                <button class="filter-chip" data-filter="symbol" data-i18n="filterSymbol">Symbols</button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between mt-4 pt-4" style="border-top: 1px solid var(--border);">
+              <span id="filterCount" style="color: var(--muted); font-size: 13px;"></span>
+              <button id="clearFilters" class="btn btn-secondary btn-sm"><span data-i18n="filterClear">Clear Filters</span></button>
+            </div>
+          </div>
+          <div class="card p-6 mb-5">
+            <h2 class="font-semibold flex items-center gap-2 mb-4">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span data-i18n="extractTitle">Extraction Settings</span>
+            </h2>
+            <div class="mode-switch">
+              <button id="modeEqual" class="mode-btn active" data-i18n="modeEqual">Total Count</button>
+              <button id="modeCustom" class="mode-btn" data-i18n="modeCustom">Custom Count</button>
+            </div>
+            <div id="equalMode" class="mb-4">
+              <label class="block text-sm mb-2" style="color: var(--muted);" data-i18n="totalCountLabel">Total extraction count</label>
+              <input type="number" id="totalCount" class="count-input w-full" style="width: 100%;" min="1" data-i18n-ph="totalCountPlaceholder" placeholder="Enter count">
+              <p class="text-xs mt-2" style="color: var(--muted);" data-i18n="totalCountHelper">Randomly extract the specified number from selected range</p>
+            </div>
+            <div id="customMode" style="display: none;">
+              <p class="text-sm mb-3" style="color: var(--muted);" data-i18n="customCountHelper">Specify extraction count per game:</p>
+              <div id="customCounts" class="space-y-2 max-h-[280px] overflow-y-auto"></div>
+            </div>
+            <button id="generateBtn" class="btn btn-primary w-full mt-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span data-i18n="generateBtn">Generate Song List</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Tab -->
+      <div id="tab-manual" class="tab-content">
+        <div class="card p-6 mb-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span data-i18n="songSequence">Song List</span>
+            </h2>
+            <button id="clearSongs" class="btn btn-ghost btn-sm"><span data-i18n="clearSongs">Clear</span></button>
+          </div>
+          <textarea id="songInput" class="input-area mono w-full p-4" style="min-height: 260px;" data-i18n-ph="songPlaceholder" placeholder="Paste song names, one per line.\nOptional numbering (1.SongName) will be stripped.\n\nExample:\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO"></textarea>
+        </div>
+      </div>
+
+      <div class="card p-6 mb-5">
+        <div class="collapse-header" id="sortToggle">
+          <h2 class="font-semibold flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="18" x2="12" y2="18"/></svg>
+            <span data-i18n="sortTitle">Sort Options</span>
+          </h2>
+          <svg class="collapse-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div id="sortContent" class="collapse-content">
+          <div class="pt-4">
+            <div class="flex flex-wrap gap-6 mb-4">
+              <label id="randomSortLabel" class="checkbox-wrap">
+                <input type="checkbox" id="randomSort">
+                <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span data-i18n="sortRandom">Random</span>
+              </label>
+              <label id="lengthSortLabel" class="checkbox-wrap">
+                <input type="checkbox" id="lengthSort">
+                <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span data-i18n="sortByLength">By Length</span>
+              </label>
+            </div>
+            <button id="applySort" class="btn btn-secondary btn-sm w-full">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              <span data-i18n="applySort">Apply Sort</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card p-6 mb-5">
+        <h2 class="font-semibold flex items-center gap-2 mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+          <span data-i18n="remarkTitle">Remark</span>
+        </h2>
+        <input type="text" id="remarkInput" class="input-area w-full p-4" data-i18n-ph="remarkPlaceholder" placeholder="Optional remark">
+      </div>
+      <div class="card p-6 mb-5">
+        <h2 class="font-semibold flex items-center gap-2 mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span data-i18n="gameOptions">Game Options</span>
+        </h2>
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="spaceAsStar">
+          <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span data-i18n="spaceHidden">Hide spaces as well (spaces become ?)</span>
+        </label>
+      </div>
+      <button id="parseBtn" class="btn btn-primary w-full text-base py-4">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span data-i18n="parseAndStart">Parse & Start Game</span>
+      </button>
+      <div id="statusHint" class="mt-5 text-center text-sm" style="color: var(--muted);"></div>
+    </div>
+  </div>
+
+  <!-- Page 2: Game -->
+  <div id="page2" class="page hidden">
+    <div class="max-w-2xl mx-auto">
+      <div class="page-header">
+        <button id="backBtn" class="back-btn" aria-label="Back">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div>
+          <h1 class="text-2xl font-bold" data-i18n="gameInProgress">Game In Progress</h1>
+          <p class="text-xs" style="color: var(--muted);" data-i18n="gameClickHint">Click a song to reveal its full name, click again to hide</p>
+        </div>
+      </div>
+      <div class="card p-6 mb-5">
+        <div id="timerDisplay" class="timer-display">00:00:00</div>
+        <div class="timer-controls">
+          <button id="pauseBtn" class="btn btn-warning">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            <span data-i18n="pauseBtn">Pause</span>
+          </button>
+          <button id="endGameBtn" class="btn btn-danger">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span data-i18n="endGameBtn">End Game</span>
+          </button>
+        </div>
+      </div>
+      <div class="card p-6 mb-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span data-i18n="openChars">Open Characters</span>
+          </h2>
+          <button id="resetChars" class="btn btn-ghost btn-sm"><span data-i18n="resetChars">Reset</span></button>
+        </div>
+        <input type="text" id="charInput" class="input-area mono w-full p-4 text-xl text-center" style="letter-spacing: 0.25em;" data-i18n-ph="charInputPlaceholder" placeholder="Type any character..." autocomplete="off" spellcheck="false">
+        <div class="mt-4">
+          <div class="text-xs mb-2" style="color: var(--muted);" data-i18n="sortedCharsLabel">Sorted opened characters:</div>
+          <div id="sortedCharsDisplay" class="sorted-chars mono"><span style="color: var(--muted);">-</span></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-4 mb-5">
+        <div class="card stat-card">
+          <div id="statSongs" class="stat-value mono" style="color: var(--accent);">0</div>
+          <div class="stat-label" data-i18n="statSongs">Songs</div>
+        </div>
+        <div class="card stat-card">
+          <div id="statChars" class="stat-value mono" style="color: var(--warning);">0</div>
+          <div class="stat-label" data-i18n="statChars">Chars</div>
+        </div>
+        <div class="card stat-card">
+          <div id="statPercent" class="stat-value mono">0%</div>
+          <div class="stat-label" data-i18n="statPercent">Reveal %</div>
+        </div>
+      </div>
+      <div class="card p-5 mb-5">
+        <div class="flex items-center justify-between">
+          <div id="hideStats" class="hide-stats flex-1" style="display: none;">
+            <span data-i18n="hiddenLabel">Hidden</span>
+            <span class="count" id="hiddenCount">0</span>
+            <span data-i18n="hiddenSongs">songs</span>
+          </div>
+          <button id="hideRevealed" class="btn btn-warning w-full">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            <span data-i18n="hideRevealed">Hide Guessed Songs</span>
+          </button>
+        </div>
+        <p class="text-xs mt-3" style="color: var(--muted);" data-i18n="hideRevealedHint">Click a song to reveal it, then click this button to remove it from the list</p>
+      </div>
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span data-i18n="resultTitle">Result</span>
+          </h2>
+          <button id="copyBtn" class="btn btn-secondary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span data-i18n="copyResult">Copy</span>
+          </button>
+        </div>
+        <div id="resultDisplay" class="result-display mono p-4 min-h-[300px] max-h-[450px] overflow-auto whitespace-pre-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page 3: Settlement -->
+  <div id="page3" class="page hidden">
+    <div class="max-w-2xl mx-auto">
+      <div class="settlement-header">
+        <div class="settlement-title" data-i18n="settlementTitle">Game Over</div>
+        <div class="settlement-subtitle" data-i18n="settlementSubtitle">Settlement info generated, ready to copy and share</div>
+      </div>
+      <div class="card p-6 mb-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span data-i18n="settlementInfo">Settlement Info</span>
+          </h2>
+          <button id="copySettlement" class="btn btn-secondary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span data-i18n="copy">Copy</span>
+          </button>
+        </div>
+        <textarea id="settlementText" class="input-area mono w-full p-4" style="min-height: 200px; resize: vertical;" readonly></textarea>
+      </div>
+      <div class="card p-6 mb-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span data-i18n="fullQuestions">Full Questions</span>
+          </h2>
+          <button id="copyQuestions" class="btn btn-secondary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span data-i18n="copy">Copy</span>
+          </button>
+        </div>
+        <textarea id="questionsText" class="input-area mono w-full p-4" style="min-height: 220px; resize: vertical;" readonly></textarea>
+      </div>
+      <div class="flex gap-4">
+        <button id="newGameBtn" class="btn btn-primary flex-1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          <span data-i18n="newGame">New Game</span>
+        </button>
+        <button id="backToEditBtn" class="btn btn-secondary flex-1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span data-i18n="backToEdit">Back to Edit</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ========== I18N ==========
+const I18N = {
+  en: {
+    appTitle:'Song Letter Opener', appSubtitle:'Import the online library or enter songs manually to start your guessing game',
+    noticeTitle:'Notice', noticeContent:'First time deploying a website, apologies for any rough edges! If copy doesn\'t work, try another browser. The online library import is a bit of spaghetti code, so please double-check the extracted song names!',
+    tabImport:'Online Library', tabManual:'Manual Input', uploadOnline:'Import Online Library', uploadOnlineLoading:'Importing...',
+    fileRemove:'Remove', fileStatsFormat:'{games} games / {songs} songs',
+    selectRange:'Select Game Range', selectAll:'Select All', selectNone:'Clear',
+    filterTitle:'Song Filter', filterOnly:'Only', filterInclude:'Contains', filterExclude:'Excludes',
+    filterLetter:'Letters', filterJapanese:'Japanese', filterHanzi:'Hanzi', filterSymbol:'Symbols',
+    filterMatchCount:'Matching songs: {count}', filterClear:'Clear Filters',
+    extractTitle:'Extraction Settings', modeEqual:'Total Count', modeCustom:'Custom Count',
+    totalCountLabel:'Total extraction count', totalCountPlaceholder:'Enter count',
+    totalCountHelper:'Randomly extract the specified number from selected range',
+    customCountHelper:'Specify extraction count per game:', generateBtn:'Generate Song List',
+    songSequence:'Song List', clearSongs:'Clear',
+    songPlaceholder:'Paste song names, one per line.\nOptional numbering (1.SongName) will be stripped.\n\nExample:\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO',
+    sortTitle:'Sort Options', sortRandom:'Random', sortByLength:'By Length', applySort:'Apply Sort',
+    remarkTitle:'Remark', remarkPlaceholder:'Optional remark, e.g. Level range Lv.15+',
+    gameOptions:'Game Options', spaceHidden:'Hide spaces as well (spaces become ?)',
+    parseAndStart:'Parse & Start Game', statusParsed:'Parsed {count} songs. Re-parsing will reset the current game.',
+    gameInProgress:'Game In Progress', gameClickHint:'Click a song to reveal its full name, click again to hide',
+    pauseBtn:'Pause', resumeBtn:'Resume', endGameBtn:'End Game',
+    openChars:'Open Characters', resetChars:'Reset', charInputPlaceholder:'Type any character...',
+    sortedCharsLabel:'Sorted opened characters:', statSongs:'Songs', statChars:'Chars', statPercent:'Reveal %',
+    hideRevealed:'Hide Guessed Songs', hideRevealedHint:'Click a song to reveal it, then click this button to remove it from the list',
+    hiddenLabel:'Hidden', hiddenSongs:'songs', resultTitle:'Result', copyResult:'Copy', copy:'Copy',
+    settlementTitle:'Game Over', settlementSubtitle:'Settlement info generated, ready to copy and share',
+    settlementInfo:'Settlement Info', fullQuestions:'Full Questions', newGame:'New Game', backToEdit:'Back to Edit',
+    modalTitle:'Found Unfinished Game', modalText:'An unfinished game was detected. Continue?',
+    modalSongCount:'Songs', modalCharCount:'Opened Chars', modalTime:'Time', modalPercent:'Reveal Rate',
+    modalNewGame:'New Game', modalContinue:'Continue',
+    formatTitle:'Online Library Format', formatDesc:'The online library file uses the following structure:',
+    formatNote:'<strong>[GameName]</strong> defines a game section. The name must exactly match a supported game (e.g. Phigros, Arcaea, etc.).',
+    formatNote2:'<strong>Songs</strong> are listed one per line under each section. Optional numbering like "1." "2)" "3:" will be automatically stripped. Empty lines between sections are allowed.',
+    guessedPrefix:'guessed\uFF1A', timeHours:'h ', timeMinutes:'m ', timeSeconds:'s', timeSecondsShort:'s', timeMinutesShort:'m',
+    settlementHeader:'Letter Opener Settlement:', settlementTime:'Time: ', settlementTotalSongs:'Total songs: ',
+    settlementAvgPerSong:'(avg {time}/song)', settlementOpenChars:'Opened chars: ', settlementAvgPerChar:'(avg {time}/char)',
+    settlementRevealRate:'Reveal rate: ', songsUnit:'songs', revealClickHint:'(click to hide)',
+    toastNoGameTag:'No valid game tags found', toastParseSuccess:'Parsed {games} games, {songs} songs',
+    toastOnlineFail:'Failed to import online library. Check your network.',
+    toastSelectGame:'Please select at least one game', toastNoMatch:'No matching songs found',
+    toastExtracted:'Extracted {count} songs', toastInvalidCount:'Please enter a valid count',
+    toastInputSongs:'Please enter song names first', toastRandomized:'Randomized',
+    toastSortedByLength:'Sorted by length', toastSelectSort:'Please select a sort method',
+    toastCleared:'Cleared', toastNeedSong:'Please enter at least one song name', toastGameStart:'Game started!',
+    toastResetChars:'All opened characters reset', toastNoRevealed:'No guessed songs. Click a song to reveal it first.',
+    toastHidden:'Hidden {count} guessed songs', toastRestored:'Game restored. Timer paused. Click "Resume" to continue.',
+    toastRemoved:'Library removed', backConfirm:'Going back will end the current game. Continue?',
+    endConfirm:'End the game?', noCopyContent:'Nothing to copy', copyFail:'Copy failed',
+    copySuccess:'Copied to clipboard', copySettlementOk:'Settlement info copied', copyQuestionsOk:'Full questions copied'
+  },
+  zh: {
+    appTitle:'曲名开字母辅助器', appSubtitle:'导入在线曲库或手动输入，开始你的猜歌游戏',
+    noticeTitle:'个人声明', noticeContent:'自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！还有那个导入在线曲库是屎山代码，大家用的时候注意一下抽取的曲名哈！',
+    tabImport:'在线曲库', tabManual:'手动输入', uploadOnline:'导入在线曲库', uploadOnlineLoading:'正在导入...',
+    fileRemove:'移除', fileStatsFormat:'{games} 个游戏 / {songs} 首曲目',
+    selectRange:'选择游戏范围', selectAll:'全选', selectNone:'清空',
+    filterTitle:'曲目过滤', filterOnly:'只有', filterInclude:'包含', filterExclude:'没有',
+    filterLetter:'字母', filterJapanese:'日文', filterHanzi:'汉字', filterSymbol:'符号',
+    filterMatchCount:'符合条件的曲目: {count} 首', filterClear:'清除过滤',
+    extractTitle:'抽取设置', modeEqual:'总数量模式', modeCustom:'定制数量模式',
+    totalCountLabel:'总抽取数量', totalCountPlaceholder:'输入总数',
+    totalCountHelper:'将从选中的范围内随机抽取指定数量的曲目',
+    customCountHelper:'为每个游戏范围指定抽取数量：', generateBtn:'生成曲目列表',
+    songSequence:'曲名序列', clearSongs:'清空',
+    songPlaceholder:'粘贴曲名列表，支持以下格式：\n\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO\n\n或每行一首曲名（无需序号）',
+    sortTitle:'排列选项', sortRandom:'随机排列', sortByLength:'按长度排列', applySort:'应用排列',
+    remarkTitle:'备注信息', remarkPlaceholder:'输入备注，如：曲目范围 Lv.15+ 等（可选）',
+    gameOptions:'游戏选项', spaceHidden:'空格也隐藏（空格也会变成?）',
+    parseAndStart:'解析并开始游戏', statusParsed:'已解析 {count} 首曲名，返回编辑后再次解析将重置游戏',
+    gameInProgress:'猜测进行中', gameClickHint:'点击曲名可显示完整名称，再次点击隐藏',
+    pauseBtn:'暂停', resumeBtn:'继续', endGameBtn:'结束游戏',
+    openChars:'开启字符', resetChars:'重置', charInputPlaceholder:'输入任意字符...',
+    sortedCharsLabel:'已排序的开启字符：', statSongs:'曲名数', statChars:'已开字符', statPercent:'揭示率',
+    hideRevealed:'隐藏已猜出的曲目', hideRevealedHint:'点击曲目显示完整曲名后，点击此按钮将其从列表中移除',
+    hiddenLabel:'已隐藏', hiddenSongs:'首曲目', resultTitle:'解析结果', copyResult:'复制结果', copy:'复制',
+    settlementTitle:'游戏结束', settlementSubtitle:'结算信息已生成，可复制分享',
+    settlementInfo:'结算信息', fullQuestions:'完整题面', newGame:'开始新游戏', backToEdit:'返回编辑',
+    modalTitle:'发现未完成的游戏', modalText:'检测到您上次有未完成的游戏，是否继续？',
+    modalSongCount:'曲目数量', modalCharCount:'已开字符', modalTime:'已用时间', modalPercent:'揭示率',
+    modalNewGame:'开始新游戏', modalContinue:'继续游戏',
+    formatTitle:'在线曲库格式说明', formatDesc:'在线曲库文件使用以下格式：',
+    formatNote:'<strong>[游戏名称]</strong> 定义游戏分区，名称必须与支持的游戏完全匹配（如 Phigros、Arcaea 等）。',
+    formatNote2:'<strong>曲目</strong>在每个分区下逐行列出。可选序号如 "1." "2)" "3:" 会被自动去除。分区之间的空行会被忽略。',
+    guessedPrefix:'guessed\uFF1A', timeHours:'小时', timeMinutes:'分钟', timeSeconds:'秒',
+    timeSecondsShort:'秒', timeMinutesShort:'分钟',
+    settlementHeader:'本局开字母结算：', settlementTime:'用时：', settlementTotalSongs:'曲目总数：',
+    settlementAvgPerSong:'（平均{time}/题）', settlementOpenChars:'开启字符数：',
+    settlementAvgPerChar:'（平均{time}/个）', settlementRevealRate:'揭开字符率：',
+    songsUnit:'首', revealClickHint:'（点击隐藏）',
+    toastNoGameTag:'未能识别任何有效游戏标签', toastParseSuccess:'成功解析 {games} 个游戏、{songs} 首曲目',
+    toastOnlineFail:'导入在线曲库失败，请检查网络连接', toastSelectGame:'请至少选择一个游戏范围',
+    toastNoMatch:'没有符合条件的曲目', toastExtracted:'已抽取 {count} 首曲目',
+    toastInvalidCount:'请输入有效的总数量', toastInputSongs:'请先输入曲名',
+    toastRandomized:'已随机排列', toastSortedByLength:'已按长度排列', toastSelectSort:'请先选择排列方式',
+    toastCleared:'已清空曲名', toastNeedSong:'请输入至少一首曲名', toastGameStart:'游戏开始！',
+    toastResetChars:'已重置所有开启字符', toastNoRevealed:'没有已猜出的曲目，请先点击曲目显示完整曲名',
+    toastHidden:'已隐藏 {count} 首已猜出的曲目', toastRestored:'已恢复游戏，计时器已暂停，点击「继续」继续计时',
+    toastRemoved:'已移除曲库', backConfirm:'返回编辑将结束当前游戏，确定吗？', endConfirm:'确定要结束游戏吗？',
+    noCopyContent:'没有可复制的内容', copyFail:'复制失败，请手动复制',
+    copySuccess:'已复制到剪贴板', copySettlementOk:'已复制结算信息', copyQuestionsOk:'已复制完整题面'
+  },
+  ja: {
+    appTitle:'曲名文字開封ヘルパー', appSubtitle:'オンラインライブラリを導入するか、手動で入力してゲームを開始',
+    noticeTitle:'お知らせ', noticeContent:'初めてウェブサイトを公開するので、不手際がありましたら申し訳ありません！コピーができない場合は別のブラウザをお試しください！オンラインライブラリのインポートは少し雑なコードなので、抽出された曲名はご確認をお願いします！',
+    tabImport:'オンライン曲庫', tabManual:'手動入力', uploadOnline:'オンライン曲庫を導入', uploadOnlineLoading:'導入中...',
+    fileRemove:'削除', fileStatsFormat:'{games}ゲーム / {songs}曲',
+    selectRange:'ゲーム範囲を選択', selectAll:'全選択', selectNone:'クリア',
+    filterTitle:'曲フィルター', filterOnly:'のみ', filterInclude:'含む', filterExclude:'含まない',
+    filterLetter:'字母', filterJapanese:'日本語', filterHanzi:'漢字', filterSymbol:'記号',
+    filterMatchCount:'条件に合致する曲: {count}曲', filterClear:'フィルターをクリア',
+    extractTitle:'抽出設定', modeEqual:'総数モード', modeCustom:'カスタム数モード',
+    totalCountLabel:'総抽出数', totalCountPlaceholder:'数を入力',
+    totalCountHelper:'選択範囲から指定数をランダムに抽出します',
+    customCountHelper:'ゲームごとの抽出数を指定：', generateBtn:'曲リストを生成',
+    songSequence:'曲名リスト', clearSongs:'クリア',
+    songPlaceholder:'曲名を貼り付け（1行に1曲）\n番号付き（1.曲名）も対応\n\n例：\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO',
+    sortTitle:'並び替えオプション', sortRandom:'ランダム', sortByLength:'長さ順', applySort:'並び替えを適用',
+    remarkTitle:'備考', remarkPlaceholder:'備考を入力（例：Lv.15+など、任意）',
+    gameOptions:'ゲームオプション', spaceHidden:'スペースも隠す（スペースも?になります）',
+    parseAndStart:'解析してゲーム開始', statusParsed:'{count}曲を解析済み。再解析すると現在のゲームがリセットされます。',
+    gameInProgress:'ゲーム進行中', gameClickHint:'曲名をクリックで全文表示、もう一度クリックで非表示',
+    pauseBtn:'一時停止', resumeBtn:'再開', endGameBtn:'ゲーム終了',
+    openChars:'文字を開く', resetChars:'リセット', charInputPlaceholder:'文字を入力...',
+    sortedCharsLabel:'ソート済み開封文字：', statSongs:'曲数', statChars:'文字数', statPercent:'開封率',
+    hideRevealed:'正解曲を非表示', hideRevealedHint:'曲名をクリックして全文表示後、このボタンでリストから非表示にします',
+    hiddenLabel:'非表示', hiddenSongs:'曲', resultTitle:'結果', copyResult:'コピー', copy:'コピー',
+    settlementTitle:'ゲーム終了', settlementSubtitle:'精算情報が生成されました。コピーして共有できます',
+    settlementInfo:'精算情報', fullQuestions:'全問題', newGame:'新しいゲーム', backToEdit:'編集に戻る',
+    modalTitle:'未完了のゲームがあります', modalText:'前回の未完了ゲームが検出されました。続けますか？',
+    modalSongCount:'曲数', modalCharCount:'開封文字数', modalTime:'経過時間', modalPercent:'開封率',
+    modalNewGame:'新しいゲーム', modalContinue:'続きから',
+    formatTitle:'オンライン曲庫形式ガイド', formatDesc:'オンライン曲庫ファイルは以下の形式です：',
+    formatNote:'<strong>[ゲーム名]</strong> でゲームセクションを定義します。名前はサポート対象ゲームと完全に一致させる必要があります（例：Phigros、Arcaeaなど）。',
+    formatNote2:'<strong>曲名</strong>は各セクションの下に1行ずつ記述します。「1.」「2)」「3:」などの番号は自動的に除去されます。セクション間の空行は無視されます。',
+    guessedPrefix:'guessed\uFF1A', timeHours:'時間', timeMinutes:'分', timeSeconds:'秒',
+    timeSecondsShort:'秒', timeMinutesShort:'分',
+    settlementHeader:'文字開封精算：', settlementTime:'時間：', settlementTotalSongs:'総曲数：',
+    settlementAvgPerSong:'（平均{time}/曲）', settlementOpenChars:'開封文字数：',
+    settlementAvgPerChar:'（平均{time}/文字）', settlementRevealRate:'開封率：',
+    songsUnit:'曲', revealClickHint:'（クリックで非表示）',
+    toastNoGameTag:'有効なゲームタグが見つかりませんでした',
+    toastParseSuccess:'{games}ゲーム、{songs}曲を解析しました',
+    toastOnlineFail:'オンライン曲庫の導入に失敗しました。ネットワークを確認してください。',
+    toastSelectGame:'少なくとも1つのゲームを選択してください', toastNoMatch:'条件に合致する曲がありません',
+    toastExtracted:'{count}曲を抽出しました', toastInvalidCount:'有効な数を入力してください',
+    toastInputSongs:'先に曲名を入力してください', toastRandomized:'ランダムに並び替えました',
+    toastSortedByLength:'長さ順に並び替えました', toastSelectSort:'並び替え方法を選択してください',
+    toastCleared:'クリアしました', toastNeedSong:'少なくとも1曲の曲名を入力してください',
+    toastGameStart:'ゲーム開始！', toastResetChars:'開封文字を全てリセットしました',
+    toastNoRevealed:'正解済みの曲がありません。先に曲名をクリックして全文表示してください。',
+    toastHidden:'{count}曲の正解済み曲を非表示にしました',
+    toastRestored:'ゲームを復元しました。タイマーは一時停止中です。「再開」をクリックしてください。',
+    toastRemoved:'曲庫を削除しました', backConfirm:'編集に戻ると現在のゲームが終了します。よろしいですか？',
+    endConfirm:'ゲームを終了しますか？', noCopyContent:'コピーする内容がありません', copyFail:'コピーに失敗しました',
+    copySuccess:'クリップボードにコピーしました', copySettlementOk:'精算情報をコピーしました', copyQuestionsOk:'全問題をコピーしました'
+  }
+};
+
+let currentLang = 'en';
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
+function updateAllText() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('.lang-btn').forEach(btn => { btn.classList.toggle('active', btn.dataset.lang === currentLang); });
+  document.title = t('appTitle');
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : (currentLang === 'ja' ? 'ja' : 'en');
+  if (state.currentPage === 2 && state.songs.length > 0) renderResult();
+  if (state.currentPage === 1) { updateStatusHint(); updateFilterCount(); updateFileStats(); }
+}
+
+// ========== Supported Games ==========
+const SUPPORTED_GAMES = ["Phigros","Arcaea","Orzmic","Milthm","Berry Melody","Lanota","Rotaeno","Cytus II","KALPA","Muse Dash","Paradigm:Reboot","TAKUMI\u00B3","PJSK","maimai","CHUNITHM","\u30AA\u30F3\u30B2\u30AD","Notanote","Rizline","DanceRail3","vivid/stasis","Groove Coaster","ChainBeeT","Liminality","RYCEAM","Dynamix","Deemo II","WACCA","OverRapid","SDVX","\u592A\u9F13\u8FBE\u4EBA","Circle of Sparks","Polytone","SEVEN's CODE","SHINOBI SLASH","Simple","Sparkline","Siglota","Twirdora","Tone Sphere","WAVEAT","Beatmania IIDX","BanG Dream!","DJMAX RESPECT V","BOF","Furrney"];
+const ONLINE_LIBRARY_URL = 'https://raw.githubusercontent.com/FallOxygen/falloxygen.github.io/main/libraries/Songs.txt';
+
+// ========== Char Type ==========
+function isLetter(c){const code=c.charCodeAt(0);return(code>=65&&code<=90)||(code>=97&&code<=122);}
+function isHiragana(c){const code=c.charCodeAt(0);return code>=0x3040&&code<=0x309F;}
+function isKatakana(c){const code=c.charCodeAt(0);return code>=0x30A0&&code<=0x30FF;}
+function isJapanese(c){return isHiragana(c)||isKatakana(c);}
+function isHanzi(c){const code=c.charCodeAt(0);return(code>=0x4E00&&code<=0x9FFF)||(code>=0x3400&&code<=0x4DBF);}
+function isSymbol(c){if(c===' '||c==='\u3000')return false;return !isLetter(c)&&!isJapanese(c)&&!isHanzi(c);}
+function checkFilter(song,ft,fv){
+  const hasL=[...song].some(isLetter),hasJ=[...song].some(isJapanese),hasH=[...song].some(isHanzi),hasS=[...song].some(isSymbol);
+  const onlyL=[...song].every(c=>isLetter(c)||c===' '||c==='\u3000'),onlyJ=[...song].every(c=>isJapanese(c)||c===' '||c==='\u3000'),onlyH=[...song].every(c=>isHanzi(c)||c===' '||c==='\u3000'),onlyS=[...song].every(c=>isSymbol(c)||c===' '||c==='\u3000');
+  switch(fv){case 'letter':if(ft==='only')return onlyL;if(ft==='include')return hasL;if(ft==='exclude')return !hasL;break;case 'japanese':if(ft==='only')return onlyJ;if(ft==='include')return hasJ;if(ft==='exclude')return !hasJ;break;case 'hanzi':if(ft==='only')return onlyH;if(ft==='include')return hasH;if(ft==='exclude')return !hasH;break;case 'symbol':if(ft==='only')return onlyS;if(ft==='include')return hasS;if(ft==='exclude')return !hasS;break;}return true;
+}
+
+// ========== Char Sort ==========
+const charPriority={digit:1,upperLetter:2,lowerLetter:3,hiragana:4,katakana:5,punctuation:6,hanzi:7,other:99};
+function getCharType(c){const code=c.charCodeAt(0);if(code>=48&&code<=57)return 'digit';if(code>=65&&code<=90)return 'upperLetter';if(code>=97&&code<=122)return 'lowerLetter';if(code>=0x3040&&code<=0x309F)return 'hiragana';if(code>=0x30A0&&code<=0x30FF)return 'katakana';const p='!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\uFF01\uFF02\uFF03\uFF04\uFF05\uFF06\uFF07\uFF08\uFF09\uFF0A\uFF0B\uFF0C\uFF0D\uFF0E\uFF0F\uFF1A\uFF1B\uFF1C\uFF1D\uFF1E\uFF1F\uFF20\uFF3B\uFF3C\uFF3D\uFF3E\uFF3F\uFF40\uFF5B\uFF5C\uFF5D\uFF5E\u300C\u300D\u300E\u300F\u3010\u3011\uFF08\uFF09\u3001\u3002\u30FB\u2026\u2014';if(p.includes(c))return 'punctuation';if((code>=0x4E00&&code<=0x9FFF)||(code>=0x3400&&code<=0x4DBF))return 'hanzi';return 'other';}
+function sortChars(chars){return chars.sort((a,b)=>{const pA=charPriority[getCharType(a)],pB=charPriority[getCharType(b)];return pA!==pB?pA-pB:a.localeCompare(b,'ja');});}
+
+// ========== IndexedDB ==========
+const DB_NAME='SongLetterHelperDB',DB_VERSION=1,STORE_NAME='library';let db=null;
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onerror=()=>reject(r.error);r.onsuccess=()=>{db=r.result;resolve(db);};r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(STORE_NAME))d.createObjectStore(STORE_NAME,{keyPath:'id'});};});}
+function saveToDB(key,data){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readwrite');tx.objectStore(STORE_NAME).put({id:key,data:data}).onsuccess=()=>resolve();tx.onerror=()=>reject(tx.error);});}
+function loadFromDB(key){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readonly');const r=tx.objectStore(STORE_NAME).get(key);r.onsuccess=()=>resolve(r.result?r.result.data:null);r.onerror=()=>reject(r.error);});}
+
+// ========== State ==========
+const STORAGE_KEY='songLetterHelper_v12';
+let state={currentPage:1,activeTab:'import',songInputText:'',songs:[],remark:'',sortType:'none',openedChars:'',spaceAsStar:false,revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0,fileName:'',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{only:[],include:[],exclude:[]},currentLang:'en'};
+let gameData={},elements={},timerInterval=null;
+
+// ========== Utils ==========
+function showToast(message,type='success'){const toast=elements.toast;toast.textContent=message;toast.className='toast '+type;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2800);}
+function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
+function parseSongs(text){if(!text.trim())return[];const lines=text.trim().split('\n');const result=[];for(const line of lines){const trimmed=line.trim();if(!trimmed)continue;const match=trimmed.match(/^\d+[.)\s:：]+(.+)$/);result.push(match?match[1].trim():trimmed);}return result;}
+
+// *** * → ? ***
+function revealChar(char,openedSet,spaceAsStar){
+  if(char===' '||char==='\u3000')return spaceAsStar?'?':char;
+  if(openedSet.has(char))return char;
+  const lower=char.toLowerCase();for(const c of openedSet){if(c.toLowerCase()===lower)return char;}return '?';
+}
+function formatTime(seconds){const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+function formatTimeReadable(seconds){const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;if(h>0)return`${h}${t('timeHours')}${m}${t('timeMinutes')}${s}${t('timeSeconds')}`;if(m>0)return`${m}${t('timeMinutes')}${s}${t('timeSeconds')}`;return`${s}${t('timeSeconds')}`;}
+function formatAverageTime(seconds){if(seconds<60)return`${seconds.toFixed(1)}${t('timeSecondsShort')}`;if(seconds<3600){const m=Math.floor(seconds/60),s=Math.round(seconds%60);return s>0?`${m}${t('timeMinutesShort')}${s}${t('timeSecondsShort')}`:`${m}${t('timeMinutesShort')}`;}const h=Math.floor(seconds/3600),m=Math.round((seconds%3600)/60);return m>0?`${h}${t('timeHours')}${m}${t('timeMinutesShort')}`:`${h}${t('timeHours')}`;}
+
+// ========== Storage ==========
+function saveState(){
+  state.songInputText=elements.songInput.value;state.remark=elements.remarkInput.value;
+  state.sortType=elements.randomSort.checked?'random':(elements.lengthSort.checked?'length':'none');
+  state.openedChars=elements.charInput.value;state.spaceAsStar=elements.spaceAsStar.checked;
+  state.totalCount=parseInt(elements.totalCount.value)||10;state.extractMode=elements.modeEqual.classList.contains('active')?'equal':'custom';
+  state.currentLang=currentLang;
+  const checked=elements.gameList.querySelectorAll('input[type="checkbox"]:checked');state.selectedGames=Array.from(checked).map(cb=>cb.dataset.game);
+  if(state.extractMode==='custom'){state.customCounts={};elements.customCountsDiv.querySelectorAll('.custom-count-input').forEach(input=>{state.customCounts[input.dataset.game]=parseInt(input.value)||0;});}
+  state.filters={only:[],include:[],exclude:[]};document.querySelectorAll('.filter-chip.active').forEach(chip=>{const type=chip.parentElement.dataset.filterType;const value=chip.dataset.filter;state.filters[type].push(value);});
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}
+}
+function loadState(){try{const saved=localStorage.getItem(STORAGE_KEY);if(saved){const parsed=JSON.parse(saved);state={...state,...parsed};return true;}}catch(e){}return false;}
+function clearGameState(){state.currentPage=1;state.songs=[];state.openedChars='';state.revealedFullIndices=[];state.hiddenIndices=[];state.timerSeconds=0;state.timerRunning=false;state.timerPaused=false;state.gameStartTime=null;state.totalPauseTime=0;state.pauseStartTime=null;state.guessedSongs=[];state.currentRevealPercent=0;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
+
+// ========== Timer ==========
+function startTimer(){if(timerInterval)return;state.timerRunning=true;if(!state.timerPaused)state.gameStartTime=Date.now()-(state.timerSeconds*1000)-state.totalPauseTime;timerInterval=setInterval(()=>{if(!state.timerPaused){state.timerSeconds=Math.floor((Date.now()-state.gameStartTime-state.totalPauseTime)/1000);updateTimerDisplay();saveState();}},1000);updatePauseButton();}
+function pauseTimer(){if(!state.timerRunning)return;if(state.timerPaused){if(state.pauseStartTime!==null)state.totalPauseTime+=Date.now()-state.pauseStartTime;state.timerPaused=false;state.pauseStartTime=null;}else{state.timerPaused=true;state.pauseStartTime=Date.now();}updatePauseButton();saveState();}
+function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}state.timerRunning=false;state.timerPaused=false;}
+function resetTimer(){stopTimer();state.timerSeconds=0;state.totalPauseTime=0;state.pauseStartTime=null;state.gameStartTime=null;updateTimerDisplay();}
+function updateTimerDisplay(){const d=document.getElementById('timerDisplay');d.textContent=formatTime(state.timerSeconds);d.classList.toggle('paused',state.timerPaused);}
+function updatePauseButton(){const btn=document.getElementById('pauseBtn');if(state.timerPaused){btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>${t('resumeBtn')}</span>`;}else{btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg><span>${t('pauseBtn')}</span>`;}}
+
+// ========== Settlement ==========
+function showSettlement(){
+  stopTimer();const totalSongs=state.songs.length,openedChars=state.openedChars.length,guessedPercent=state.currentRevealPercent;
+  const avgTimePerSong=totalSongs>0?state.timerSeconds/totalSongs:0,avgTimePerChar=openedChars>0?state.timerSeconds/openedChars:0;
+  let txt=t('settlementHeader')+'\n';txt+=t('settlementTime')+formatTimeReadable(state.timerSeconds)+'\n';
+  txt+=t('settlementTotalSongs')+totalSongs+t('songsUnit');if(avgTimePerSong>0)txt+=t('settlementAvgPerSong').replace('{time}',formatAverageTime(avgTimePerSong));txt+='\n';
+  txt+=t('settlementOpenChars')+openedChars+t('timeSecondsShort');if(avgTimePerChar>0)txt+=t('settlementAvgPerChar').replace('{time}',formatAverageTime(avgTimePerChar));txt+='\n';
+  txt+=t('settlementRevealRate')+guessedPercent+'%';
+  document.getElementById('settlementText').value=txt;
+  let qtxt=state.songs.map((s,i)=>`${i+1}.${s}`).join('\n');if(state.remark.trim())qtxt+=`\n[${state.remark.trim()}]`;
+  document.getElementById('questionsText').value=qtxt;clearGameState();switchToPage(3);
+}
+
+// ========== Page Switch ==========
+function switchToPage(pageNum,isRestore=false){
+  state.currentPage=pageNum;saveState();document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.classList.add('hidden');});
+  const pageEl=document.getElementById('page'+pageNum);pageEl.classList.remove('hidden');pageEl.classList.add('active');
+  if(pageNum===1){updateStatusHint();resetTimer();}
+  else if(pageNum===2){if(isRestore){elements.charInput.value=state.openedChars||'';state.timerRunning=true;state.timerPaused=true;state.gameStartTime=Date.now()-state.timerSeconds*1000-state.totalPauseTime;state.pauseStartTime=Date.now();updateTimerDisplay();updatePauseButton();startTimer();}else{startTimer();}renderResult();}
+  else if(pageNum===3){stopTimer();}
+}
+function switchTab(tabName){state.activeTab=tabName;document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.toggle('active',btn.dataset.tab===tabName);});document.querySelectorAll('.tab-content').forEach(c=>{c.classList.toggle('active',c.id==='tab-'+tabName);});saveState();}
+
+// ========== Library Parse ==========
+function parseLibrary(text){const lines=text.split('\n');const data={};let currentGame=null;for(const line of lines){const trimmed=line.trim();if(!trimmed)continue;const tagMatch=trimmed.match(/^\[(.+)\]$/);if(tagMatch){const tagName=tagMatch[1].trim();if(SUPPORTED_GAMES.includes(tagName)){currentGame=tagName;if(!data[currentGame])data[currentGame]=[];continue;}}if(currentGame&&trimmed){const songMatch=trimmed.match(/^\d+[.)\s:：]+(.+)$/);const songName=songMatch?songMatch[1].trim():trimmed;if(songName)data[currentGame].push(songName);}}for(const game in data){if(data[game].length===0)delete data[game];}return data;}
+function renderGameList(){const games=Object.keys(gameData).sort((a,b)=>SUPPORTED_GAMES.indexOf(a)-SUPPORTED_GAMES.indexOf(b));elements.gameList.innerHTML=games.map(game=>{const count=gameData[game].length;const checked=state.selectedGames.includes(game)?'checked':'';return`<div class="game-item"><label class="checkbox-wrap flex-1"><input type="checkbox" data-game="${escapeHtml(game)}" ${checked}><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="game-name">${escapeHtml(game)}</span><span class="game-count">${count}${t('songsUnit')}</span></label></div>`;}).join('');updateFileStats();updateCustomCounts();updateFilterCount();}
+function updateFileStats(){const totalGames=Object.keys(gameData).length,totalSongs=Object.values(gameData).reduce((s,a)=>s+a.length,0);document.getElementById('fileStats').textContent=t('fileStatsFormat').replace('{games}',totalGames).replace('{songs}',totalSongs);}
+function updateCustomCounts(){const games=Object.keys(gameData);elements.customCountsDiv.innerHTML=games.map(game=>{const count=gameData[game].length,savedCount=state.customCounts[game]||0,checked=state.selectedGames.includes(game);return`<div class="flex items-center gap-3 p-2 rounded-lg ${checked?'':'opacity-40'}"><span class="flex-1 text-sm truncate">${escapeHtml(game)}</span><span class="text-xs" style="color:var(--muted);">${count}${t('songsUnit')}</span><input type="number" class="count-input custom-count-input" data-game="${escapeHtml(game)}" value="${savedCount}" min="0" max="${count}" ${checked?'':'disabled'}></div>`;}).join('');}
+
+// ========== Filter ==========
+function getFilteredSongs(songs){const{only,include,exclude}=state.filters;return songs.filter(song=>{for(const f of only)if(!checkFilter(song,'only',f))return false;for(const f of include)if(!checkFilter(song,'include',f))return false;for(const f of exclude)if(!checkFilter(song,'exclude',f))return false;return true;});}
+function updateFilterCount(){const selectedGames=Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.game);let allSongs=[];for(const game of selectedGames)if(gameData[game])allSongs=allSongs.concat(gameData[game]);const filtered=getFilteredSongs(allSongs);document.getElementById('filterCount').textContent=t('filterMatchCount').replace('{count}',filtered.length);}
+
+// ========== Extract ==========
+function generateSongs(){
+  const selectedGames=Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.game);
+  if(selectedGames.length===0){showToast(t('toastSelectGame'),'error');return;}
+  const gameSongMap={};for(const game of selectedGames)if(gameData[game])gameSongMap[game]=getFilteredSongs([...gameData[game]]);
+  const totalFiltered=Object.values(gameSongMap).reduce((s,a)=>s+a.length,0);if(totalFiltered===0){showToast(t('toastNoMatch'),'error');return;}
+  let resultSongs=[];
+  if(state.extractMode==='equal'){const totalCount=parseInt(elements.totalCount.value)||0;if(totalCount<=0){showToast(t('toastInvalidCount'),'error');return;}for(const game in gameSongMap){const arr=gameSongMap[game];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}const games=Object.keys(gameSongMap);const indices={};games.forEach(g=>indices[g]=0);let gameIdx=0;const usedSongs=new Set();while(resultSongs.length<totalCount){let found=false;const startIdx=gameIdx;do{const game=games[gameIdx];const songs=gameSongMap[game];const idx=indices[game];if(idx<songs.length){const song=songs[idx];if(!usedSongs.has(song)){resultSongs.push(song);usedSongs.add(song);found=true;}indices[game]++;}gameIdx=(gameIdx+1)%games.length;}while(!found&&gameIdx!==startIdx);if(!found)break;}showToast(t('toastExtracted').replace('{count}',resultSongs.length));}
+  else{const usedSongs=new Set();for(const game of selectedGames){const count=state.customCounts[game]||0;if(count<=0)continue;const songs=gameSongMap[game]?[...gameSongMap[game]]:[];for(let i=songs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[songs[i],songs[j]]=[songs[j],songs[i]];}let added=0;for(const song of songs){if(added>=count)break;if(!usedSongs.has(song)){resultSongs.push(song);usedSongs.add(song);added++;}}}showToast(t('toastExtracted').replace('{count}',resultSongs.length));}
+  elements.songInput.value=resultSongs.map((s,i)=>`${i+1}.${s}`).join('\n');state.songInputText=elements.songInput.value;saveState();switchTab('manual');
+}
+
+// ========== Render ==========
+function renderResult(){
+  const openedSet=new Set(elements.charInput.value);const sortedOpened=sortChars(Array.from(openedSet));const spaceAsStar=state.spaceAsStar;
+  document.getElementById('sortedCharsDisplay').innerHTML=sortedOpened.length===0?'<span style="color:var(--muted);">-</span>':sortedOpened.map(c=>`<span class="char-tag">${escapeHtml(c)}</span>`).join('');
+  if(state.songs.length===0){document.getElementById('resultDisplay').innerHTML='<span style="color:var(--muted);">-</span>';updateStats(0,0);return;}
+  let html=`<div class="guessed-line">${t('guessedPrefix')}${escapeHtml(sortedOpened.join(''))}</div>`;let totalNonSpace=0,revealedNonSpace=0;
+  state.songs.forEach((song,idx)=>{const isHidden=state.hiddenIndices.includes(idx),isRevealedFull=state.revealedFullIndices.includes(idx);const revealedArr=[];for(const char of song){const r=revealChar(char,openedSet,spaceAsStar);revealedArr.push(r);if(char!==' '&&char!=='\u3000'){totalNonSpace++;if(r!=='?')revealedNonSpace++;}}const maskedStr=revealedArr.join('');html+=`<div class="song-line ${isHidden?'hidden-song':''} ${isRevealedFull?'revealed-full':''}" data-index="${idx}"><span class="masked-title"><span class="line-number">${idx+1}.</span>${formatLineHtml(maskedStr,spaceAsStar)}</span><span class="full-title"><span class="line-number">${idx+1}.</span>${escapeHtml(song)}</span>${isRevealedFull?`<span class="full-reveal-hint">${t('revealClickHint')}</span>`:''}</div>`;});
+  if(state.remark.trim())html+=`<div class="remark-line">[${escapeHtml(state.remark.trim())}]</div>`;
+  document.getElementById('resultDisplay').innerHTML=html;
+  document.querySelectorAll('.song-line').forEach(line=>{line.addEventListener('click',()=>{toggleRevealFull(parseInt(line.dataset.index));});});
+  const visibleCount=state.songs.length-state.hiddenIndices.length;const percent=totalNonSpace>0?Math.round(revealedNonSpace/totalNonSpace*100):0;
+  state.currentRevealPercent=percent;updateStats(visibleCount,percent);updateHideStats();
+}
+function formatLineHtml(text,spaceAsStar){return text.split('').map(char=>{if(char===' '||char==='\u3000')return spaceAsStar?'<span class="char-hidden">?</span>':'<span class="char-space"> </span>';if(char==='?')return '<span class="char-hidden">?</span>';return`<span class="char-revealed">${escapeHtml(char)}</span>`;}).join('');}
+function toggleRevealFull(idx){const i=state.revealedFullIndices.indexOf(idx);if(i>=0)state.revealedFullIndices.splice(i,1);else state.revealedFullIndices.push(idx);saveState();renderResult();}
+function updateStats(songCount,percent){document.getElementById('statSongs').textContent=songCount;document.getElementById('statChars').textContent=elements.charInput.value.length;document.getElementById('statPercent').textContent=percent+'%';}
+function updateHideStats(){const el=document.getElementById('hideStats'),cnt=document.getElementById('hiddenCount');if(state.hiddenIndices.length>0){el.style.display='flex';cnt.textContent=state.hiddenIndices.length;}else el.style.display='none';}
+function updateStatusHint(){const hint=document.getElementById('statusHint');if(state.songs.length>0){hint.textContent=t('statusParsed').replace('{count}',state.songs.length);hint.style.color='var(--accent)';}else hint.textContent='';}
+function updateCheckboxStates(){elements.lengthSortLabel.classList.toggle('disabled',elements.randomSort.checked);elements.randomSortLabel.classList.toggle('disabled',elements.lengthSort.checked);}
+function hideRevealedSongs(){if(state.revealedFullIndices.length===0){showToast(t('toastNoRevealed'),'info');return;}for(const idx of state.revealedFullIndices){if(!state.hiddenIndices.includes(idx)){state.hiddenIndices.push(idx);state.guessedSongs.push({index:idx,time:state.timerSeconds});}}const count=state.revealedFullIndices.length;state.revealedFullIndices=[];saveState();renderResult();showToast(t('toastHidden').replace('{count}',count));}
+function showRestoreModal(){document.getElementById('restoreSongCount').textContent=(state.songs.length-state.hiddenIndices.length)+t('songsUnit');document.getElementById('restoreCharCount').textContent=state.openedChars.length;document.getElementById('restoreTime').textContent=formatTime(state.timerSeconds);document.getElementById('restorePercent').textContent=state.currentRevealPercent+'%';document.getElementById('restoreModal').classList.add('show');}
+function hideRestoreModal(){document.getElementById('restoreModal').classList.remove('show');}
+
+// ========== Online Library ==========
+async function processLibraryText(text,fileName){
+  const data=parseLibrary(text);if(Object.keys(data).length===0){showToast(t('toastNoGameTag'),'error');return;}
+  gameData=data;state.fileName=fileName;state.selectedGames=[];state.customCounts={};
+  document.getElementById('fileName').textContent=fileName;elements.parsedSection.style.display='block';renderGameList();saveState();
+  try{await saveToDB('gameData',gameData);}catch(e){}
+  const gc=Object.keys(gameData).length,sc=Object.values(gameData).reduce((s,a)=>s+a.length,0);showToast(t('toastParseSuccess').replace('{games}',gc).replace('{songs}',sc));
+}
+async function importOnlineLibrary(){
+  const btn=document.getElementById('importOnlineBtn');const orig=btn.innerHTML;btn.disabled=true;
+  btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg><span>${t('uploadOnlineLoading')}</span>`;
+  try{const response=await fetch(ONLINE_LIBRARY_URL);if(!response.ok)throw new Error(`HTTP ${response.status}`);await processLibraryText(await response.text(),t('tabImport'));}
+  catch(e){console.error(e);showToast(t('toastOnlineFail'),'error');}
+  finally{btn.disabled=false;btn.innerHTML=orig;}
+}
+
+// ========== Clipboard ==========
+async function copyText(text,successMsg,failMsg){try{await navigator.clipboard.writeText(text);showToast(successMsg);}catch(e){const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showToast(successMsg);}catch(err){showToast(failMsg,'error');}document.body.removeChild(ta);}}
+
+// ========== Init ==========
+async function init(){
+  elements={toast:document.getElementById('toast'),songInput:document.getElementById('songInput'),remarkInput:document.getElementById('remarkInput'),charInput:document.getElementById('charInput'),randomSort:document.getElementById('randomSort'),lengthSort:document.getElementById('lengthSort'),randomSortLabel:document.getElementById('randomSortLabel'),lengthSortLabel:document.getElementById('lengthSortLabel'),sortToggle:document.getElementById('sortToggle'),sortContent:document.getElementById('sortContent'),spaceAsStar:document.getElementById('spaceAsStar'),hideRevealed:document.getElementById('hideRevealed'),parsedSection:document.getElementById('parsedSection'),gameList:document.getElementById('gameList'),modeEqual:document.getElementById('modeEqual'),modeCustom:document.getElementById('modeCustom'),equalMode:document.getElementById('equalMode'),customMode:document.getElementById('customMode'),customCountsDiv:document.getElementById('customCounts'),totalCount:document.getElementById('totalCount'),generateBtn:document.getElementById('generateBtn'),selectAll:document.getElementById('selectAll'),selectNone:document.getElementById('selectNone'),clearFile:document.getElementById('clearFile'),importOnlineBtn:document.getElementById('importOnlineBtn')};
+  try{await openDB();}catch(e){console.error('IndexedDB failed:',e);}
+  loadState();currentLang=state.currentLang||'en';
+  elements.songInput.value=state.songInputText||'';elements.remarkInput.value=state.remark||'';
+  elements.charInput.value=state.openedChars||'';elements.spaceAsStar.checked=state.spaceAsStar||false;
+  elements.totalCount.value=state.totalCount||10;
+  if(state.sortType==='random')elements.randomSort.checked=true;else if(state.sortType==='length')elements.lengthSort.checked=true;
+  updateCheckboxStates();
+  try{const savedGameData=await loadFromDB('gameData');if(savedGameData&&Object.keys(savedGameData).length>0){gameData=savedGameData;document.getElementById('fileName').textContent=state.fileName||t('tabImport');elements.parsedSection.style.display='block';renderGameList();state.filters.only.forEach(f=>{document.querySelector(`.filter-options[data-filter-type="only"] .filter-chip[data-filter="${f}"]`)?.classList.add('active');});state.filters.include.forEach(f=>{document.querySelector(`.filter-options[data-filter-type="include"] .filter-chip[data-filter="${f}"]`)?.classList.add('active');});state.filters.exclude.forEach(f=>{document.querySelector(`.filter-options[data-filter-type="exclude"] .filter-chip[data-filter="${f}"]`)?.classList.add('active');});if(state.extractMode==='custom'){elements.modeEqual.classList.remove('active');elements.modeCustom.classList.add('active');elements.equalMode.style.display='none';elements.customMode.style.display='block';}}}catch(e){console.warn('Load library failed:',e);}
+  switchTab(state.activeTab||'import');updateAllText();
+  if(state.currentPage===2&&state.songs.length>0)showRestoreModal();else{updateStatusHint();switchToPage(1);}
+  bindEvents();
+}
+
+function bindEvents(){
+  document.querySelectorAll('.lang-btn').forEach(btn=>{btn.addEventListener('click',()=>{currentLang=btn.dataset.lang;state.currentLang=currentLang;saveState();updateAllText();});});
+  document.getElementById('formatToggle').addEventListener('click',()=>{const isOpen=document.getElementById('formatContent').classList.contains('open');document.getElementById('formatContent').classList.toggle('open');document.getElementById('formatToggle').classList.toggle('expanded',!isOpen);});
+  document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>switchTab(btn.dataset.tab));});
+  elements.randomSort.addEventListener('change',()=>{if(elements.randomSort.checked)elements.lengthSort.checked=false;updateCheckboxStates();saveState();});
+  elements.lengthSort.addEventListener('change',()=>{if(elements.lengthSort.checked)elements.randomSort.checked=false;updateCheckboxStates();saveState();});
+  elements.sortToggle.addEventListener('click',()=>{const isOpen=elements.sortContent.classList.contains('open');elements.sortContent.classList.toggle('open');elements.sortToggle.classList.toggle('expanded',!isOpen);});
+  document.getElementById('applySort').addEventListener('click',()=>{let songs=parseSongs(elements.songInput.value);if(songs.length===0){showToast(t('toastInputSongs'),'error');return;}if(elements.randomSort.checked){for(let i=songs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[songs[i],songs[j]]=[songs[j],songs[i]];}showToast(t('toastRandomized'));}else if(elements.lengthSort.checked){songs.sort((a,b)=>a.length-b.length);showToast(t('toastSortedByLength'));}else{showToast(t('toastSelectSort'),'error');return;}elements.songInput.value=songs.map((s,i)=>`${i+1}.${s}`).join('\n');saveState();});
+  document.getElementById('clearSongs').addEventListener('click',()=>{elements.songInput.value='';saveState();showToast(t('toastCleared'));});
+  elements.spaceAsStar.addEventListener('change',saveState);
+  elements.importOnlineBtn.addEventListener('click',importOnlineLibrary);
+  elements.clearFile.addEventListener('click',async()=>{gameData={};state.selectedGames=[];state.fileName='';elements.parsedSection.style.display='none';try{await saveToDB('gameData',{});}catch(e){}saveState();showToast(t('toastRemoved'));});
+  elements.selectAll.addEventListener('click',()=>{elements.gameList.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=true);updateCustomCounts();updateFilterCount();saveState();});
+  elements.selectNone.addEventListener('click',()=>{elements.gameList.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);updateCustomCounts();updateFilterCount();saveState();});
+  elements.gameList.addEventListener('change',e=>{if(e.target.type==='checkbox'){updateCustomCounts();updateFilterCount();saveState();}});
+  document.querySelectorAll('.filter-chip').forEach(chip=>{chip.addEventListener('click',()=>{chip.classList.toggle('active');updateFilterCount();saveState();});});
+  document.getElementById('clearFilters').addEventListener('click',()=>{document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));state.filters={only:[],include:[],exclude:[]};updateFilterCount();saveState();});
+  elements.modeEqual.addEventListener('click',()=>{elements.modeEqual.classList.add('active');elements.modeCustom.classList.remove('active');elements.equalMode.style.display='block';elements.customMode.style.display='none';state.extractMode='equal';saveState();});
+  elements.modeCustom.addEventListener('click',()=>{elements.modeCustom.classList.add('active');elements.modeEqual.classList.remove('active');elements.customMode.style.display='block';elements.equalMode.style.display='none';state.extractMode='custom';updateCustomCounts();saveState();});
+  elements.generateBtn.addEventListener('click',generateSongs);
+  elements.customCountsDiv.addEventListener('input',e=>{if(e.target.classList.contains('custom-count-input'))saveState();});
+  elements.totalCount.addEventListener('input',saveState);
+  document.getElementById('parseBtn').addEventListener('click',()=>{const songs=parseSongs(elements.songInput.value);if(songs.length===0){showToast(t('toastNeedSong'),'error');return;}resetTimer();state.songs=songs;state.remark=elements.remarkInput.value.trim();state.spaceAsStar=elements.spaceAsStar.checked;state.openedChars='';state.hiddenIndices=[];state.revealedFullIndices=[];state.guessedSongs=[];state.currentRevealPercent=0;elements.charInput.value='';saveState();showToast(t('toastGameStart'));switchToPage(2);});
+  document.getElementById('backBtn').addEventListener('click',()=>{if(confirm(t('backConfirm'))){stopTimer();clearGameState();switchToPage(1);}});
+  elements.songInput.addEventListener('input',saveState);elements.remarkInput.addEventListener('input',saveState);
+  elements.charInput.addEventListener('input',()=>{state.openedChars=elements.charInput.value;saveState();renderResult();});
+  document.getElementById('resetChars').addEventListener('click',()=>{elements.charInput.value='';state.openedChars='';saveState();renderResult();showToast(t('toastResetChars'));});
+  elements.hideRevealed.addEventListener('click',hideRevealedSongs);
+  document.getElementById('pauseBtn').addEventListener('click',pauseTimer);
+  document.getElementById('endGameBtn').addEventListener('click',()=>{if(confirm(t('endConfirm')))showSettlement();});
+  document.getElementById('copyBtn').addEventListener('click',async()=>{if(state.songs.length===0){showToast(t('noCopyContent'),'error');return;}const openedSet=new Set(elements.charInput.value);const sortedOpened=sortChars(Array.from(openedSet));const spaceAsStar=state.spaceAsStar;let text=`${t('guessedPrefix')}${sortedOpened.join('')}\n`;state.songs.forEach((song,idx)=>{if(state.hiddenIndices.includes(idx))return;if(state.revealedFullIndices.includes(idx)){text+=`${idx+1}.${song}\n`;}else{const revealed=[];for(const char of song)revealed.push(revealChar(char,openedSet,spaceAsStar));text+=`${idx+1}.${revealed.join('')}\n`;}});if(state.remark.trim())text+=`[${state.remark.trim()}]`;copyText(text.trim(),t('copySuccess'),t('copyFail'));});
+  document.getElementById('copySettlement').addEventListener('click',()=>copyText(document.getElementById('settlementText').value,t('copySettlementOk'),t('copyFail')));
+  document.getElementById('copyQuestions').addEventListener('click',()=>copyText(document.getElementById('questionsText').value,t('copyQuestionsOk'),t('copyFail')));
+  document.getElementById('newGameBtn').addEventListener('click',()=>{resetTimer();state.songs=[];state.hiddenIndices=[];state.revealedFullIndices=[];state.guessedSongs=[];state.openedChars='';state.currentRevealPercent=0;elements.charInput.value='';switchToPage(1);});
+  document.getElementById('backToEditBtn').addEventListener('click',()=>switchToPage(1));
+  document.getElementById('restoreContinue').addEventListener('click',()=>{hideRestoreModal();elements.charInput.value=state.openedChars||'';switchToPage(2,true);showToast(t('toastRestored'));});
+  document.getElementById('restoreNewGame').addEventListener('click',()=>{hideRestoreModal();clearGameState();elements.charInput.value='';updateStatusHint();switchToPage(1);});
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
