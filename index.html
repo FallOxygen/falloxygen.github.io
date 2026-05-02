@@ -207,7 +207,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </button>
 </div>
 <div id="toast" class="toast"></div>
-<!-- Settings Modal -->
+
 <div id="settingsModal" class="modal-overlay settings-modal">
 <div class="modal-content">
 <div class="flex items-center justify-between mb-5">
@@ -243,21 +243,45 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div class="pt-3 guide-content" id="guideBody"></div>
 </div>
 </div>
+<div class="settings-section">
+<div class="settings-section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg><span data-i18n="contactTitle">Contact Developer</span></div>
+<div class="text-sm" style="color:var(--muted); line-height: 1.8; background:rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+<strong>QQ:</strong> 3962976891<br>
+<strong>Email 1:</strong> 3962976891@qq.com<br>
+<strong>Email 2:</strong> falloxygen.onezeroseven@gmail.com<br>
+<strong>Bilibili:</strong> UID: 3546979370010679
+</div>
+</div>
+
 </div>
 </div>
 </div>
-<!-- Rename Modal -->
+
+<div id="customLibModal" class="modal-overlay">
+<div class="modal-content" style="max-width:400px">
+<div class="modal-title" data-i18n="importCustom">导入本地曲库</div>
+<div class="text-sm mb-3" style="color:var(--muted);" data-i18n="formatReqs">导入后需要您输入该曲库包含什么范围，一行一个。<br>因为代码内部内置了解析在线曲库的范围tag，若您的曲库没有在线曲库的范围，则无法解析。</div>
+<input type="text" id="customLibName" class="input-area w-full p-3 mb-3" data-i18n-ph="customLibName" placeholder="曲库名称 (可选)">
+<textarea id="customLibTags" class="input-area w-full p-3 mb-3" rows="4" data-i18n-ph="customLibTagsPh" placeholder="允许的范围标签 (一行一个)\n例如:\nPhigros\nArcaea"></textarea>
+<input type="file" id="customLibFile" accept=".txt" class="block w-full text-sm mb-4" style="color:var(--fg);">
+<div class="modal-buttons">
+<button id="customLibCancel" class="btn btn-secondary"><span data-i18n="cancelBtn">取消</span></button>
+<button id="customLibConfirm" class="btn btn-primary"><span data-i18n="confirmBtn">导入</span></button>
+</div>
+</div>
+</div>
+
 <div id="renameModal" class="modal-overlay">
 <div class="modal-content" style="max-width:360px">
-<div class="modal-title" data-i18n="renameTitle">Rename Sheet</div>
-<input type="text" id="renameInput" class="input-area w-full p-3 mb-4" maxlength="20">
+<div class="modal-title" data-i18n="renameTitle">Rename</div>
+<input type="text" id="renameInput" class="input-area w-full p-3 mb-4" maxlength="30">
 <div class="modal-buttons">
 <button id="renameCancel" class="btn btn-secondary"><span data-i18n="cancelBtn">Cancel</span></button>
 <button id="renameConfirm" class="btn btn-primary"><span data-i18n="confirmBtn">Confirm</span></button>
 </div>
 </div>
 </div>
-<!-- Restore Modal -->
+
 <div id="restoreModal" class="modal-overlay">
 <div class="modal-content">
 <div class="modal-title" style="color:var(--accent);" data-i18n="modalTitle">Found Unfinished Game</div>
@@ -275,7 +299,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 </div>
 </div>
-<!-- Lookup Modal -->
+
 <div id="lookupModal" class="modal-overlay">
 <div class="modal-content" style="max-width:400px">
 <div class="modal-title" id="lookupTitle">-</div>
@@ -283,17 +307,19 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <button id="lookupClose" class="btn btn-secondary w-full"><span data-i18n="closeBtn">Close</span></button>
 </div>
 </div>
-<!-- Page 1: Editor -->
+
 <div id="page1" class="page active">
 <div class="max-w-2xl mx-auto">
 <header class="mb-6">
 <h1 class="text-3xl font-bold mb-2" data-i18n="appTitle">Song Letter Opener</h1>
 <p class="text-sm" style="color:var(--muted);" data-i18n="appSubtitle">Import the online library or enter songs manually to start your guessing game</p>
 </header>
+
 <div class="notice-box">
 <div class="title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span data-i18n="noticeTitle">Notice</span></div>
 <div class="content" data-i18n="noticeContent">First time deploying a website, apologies for any rough edges! If copy doesn't work, try another browser. The online library import is a bit of spaghetti code, so please double-check the extracted song names!</div>
 </div>
+
 <div class="sheet-bar" id="sheetBar">
 <div class="sheet-tabs" id="sheetTabs"></div>
 <div class="sheet-actions">
@@ -308,20 +334,29 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </button>
 </div>
 </div>
+
 <div class="tabs">
-<button class="tab-btn active" data-tab="import" data-i18n="tabImport">Online Library</button>
+<button class="tab-btn active" data-tab="import" data-i18n="tabLibrary">Library</button>
 <button class="tab-btn" data-tab="manual" data-i18n="tabManual">Manual Input</button>
 </div>
+
 <div id="tab-import" class="tab-content active">
 <div class="card p-6 mb-5">
+<div class="flex items-center gap-2 mb-4">
+<select id="librarySelect" class="input-area flex-1 p-2 text-sm cursor-pointer"></select>
+<button id="importCustomBtn" class="btn btn-secondary btn-sm" data-i18n="importCustom">导入本地</button>
+<button id="renameLibBtn" class="btn btn-secondary btn-sm" data-i18n="renameLib">重命名</button>
+<button id="deleteLibBtn" class="btn btn-danger btn-sm" data-i18n="deleteLib">删除</button>
+</div>
+
 <div class="help-box">
 <div class="collapse-header" id="formatToggle">
-<div class="title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span data-i18n="formatTitle">Online Library Format</span></div>
+<div class="title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span data-i18n="formatTitle">Library Format</span></div>
 <svg class="collapse-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
 </div>
 <div id="formatContent" class="collapse-content">
 <div class="pt-3">
-<p class="format-note" data-i18n="formatDesc">The online library file uses the following structure:</p>
+<p class="format-note" data-i18n="formatDesc">The library file uses the following structure:</p>
 <pre class="format-example mono">[Phigros] 1.Distorted Fate 2.DESTRUCTION 3,2,1 3.Glaciaxion [Arcaea] 1.Sheriruth 2.Arcahv</pre>
 <p class="format-note" data-i18n="formatNote"></p>
 <p class="format-note" data-i18n="formatNote2"></p>
@@ -333,15 +368,17 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <span data-i18n="uploadOnline">Import Online Library</span>
 </button>
 </div>
+
 <div id="parsedSection" style="display:none;">
 <div class="card p-6 mb-5">
 <div class="file-info">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
 <span id="fileName" class="filename">-</span>
 <span id="fileStats" style="color:var(--muted);font-size:13px;"></span>
-<button id="clearFile" class="btn btn-danger btn-sm"><span data-i18n="fileRemove">Remove</span></button>
+<button id="clearFile" class="btn btn-danger btn-sm" style="display:none;"><span data-i18n="fileRemove">Remove</span></button>
 </div>
 </div>
+
 <div class="card p-6 mb-5">
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span data-i18n="selectRange">Select Game Range</span></h2>
@@ -352,6 +389,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 <div id="gameList" class="game-list"></div>
 </div>
+
 <div class="card p-6 mb-5">
 <h2 class="font-semibold flex items-center gap-2 mb-4"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span data-i18n="filterTitle">Song Filter</span></h2>
 <div class="filter-section">
@@ -375,6 +413,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <button id="clearFilters" class="btn btn-secondary btn-sm"><span data-i18n="filterClear">Clear Filters</span></button>
 </div>
 </div>
+
 <div class="card p-6 mb-5">
 <h2 class="font-semibold flex items-center gap-2 mb-4"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span data-i18n="extractTitle">Extraction Settings</span></h2>
 <div class="mode-switch">
@@ -397,15 +436,17 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 </div>
 </div>
+
 <div id="tab-manual" class="tab-content">
 <div class="card p-6 mb-5">
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span data-i18n="songSequence">Song List</span></h2>
 <button id="clearSongs" class="btn btn-ghost btn-sm"><span data-i18n="clearSongs">Clear</span></button>
 </div>
-<textarea id="songInput" class="input-area mono w-full p-4" style="min-height:260px;" data-i18n-ph="songPlaceholder" placeholder="Paste song names, one per line.\nOptional numbering (1.SongName) will be stripped.\n\nExample:\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO"></textarea>
+<textarea id="songInput" class="input-area mono w-full p-4" style="min-height:260px;" data-i18n-ph="songPlaceholder" placeholder="Paste song names, one per line."></textarea>
 </div>
 </div>
+
 <div class="card p-6 mb-5">
 <div class="collapse-header" id="sortToggle">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="18" x2="12" y2="18"/></svg><span data-i18n="sortTitle">Sort Options</span></h2>
@@ -424,10 +465,12 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 </div>
 </div>
+
 <div class="card p-6 mb-5">
 <h2 class="font-semibold flex items-center gap-2 mb-4"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg><span data-i18n="remarkTitle">Remark</span></h2>
 <input type="text" id="remarkInput" class="input-area w-full p-4" data-i18n-ph="remarkPlaceholder" placeholder="Optional remark">
 </div>
+
 <button id="parseBtn" class="btn btn-primary w-full text-base py-4">
 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
 <span data-i18n="parseAndStart">Parse & Start Game</span>
@@ -435,7 +478,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div id="statusHint" class="mt-5 text-center text-sm" style="color:var(--muted);"></div>
 </div>
 </div>
-<!-- Page 2: Game -->
+
 <div id="page2" class="page hidden">
 <div class="max-w-2xl mx-auto">
 <div class="page-header">
@@ -445,6 +488,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <p class="text-xs" style="color:var(--muted);" data-i18n="gameClickHint">Click a song to reveal its full name, click again to hide</p>
 </div>
 </div>
+
 <div id="timerCard" class="card p-6 mb-5">
 <div id="timerDisplay" class="timer-display">00:00:00</div>
 <div class="timer-controls">
@@ -452,6 +496,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <button id="endGameBtn" class="btn btn-danger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span data-i18n="endGameBtn">End Game</span></button>
 </div>
 </div>
+
 <div class="card p-6 mb-5">
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span data-i18n="openChars">Open Characters</span></h2>
@@ -463,11 +508,13 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div id="sortedCharsDisplay" class="sorted-chars mono"><span style="color:var(--muted);">-</span></div>
 </div>
 </div>
+
 <div class="grid grid-cols-3 gap-4 mb-5">
 <div class="card stat-card"><div id="statSongs" class="stat-value mono" style="color:var(--accent);">0</div><div class="stat-label" data-i18n="statSongs">Songs</div></div>
 <div class="card stat-card"><div id="statChars" class="stat-value mono" style="color:var(--warning);">0</div><div class="stat-label" data-i18n="statChars">Chars</div></div>
 <div class="card stat-card"><div id="statPercent" class="stat-value mono">0%</div><div class="stat-label" data-i18n="statPercent">Reveal %</div></div>
 </div>
+
 <div class="card p-5 mb-5">
 <div class="flex items-center justify-between">
 <div id="hideStats" class="hide-stats flex-1" style="display:none;"><span data-i18n="hiddenLabel">Hidden</span><span class="count" id="hiddenCount">0</span><span data-i18n="hiddenSongs">songs</span></div>
@@ -475,22 +522,28 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 <p class="text-xs mt-3" style="color:var(--muted);" data-i18n="hideRevealedHint">Click a song to reveal it, then click this button to remove it from the list</p>
 </div>
+
 <div class="card p-6">
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span data-i18n="resultTitle">Result</span></h2>
+<div class="flex gap-2">
+<button id="exportImgBtn" class="btn btn-ghost btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span data-i18n="exportImage">导出图片</span></button>
 <button id="copyBtn" class="btn btn-secondary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span data-i18n="copyResult">Copy</span></button>
+</div>
 </div>
 <div id="resultDisplay" class="result-display mono p-4 min-h-[300px] max-h-[450px] overflow-auto whitespace-pre-wrap"></div>
 </div>
+
 </div>
 </div>
-<!-- Page 3: Settlement -->
+
 <div id="page3" class="page hidden">
 <div class="max-w-2xl mx-auto">
 <div class="settlement-header">
 <div class="settlement-title" data-i18n="settlementTitle">Game Over</div>
 <div class="settlement-subtitle" data-i18n="settlementSubtitle">Settlement info generated, ready to copy and share</div>
 </div>
+
 <div class="card p-6 mb-5">
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span data-i18n="settlementInfo">Settlement Info</span></h2>
@@ -498,6 +551,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 <textarea id="settlementText" class="input-area mono w-full p-4" style="min-height:200px;resize:vertical;" readonly></textarea>
 </div>
+
 <div class="card p-6 mb-5">
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span data-i18n="fullQuestions">Full Questions</span></h2>
@@ -505,19 +559,25 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 <textarea id="questionsText" class="input-area mono w-full p-4" style="min-height:220px;resize:vertical;" readonly></textarea>
 </div>
+
 <div class="flex gap-4">
 <button id="newGameBtn" class="btn btn-primary flex-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg><span data-i18n="newGame">New Game</span></button>
 <button id="backToEditBtn" class="btn btn-secondary flex-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span data-i18n="backToEdit">Back to Edit</span></button>
 </div>
+
 </div>
 </div>
+
 <script>
 // ========== I18N ==========
 const I18N={
 en:{
 appTitle:'Song Letter Opener',appSubtitle:'Import the online library or enter songs manually to start your guessing game',
 noticeTitle:'Notice',noticeContent:'First time deploying a website, apologies for any rough edges! If copy doesn\'t work, try another browser. The online library import is a bit of spaghetti code, so please double-check the extracted song names!',
-tabImport:'Online Library',tabManual:'Manual Input',uploadOnline:'Import Online Library',uploadOnlineLoading:'Importing...',
+tabLibrary:'Library',tabManual:'Manual Input',uploadOnline:'Import Online Library',uploadOnlineLoading:'Importing...',
+importCustom:'Import Local', renameLib:'Rename', deleteLib:'Delete',
+customLibName:'Library Name (Optional)', customLibTagsPh:'Allowed tags (one per line)\ne.g.\nPhigros\nArcaea',
+formatReqs:'After importing, you must specify the range tags included in this custom library (one per line). Built-in tags might conflict if omitted.',
 fileRemove:'Remove',fileStatsFormat:'{games} games / {songs} songs',
 selectRange:'Select Game Range',selectAll:'Select All',selectNone:'Clear',
 filterTitle:'Song Filter',filterCharTypes:'Character Types',filterLetter:'Letters',filterJapanese:'Japanese',filterHanzi:'Hanzi',filterAllowOther:'Allow other characters (symbols, etc.)',filterMinLength:'Minimum Character Length',filterMinLengthHint:'(including spaces, 0 = no limit)',
@@ -525,7 +585,7 @@ filterMatchCount:'Matching songs: {count}',filterClear:'Clear Filters',
 extractTitle:'Extraction Settings',modeEqual:'Total Count',modeCustom:'Custom Count',
 totalCountLabel:'Total extraction count',totalCountPlaceholder:'Enter count',totalCountHelper:'Randomly extract the specified number from selected range',
 customCountHelper:'Specify extraction count per game:',generateBtn:'Generate Song List',
-songSequence:'Song List',clearSongs:'Clear',songPlaceholder:'Paste song names, one per line.\nOptional numbering (1.SongName) will be stripped.\n\nExample:\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO',
+songSequence:'Song List',clearSongs:'Clear',songPlaceholder:'Paste song names, one per line.\nOptional numbering (1.SongName) will be stripped.',
 sortTitle:'Sort Options',sortRandom:'Random',sortByLength:'By Length',applySort:'Apply Sort',
 remarkTitle:'Remark',remarkPlaceholder:'Optional remark',
 parseAndStart:'Parse & Start Game',
@@ -535,40 +595,44 @@ pauseBtn:'Pause',resumeBtn:'Resume',endGameBtn:'End Game',
 openChars:'Open Characters',resetChars:'Reset',charInputPlaceholder:'Type any character...',
 sortedCharsLabel:'Sorted opened characters:',statSongs:'Songs',statChars:'Chars',statPercent:'Reveal %',
 hideRevealed:'Hide Guessed Songs',hideRevealedHint:'Click a song to reveal it, then click this button to remove it from the list',
-hiddenLabel:'Hidden',hiddenSongs:'songs',resultTitle:'Result',copyResult:'Copy',copy:'Copy',
+hiddenLabel:'Hidden',hiddenSongs:'songs',resultTitle:'Result',copyResult:'Copy',copy:'Copy', exportImage: 'Export Image',
 settlementTitle:'Game Over',settlementSubtitle:'Settlement info generated, ready to copy and share',
 settlementInfo:'Settlement Info',fullQuestions:'Full Questions',newGame:'New Game',backToEdit:'Back to Edit',
 modalTitle:'Found Unfinished Game',modalText:'An unfinished game was detected. Continue?',
 modalSheetName:'Sheet',modalSongCount:'Songs',modalCharCount:'Opened Chars',modalTime:'Time',modalPercent:'Reveal Rate',
 modalNewGame:'New Game',modalContinue:'Continue',
-formatTitle:'Online Library Format',formatDesc:'The online library file uses the following structure:',
-formatNote:'<strong>[GameName]</strong> defines a game section. The name must exactly match a supported game (e.g. Phigros, Arcaea, etc.).',
-formatNote2:'<strong>Songs</strong> are listed one per line under each section. Optional numbering like "1." "2)" "3:" will be automatically stripped. Empty lines between sections are allowed.',
+formatTitle:'Library Format',formatDesc:'The library file uses the following structure:',
+formatNote:'<strong>[GameName]</strong> defines a game section. The name must match a defined tag.',
+formatNote2:'<strong>Songs</strong> are listed one per line under each section.',
 guessedPrefix:'guessed：',
 timeHours:'h ',timeMinutes:'m ',timeSeconds:'s',timeSecondsShort:'s',timeMinutesShort:'m',
 settlementHeader:'Letter Opener Settlement:',settlementTime:'Time: ',settlementTotalSongs:'Total songs: ',settlementAvgPerSong:'(avg {time}/song)',settlementOpenChars:'Opened chars: ',settlementAvgPerChar:'(avg {time}/char)',settlementRevealRate:'Reveal rate: ',songsUnit:'songs',revealClickHint:'(click to hide)',
-toastNoGameTag:'No valid game tags found',toastParseSuccess:'Parsed {games} games, {songs} songs',toastOnlineFail:'Failed to import online library. Check your network.',
+toastNoGameTag:'No valid game tags found',toastParseSuccess:'Parsed {games} games, {songs} songs',toastOnlineFail:'Failed to import online library.',
 toastSelectGame:'Please select at least one game',toastNoMatch:'No matching songs found',toastExtracted:'Extracted {count} songs',toastInvalidCount:'Please enter a valid count',
 toastInputSongs:'Please enter song names first',toastRandomized:'Randomized',toastSortedByLength:'Sorted by length',toastSelectSort:'Please select a sort method',toastCleared:'Cleared',
 toastNeedSong:'Please enter at least one song name',toastGameStart:'Game started!',toastResetChars:'All opened characters reset',
 toastNoRevealed:'No guessed songs. Click a song to reveal it first.',toastHidden:'Hidden {count} guessed songs',
-toastRestored:'Game restored. Timer paused. Click "Resume" to continue.',toastRemoved:'Library removed',
+toastRestored:'Game restored. Timer paused.',toastRemoved:'Library removed', toastExported:'Image Exported', toastTagsRequired: 'Range tags are required for custom library', toastLibDeleted: 'Library deleted', toastLibRenamed: 'Library renamed',
 backConfirm:'Going back will end the current game. Continue?',endConfirm:'End the game?',
 noCopyContent:'Nothing to copy',copyFail:'Copy failed',copySuccess:'Copied to clipboard',copySettlementOk:'Settlement info copied',copyQuestionsOk:'Full questions copied',
-settingsTitle:'Settings',settingMaskTitle:'Mask Character',settingFuncTitle:'Function Toggles',
+settingsTitle:'Settings',settingMaskTitle:'Mask Character',settingFuncTitle:'Function Toggles', contactTitle: 'Contact Developer',
 settingTimer:'Enable Timer',settingSettlement:'Enable Settlement',settingSpaceHidden:'Hide Spaces as Mask Character',
 settingAutoRemark:'Auto-fill Remark with Game Range',settingCharSort:'Sort Opened Characters',settingSongLookup:'Enable Song Source Lookup',
 settingGuideTitle:'Usage Guide',closeBtn:'Close',cancelBtn:'Cancel',confirmBtn:'Confirm',
-renameTitle:'Rename Sheet',sheetDefaultName:'Sheet',
+renameTitle:'Rename',sheetDefaultName:'Sheet',
 toastSheetAdded:'New sheet added',toastSheetDeleted:'Sheet deleted',toastSheetCantDelete:'Cannot delete the last sheet',toastSheetRenamed:'Sheet renamed',
 autoRemarkPrefix:'Range: ',
 lookupTitle:'Song Source',lookupNotFound:'Not found in library',lookupInGames:'Appears in {count} game(s):',
-guideHtml:'<h4>Getting Started</h4><ul><li>Import the online library or manually enter song names</li><li>Configure filters and extraction settings as needed</li><li>Click "Parse & Start Game" to begin guessing</li></ul><h4>Online Library</h4><ul><li>Click "Import Online Library" to fetch the pre-built song database</li><li>Select desired game ranges from the list</li><li>Apply character type and length filters to narrow down songs</li><li>Set extraction count (total or per-game) and click "Generate Song List"</li><li>Generated songs will be placed in the manual input area for review</li></ul><h4>Manual Input</h4><ul><li>Switch to the "Manual Input" tab</li><li>Paste song names, one per line; optional numbering (1. 2) 3: etc.) will be stripped</li></ul><h4>Filters</h4><ul><li><b>Character Types:</b> Select which types songs must contain. If multiple are selected, songs must have ALL selected types and NO other main types. "Allow other characters" permits symbols and non-standard characters.</li><li><b>Minimum Length:</b> Set the minimum total character count (including spaces). 0 means no limit.</li></ul><div class="guide-note">Filters only apply when using "Generate Song List" from the online library. They do not affect manually entered songs.</div><h4>Sort Options</h4><ul><li><b>Random:</b> Shuffle song order randomly</li><li><b>By Length:</b> Sort songs from shortest to longest</li></ul><h4>Game Page</h4><ul><li>Type characters in the input field to reveal them across all song names</li><li>Opened characters are displayed below (sorted if enabled in settings)</li><li>Click a song to reveal its full name; click again to hide</li><li>"Hide Guessed Songs" removes all currently revealed songs from the list</li><li>"Copy" copies the current masked result as text</li><li>If "Song Source Lookup" is enabled, each song has a lookup button to see which games in the full library contain it</li></ul><h4>Settings</h4><ul><li><b>Mask Character:</b> Choose ?, *, or × as the hidden character symbol</li><li><b>Enable Timer:</b> Show/hide the game timer</li><li><b>Enable Settlement:</b> Show/hide the end-game settlement page</li><li><b>Hide Spaces:</b> When on, spaces also become the mask character</li><li><b>Auto-fill Remark:</b> Automatically fills remark with "Range: xxx" based on selected games when starting</li><li><b>Sort Opened Characters:</b> Whether to sort the opened characters display</li><li><b>Song Source Lookup:</b> Show lookup buttons on each song in game view</li></ul><h4>Multi-Sheet</h4><ul><li>Create multiple sheets for different question sets (e.g., different rounds or difficulty levels)</li><li>Each sheet has independent songs, filters, and game state</li><li>Use + to add, pencil to rename, and trash to delete sheets</li><li>A green dot on a sheet tab indicates it has an active game</li></ul><h4>Settlement</h4><ul><li>When ending a game (with settlement enabled), a summary is generated</li><li>Includes: time, total songs, opened chars, reveal rate, and averages</li><li>Both settlement info and full question list can be copied for sharing</li></ul>'
+onlineLibName:'Online Library (Built-in)',
+guideHtml:'<h4>Getting Started</h4><ul><li>Import a library or manually enter song names</li><li>Configure filters and extraction settings as needed</li><li>Click "Parse & Start Game" to begin guessing</li></ul><h4>Libraries</h4><ul><li>You can load the default online library, or import your own .txt file.</li><li>For custom imports, you must specify the range tags.</li></ul>'
 },
 zh:{
 appTitle:'曲名开字母辅助器',appSubtitle:'导入在线曲库或手动输入，开始你的猜歌游戏',
 noticeTitle:'个人声明',noticeContent:'自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！还有那个导入在线曲库是屎山代码，大家用的时候注意一下抽取的曲名哈！',
-tabImport:'在线曲库',tabManual:'手动输入',uploadOnline:'导入在线曲库',uploadOnlineLoading:'正在导入...',
+tabLibrary:'曲库',tabManual:'手动输入',uploadOnline:'导入在线曲库',uploadOnlineLoading:'正在导入...',
+importCustom:'导入本地', renameLib:'重命名', deleteLib:'删除',
+customLibName:'曲库名称 (可选)', customLibTagsPh:'允许的范围标签 (一行一个)\n例如:\nPhigros\nArcaea',
+formatReqs:'导入后需要您输入该曲库包含什么范围，一行一个。<br>因为代码内部内置了解析在线曲库的范围tag，若您的曲库没有内置范围，则无法解析。',
 fileRemove:'移除',fileStatsFormat:'{games} 个游戏 / {songs} 首曲目',
 selectRange:'选择游戏范围',selectAll:'全选',selectNone:'清空',
 filterTitle:'曲目过滤',filterCharTypes:'字符类型',filterLetter:'字母',filterJapanese:'日文',filterHanzi:'汉字',filterAllowOther:'允许包含其他字符（符号等）',filterMinLength:'最少字符长度',filterMinLengthHint:'（包含空格，0 = 不限制）',
@@ -576,7 +640,7 @@ filterMatchCount:'符合条件的曲目: {count} 首',filterClear:'清除过滤'
 extractTitle:'抽取设置',modeEqual:'总数量模式',modeCustom:'定制数量模式',
 totalCountLabel:'总抽取数量',totalCountPlaceholder:'输入总数',totalCountHelper:'将从选中的范围内随机抽取指定数量的曲目',
 customCountHelper:'为每个游戏范围指定抽取数量：',generateBtn:'生成曲目列表',
-songSequence:'曲名序列',clearSongs:'清空',songPlaceholder:'粘贴曲名列表，支持以下格式：\n\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO\n\n或每行一首曲名（无需序号）',
+songSequence:'曲名序列',clearSongs:'清空',songPlaceholder:'粘贴曲名列表，每行一首曲名（无需序号）',
 sortTitle:'排列选项',sortRandom:'随机排列',sortByLength:'按长度排列',applySort:'应用排列',
 remarkTitle:'备注信息',remarkPlaceholder:'输入备注（可选）',
 parseAndStart:'解析并开始游戏',
@@ -586,40 +650,44 @@ pauseBtn:'暂停',resumeBtn:'继续',endGameBtn:'结束游戏',
 openChars:'开启字符',resetChars:'重置',charInputPlaceholder:'输入任意字符...',
 sortedCharsLabel:'已排序的开启字符：',statSongs:'曲名数',statChars:'已开字符',statPercent:'揭示率',
 hideRevealed:'隐藏已猜出的曲目',hideRevealedHint:'点击曲目显示完整曲名后，点击此按钮将其从列表中移除',
-hiddenLabel:'已隐藏',hiddenSongs:'首曲目',resultTitle:'解析结果',copyResult:'复制结果',copy:'复制',
+hiddenLabel:'已隐藏',hiddenSongs:'首曲目',resultTitle:'解析结果',copyResult:'复制结果',copy:'复制', exportImage: '导出图片',
 settlementTitle:'游戏结束',settlementSubtitle:'结算信息已生成，可复制分享',
 settlementInfo:'结算信息',fullQuestions:'完整题面',newGame:'开始新游戏',backToEdit:'返回编辑',
 modalTitle:'发现未完成的游戏',modalText:'检测到您上次有未完成的游戏，是否继续？',
 modalSheetName:'题面',modalSongCount:'曲目数量',modalCharCount:'已开字符',modalTime:'已用时间',modalPercent:'揭示率',
 modalNewGame:'开始新游戏',modalContinue:'继续游戏',
-formatTitle:'在线曲库格式说明',formatDesc:'在线曲库文件使用以下格式：',
-formatNote:'<strong>[游戏名称]</strong> 定义游戏分区，名称必须与支持的游戏完全匹配。',
-formatNote2:'<strong>曲目</strong>在每个分区下逐行列出。可选序号如 "1." "2)" "3:" 会被自动去除。',
+formatTitle:'曲库格式说明',formatDesc:'曲库文件使用以下格式：',
+formatNote:'<strong>[范围名称]</strong> 定义游戏分区。',
+formatNote2:'<strong>曲目</strong>在每个分区下逐行列出。',
 guessedPrefix:'guessed：',
 timeHours:'小时',timeMinutes:'分钟',timeSeconds:'秒',timeSecondsShort:'秒',timeMinutesShort:'分钟',
 settlementHeader:'本局开字母结算：',settlementTime:'用时：',settlementTotalSongs:'曲目总数：',settlementAvgPerSong:'（平均{time}/题）',settlementOpenChars:'开启字符数：',settlementAvgPerChar:'（平均{time}/个）',settlementRevealRate:'揭开字符率：',songsUnit:'首',revealClickHint:'（点击隐藏）',
-toastNoGameTag:'未能识别任何有效游戏标签',toastParseSuccess:'成功解析 {games} 个游戏、{songs} 首曲目',toastOnlineFail:'导入在线曲库失败，请检查网络连接',
+toastNoGameTag:'未能识别任何有效范围标签',toastParseSuccess:'成功解析 {games} 个范围、{songs} 首曲目',toastOnlineFail:'导入曲库失败，请检查网络连接',
 toastSelectGame:'请至少选择一个游戏范围',toastNoMatch:'没有符合条件的曲目',toastExtracted:'已抽取 {count} 首曲目',toastInvalidCount:'请输入有效的总数量',
 toastInputSongs:'请先输入曲名',toastRandomized:'已随机排列',toastSortedByLength:'已按长度排列',toastSelectSort:'请先选择排列方式',toastCleared:'已清空曲名',
 toastNeedSong:'请输入至少一首曲名',toastGameStart:'游戏开始！',toastResetChars:'已重置所有开启字符',
 toastNoRevealed:'没有已猜出的曲目，请先点击曲目显示完整曲名',toastHidden:'已隐藏 {count} 首已猜出的曲目',
-toastRestored:'已恢复游戏，计时器已暂停，点击「继续」继续计时',toastRemoved:'已移除曲库',
+toastRestored:'已恢复游戏，计时器已暂停，点击「继续」继续计时',toastRemoved:'已清空当前内容', toastExported:'已导出图片并保存', toastTagsRequired: '自定义曲库必须输入范围标签', toastLibDeleted: '曲库已删除', toastLibRenamed: '曲库已重命名',
 backConfirm:'返回编辑将结束当前游戏，确定吗？',endConfirm:'确定要结束游戏吗？',
 noCopyContent:'没有可复制的内容',copyFail:'复制失败，请手动复制',copySuccess:'已复制到剪贴板',copySettlementOk:'已复制结算信息',copyQuestionsOk:'已复制完整题面',
-settingsTitle:'设置',settingMaskTitle:'遮罩符号',settingFuncTitle:'功能开关',
+settingsTitle:'设置',settingMaskTitle:'遮罩符号',settingFuncTitle:'功能开关', contactTitle:'联系开发者',
 settingTimer:'开启计时功能',settingSettlement:'开启结算功能',settingSpaceHidden:'空格也隐藏为遮罩符号',
 settingAutoRemark:'自动根据游戏范围填充备注',settingCharSort:'开启字符排序',settingSongLookup:'开启曲目来源查询',
 settingGuideTitle:'使用指南',closeBtn:'关闭',cancelBtn:'取消',confirmBtn:'确认',
-renameTitle:'重命名题面',sheetDefaultName:'题面',
+renameTitle:'重命名',sheetDefaultName:'题面',
 toastSheetAdded:'已添加新题面',toastSheetDeleted:'已删除题面',toastSheetCantDelete:'无法删除最后一个题面',toastSheetRenamed:'已重命名',
 autoRemarkPrefix:'范围：',
 lookupTitle:'曲目来源',lookupNotFound:'未在曲库中找到',lookupInGames:'出现在 {count} 个游戏中：',
-guideHtml:'<h4>快速开始</h4><ul><li>导入在线曲库或手动输入曲名</li><li>按需配置过滤和抽取设置</li><li>点击「解析并开始游戏」开始猜歌</li></ul><h4>在线曲库</h4><ul><li>点击「导入在线曲库」获取预置曲库数据</li><li>在列表中选择需要的游戏范围</li><li>使用字符类型和长度过滤筛选曲目</li><li>设置抽取数量（总数量或按游戏定制）后点击「生成曲目列表」</li><li>生成的曲目会放入手动输入区域供检查</li></ul><h4>手动输入</h4><ul><li>切换到「手动输入」标签页</li><li>粘贴曲名，每行一首；可选序号（1. 2) 3: 等）会被自动去除</li></ul><h4>过滤功能</h4><ul><li><b>字符类型：</b>选择曲名必须包含的字符类型。选择多个类型时，曲名必须同时包含所有选中类型，且不包含未选中的主要类型。「允许包含其他字符」勾选后允许出现符号等非标准字符。</li><li><b>最少字符长度：</b>设置曲名的最少总字符数（含空格）。0 表示不限制。</li></ul><div class="guide-note">过滤功能仅在「生成曲目列表」时生效，不影响手动输入的曲名。</div><h4>排列选项</h4><ul><li><b>随机排列：</b>随机打乱曲目顺序</li><li><b>按长度排列：</b>从短到长排序</li></ul><h4>游戏页面</h4><ul><li>在输入框中输入字符来在所有曲名中揭示该字符</li><li>已开启的字符显示在下方（设置中开启排序后会自动排序）</li><li>点击曲名可显示完整名称，再次点击隐藏</li><li>「隐藏已猜出的曲目」将当前已揭示的曲目从列表中移除</li><li>「复制结果」将当前遮罩结果复制为文本</li><li>若开启「曲目来源查询」，每首曲名旁会有查询按钮，可查看该曲名在完整曲库中出现于哪些游戏</li></ul><h4>设置说明</h4><ul><li><b>遮罩符号：</b>选择 ?、* 或 × 作为隐藏字符的显示符号</li><li><b>开启计时：</b>显示/隐藏游戏计时器</li><li><b>开启结算：</b>显示/隐藏结束游戏的结算页面</li><li><b>空格也隐藏：</b>开启后空格也会变成遮罩符号</li><li><b>自动填充备注：</b>开始游戏时根据选择的游戏范围自动填入备注「范围：xxx」</li><li><b>字符排序：</b>是否对已开启字符进行排序显示</li><li><b>曲目来源查询：</b>在游戏视图中每首曲名旁显示来源查询按钮</li></ul><h4>多题面功能</h4><ul><li>可创建多个题面用于不同轮次或难度（如多周目）</li><li>每个题面的曲名、过滤、游戏状态完全独立互不干扰</li><li>使用 + 添加、铅笔重命名、垃圾桶删除题面</li><li>题面标签上的绿色圆点表示该题面有进行中的游戏</li></ul><h4>结算</h4><ul><li>结束游戏时（开启结算功能）会生成结算摘要</li><li>包含：用时、曲目总数、开启字符数、揭示率和平均值</li><li>结算信息和完整题面均可复制分享</li></ul>'
+onlineLibName:'在线曲库 (内置)',
+guideHtml:'<h4>快速开始</h4><ul><li>导入在线/本地曲库或手动输入曲名</li><li>按需配置过滤和抽取设置</li><li>点击「解析并开始游戏」开始猜歌</li></ul><h4>多曲库支持</h4><ul><li>内置在线曲库包含常见音游，也可导入自定义本地曲库。</li><li>导入本地曲库时需按行声明包含的tag标签。</li></ul>'
 },
 ja:{
 appTitle:'曲名文字開封ヘルパー',appSubtitle:'オンラインライブラリを導入するか、手動で入力してゲームを開始',
-noticeTitle:'お知らせ',noticeContent:'初めてウェブサイトを公開するので、不手際がありましたら申し訳ありません！コピーができない場合は別のブラウザをお試しください！オンラインライブラリのインポートは少し雑なコードなので、抽出された曲名はご確認をお願いします！',
-tabImport:'オンライン曲庫',tabManual:'手動入力',uploadOnline:'オンライン曲庫を導入',uploadOnlineLoading:'導入中...',
+noticeTitle:'お知らせ',noticeContent:'初めてウェブサイトを公開するので、不手際がありましたら申し訳ありません！',
+tabLibrary:'曲庫',tabManual:'手動入力',uploadOnline:'オンライン曲庫を導入',uploadOnlineLoading:'導入中...',
+importCustom:'ローカル導入', renameLib:'名前変更', deleteLib:'削除',
+customLibName:'曲庫名 (任意)', customLibTagsPh:'許可されたタグ (1行に1つ)',
+formatReqs:'導入後、この曲庫に含まれる範囲タグを入力する必要があります。',
 fileRemove:'削除',fileStatsFormat:'{games}ゲーム / {songs}曲',
 selectRange:'ゲーム範囲を選択',selectAll:'全選択',selectNone:'クリア',
 filterTitle:'曲フィルター',filterCharTypes:'文字タイプ',filterLetter:'字母',filterJapanese:'日本語',filterHanzi:'漢字',filterAllowOther:'その他の文字を許可（記号など）',filterMinLength:'最小文字数',filterMinLengthHint:'（スペース含む、0 = 制限なし）',
@@ -627,7 +695,7 @@ filterMatchCount:'条件に合致する曲: {count}曲',filterClear:'フィル�
 extractTitle:'抽出設定',modeEqual:'総数モード',modeCustom:'カスタム数モード',
 totalCountLabel:'総抽出数',totalCountPlaceholder:'数を入力',totalCountHelper:'選択範囲から指定数をランダムに抽出します',
 customCountHelper:'ゲームごとの抽出数を指定：',generateBtn:'曲リストを生成',
-songSequence:'曲名リスト',clearSongs:'クリア',songPlaceholder:'曲名を貼り付け（1行に1曲）\n番号付き（1.曲名）も対応\n\n例：\n1.Distorted Fate\n2.Xterfusion\n3.INTERNET YAMERO',
+songSequence:'曲名リスト',clearSongs:'クリア',songPlaceholder:'曲名を貼り付け（1行に1曲）',
 sortTitle:'並び替えオプション',sortRandom:'ランダム',sortByLength:'長さ順',applySort:'並び替えを適用',
 remarkTitle:'備考',remarkPlaceholder:'備考を入力（任意）',
 parseAndStart:'解析してゲーム開始',
@@ -637,53 +705,55 @@ pauseBtn:'一時停止',resumeBtn:'再開',endGameBtn:'ゲーム終了',
 openChars:'文字を開く',resetChars:'リセット',charInputPlaceholder:'文字を入力...',
 sortedCharsLabel:'ソート済み開封文字：',statSongs:'曲数',statChars:'文字数',statPercent:'開封率',
 hideRevealed:'正解曲を非表示',hideRevealedHint:'曲名をクリックして全文表示後、このボタンでリストから非表示にします',
-hiddenLabel:'非表示',hiddenSongs:'曲',resultTitle:'結果',copyResult:'コピー',copy:'コピー',
+hiddenLabel:'非表示',hiddenSongs:'曲',resultTitle:'結果',copyResult:'コピー',copy:'コピー', exportImage:'画像出力',
 settlementTitle:'ゲーム終了',settlementSubtitle:'精算情報が生成されました。コピーして共有できます',
 settlementInfo:'精算情報',fullQuestions:'全問題',newGame:'新しいゲーム',backToEdit:'編集に戻る',
 modalTitle:'未完了のゲームがあります',modalText:'前回の未完了ゲームが検出されました。続けますか？',
 modalSheetName:'シート',modalSongCount:'曲数',modalCharCount:'開封文字数',modalTime:'経過時間',modalPercent:'開封率',
 modalNewGame:'新しいゲーム',modalContinue:'続きから',
-formatTitle:'オンライン曲庫形式ガイド',formatDesc:'オンライン曲庫ファイルは以下の形式です：',
-formatNote:'<strong>[ゲーム名]</strong> でゲームセクションを定義します。名前はサポート対象ゲームと完全に一致させる必要があります。',
-formatNote2:'<strong>曲名</strong>は各セクションの下に1行ずつ記述します。「1.」「2)」「3:」などの番号は自動的に除去されます。',
+formatTitle:'曲庫形式ガイド',formatDesc:'曲庫ファイルは以下の形式です：',
+formatNote:'<strong>[範囲名]</strong> でセクションを定義します。',
+formatNote2:'<strong>曲名</strong>は各セクションの下に1行ずつ記述します。',
 guessedPrefix:'guessed：',
 timeHours:'時間',timeMinutes:'分',timeSeconds:'秒',timeSecondsShort:'秒',timeMinutesShort:'分',
 settlementHeader:'文字開封精算：',settlementTime:'時間：',settlementTotalSongs:'総曲数：',settlementAvgPerSong:'（平均{time}/曲）',settlementOpenChars:'開封文字数：',settlementAvgPerChar:'（平均{time}/文字）',settlementRevealRate:'開封率：',songsUnit:'曲',revealClickHint:'（クリックで非表示）',
-toastNoGameTag:'有効なゲームタグが見つかりませんでした',toastParseSuccess:'{games}ゲーム、{songs}曲を解析しました',toastOnlineFail:'オンライン曲庫の導入に失敗しました。ネットワークを確認してください。',
+toastNoGameTag:'有効なタグが見つかりませんでした',toastParseSuccess:'{games}ゲーム、{songs}曲を解析しました',toastOnlineFail:'オンライン曲庫の導入に失敗しました。',
 toastSelectGame:'少なくとも1つのゲームを選択してください',toastNoMatch:'条件に合致する曲がありません',toastExtracted:'{count}曲を抽出しました',toastInvalidCount:'有効な数を入力してください',
 toastInputSongs:'先に曲名を入力してください',toastRandomized:'ランダムに並び替えました',toastSortedByLength:'長さ順に並び替えました',toastSelectSort:'並び替え方法を選択してください',toastCleared:'クリアしました',
 toastNeedSong:'少なくとも1曲の曲名を入力してください',toastGameStart:'ゲーム開始！',toastResetChars:'開封文字を全てリセットしました',
-toastNoRevealed:'正解済みの曲がありません。先に曲名をクリックして全文表示してください。',toastHidden:'{count}曲の正解済み曲を非表示にしました',
-toastRestored:'ゲームを復元しました。タイマーは一時停止中です。「再開」をクリックしてください。',toastRemoved:'曲庫を削除しました',
+toastNoRevealed:'正解済みの曲がありません。',toastHidden:'{count}曲の正解済み曲を非表示にしました',
+toastRestored:'ゲームを復元しました。',toastRemoved:'曲庫を削除しました', toastExported:'画像を出力しました', toastTagsRequired:'タグが必要です', toastLibDeleted:'曲庫を削除しました', toastLibRenamed:'名前を変更しました',
 backConfirm:'編集に戻ると現在のゲームが終了します。よろしいですか？',endConfirm:'ゲームを終了しますか？',
 noCopyContent:'コピーする内容がありません',copyFail:'コピーに失敗しました',copySuccess:'クリップボードにコピーしました',copySettlementOk:'精算情報をコピーしました',copyQuestionsOk:'全問題をコピーしました',
-settingsTitle:'設定',settingMaskTitle:'マスク文字',settingFuncTitle:'機能切替',
+settingsTitle:'設定',settingMaskTitle:'マスク文字',settingFuncTitle:'機能切替', contactTitle:'開発者に連絡',
 settingTimer:'タイマーを有効化',settingSettlement:'精算を有効化',settingSpaceHidden:'スペースもマスク文字で隠す',
 settingAutoRemark:'ゲーム範囲で備考を自動入力',settingCharSort:'開封文字をソート',settingSongLookup:'曲の来源検索を有効化',
 settingGuideTitle:'使用ガイド',closeBtn:'閉じる',cancelBtn:'キャンセル',confirmBtn:'確認',
-renameTitle:'シートの名前変更',sheetDefaultName:'シート',
+renameTitle:'名前変更',sheetDefaultName:'シート',
 toastSheetAdded:'新しいシートを追加しました',toastSheetDeleted:'シートを削除しました',toastSheetCantDelete:'最後のシートは削除できません',toastSheetRenamed:'名前を変更しました',
 autoRemarkPrefix:'範囲：',
 lookupTitle:'曲の来源',lookupNotFound:'曲庫に見つかりません',lookupInGames:'{count}個のゲームに登場：',
-guideHtml:'<h4>はじめに</h4><ul><li>オンライン曲庫を導入するか、手動で曲名を入力</li><li>フィルターや抽出設定を必要に応じて設定</li><li>「解析してゲーム開始」をクリックしてゲーム開始</li></ul><h4>オンライン曲庫</h4><ul><li>「オンライン曲庫を導入」をクリックしてプリセット曲庫データを取得</li><li>リストから必要なゲーム範囲を選択</li><li>文字タイプと長さフィルターで曲を絞り込み</li><li>抽出数を設定（総数またはゲーム別カスタム）して「曲リストを生成」</li><li>生成された曲は手動入力エリアに配置され確認可能</li></ul><h4>手動入力</h4><ul><li>「手動入力」タブに切り替え</li><li>曲名を貼り付け（1行に1曲）。番号（1. 2) 3:等）は自動除去</li></ul><h4>フィルター</h4><ul><li><b>文字タイプ：</b>曲名に含まれるべき文字タイプを選択。複数選択時、曲名は全ての選択タイプを含み、未選択のメインタイプを含まない必要があります。「その他の文字を許可」で記号等の許可が可能。</li><li><b>最小文字数：</b>曲名の最小文字数を設定（スペース含む）。0は制限なし。</li></ul><div class="guide-note">フィルターは「曲リストを生成」時のみ有効です。手動入力の曲には影響しません。</div><h4>並び替え</h4><ul><li><b>ランダム：</b>曲順をランダムにシャッフル</li><li><b>長さ順：</b>短い順にソート</li></ul><h4>ゲーム画面</h4><ul><li>入力欄に文字を入力して全曲名でその文字を開封</li><li>開封済み文字が下部に表示（設定でソート有効時は自動ソート）</li><li>曲名をクリックで全文表示、もう一度クリックで非表示</li><li>「正解曲を非表示」で現在表示中の曲をリストから削除</li><li>「コピー」で現在のマスク結果をテキストとしてコピー</li><li>「曲の来源検索」有効時、各曲名に検索ボタンが表示され、曲庫内のどのゲームに含まれるか確認可能</li></ul><h4>設定</h4><ul><li><b>マスク文字：</b>?、*、×から隠し文字の表示記号を選択</li><li><b>タイマー：</b>ゲームタイマーの表示/非表示</li><li><b>精算：</b>ゲーム終了時の精算ページの表示/非表示</li><li><b>スペースも隠す：</b>オンでスペースもマスク文字になる</li><li><b>備考自動入力：</b>ゲーム開始時に選択ゲーム範囲から自動で備考に入力</li><li><b>文字ソート：</b>開封文字のソート表示の有無</li><li><b>来源検索：</b>ゲーム画面の各曲名に検索ボタンを表示</li></ul><h4>マルチシート</h4><ul><li>複数のシートを作成して異なる問題セットを管理（例：異なる周回や難易度）</li><li>各シートの曲名、フィルター、ゲーム状態は完全に独立</li><li>+で追加、鉛筆で名前変更、ゴミ箱で削除</li><li>シートタブの緑の点は進行中のゲームがあることを示す</li></ul><h4>精算</h4><ul><li>ゲーム終了時（精算有効時）に精算サマリーが生成</li><li>含む：時間、総曲数、開封文字数、開封率、平均値</li><li>精算情報と全問題は共有用にコピー可能</li></ul>'
+onlineLibName:'オンライン曲庫 (内蔵)',
+guideHtml:'<h4>はじめに</h4><ul><li>曲庫を導入するか、手動で曲名を入力</li></ul>'
 }
 };
 let currentLang='en';
 function t(key){return(I18N[currentLang]&&I18N[currentLang][key])||I18N.en[key]||key;}
 function updateAllText(){
-document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+document.querySelectorAll('[data-i18n]').forEach(el=>{el.innerHTML=t(el.dataset.i18n);});
 document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
 document.querySelectorAll('.lang-btn').forEach(btn=>{btn.classList.toggle('active',btn.dataset.lang===currentLang);});
 document.title=t('appTitle');
 document.documentElement.lang=currentLang==='zh'?'zh-CN':(currentLang==='ja'?'ja':'en');
 document.getElementById('guideBody').innerHTML=t('guideHtml');
+updateLibrarySelect();
 if(state.currentPage===2&&cs().songs.length>0)renderResult();
 if(state.currentPage===1){updateStatusHint();updateFilterCount();updateFileStats();}
 }
 // ========== Constants ==========
-const SUPPORTED_GAMES=["Phigros","Arcaea","Orzmic","Milthm","Berry Melody","Lanota","Rotaeno","Cytus II","KALPA","Muse Dash","Paradigm:Reboot","TAKUMI³","PJSK","maimai","CHUNITHM","オンゲキ","Notanote","Rizline","DanceRail3","vivid/stasis","Groove Coaster","ChainBeeT","Liminality","RYCEAM","Dynamix","Deemo II","WACCA","OverRapid","SDVX","太鼓の達人","Circle of Sparks","Polytone","SEVEN's CODE","SHINOBI SLASH","Simple","Sparkline","Siglota","Twirdora","Tone Sphere","WAVEAT","Beatmania IIDX","BanG Dream!","DJMAX","BOF","Furrney","Other"];
+const SUPPORTED_GAMES=["Phigros","Arcaea","Orzmic","Milthm","Berry Melody","Lanota","Rotaeno","Cytus II","KALPA","Muse Dash","Paradigm:Reboot","TAKUMI³","PJSK","maimai","CHUNITHM","オンゲキ","Notanote","Rizline","DanceRail3","vivid/stasis","Groove Coaster","ChainBeeT","Liminality","RYCEAM","Dynamix","Deemo II","WACCA","OverRapid","SDVX","太鼓の達人","Circle of Sparks","Polytone","SEVEN's CODE","SHINOBI SLASH","Simple","Sparkline","Siglota","Twirdora","Tone Sphere","WAVEAT","Beatmania IIDX","BanG Dream!","DJMAX","BOF","Furrney","VOEZ","Piano Tiles 2","RAVON","ELLIA","Hachi Hachi","Zion","Other"];
 const ONLINE_LIBRARY_URL='https://raw.githubusercontent.com/FallOxygen/falloxygen.github.io/main/library/Songs.txt';
-const STORAGE_KEY='songLetterHelper_v13';
+const STORAGE_KEY='songLetterHelper_v14';
 // ========== Char Type ==========
 function isLetter(c){const code=c.charCodeAt(0);return(code>=65&&code<=90)||(code>=97&&code<=122);}
 function isHiragana(c){const code=c.charCodeAt(0);return code>=0x3040&&code<=0x309F;}
@@ -718,6 +788,8 @@ function newSheet(name){return{name:name||t('sheetDefaultName'),songInputText:''
 let state={
 sheets:[newSheet('Sheet 1')],currentSheetIndex:0,currentPage:1,activeTab:'import',
 fileName:'',currentLang:'en',
+libraries: [{id: 'online', name: 'Online Library (Built-in)'}],
+currentLibId: 'online',
 settings:{maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false}
 };
 let gameData={},elements={},timerInterval=null;
@@ -753,10 +825,49 @@ sheet.filters.allowOther=elements.filterAllowOther.checked;
 sheet.filters.minLength=parseInt(elements.filterMinLength.value)||0;
 try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}
 }
-function loadState(){try{const saved=localStorage.getItem(STORAGE_KEY);if(saved){const parsed=JSON.parse(saved);
-if(parsed.sheets&&parsed.sheets.length>0){state={...state,...parsed};if(!state.settings)state.settings={maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false};return true;}
-else if(parsed.songs){const s=newSheet('Sheet 1');s.songs=parsed.songs;s.openedChars=parsed.openedChars||'';s.revealedFullIndices=parsed.revealedFullIndices||[];s.hiddenIndices=parsed.hiddenIndices||[];s.timerSeconds=parsed.timerSeconds||0;s.timerRunning=parsed.timerRunning||false;s.timerPaused=parsed.timerPaused||false;s.gameStartTime=parsed.gameStartTime;s.totalPauseTime=parsed.totalPauseTime||0;s.pauseStartTime=parsed.pauseStartTime;s.guessedSongs=parsed.guessedSongs||[];s.currentRevealPercent=parsed.currentRevealPercent||0;s.songInputText=parsed.songInputText||'';s.remark=parsed.remark||'';s.sortType=parsed.sortType||'none';s.selectedGames=parsed.selectedGames||[];s.customCounts=parsed.customCounts||{};s.filters=parsed.filters||{charTypes:[],allowOther:false,minLength:0};state.sheets=[s];state.currentSheetIndex=0;state.currentPage=parsed.currentPage||1;state.activeTab=parsed.activeTab||'import';state.fileName=parsed.fileName||'';state.currentLang=parsed.currentLang||'en';return true;}}}catch(e){}return false;}
+function loadState(){
+try{
+const saved=localStorage.getItem(STORAGE_KEY);
+if(saved){
+const parsed=JSON.parse(saved);
+if(parsed.sheets&&parsed.sheets.length>0){
+state={...state,...parsed};
+if(!state.settings)state.settings={maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false};
+if(!state.libraries)state.libraries=[{id:'online', name:t('onlineLibName')||'Online Library'}];
+if(!state.currentLibId)state.currentLibId='online';
+return true;
+}
+}
+}catch(e){}return false;
+}
 function clearSheetGame(sheet){sheet.openedChars='';sheet.revealedFullIndices=[];sheet.hiddenIndices=[];sheet.timerSeconds=0;sheet.timerRunning=false;sheet.timerPaused=false;sheet.gameStartTime=null;sheet.totalPauseTime=0;sheet.pauseStartTime=null;sheet.guessedSongs=[];sheet.currentRevealPercent=0;}
+
+// ========== Libraries ==========
+function updateLibrarySelect() {
+  const sel = document.getElementById('librarySelect');
+  sel.innerHTML = state.libraries.map(l => {
+    let dispName = l.name;
+    if(l.id === 'online') dispName = t('onlineLibName') || 'Online Library';
+    return `<option value="${l.id}" ${l.id === state.currentLibId ? 'selected' : ''}>${escapeHtml(dispName)}</option>`;
+  }).join('');
+}
+async function loadSelectedLibrary() {
+  const libId = state.currentLibId;
+  try {
+    const data = await loadFromDB(libId === 'online' ? 'gameData' : 'library_' + libId);
+    gameData = data || {};
+  } catch(e) {
+    gameData = {};
+  }
+  
+  if(Object.keys(gameData).length > 0) {
+    elements.parsedSection.style.display = 'block';
+    renderGameList();
+  } else {
+    elements.parsedSection.style.display = 'none';
+  }
+}
+
 // ========== Timer ==========
 function startTimer(){if(timerInterval)return;const sheet=cs();sheet.timerRunning=true;if(!sheet.timerPaused)sheet.gameStartTime=Date.now()-(sheet.timerSeconds*1000)-sheet.totalPauseTime;timerInterval=setInterval(()=>{const s=cs();if(!s.timerPaused){s.timerSeconds=Math.floor((Date.now()-s.gameStartTime-s.totalPauseTime)/1000);updateTimerDisplay();saveState();}},1000);updatePauseButton();}
 function pauseTimer(){const sheet=cs();if(!sheet.timerRunning)return;if(sheet.timerPaused){if(sheet.pauseStartTime!==null)sheet.totalPauseTime+=Date.now()-sheet.pauseStartTime;sheet.timerPaused=false;sheet.pauseStartTime=null;}else{sheet.timerPaused=true;sheet.pauseStartTime=Date.now();}updatePauseButton();saveState();}
@@ -764,6 +875,7 @@ function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterva
 function resetTimer(){stopTimer();const sheet=cs();sheet.timerSeconds=0;sheet.totalPauseTime=0;sheet.pauseStartTime=null;sheet.gameStartTime=null;updateTimerDisplay();}
 function updateTimerDisplay(){const d=document.getElementById('timerDisplay');if(d)d.textContent=formatTime(cs().timerSeconds);d&&d.classList.toggle('paused',cs().timerPaused);}
 function updatePauseButton(){const btn=document.getElementById('pauseBtn');if(!btn)return;if(cs().timerPaused){btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>${t('resumeBtn')}</span>`;}else{btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg><span>${t('pauseBtn')}</span>`;}}
+
 // ========== Settlement ==========
 function showSettlement(){
 stopTimer();const sheet=cs();const totalSongs=sheet.songs.length,openedChars=sheet.openedChars.length,guessedPercent=sheet.currentRevealPercent;
@@ -780,6 +892,7 @@ let qtxt=sheet.songs.map((s,i)=>`${i+1}.${s}`).join('\n');if(sheet.remark.trim()
 document.getElementById('questionsText').value=qtxt;
 clearSheetGame(sheet);switchToPage(3);
 }
+
 // ========== Apply Settings to UI ==========
 function applySettings(){
 const s=state.settings;
@@ -793,6 +906,7 @@ document.getElementById('setCharSort').checked=s.enableCharSort;
 document.getElementById('setSongLookup').checked=s.enableSongLookup;
 if(state.currentPage===2)renderResult();
 }
+
 // ========== Page Switch ==========
 function switchToPage(pageNum,isRestore=false){
 state.currentPage=pageNum;saveState();
@@ -803,6 +917,7 @@ else if(pageNum===2){applySettings();if(isRestore){elements.charInput.value=cs()
 else if(pageNum===3){stopTimer();}
 }
 function switchTab(tabName){state.activeTab=tabName;document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.toggle('active',btn.dataset.tab===tabName);});document.querySelectorAll('.tab-content').forEach(c=>{c.classList.toggle('active',c.id==='tab-'+tabName);});saveState();}
+
 // ========== Sheet Management ==========
 function renderSheetTabs(){
 const container=document.getElementById('sheetTabs');
@@ -837,19 +952,55 @@ function addSheet(){saveCurrentSheetUI();const idx=state.sheets.length+1;state.s
 function deleteSheet(){if(state.sheets.length<=1){showToast(t('toastSheetCantDelete'),'error');return;}
 saveCurrentSheetUI();state.sheets.splice(state.currentSheetIndex,1);if(state.currentSheetIndex>=state.sheets.length)state.currentSheetIndex=state.sheets.length-1;saveState();loadSheetUI(cs());renderSheetTabs();showToast(t('toastSheetDeleted'));}
 function renameSheet(newName){if(!newName.trim())return;cs().name=newName.trim();saveState();renderSheetTabs();showToast(t('toastSheetRenamed'));}
+
 // ========== Library Parse ==========
-function parseLibrary(text){const lines=text.split('\n');const data={};let currentGame=null;for(const line of lines){const trimmed=line.trim();if(!trimmed)continue;const tagMatch=trimmed.match(/^\[(.+)\]$/);if(tagMatch){const tagName=tagMatch[1].trim();if(SUPPORTED_GAMES.includes(tagName)){currentGame=tagName;if(!data[currentGame])data[currentGame]=[];continue;}}if(currentGame&&trimmed){const songMatch=trimmed.match(/^\d+[.)\s:：]+(.+)$/);const songName=songMatch?songMatch[1].trim():trimmed;if(songName)data[currentGame].push(songName);}}for(const game in data){if(data[game].length===0)delete data[game];}return data;}
+function parseLibrary(text, allowedTags = null){
+const lines=text.split('\n');
+const data={};
+let currentGame=null;
+const validTags = allowedTags || SUPPORTED_GAMES;
+for(const line of lines){
+const trimmed=line.trim();
+if(!trimmed)continue;
+const tagMatch=trimmed.match(/^\[(.+)\]$/);
+if(tagMatch){
+const tagName=tagMatch[1].trim();
+if(validTags.includes(tagName)){
+currentGame=tagName;
+if(!data[currentGame])data[currentGame]=[];
+continue;
+}
+}
+if(currentGame&&trimmed){
+const songMatch=trimmed.match(/^\d+[.)\s:：]+(.+)$/);
+const songName=songMatch?songMatch[1].trim():trimmed;
+if(songName)data[currentGame].push(songName);
+}
+}
+for(const game in data){if(data[game].length===0)delete data[game];}
+return data;
+}
+
 function renderGameList(){
-const games=Object.keys(gameData).sort((a,b)=>SUPPORTED_GAMES.indexOf(a)-SUPPORTED_GAMES.indexOf(b));
+let games = Object.keys(gameData);
+// If online library, sort by supported games array, else alphabetical
+if (state.currentLibId === 'online') {
+  games.sort((a,b)=>SUPPORTED_GAMES.indexOf(a)-SUPPORTED_GAMES.indexOf(b));
+} else {
+  games.sort();
+}
+
 const sheet=cs();
 elements.gameList.innerHTML=games.map(game=>{const count=gameData[game].length;const checked=sheet.selectedGames.includes(game)?'checked':'';return`<div class="game-item"><label class="checkbox-wrap flex-1"><input type="checkbox" data-game="${escapeHtml(game)}" ${checked}><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="game-name">${escapeHtml(game)}</span><span class="game-count">${count}${t('songsUnit')}</span></label></div>`;}).join('');
 updateFileStats();updateCustomCounts();updateFilterCount();
 }
 function updateFileStats(){const totalGames=Object.keys(gameData).length,totalSongs=Object.values(gameData).reduce((s,a)=>s+a.length,0);document.getElementById('fileStats').textContent=t('fileStatsFormat').replace('{games}',totalGames).replace('{songs}',totalSongs);}
 function updateCustomCounts(){const games=Object.keys(gameData);const sheet=cs();elements.customCountsDiv.innerHTML=games.map(game=>{const count=gameData[game].length,savedCount=sheet.customCounts[game]||0,checked=sheet.selectedGames.includes(game);return`<div class="flex items-center gap-3 p-2 rounded-lg ${checked?'':'opacity-40'}"><span class="flex-1 text-sm truncate">${escapeHtml(game)}</span><span class="text-xs" style="color:var(--muted);">${count}${t('songsUnit')}</span><input type="number" class="count-input custom-count-input" data-game="${escapeHtml(game)}" value="${savedCount}" min="0" max="${count}" ${checked?'':'disabled'}></div>`;}).join('');}
+
 // ========== Filter ==========
 function getFilteredSongs(songs){const sheet=cs();const{charTypes,allowOther,minLength}=sheet.filters;return songs.filter(song=>checkNewFilter(song,charTypes,allowOther,minLength));}
 function updateFilterCount(){const selectedGames=Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.game);let allSongs=[];for(const game of selectedGames)if(gameData[game])allSongs=allSongs.concat(gameData[game]);const filtered=getFilteredSongs(allSongs);document.getElementById('filterCount').textContent=t('filterMatchCount').replace('{count}',filtered.length);}
+
 // ========== Extract ==========
 function generateSongs(){
 const sheet=cs();
@@ -872,7 +1023,7 @@ showToast(t('toastExtracted').replace('{count}',resultSongs.length));
 elements.songInput.value=resultSongs.map((s,i)=>`${i+1}.${s}`).join('\n');
 sheet.songInputText=elements.songInput.value;
 saveState();
-// 自动填充备注（生成曲目列表时立即填充，而不是等点击"解析并开始游戏"）
+
 if(state.settings.autoFillRemark&&sheet.selectedGames.length>0&&!elements.remarkInput.value.trim()){
     const remark=t('autoRemarkPrefix')+sheet.selectedGames.join(', ');
     elements.remarkInput.value=remark;
@@ -880,6 +1031,7 @@ if(state.settings.autoFillRemark&&sheet.selectedGames.length>0&&!elements.remark
 }
 switchTab('manual');
 }
+
 // ========== Render ==========
 function renderResult(){
 const sheet=cs();const openedSet=new Set(elements.charInput.value);
@@ -911,32 +1063,113 @@ function updateStats(songCount,percent){document.getElementById('statSongs').tex
 function updateHideStats(){const el=document.getElementById('hideStats'),cnt=document.getElementById('hiddenCount');if(cs().hiddenIndices.length>0){el.style.display='flex';cnt.textContent=cs().hiddenIndices.length;}else el.style.display='none';}
 function updateStatusHint(){const hint=document.getElementById('statusHint');if(cs().songs.length>0){hint.textContent=t('statusParsed').replace('{count}',cs().songs.length);hint.style.color='var(--accent)';}else hint.textContent='';}
 function updateCheckboxStates(){elements.lengthSortLabel.classList.toggle('disabled',elements.randomSort.checked);elements.randomSortLabel.classList.toggle('disabled',elements.lengthSort.checked);}
+
 // ========== Hide Revealed ==========
 function hideRevealedSongs(){const sheet=cs();if(sheet.revealedFullIndices.length===0){showToast(t('toastNoRevealed'),'info');return;}for(const idx of sheet.revealedFullIndices){if(!sheet.hiddenIndices.includes(idx)){sheet.hiddenIndices.push(idx);sheet.guessedSongs.push({index:idx,time:sheet.timerSeconds});}}const count=sheet.revealedFullIndices.length;sheet.revealedFullIndices=[];saveState();renderResult();showToast(t('toastHidden').replace('{count}',count));}
+
 // ========== Restore Modal ==========
 function showRestoreModal(){const sheet=cs();document.getElementById('restoreSheetName').textContent=sheet.name;document.getElementById('restoreSongCount').textContent=(sheet.songs.length-sheet.hiddenIndices.length)+t('songsUnit');document.getElementById('restoreCharCount').textContent=sheet.openedChars.length;document.getElementById('restoreTime').textContent=formatTime(sheet.timerSeconds);document.getElementById('restorePercent').textContent=sheet.currentRevealPercent+'%';document.getElementById('restoreModal').classList.add('show');}
 function hideRestoreModal(){document.getElementById('restoreModal').classList.remove('show');}
+
 // ========== Song Lookup ==========
 function showSongLookup(songName){const modal=document.getElementById('lookupModal');document.getElementById('lookupTitle').textContent=t('lookupTitle');const body=document.getElementById('lookupBody');let html='';const foundGames=[];for(const game in gameData){if(gameData[game].includes(songName))foundGames.push(game);}if(foundGames.length===0){html=`<div style="text-align:center;padding:30px;color:var(--muted);">${t('lookupNotFound')}</div>`;}else{html+=`<div style="padding:8px 14px;font-size:13px;color:var(--muted);margin-bottom:8px;">${t('lookupInGames').replace('{count}',foundGames.length)}</div>`;foundGames.forEach(game=>{html+=`<div class="lookup-item"><span class="lookup-game">${escapeHtml(game)}</span></div>`;});}body.innerHTML=html;modal.classList.add('show');}
-// ========== Online Library ==========
-async function processLibraryText(text,fileName){const data=parseLibrary(text);if(Object.keys(data).length===0){showToast(t('toastNoGameTag'),'error');return;}gameData=data;state.fileName=fileName;document.getElementById('fileName').textContent=fileName;elements.parsedSection.style.display='block';renderGameList();saveState();try{await saveToDB('gameData',gameData);}catch(e){}const gc=Object.keys(gameData).length,sc=Object.values(gameData).reduce((s,a)=>s+a.length,0);showToast(t('toastParseSuccess').replace('{games}',gc).replace('{songs}',sc));}
-async function importOnlineLibrary(){const btn=document.getElementById('importOnlineBtn');const orig=btn.innerHTML;btn.disabled=true;btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg><span>${t('uploadOnlineLoading')}</span>`;try{const response=await fetch(ONLINE_LIBRARY_URL);if(!response.ok)throw new Error(`HTTP ${response.status}`);await processLibraryText(await response.text(),t('tabImport'));}catch(e){console.error(e);showToast(t('toastOnlineFail'),'error');}finally{btn.disabled=false;btn.innerHTML=orig;}}
-// ========== Clipboard ==========
+
+// ========== Export Result Logic ==========
+function getResultTextForExport() {
+  const sheet=cs();
+  if(sheet.songs.length===0) return '';
+  const openedSet=new Set(elements.charInput.value);
+  const maskChar=state.settings.maskChar;
+  const spaceAsStar=state.settings.spaceAsStar;
+  let sortedOpened=Array.from(openedSet);
+  if(state.settings.enableCharSort) sortedOpened=sortChars(sortedOpened);
+  const displayChars=state.settings.enableCharSort?sortedOpened:Array.from(openedSet);
+  
+  let text=`${t('guessedPrefix')}${displayChars.join('')}\n`;
+  sheet.songs.forEach((song,idx)=>{
+    if(sheet.hiddenIndices.includes(idx)) return;
+    if(sheet.revealedFullIndices.includes(idx)){
+      text+=`${idx+1}. ${song}\n`;
+    } else {
+      const revealed=[];
+      for(const char of song) revealed.push(revealChar(char,openedSet,spaceAsStar,maskChar));
+      text+=`${idx+1}. ${revealed.join('')}\n`;
+    }
+  });
+  if(sheet.remark.trim()) text+=`\n[${sheet.remark.trim()}]`;
+  return text.trim();
+}
+
+// ========== Library Managers (Online & Custom) ==========
+async function processLibraryText(text,fileName, isCustom = false, customTags = null){
+const data=parseLibrary(text, customTags);
+if(Object.keys(data).length===0){showToast(t('toastNoGameTag'),'error');return;}
+gameData=data;
+
+if(isCustom) {
+  const libId = 'custom_' + Date.now();
+  state.libraries.push({ id: libId, name: fileName, isCustom: true, tags: customTags });
+  state.currentLibId = libId;
+  await saveToDB('library_' + libId, gameData);
+} else {
+  state.currentLibId = 'online';
+  await saveToDB('gameData', gameData);
+}
+
+saveState();
+updateLibrarySelect();
+
+elements.parsedSection.style.display='block';
+renderGameList();
+const gc=Object.keys(gameData).length,sc=Object.values(gameData).reduce((s,a)=>s+a.length,0);
+showToast(t('toastParseSuccess').replace('{games}',gc).replace('{songs}',sc));
+}
+
+async function importOnlineLibrary(){
+const btn=document.getElementById('importOnlineBtn');const orig=btn.innerHTML;
+btn.disabled=true;btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg><span>${t('uploadOnlineLoading')}</span>`;
+try{
+  const response=await fetch(ONLINE_LIBRARY_URL);
+  if(!response.ok)throw new Error(`HTTP ${response.status}`);
+  await processLibraryText(await response.text(),'Online Library (Built-in)', false);
+}catch(e){
+  console.error(e);showToast(t('toastOnlineFail'),'error');
+}finally{
+  btn.disabled=false;btn.innerHTML=orig;
+}
+}
+
+// ========== Clipboard & Canvas Export ==========
 async function copyText(text,successMsg,failMsg){try{await navigator.clipboard.writeText(text);showToast(successMsg);}catch(e){const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showToast(successMsg);}catch(err){showToast(failMsg,'error');}document.body.removeChild(ta);}}
+
 // ========== Init ==========
 async function init(){
-elements={toast:document.getElementById('toast'),songInput:document.getElementById('songInput'),remarkInput:document.getElementById('remarkInput'),charInput:document.getElementById('charInput'),randomSort:document.getElementById('randomSort'),lengthSort:document.getElementById('lengthSort'),randomSortLabel:document.getElementById('randomSortLabel'),lengthSortLabel:document.getElementById('lengthSortLabel'),sortToggle:document.getElementById('sortToggle'),sortContent:document.getElementById('sortContent'),hideRevealed:document.getElementById('hideRevealed'),parsedSection:document.getElementById('parsedSection'),gameList:document.getElementById('gameList'),modeEqual:document.getElementById('modeEqual'),modeCustom:document.getElementById('modeCustom'),equalMode:document.getElementById('equalMode'),customMode:document.getElementById('customMode'),customCountsDiv:document.getElementById('customCounts'),totalCount:document.getElementById('totalCount'),generateBtn:document.getElementById('generateBtn'),selectAll:document.getElementById('selectAll'),selectNone:document.getElementById('selectNone'),clearFile:document.getElementById('clearFile'),importOnlineBtn:document.getElementById('importOnlineBtn'),filterAllowOther:document.getElementById('filterAllowOther'),filterMinLength:document.getElementById('filterMinLength')};
+elements={toast:document.getElementById('toast'),songInput:document.getElementById('songInput'),remarkInput:document.getElementById('remarkInput'),charInput:document.getElementById('charInput'),randomSort:document.getElementById('randomSort'),lengthSort:document.getElementById('lengthSort'),randomSortLabel:document.getElementById('randomSortLabel'),lengthSortLabel:document.getElementById('lengthSortLabel'),sortToggle:document.getElementById('sortToggle'),sortContent:document.getElementById('sortContent'),hideRevealed:document.getElementById('hideRevealed'),parsedSection:document.getElementById('parsedSection'),gameList:document.getElementById('gameList'),modeEqual:document.getElementById('modeEqual'),modeCustom:document.getElementById('modeCustom'),equalMode:document.getElementById('equalMode'),customMode:document.getElementById('customMode'),customCountsDiv:document.getElementById('customCounts'),totalCount:document.getElementById('totalCount'),generateBtn:document.getElementById('generateBtn'),selectAll:document.getElementById('selectAll'),selectNone:document.getElementById('selectNone'),clearFile:document.getElementById('clearFile'),importOnlineBtn:document.getElementById('importOnlineBtn'),filterAllowOther:document.getElementById('filterAllowOther'),filterMinLength:document.getElementById('filterMinLength'), librarySelect:document.getElementById('librarySelect')};
 try{await openDB();}catch(e){console.error('IndexedDB failed:',e);}
 loadState();currentLang=state.currentLang||'en';
 const sheet=cs();
 elements.songInput.value=sheet.songInputText||'';elements.remarkInput.value=sheet.remark||'';elements.charInput.value=sheet.openedChars||'';elements.totalCount.value=sheet.totalCount||10;
 if(sheet.sortType==='random')elements.randomSort.checked=true;else if(sheet.sortType==='length')elements.lengthSort.checked=true;
 updateCheckboxStates();
-try{const savedGameData=await loadFromDB('gameData');if(savedGameData&&Object.keys(savedGameData).length>0){gameData=savedGameData;document.getElementById('fileName').textContent=state.fileName||t('tabImport');elements.parsedSection.style.display='block';renderGameList();sheet.filters.charTypes.forEach(f=>{const cb=document.querySelector(`#filterCharTypes input[data-chartype="${f}"]`);if(cb)cb.checked=true;});elements.filterAllowOther.checked=sheet.filters.allowOther||false;elements.filterMinLength.value=sheet.filters.minLength||0;if(sheet.extractMode==='custom'){elements.modeEqual.classList.remove('active');elements.modeCustom.classList.add('active');elements.equalMode.style.display='none';elements.customMode.style.display='block';}}}catch(e){console.warn('Load library failed:',e);}
+updateLibrarySelect();
+
+try{
+  await loadSelectedLibrary();
+  if(Object.keys(gameData).length>0){
+    sheet.filters.charTypes.forEach(f=>{const cb=document.querySelector(`#filterCharTypes input[data-chartype="${f}"]`);if(cb)cb.checked=true;});
+    elements.filterAllowOther.checked=sheet.filters.allowOther||false;
+    elements.filterMinLength.value=sheet.filters.minLength||0;
+    if(sheet.extractMode==='custom'){elements.modeEqual.classList.remove('active');elements.modeCustom.classList.add('active');elements.equalMode.style.display='none';elements.customMode.style.display='block';}
+  }
+}catch(e){console.warn('Load library failed:',e);}
+
 switchTab(state.activeTab||'import');updateAllText();renderSheetTabs();applySettings();
 if(state.currentPage===2&&sheet.songs.length>0)showRestoreModal();else{updateStatusHint();switchToPage(1);}
 bindEvents();
 }
+
+let renameTarget = 'sheet';
+
 function bindEvents(){
 // Language
 document.querySelectorAll('.lang-btn').forEach(btn=>{btn.addEventListener('click',()=>{currentLang=btn.dataset.lang;state.currentLang=currentLang;saveState();updateAllText();});});
@@ -955,15 +1188,100 @@ document.getElementById('guideToggle').addEventListener('click',()=>{const isOpe
 document.getElementById('formatToggle').addEventListener('click',()=>{const isOpen=document.getElementById('formatContent').classList.contains('open');document.getElementById('formatContent').classList.toggle('open');document.getElementById('formatToggle').classList.toggle('expanded',!isOpen);});
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>switchTab(btn.dataset.tab));});
+
 // Sort
 elements.randomSort.addEventListener('change',()=>{if(elements.randomSort.checked)elements.lengthSort.checked=false;updateCheckboxStates();saveState();});
 elements.lengthSort.addEventListener('change',()=>{if(elements.lengthSort.checked)elements.randomSort.checked=false;updateCheckboxStates();saveState();});
 elements.sortToggle.addEventListener('click',()=>{const isOpen=elements.sortContent.classList.contains('open');elements.sortContent.classList.toggle('open');elements.sortToggle.classList.toggle('expanded',!isOpen);});
 document.getElementById('applySort').addEventListener('click',()=>{let songs=parseSongs(elements.songInput.value);if(songs.length===0){showToast(t('toastInputSongs'),'error');return;}if(elements.randomSort.checked){for(let i=songs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[songs[i],songs[j]]=[songs[j],songs[i]];}showToast(t('toastRandomized'));}else if(elements.lengthSort.checked){songs.sort((a,b)=>a.length-b.length);showToast(t('toastSortedByLength'));}else{showToast(t('toastSelectSort'),'error');return;}elements.songInput.value=songs.map((s,i)=>`${i+1}.${s}`).join('\n');saveState();});
 document.getElementById('clearSongs').addEventListener('click',()=>{elements.songInput.value='';saveState();showToast(t('toastCleared'));});
-// Online library
+
+// Libraries Manager
 elements.importOnlineBtn.addEventListener('click',importOnlineLibrary);
-elements.clearFile.addEventListener('click',async()=>{gameData={};state.fileName='';elements.parsedSection.style.display='none';try{await saveToDB('gameData',{});}catch(e){}saveState();showToast(t('toastRemoved'));});
+
+elements.librarySelect.addEventListener('change', (e) => {
+  state.currentLibId = e.target.value;
+  saveState();
+  loadSelectedLibrary();
+});
+
+document.getElementById('importCustomBtn').addEventListener('click', () => {
+  document.getElementById('customLibModal').classList.add('show');
+  document.getElementById('customLibName').value = '';
+  document.getElementById('customLibTags').value = '';
+  document.getElementById('customLibFile').value = '';
+});
+
+document.getElementById('customLibCancel').addEventListener('click', () => {
+  document.getElementById('customLibModal').classList.remove('show');
+});
+
+document.getElementById('customLibConfirm').addEventListener('click', async () => {
+  const fileInput = document.getElementById('customLibFile');
+  if (!fileInput.files.length) return;
+  const file = fileInput.files[0];
+  const nameInput = document.getElementById('customLibName').value.trim() || file.name.replace('.txt','');
+  const tagsInput = document.getElementById('customLibTags').value.trim();
+  
+  if (!tagsInput) { showToast(t('toastTagsRequired'), 'error'); return; }
+  const customTags = tagsInput.split('\n').map(tg => tg.trim()).filter(tg => tg);
+  
+  try {
+    const text = await file.text();
+    await processLibraryText(text, nameInput, true, customTags);
+    document.getElementById('customLibModal').classList.remove('show');
+  } catch(e) { showToast('Error reading file', 'error'); }
+});
+
+document.getElementById('deleteLibBtn').addEventListener('click', async () => {
+  if (state.currentLibId === 'online') {
+    gameData = {};
+    await saveToDB('gameData', {});
+    elements.parsedSection.style.display = 'none';
+    showToast(t('toastRemoved'));
+    return;
+  }
+  const idx = state.libraries.findIndex(l => l.id === state.currentLibId);
+  if (idx > -1) state.libraries.splice(idx, 1);
+  state.currentLibId = 'online';
+  saveState();
+  updateLibrarySelect();
+  loadSelectedLibrary();
+  showToast(t('toastLibDeleted'));
+});
+
+// Rename logic adapted for dual use
+document.getElementById('renameSheetBtn').addEventListener('click',()=>{
+  renameTarget = 'sheet';
+  document.getElementById('renameInput').value=cs().name;
+  document.getElementById('renameModal').classList.add('show');
+  setTimeout(()=>document.getElementById('renameInput').focus(),100);
+});
+
+document.getElementById('renameLibBtn').addEventListener('click',()=>{
+  if(state.currentLibId === 'online') return;
+  renameTarget = 'library';
+  const lib = state.libraries.find(l => l.id === state.currentLibId);
+  document.getElementById('renameInput').value = lib ? lib.name : '';
+  document.getElementById('renameModal').classList.add('show');
+  setTimeout(()=>document.getElementById('renameInput').focus(),100);
+});
+
+document.getElementById('renameCancel').addEventListener('click',()=>document.getElementById('renameModal').classList.remove('show'));
+document.getElementById('renameConfirm').addEventListener('click',()=>{
+  const val = document.getElementById('renameInput').value.trim();
+  if(val) {
+    if(renameTarget === 'sheet') { renameSheet(val); }
+    else {
+      const lib = state.libraries.find(l => l.id === state.currentLibId);
+      if(lib) { lib.name = val; saveState(); updateLibrarySelect(); showToast(t('toastLibRenamed')); }
+    }
+  }
+  document.getElementById('renameModal').classList.remove('show');
+});
+
+document.getElementById('renameInput').addEventListener('keydown',e=>{if(e.key==='Enter'){document.getElementById('renameConfirm').click();}if(e.key==='Escape')document.getElementById('renameModal').classList.remove('show');});
+
 // Game list
 elements.selectAll.addEventListener('click',()=>{elements.gameList.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=true);updateCustomCounts();updateFilterCount();saveState();});
 elements.selectNone.addEventListener('click',()=>{elements.gameList.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);updateCustomCounts();updateFilterCount();saveState();});
@@ -981,9 +1299,9 @@ elements.customCountsDiv.addEventListener('input',e=>{if(e.target.classList.cont
 elements.totalCount.addEventListener('input',saveState);
 // Parse & start
 document.getElementById('parseBtn').addEventListener('click',()=>{const songs=parseSongs(elements.songInput.value);if(songs.length===0){showToast(t('toastNeedSong'),'error');return;}saveCurrentSheetUI();const sheet=cs();
-// Auto-fill remark
 if(state.settings.autoFillRemark&&sheet.selectedGames.length>0&&!sheet.remark.trim()){sheet.remark=t('autoRemarkPrefix')+sheet.selectedGames.join(', ');elements.remarkInput.value=sheet.remark;}
 resetTimer();sheet.songs=songs;sheet.openedChars='';sheet.hiddenIndices=[];sheet.revealedFullIndices=[];sheet.guessedSongs=[];sheet.currentRevealPercent=0;elements.charInput.value='';saveState();showToast(t('toastGameStart'));switchToPage(2);});
+
 // Game page
 document.getElementById('backBtn').addEventListener('click',()=>{if(confirm(t('backConfirm'))){stopTimer();clearSheetGame(cs());switchToPage(1);}});
 elements.songInput.addEventListener('input',saveState);elements.remarkInput.addEventListener('input',saveState);
@@ -992,31 +1310,65 @@ document.getElementById('resetChars').addEventListener('click',()=>{elements.cha
 elements.hideRevealed.addEventListener('click',hideRevealedSongs);
 document.getElementById('pauseBtn').addEventListener('click',pauseTimer);
 document.getElementById('endGameBtn').addEventListener('click',()=>{if(state.settings.enableSettlement){if(confirm(t('endConfirm')))showSettlement();}else{if(confirm(t('endConfirm'))){stopTimer();clearSheetGame(cs());switchToPage(1);}}});
-// Copy
-document.getElementById('copyBtn').addEventListener('click',async()=>{const sheet=cs();if(sheet.songs.length===0){showToast(t('noCopyContent'),'error');return;}const openedSet=new Set(elements.charInput.value);const maskChar=state.settings.maskChar;const spaceAsStar=state.settings.spaceAsStar;let sortedOpened=Array.from(openedSet);if(state.settings.enableCharSort)sortedOpened=sortChars(sortedOpened);const displayChars=state.settings.enableCharSort?sortedOpened:Array.from(openedSet);let text=`${t('guessedPrefix')}${displayChars.join('')}\n`;sheet.songs.forEach((song,idx)=>{if(sheet.hiddenIndices.includes(idx))return;if(sheet.revealedFullIndices.includes(idx)){text+=`${idx+1}.${song}\n`;}else{const revealed=[];for(const char of song)revealed.push(revealChar(char,openedSet,spaceAsStar,maskChar));text+=`${idx+1}.${revealed.join('')}\n`;}});if(sheet.remark.trim())text+=`[${sheet.remark.trim()}]`;copyText(text.trim(),t('copySuccess'),t('copyFail'));});
+
+// Copy & Export
+document.getElementById('copyBtn').addEventListener('click',async()=>{const text=getResultTextForExport(); if(!text){showToast(t('noCopyContent'),'error');return;} copyText(text,t('copySuccess'),t('copyFail'));});
+
+document.getElementById('exportImgBtn').addEventListener('click', () => {
+  const text = getResultTextForExport();
+  if(!text) { showToast(t('noCopyContent'), 'error'); return; }
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const lines = text.split('\n');
+  const fontSize = 18; const lineHeight = 30; const padding = 40;
+  
+  ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+  let maxWidth = 400;
+  lines.forEach(l => {
+    const w = ctx.measureText(l).width;
+    if(w > maxWidth) maxWidth = w;
+  });
+  
+  canvas.width = maxWidth + padding * 2;
+  canvas.height = lines.length * lineHeight + padding * 2;
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = '#000000';
+  ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+  ctx.textBaseline = 'top';
+  lines.forEach((line, i) => {
+    ctx.fillText(line, padding, padding + i * lineHeight);
+  });
+  
+  const link = document.createElement('a');
+  link.download = `LetterOpener_${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast(t('toastExported'));
+});
+
 document.getElementById('copySettlement').addEventListener('click',()=>copyText(document.getElementById('settlementText').value,t('copySettlementOk'),t('copyFail')));
 document.getElementById('copyQuestions').addEventListener('click',()=>copyText(document.getElementById('questionsText').value,t('copyQuestionsOk'),t('copyFail')));
+
 // Settlement page
 document.getElementById('newGameBtn').addEventListener('click',()=>{resetTimer();const sheet=cs();sheet.songs=[];sheet.hiddenIndices=[];sheet.revealedFullIndices=[];sheet.guessedSongs=[];sheet.openedChars='';sheet.currentRevealPercent=0;elements.charInput.value='';switchToPage(1);});
 document.getElementById('backToEditBtn').addEventListener('click',()=>switchToPage(1));
+
 // Restore modal
 document.getElementById('restoreContinue').addEventListener('click',()=>{hideRestoreModal();elements.charInput.value=cs().openedChars||'';switchToPage(2,true);showToast(t('toastRestored'));});
 document.getElementById('restoreNewGame').addEventListener('click',()=>{hideRestoreModal();clearSheetGame(cs());elements.charInput.value='';updateStatusHint();switchToPage(1);});
 // Lookup modal
 document.getElementById('lookupClose').addEventListener('click',()=>document.getElementById('lookupModal').classList.remove('show'));
-// Rename modal
-document.getElementById('renameSheetBtn').addEventListener('click',()=>{document.getElementById('renameInput').value=cs().name;document.getElementById('renameModal').classList.add('show');setTimeout(()=>document.getElementById('renameInput').focus(),100);});
-document.getElementById('renameCancel').addEventListener('click',()=>document.getElementById('renameModal').classList.remove('show'));
-document.getElementById('renameConfirm').addEventListener('click',()=>{renameSheet(document.getElementById('renameInput').value);document.getElementById('renameModal').classList.remove('show');});
-document.getElementById('renameInput').addEventListener('keydown',e=>{if(e.key==='Enter'){renameSheet(document.getElementById('renameInput').value);document.getElementById('renameModal').classList.remove('show');}if(e.key==='Escape')document.getElementById('renameModal').classList.remove('show');});
 // Sheet actions
 document.getElementById('addSheetBtn').addEventListener('click',addSheet);
 document.getElementById('deleteSheetBtn').addEventListener('click',deleteSheet);
 document.getElementById('sheetTabs').addEventListener('click',e=>{const tab=e.target.closest('.sheet-tab');if(tab)switchSheet(parseInt(tab.dataset.index));});
 // Close modals on overlay click
-['settingsModal','renameModal','lookupModal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');});});
+['settingsModal','renameModal','lookupModal','customLibModal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');});});
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
-  </html>
+    </html>
