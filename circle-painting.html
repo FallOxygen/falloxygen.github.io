@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画圆评分挑战</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            align-items: flex-start;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        canvas {
+            border-radius: 12px;
+            cursor: crosshair;
+            background: #0a0a0a;
+            display: block;
+            touch-action: none;
+        }
+
+        .canvas-label {
+            text-align: center;
+            margin-top: 10px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            min-width: 300px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #e94560;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .score-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .score-number {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #e94560;
+            text-shadow: 0 0 30px rgba(233, 69, 96, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .score-label {
+            font-size: 1.2rem;
+            color: #888;
+            margin-top: -10px;
+        }
+
+        .grade {
+            font-size: 1.5rem;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .grade-perfect { color: #ffd700; text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+        .grade-excellent { color: #00d9ff; }
+        .grade-good { color: #00ff88; }
+        .grade-ok { color: #ffaa00; }
+        .grade-bad { color: #ff4444; }
+
+        .stats {
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #aaa;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #c73e54);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .hint {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #e94560;
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.5;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .progress-ring.active {
+            opacity: 1;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.1; }
+        }
+
+        .guide-circle {
+            animation: pulse 2s infinite;
+        }
+
+        .history {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .history-score {
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(233, 69, 96, 0.5);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>⭕ 画圆评分挑战</h1>
+    <p class="subtitle">在画布上画一个圆，看看你能得多少分！</p>
+
+    <div class="container">
+        <div class="canvas-wrapper">
+            <canvas id="drawCanvas" width="500" height="500"></canvas>
+            <div class="canvas-label">按住鼠标 / 手指 画圆，松开自动评分</div>
+            <svg class="progress-ring" width="500" height="500" id="guideRing">
+                <circle class="guide-circle" cx="250" cy="250" r="150" 
+                    fill="none" stroke="rgba(233,69,96,0.2)" stroke-width="2" stroke-dasharray="8,4"/>
+            </svg>
+        </div>
+
+        <div class="panel">
+            <h2>📊 评分结果</h2>
+            
+            <div class="score-display">
+                <div class="score-number" id="scoreDisplay">--</div>
+                <div class="score-label">满分 100</div>
+                <div class="grade" id="gradeDisplay"></div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">圆度 (Circularity)</span>
+                    <span class="stat-value" id="circularity">--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">闭合度 (Closure)</span>
+                    <span class="stat-value" id="closure">--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">平滑度 (Smoothness)</span>
+                    <span class="stat-value" id="smoothness">--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">半径标准差</span>
+                    <span class="stat-value" id="radiusStd">--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">平均半径</span>
+                    <span class="stat-value" id="avgRadius">--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">绘制点数</span>
+                    <span class="stat-value" id="pointCount">--</span>
+                </div>
+            </div>
+
+            <div class="hint" id="hintText">
+                💡 提示：尽量画一个完整的闭合圆，速度均匀，线条流畅，得分会更高哦！
+            </div>
+
+            <button class="btn btn-primary" onclick="clearCanvas()">🗑️ 清空画布</button>
+            <button class="btn btn-secondary" onclick="toggleGuide()">👁️ 显示/隐藏辅助圆</button>
+
+            <div class="history" id="historyList" style="display:none;">
+                <h3 style="margin:15px 0 10px; font-size:1rem; color:#888;">历史记录</h3>
+                <div id="historyContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const guideRing = document.getElementById('guideRing');
+        
+        let isDrawing = false;
+        let points = [];
+        let history = [];
+        let guideVisible = false;
+
+        // 设置画布
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#e94560';
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(233, 69, 96, 0.5)';
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('mouseleave', endDraw);
+        
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+        canvas.addEventListener('touchend', endDraw);
+
+        function startDraw(e) {
+            isDrawing = true;
+            points = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const pos = getPos(e);
+            points.push(pos);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            
+            // 距离过滤，避免点过于密集
+            const last = points[points.length - 1];
+            const dist = Math.hypot(pos.x - last.x, pos.y - last.y);
+            if (dist < 3) return;
+            
+            points.push(pos);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function endDraw() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            if (points.length > 20) {
+                evaluateCircle();
+            } else {
+                document.getElementById('hintText').textContent = '⚠️ 画的太短了，请画一个完整的圆！';
+            }
+        }
+
+        function evaluateCircle() {
+            // 1. 计算几何中心
+            let sumX = 0, sumY = 0;
+            for (let p of points) {
+                sumX += p.x;
+                sumY += p.y;
+            }
+            const centerX = sumX / points.length;
+            const centerY = sumY / points.length;
+
+            // 2. 计算每个点到中心的距离（半径）
+            const radii = points.map(p => Math.hypot(p.x - centerX, p.y - centerY));
+            const avgRadius = radii.reduce((a, b) => a + b, 0) / radii.length;
+            
+            if (avgRadius < 20) {
+                document.getElementById('hintText').textContent = '⚠️ 圆太小了，请画大一点！';
+                return;
+            }
+
+            // 3. 计算半径标准差和圆度
+            const radiusVariance = radii.reduce((sum, r) => sum + Math.pow(r - avgRadius, 2), 0) / radii.length;
+            const radiusStd = Math.sqrt(radiusVariance);
+            // 圆度：标准差越小越接近1，使用指数衰减
+            const circularity = Math.exp(-radiusStd / avgRadius * 3);
+
+            // 4. 计算闭合度（起点与终点的距离相对于周长）
+            const start = points[0];
+            const end = points[points.length - 1];
+            const gapDistance = Math.hypot(end.x - start.x, end.y - start.y);
+            const circumference = 2 * Math.PI * avgRadius;
+            const closureRaw = Math.max(0, 1 - gapDistance / (circumference * 0.15));
+            // 如果gap很小，额外奖励
+            const closure = closureRaw < 0.3 ? closureRaw * 0.5 : closureRaw;
+
+            // 5. 计算平滑度（角度变化的标准差）
+            let angleChanges = [];
+            for (let i = 2; i < points.length; i++) {
+                const a = points[i - 2];
+                const b = points[i - 1];
+                const c = points[i];
+                const angle1 = Math.atan2(b.y - a.y, b.x - a.x);
+                const angle2 = Math.atan2(c.y - b.y, c.x - b.x);
+                let diff = angle2 - angle1;
+                while (diff > Math.PI) diff -= 2 * Math.PI;
+                while (diff < -Math.PI) diff += 2 * Math.PI;
+                angleChanges.push(Math.abs(diff));
+            }
+            const avgAngleChange = angleChanges.reduce((a, b) => a + b, 0) / angleChanges.length;
+            // 理想圆上相邻点角度变化应该均匀，变化越稳定越平滑
+            const angleVariance = angleChanges.reduce((sum, a) => sum + Math.pow(a - avgAngleChange, 2), 0) / angleChanges.length;
+            const smoothness = Math.exp(-angleVariance * 50);
+
+            // 6. 综合评分（加权）
+            // 圆度 50%，闭合度 25%，平滑度 25%
+            let score = circularity * 50 + closure * 25 + smoothness * 25;
+            
+            // 点数惩罚（太少或太多都不好）
+            const idealPoints = circumference / 5; // 约每5像素一个点
+            const pointRatio = Math.min(points.length / Math.max(idealPoints, 10), 2);
+            if (pointRatio < 0.5) score *= 0.8;
+            
+            // 大小惩罚（太小的圆难画准，但不惩罚）
+            if (avgRadius < 50) score *= 0.9 + (avgRadius / 50) * 0.1;
+
+            score = Math.min(100, Math.max(0, score));
+            score = Math.round(score * 100) / 100; // 精确到0.01
+
+            // 显示结果
+            displayResult(score, circularity, closure, smoothness, radiusStd, avgRadius);
+            drawAnalysis(centerX, centerY, avgRadius, radii);
+            addHistory(score);
+        }
+
+        function displayResult(score, circularity, closure, smoothness, radiusStd, avgRadius) {
+            const scoreEl = document.getElementById('scoreDisplay');
+            const gradeEl = document.getElementById('gradeDisplay');
+            
+            // 动画显示分数
+            let current = 0;
+            const step = score / 30;
+            const anim = setInterval(() => {
+                current += step;
+                if (current >= score) {
+                    current = score;
+                    clearInterval(anim);
+                }
+                scoreEl.textContent = current.toFixed(2);
+            }, 30);
+
+            // 评级
+            let grade, gradeClass, hint;
+            if (score >= 95) {
+                grade = '🏆 完美！';
+                gradeClass = 'grade-perfect';
+                hint = '🎉 太厉害了！你的圆简直可以用圆规画出来！';
+            } else if (score >= 85) {
+                grade = '✨ 优秀';
+                gradeClass = 'grade-excellent';
+                hint = '👏 非常棒！已经很接近完美的圆了！';
+            } else if (score >= 70) {
+                grade = '👍 良好';
+                gradeClass = 'grade-good';
+                hint = '💪 不错！再注意一下闭合和均匀度会更好。';
+            } else if (score >= 50) {
+                grade = '😐 一般';
+                gradeClass = 'grade-ok';
+                hint = '📏 圆有点变形，试着画得更均匀、更闭合一些。';
+            } else {
+                grade = '💔 还需努力';
+                gradeClass = 'grade-bad';
+                hint = '😅 这看起来不太像圆哦，慢慢来，注意保持手稳！';
+            }
+
+            gradeEl.textContent = grade;
+            gradeEl.className = 'grade ' + gradeClass;
+            document.getElementById('hintText').textContent = hint;
+
+            document.getElementById('circularity').textContent = (circularity * 100).toFixed(2) + '%';
+            document.getElementById('closure').textContent = (closure * 100).toFixed(2) + '%';
+            document.getElementById('smoothness').textContent = (smoothness * 100).toFixed(2) + '%';
+            document.getElementById('radiusStd').textContent = radiusStd.toFixed(2) + ' px';
+            document.getElementById('avgRadius').textContent = avgRadius.toFixed(2) + ' px';
+            document.getElementById('pointCount').textContent = points.length;
+        }
+
+        function drawAnalysis(cx, cy, avgRadius, radii) {
+            // 绘制分析辅助线
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            
+            // 中心点
+            ctx.fillStyle = '#00d9ff';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 理想圆
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.arc(cx, cy, avgRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // 最大/最小半径标记
+            const maxR = Math.max(...radii);
+            const minR = Math.min(...radii);
+            
+            ctx.strokeStyle = '#ffaa00';
+            ctx.beginPath();
+            ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ff4444';
+            ctx.beginPath();
+            ctx.arc(cx, cy, minR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            points = [];
+            document.getElementById('scoreDisplay').textContent = '--';
+            document.getElementById('gradeDisplay').textContent = '';
+            document.getElementById('circularity').textContent = '--';
+            document.getElementById('closure').textContent = '--';
+            document.getElementById('smoothness').textContent = '--';
+            document.getElementById('radiusStd').textContent = '--';
+            document.getElementById('avgRadius').textContent = '--';
+            document.getElementById('pointCount').textContent = '--';
+            document.getElementById('hintText').textContent = '💡 提示：尽量画一个完整的闭合圆，速度均匀，线条流畅，得分会更高哦！';
+        }
+
+        function toggleGuide() {
+            guideVisible = !guideVisible;
+            guideRing.classList.toggle('active', guideVisible);
+        }
+
+        function addHistory(score) {
+            history.unshift({ score, time: new Date().toLocaleTimeString() });
+            if (history.length > 10) history.pop();
+            
+            const list = document.getElementById('historyList');
+            const content = document.getElementById('historyContent');
+            list.style.display = 'block';
+            
+            content.innerHTML = history.map(h => `
+                <div class="history-item">
+                    <span>${h.time}</span>
+                    <span class="history-score">${h.score.toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
