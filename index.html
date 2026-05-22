@@ -137,17 +137,6 @@ textarea.input-area{resize:vertical;line-height:1.8}
 .format-example{background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;overflow-x:auto;margin:10px 0;color:var(--fg)}
 .format-note{color:var(--muted);font-size:13px;line-height:1.8;margin-top:8px}
 .format-note strong{color:var(--warning);font-weight:600}
-.sheet-bar{display:flex;align-items:center;gap:4px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px}
-.sheet-tabs{display:flex;gap:2px;flex:1;overflow-x:auto;min-width:0}
-.sheet-tab{padding:8px 18px;border-radius:8px 8px 0 0;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;border:1px solid transparent;border-bottom:none;background:rgba(0,0,0,0.2);position:relative;flex-shrink:0}
-.sheet-tab:hover{color:var(--fg);background:rgba(0,0,0,0.3)}
-.sheet-tab.active{color:var(--accent);background:var(--card);border-color:var(--border)}
-.sheet-tab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--card)}
-.sheet-tab .game-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--success);margin-left:8px;vertical-align:middle}
-.sheet-actions{display:flex;gap:4px;flex-shrink:0}
-.sheet-action-btn{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;font-size:14px}
-.sheet-action-btn:hover{color:var(--fg);border-color:var(--accent);background:rgba(255,255,255,0.03)}
-.sheet-action-btn.danger:hover{color:var(--danger);border-color:var(--danger)}
 .mask-options{display:flex;gap:10px}
 .mask-option{flex:1;padding:14px 10px;border-radius:12px;border:2px solid var(--border);background:rgba(0,0,0,0.3);cursor:pointer;transition:all .2s;text-align:center}
 .mask-option:hover{border-color:var(--accent)}
@@ -190,7 +179,6 @@ textarea.input-area{resize:vertical;line-height:1.8}
 .lang-bar{padding:6px 10px}
 .lang-btn{padding:4px 10px;font-size:12px}
 .settings-modal .modal-content{max-width:95%;padding:20px}
-.sheet-tab{padding:6px 12px;font-size:12px}
 }
 </style>
 </head>
@@ -233,6 +221,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <label class="checkbox-wrap"><input type="checkbox" id="setAutoFillRemark"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="settingAutoRemark">Auto-fill Remark with Game Range</span></label>
 <label class="checkbox-wrap"><input type="checkbox" id="setCharSort" checked><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="settingCharSort">Sort Opened Characters</span></label>
 <label class="checkbox-wrap"><input type="checkbox" id="setSongLookup"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="settingSongLookup">Enable Song Source Lookup</span></label>
+<label class="checkbox-wrap"><input type="checkbox" id="setFixedImageRatio"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="settingFixedRatio">Fixed Export Image Ratio (9:16)</span></label>
 </div>
 <div class="settings-section">
 <div class="collapse-header" id="guideToggle">
@@ -287,7 +276,6 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div class="modal-title" style="color:var(--accent);" data-i18n="modalTitle">Found Unfinished Game</div>
 <div class="modal-text" data-i18n="modalText">An unfinished game was detected. Continue?</div>
 <div class="modal-info">
-<div class="modal-info-item"><span class="modal-info-label" data-i18n="modalSheetName">Sheet</span><span class="modal-info-value" id="restoreSheetName">-</span></div>
 <div class="modal-info-item"><span class="modal-info-label" data-i18n="modalSongCount">Songs</span><span class="modal-info-value" id="restoreSongCount">0</span></div>
 <div class="modal-info-item"><span class="modal-info-label" data-i18n="modalCharCount">Opened Chars</span><span class="modal-info-value" id="restoreCharCount">0</span></div>
 <div class="modal-info-item"><span class="modal-info-label" data-i18n="modalTime">Time</span><span class="modal-info-value" id="restoreTime">00:00:00</span></div>
@@ -318,21 +306,6 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div class="notice-box">
 <div class="title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span data-i18n="noticeTitle">Notice</span></div>
 <div class="content" data-i18n="noticeContent">First time deploying a website, apologies for any rough edges! If copy doesn't work, try another browser. The online library import is a bit of spaghetti code, so please double-check the extracted song names!</div>
-</div>
-
-<div class="sheet-bar" id="sheetBar">
-<div class="sheet-tabs" id="sheetTabs"></div>
-<div class="sheet-actions">
-<button class="sheet-action-btn" id="addSheetBtn" title="Add">
-<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-</button>
-<button class="sheet-action-btn" id="renameSheetBtn" title="Rename">
-<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-</button>
-<button class="sheet-action-btn danger" id="deleteSheetBtn" title="Delete">
-<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-</button>
-</div>
 </div>
 
 <div class="tabs">
@@ -599,7 +572,7 @@ hiddenLabel:'Hidden',hiddenSongs:'songs',resultTitle:'Result',copyResult:'Copy',
 settlementTitle:'Game Over',settlementSubtitle:'Settlement info generated, ready to copy and share',
 settlementInfo:'Settlement Info',fullQuestions:'Full Questions',newGame:'New Game',backToEdit:'Back to Edit',
 modalTitle:'Found Unfinished Game',modalText:'An unfinished game was detected. Continue?',
-modalSheetName:'Sheet',modalSongCount:'Songs',modalCharCount:'Opened Chars',modalTime:'Time',modalPercent:'Reveal Rate',
+modalSongCount:'Songs',modalCharCount:'Opened Chars',modalTime:'Time',modalPercent:'Reveal Rate',
 modalNewGame:'New Game',modalContinue:'Continue',
 formatTitle:'Library Format',formatDesc:'The library file uses the following structure:',
 formatNote:'<strong>[GameName]</strong> defines a game section. The name must match a defined tag.',
@@ -618,9 +591,9 @@ noCopyContent:'Nothing to copy',copyFail:'Copy failed',copySuccess:'Copied to cl
 settingsTitle:'Settings',settingMaskTitle:'Mask Character',settingFuncTitle:'Function Toggles', contactTitle: 'Contact Developer',
 settingTimer:'Enable Timer',settingSettlement:'Enable Settlement',settingSpaceHidden:'Hide Spaces as Mask Character',
 settingAutoRemark:'Auto-fill Remark with Game Range',settingCharSort:'Sort Opened Characters',settingSongLookup:'Enable Song Source Lookup',
+settingFixedRatio: 'Fixed Export Image Ratio (9:16)',
 settingGuideTitle:'Usage Guide',closeBtn:'Close',cancelBtn:'Cancel',confirmBtn:'Confirm',
-renameTitle:'Rename',sheetDefaultName:'Sheet',
-toastSheetAdded:'New sheet added',toastSheetDeleted:'Sheet deleted',toastSheetCantDelete:'Cannot delete the last sheet',toastSheetRenamed:'Sheet renamed',
+renameTitle:'Rename',
 autoRemarkPrefix:'Range: ',
 lookupTitle:'Song Source',lookupNotFound:'Not found in library',lookupInGames:'Appears in {count} game(s):',
 onlineLibName:'Online Library (Built-in)',
@@ -654,7 +627,7 @@ hiddenLabel:'已隐藏',hiddenSongs:'首曲目',resultTitle:'解析结果',copyR
 settlementTitle:'游戏结束',settlementSubtitle:'结算信息已生成，可复制分享',
 settlementInfo:'结算信息',fullQuestions:'完整题面',newGame:'开始新游戏',backToEdit:'返回编辑',
 modalTitle:'发现未完成的游戏',modalText:'检测到您上次有未完成的游戏，是否继续？',
-modalSheetName:'题面',modalSongCount:'曲目数量',modalCharCount:'已开字符',modalTime:'已用时间',modalPercent:'揭示率',
+modalSongCount:'曲目数量',modalCharCount:'已开字符',modalTime:'已用时间',modalPercent:'揭示率',
 modalNewGame:'开始新游戏',modalContinue:'继续游戏',
 formatTitle:'曲库格式说明',formatDesc:'曲库文件使用以下格式：',
 formatNote:'<strong>[范围名称]</strong> 定义游戏分区。',
@@ -673,9 +646,9 @@ noCopyContent:'没有可复制的内容',copyFail:'复制失败，请手动复�
 settingsTitle:'设置',settingMaskTitle:'遮罩符号',settingFuncTitle:'功能开关', contactTitle:'联系开发者',
 settingTimer:'开启计时功能',settingSettlement:'开启结算功能',settingSpaceHidden:'空格也隐藏为遮罩符号',
 settingAutoRemark:'自动根据游戏范围填充备注',settingCharSort:'开启字符排序',settingSongLookup:'开启曲目来源查询',
+settingFixedRatio: '固定导出图片 9:16 比例',
 settingGuideTitle:'使用指南',closeBtn:'关闭',cancelBtn:'取消',confirmBtn:'确认',
-renameTitle:'重命名',sheetDefaultName:'题面',
-toastSheetAdded:'已添加新题面',toastSheetDeleted:'已删除题面',toastSheetCantDelete:'无法删除最后一个题面',toastSheetRenamed:'已重命名',
+renameTitle:'重命名',
 autoRemarkPrefix:'范围：',
 lookupTitle:'曲目来源',lookupNotFound:'未在曲库中找到',lookupInGames:'出现在 {count} 个游戏中：',
 onlineLibName:'在线曲库 (内置)',
@@ -709,7 +682,7 @@ hiddenLabel:'非表示',hiddenSongs:'曲',resultTitle:'結果',copyResult:'コ�
 settlementTitle:'ゲーム終了',settlementSubtitle:'精算情報が生成されました。コピーして共有できます',
 settlementInfo:'精算情報',fullQuestions:'全問題',newGame:'新しいゲーム',backToEdit:'編集に戻る',
 modalTitle:'未完了のゲームがあります',modalText:'前回の未完了ゲームが検出されました。続けますか？',
-modalSheetName:'シート',modalSongCount:'曲数',modalCharCount:'開封文字数',modalTime:'経過時間',modalPercent:'開封率',
+modalSongCount:'曲数',modalCharCount:'開封文字数',modalTime:'経過時間',modalPercent:'開封率',
 modalNewGame:'新しいゲーム',modalContinue:'続きから',
 formatTitle:'曲庫形式ガイド',formatDesc:'曲庫ファイルは以下の形式です：',
 formatNote:'<strong>[範囲名]</strong> でセクションを定義します。',
@@ -728,9 +701,9 @@ noCopyContent:'コピーする内容がありません',copyFail:'コピーに�
 settingsTitle:'設定',settingMaskTitle:'マスク文字',settingFuncTitle:'機能切替', contactTitle:'開発者に連絡',
 settingTimer:'タイマーを有効化',settingSettlement:'精算を有効化',settingSpaceHidden:'スペースもマスク文字で隠す',
 settingAutoRemark:'ゲーム範囲で備考を自動入力',settingCharSort:'開封文字をソート',settingSongLookup:'曲の来源検索を有効化',
+settingFixedRatio: '画像出力の比率を9:16に固定',
 settingGuideTitle:'使用ガイド',closeBtn:'閉じる',cancelBtn:'キャンセル',confirmBtn:'確認',
-renameTitle:'名前変更',sheetDefaultName:'シート',
-toastSheetAdded:'新しいシートを追加しました',toastSheetDeleted:'シートを削除しました',toastSheetCantDelete:'最後のシートは削除できません',toastSheetRenamed:'名前を変更しました',
+renameTitle:'名前変更',
 autoRemarkPrefix:'範囲：',
 lookupTitle:'曲の来源',lookupNotFound:'曲庫に見つかりません',lookupInGames:'{count}個のゲームに登場：',
 onlineLibName:'オンライン曲庫 (内蔵)',
@@ -783,17 +756,17 @@ function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(D
 function saveToDB(key,data){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readwrite');tx.objectStore(STORE_NAME).put({id:key,data:data}).onsuccess=()=>resolve();tx.onerror=()=>reject(tx.error);});}
 function loadFromDB(key){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readonly');const r=tx.objectStore(STORE_NAME).get(key);r.onsuccess=()=>resolve(r.result?r.result.data:null);r.onerror=()=>reject(r.error);});}
 // ========== Default Sheet ==========
-function newSheet(name){return{name:name||t('sheetDefaultName'),songInputText:'',songs:[],remark:'',sortType:'none',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{charTypes:[],allowOther:false,minLength:0},openedChars:'',revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0};}
+function newSheet(){return{songInputText:'',songs:[],remark:'',sortType:'none',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{charTypes:[],allowOther:false,minLength:0},openedChars:'',revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0};}
 // ========== State ==========
 let state={
-sheets:[newSheet('Sheet 1')],currentSheetIndex:0,currentPage:1,activeTab:'import',
+sheets:[newSheet()],currentPage:1,activeTab:'import',
 fileName:'',currentLang:'en',
 libraries: [{id: 'online', name: 'Online Library (Built-in)'}],
 currentLibId: 'online',
-settings:{maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false}
+settings:{maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false,fixedImageRatio:false}
 };
 let gameData={},elements={},timerInterval=null;
-function cs(){return state.sheets[state.currentSheetIndex]||state.sheets[0];}
+function cs(){return state.sheets[0];}
 // ========== Utils ==========
 function showToast(message,type='success'){const toast=elements.toast;toast.textContent=message;toast.className='toast '+type;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2800);}
 function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
@@ -832,7 +805,9 @@ if(saved){
 const parsed=JSON.parse(saved);
 if(parsed.sheets&&parsed.sheets.length>0){
 state={...state,...parsed};
-if(!state.settings)state.settings={maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false};
+if(state.sheets.length>1) state.sheets=[state.sheets[state.currentSheetIndex||0]];
+if(!state.settings)state.settings={maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false,fixedImageRatio:false};
+if(state.settings.fixedImageRatio===undefined)state.settings.fixedImageRatio=false;
 if(!state.libraries)state.libraries=[{id:'online', name:t('onlineLibName')||'Online Library'}];
 if(!state.currentLibId)state.currentLibId='online';
 return true;
@@ -904,6 +879,7 @@ document.getElementById('setSpaceAsStar').checked=s.spaceAsStar;
 document.getElementById('setAutoFillRemark').checked=s.autoFillRemark;
 document.getElementById('setCharSort').checked=s.enableCharSort;
 document.getElementById('setSongLookup').checked=s.enableSongLookup;
+document.getElementById('setFixedImageRatio').checked=s.fixedImageRatio;
 if(state.currentPage===2)renderResult();
 }
 
@@ -912,22 +888,13 @@ function switchToPage(pageNum,isRestore=false){
 state.currentPage=pageNum;saveState();
 document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.classList.add('hidden');});
 const pageEl=document.getElementById('page'+pageNum);pageEl.classList.remove('hidden');pageEl.classList.add('active');
-if(pageNum===1){updateStatusHint();resetTimer();renderSheetTabs();applySettings();}
+if(pageNum===1){updateStatusHint();resetTimer();applySettings();}
 else if(pageNum===2){applySettings();if(isRestore){elements.charInput.value=cs().openedChars||'';const sheet=cs();sheet.timerRunning=true;sheet.timerPaused=true;sheet.gameStartTime=Date.now()-sheet.timerSeconds*1000-sheet.totalPauseTime;sheet.pauseStartTime=Date.now();updateTimerDisplay();updatePauseButton();startTimer();}else{startTimer();}renderResult();}
 else if(pageNum===3){stopTimer();}
 }
 function switchTab(tabName){state.activeTab=tabName;document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.toggle('active',btn.dataset.tab===tabName);});document.querySelectorAll('.tab-content').forEach(c=>{c.classList.toggle('active',c.id==='tab-'+tabName);});saveState();}
 
 // ========== Sheet Management ==========
-function renderSheetTabs(){
-const container=document.getElementById('sheetTabs');
-container.innerHTML=state.sheets.map((sheet,i)=>{
-const active=i===state.currentSheetIndex?'active':'';
-const dot=sheet.songs.length>0?'<span class="game-dot"></span>':'';
-return`<div class="sheet-tab ${active}" data-index="${i}">${escapeHtml(sheet.name)}${dot}</div>`;
-}).join('');
-}
-function saveCurrentSheetUI(){const sheet=cs();sheet.songInputText=elements.songInput.value;sheet.remark=elements.remarkInput.value;sheet.sortType=elements.randomSort.checked?'random':(elements.lengthSort.checked?'length':'none');sheet.openedChars=elements.charInput.value;}
 function loadSheetUI(sheet){
 elements.songInput.value=sheet.songInputText||'';
 elements.remarkInput.value=sheet.remark||'';
@@ -943,15 +910,6 @@ elements.filterMinLength.value=sheet.filters.minLength||0;
 if(sheet.extractMode==='custom'){elements.modeEqual.classList.remove('active');elements.modeCustom.classList.add('active');elements.equalMode.style.display='none';elements.customMode.style.display='block';}else{elements.modeEqual.classList.add('active');elements.modeCustom.classList.remove('active');elements.equalMode.style.display='block';elements.customMode.style.display='none';}
 updateFilterCount();updateStatusHint();
 }
-function switchSheet(idx){
-if(idx===state.currentSheetIndex)return;
-saveCurrentSheetUI();state.currentSheetIndex=idx;saveState();
-loadSheetUI(cs());renderSheetTabs();
-}
-function addSheet(){saveCurrentSheetUI();const idx=state.sheets.length+1;state.sheets.push(newSheet(t('sheetDefaultName')+' '+(idx)));state.currentSheetIndex=state.sheets.length-1;saveState();loadSheetUI(cs());renderSheetTabs();showToast(t('toastSheetAdded'));}
-function deleteSheet(){if(state.sheets.length<=1){showToast(t('toastSheetCantDelete'),'error');return;}
-saveCurrentSheetUI();state.sheets.splice(state.currentSheetIndex,1);if(state.currentSheetIndex>=state.sheets.length)state.currentSheetIndex=state.sheets.length-1;saveState();loadSheetUI(cs());renderSheetTabs();showToast(t('toastSheetDeleted'));}
-function renameSheet(newName){if(!newName.trim())return;cs().name=newName.trim();saveState();renderSheetTabs();showToast(t('toastSheetRenamed'));}
 
 // ========== Library Parse ==========
 function parseLibrary(text, allowedTags = null){
@@ -1022,13 +980,14 @@ showToast(t('toastExtracted').replace('{count}',resultSongs.length));
 }
 elements.songInput.value=resultSongs.map((s,i)=>`${i+1}.${s}`).join('\n');
 sheet.songInputText=elements.songInput.value;
-saveState();
 
-if(state.settings.autoFillRemark&&sheet.selectedGames.length>0&&!elements.remarkInput.value.trim()){
+if(state.settings.autoFillRemark&&sheet.selectedGames.length>0){
     const remark=t('autoRemarkPrefix')+sheet.selectedGames.join(', ');
     elements.remarkInput.value=remark;
     sheet.remark=remark;
 }
+
+saveState();
 switchTab('manual');
 }
 
@@ -1068,7 +1027,7 @@ function updateCheckboxStates(){elements.lengthSortLabel.classList.toggle('disab
 function hideRevealedSongs(){const sheet=cs();if(sheet.revealedFullIndices.length===0){showToast(t('toastNoRevealed'),'info');return;}for(const idx of sheet.revealedFullIndices){if(!sheet.hiddenIndices.includes(idx)){sheet.hiddenIndices.push(idx);sheet.guessedSongs.push({index:idx,time:sheet.timerSeconds});}}const count=sheet.revealedFullIndices.length;sheet.revealedFullIndices=[];saveState();renderResult();showToast(t('toastHidden').replace('{count}',count));}
 
 // ========== Restore Modal ==========
-function showRestoreModal(){const sheet=cs();document.getElementById('restoreSheetName').textContent=sheet.name;document.getElementById('restoreSongCount').textContent=(sheet.songs.length-sheet.hiddenIndices.length)+t('songsUnit');document.getElementById('restoreCharCount').textContent=sheet.openedChars.length;document.getElementById('restoreTime').textContent=formatTime(sheet.timerSeconds);document.getElementById('restorePercent').textContent=sheet.currentRevealPercent+'%';document.getElementById('restoreModal').classList.add('show');}
+function showRestoreModal(){const sheet=cs();document.getElementById('restoreSongCount').textContent=(sheet.songs.length-sheet.hiddenIndices.length)+t('songsUnit');document.getElementById('restoreCharCount').textContent=sheet.openedChars.length;document.getElementById('restoreTime').textContent=formatTime(sheet.timerSeconds);document.getElementById('restorePercent').textContent=sheet.currentRevealPercent+'%';document.getElementById('restoreModal').classList.add('show');}
 function hideRestoreModal(){document.getElementById('restoreModal').classList.remove('show');}
 
 // ========== Song Lookup ==========
@@ -1163,12 +1122,10 @@ try{
   }
 }catch(e){console.warn('Load library failed:',e);}
 
-switchTab(state.activeTab||'import');updateAllText();renderSheetTabs();applySettings();
+switchTab(state.activeTab||'import');updateAllText();applySettings();
 if(state.currentPage===2&&sheet.songs.length>0)showRestoreModal();else{updateStatusHint();switchToPage(1);}
 bindEvents();
 }
-
-let renameTarget = 'sheet';
 
 function bindEvents(){
 // Language
@@ -1183,6 +1140,8 @@ document.getElementById('setSpaceAsStar').addEventListener('change',e=>{state.se
 document.getElementById('setAutoFillRemark').addEventListener('change',e=>{state.settings.autoFillRemark=e.target.checked;saveState();});
 document.getElementById('setCharSort').addEventListener('change',e=>{state.settings.enableCharSort=e.target.checked;saveState();if(state.currentPage===2)renderResult();});
 document.getElementById('setSongLookup').addEventListener('change',e=>{state.settings.enableSongLookup=e.target.checked;saveState();if(state.currentPage===2)renderResult();});
+document.getElementById('setFixedImageRatio').addEventListener('change',e=>{state.settings.fixedImageRatio=e.target.checked;saveState();});
+
 document.getElementById('guideToggle').addEventListener('click',()=>{const isOpen=document.getElementById('guideContent').classList.contains('open');document.getElementById('guideContent').classList.toggle('open');document.getElementById('guideToggle').classList.toggle('expanded',!isOpen);});
 // Format help
 document.getElementById('formatToggle').addEventListener('click',()=>{const isOpen=document.getElementById('formatContent').classList.contains('open');document.getElementById('formatContent').classList.toggle('open');document.getElementById('formatToggle').classList.toggle('expanded',!isOpen);});
@@ -1250,17 +1209,9 @@ document.getElementById('deleteLibBtn').addEventListener('click', async () => {
   showToast(t('toastLibDeleted'));
 });
 
-// Rename logic adapted for dual use
-document.getElementById('renameSheetBtn').addEventListener('click',()=>{
-  renameTarget = 'sheet';
-  document.getElementById('renameInput').value=cs().name;
-  document.getElementById('renameModal').classList.add('show');
-  setTimeout(()=>document.getElementById('renameInput').focus(),100);
-});
-
+// Rename library logic
 document.getElementById('renameLibBtn').addEventListener('click',()=>{
   if(state.currentLibId === 'online') return;
-  renameTarget = 'library';
   const lib = state.libraries.find(l => l.id === state.currentLibId);
   document.getElementById('renameInput').value = lib ? lib.name : '';
   document.getElementById('renameModal').classList.add('show');
@@ -1271,11 +1222,8 @@ document.getElementById('renameCancel').addEventListener('click',()=>document.ge
 document.getElementById('renameConfirm').addEventListener('click',()=>{
   const val = document.getElementById('renameInput').value.trim();
   if(val) {
-    if(renameTarget === 'sheet') { renameSheet(val); }
-    else {
-      const lib = state.libraries.find(l => l.id === state.currentLibId);
-      if(lib) { lib.name = val; saveState(); updateLibrarySelect(); showToast(t('toastLibRenamed')); }
-    }
+    const lib = state.libraries.find(l => l.id === state.currentLibId);
+    if(lib) { lib.name = val; saveState(); updateLibrarySelect(); showToast(t('toastLibRenamed')); }
   }
   document.getElementById('renameModal').classList.remove('show');
 });
@@ -1298,9 +1246,18 @@ elements.generateBtn.addEventListener('click',generateSongs);
 elements.customCountsDiv.addEventListener('input',e=>{if(e.target.classList.contains('custom-count-input'))saveState();});
 elements.totalCount.addEventListener('input',saveState);
 // Parse & start
-document.getElementById('parseBtn').addEventListener('click',()=>{const songs=parseSongs(elements.songInput.value);if(songs.length===0){showToast(t('toastNeedSong'),'error');return;}saveCurrentSheetUI();const sheet=cs();
-if(state.settings.autoFillRemark&&sheet.selectedGames.length>0&&!sheet.remark.trim()){sheet.remark=t('autoRemarkPrefix')+sheet.selectedGames.join(', ');elements.remarkInput.value=sheet.remark;}
-resetTimer();sheet.songs=songs;sheet.openedChars='';sheet.hiddenIndices=[];sheet.revealedFullIndices=[];sheet.guessedSongs=[];sheet.currentRevealPercent=0;elements.charInput.value='';saveState();showToast(t('toastGameStart'));switchToPage(2);});
+document.getElementById('parseBtn').addEventListener('click',()=>{
+const songs=parseSongs(elements.songInput.value);
+if(songs.length===0){showToast(t('toastNeedSong'),'error');return;}
+const sheet=cs();
+
+if(state.settings.autoFillRemark&&sheet.selectedGames.length>0){
+    sheet.remark=t('autoRemarkPrefix')+sheet.selectedGames.join(', ');
+    elements.remarkInput.value=sheet.remark;
+}
+
+resetTimer();sheet.songs=songs;sheet.openedChars='';sheet.hiddenIndices=[];sheet.revealedFullIndices=[];sheet.guessedSongs=[];sheet.currentRevealPercent=0;elements.charInput.value='';saveState();showToast(t('toastGameStart'));switchToPage(2);
+});
 
 // Game page
 document.getElementById('backBtn').addEventListener('click',()=>{if(confirm(t('backConfirm'))){stopTimer();clearSheetGame(cs());switchToPage(1);}});
@@ -1320,28 +1277,81 @@ document.getElementById('exportImgBtn').addEventListener('click', () => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const lines = text.split('\n');
-  const fontSize = 18; const lineHeight = 30; const padding = 40;
-  
-  ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
-  let maxWidth = 400;
-  lines.forEach(l => {
-    const w = ctx.measureText(l).width;
-    if(w > maxWidth) maxWidth = w;
-  });
-  
-  canvas.width = maxWidth + padding * 2;
-  canvas.height = lines.length * lineHeight + padding * 2;
-  
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.fillStyle = '#000000';
-  ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
-  ctx.textBaseline = 'top';
-  lines.forEach((line, i) => {
-    ctx.fillText(line, padding, padding + i * lineHeight);
-  });
-  
+
+  if (state.settings.fixedImageRatio) {
+    const baseWidth = 1080;
+    const targetHeight = 1920;
+    const paddingX = 80;
+    const paddingY = 100;
+    const maxTextWidth = baseWidth - paddingX * 2;
+    const fontSize = 42;
+    const lineHeight = 64;
+
+    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+
+    const wrappedLines = [];
+    lines.forEach(line => {
+      if (line === '') { wrappedLines.push(''); return; }
+      let currentLine = '';
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const testLine = currentLine + char;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxTextWidth && i > 0) {
+          wrappedLines.push(currentLine);
+          currentLine = char;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      wrappedLines.push(currentLine);
+    });
+
+    const contentHeight = wrappedLines.length * lineHeight;
+    const finalHeight = Math.max(targetHeight, contentHeight + paddingY * 2);
+
+    canvas.width = baseWidth;
+    canvas.height = finalHeight;
+
+    ctx.fillStyle = '#12151c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#e8eaed';
+    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+    ctx.textBaseline = 'top';
+
+    let startY = paddingY;
+    if (finalHeight === targetHeight) {
+        startY = (targetHeight - contentHeight) / 2;
+    }
+
+    wrappedLines.forEach((line, i) => {
+      ctx.fillText(line, paddingX, startY + i * lineHeight);
+    });
+
+  } else {
+    const fontSize = 24; const lineHeight = 40; const padding = 40;
+    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+    let maxWidth = 400;
+    lines.forEach(l => {
+      const w = ctx.measureText(l).width;
+      if(w > maxWidth) maxWidth = w;
+    });
+
+    canvas.width = maxWidth + padding * 2;
+    canvas.height = lines.length * lineHeight + padding * 2;
+
+    ctx.fillStyle = '#12151c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#e8eaed';
+    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+    ctx.textBaseline = 'top';
+    lines.forEach((line, i) => {
+      ctx.fillText(line, padding, padding + i * lineHeight);
+    });
+  }
+
   const link = document.createElement('a');
   link.download = `LetterOpener_${Date.now()}.png`;
   link.href = canvas.toDataURL('image/png');
@@ -1361,14 +1371,11 @@ document.getElementById('restoreContinue').addEventListener('click',()=>{hideRes
 document.getElementById('restoreNewGame').addEventListener('click',()=>{hideRestoreModal();clearSheetGame(cs());elements.charInput.value='';updateStatusHint();switchToPage(1);});
 // Lookup modal
 document.getElementById('lookupClose').addEventListener('click',()=>document.getElementById('lookupModal').classList.remove('show'));
-// Sheet actions
-document.getElementById('addSheetBtn').addEventListener('click',addSheet);
-document.getElementById('deleteSheetBtn').addEventListener('click',deleteSheet);
-document.getElementById('sheetTabs').addEventListener('click',e=>{const tab=e.target.closest('.sheet-tab');if(tab)switchSheet(parseInt(tab.dataset.index));});
+
 // Close modals on overlay click
 ['settingsModal','renameModal','lookupModal','customLibModal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');});});
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
-    </html>
+</html>
