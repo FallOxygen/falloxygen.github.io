@@ -25,6 +25,7 @@ body{background:var(--bg);color:var(--fg);min-height:100vh;overflow-x:hidden}
 textarea.input-area{resize:vertical;line-height:1.8}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s ease;border:none;white-space:nowrap}
 .btn:active{transform:scale(0.97)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;pointer-events:none}
 .btn-primary{background:linear-gradient(135deg,var(--accent) 0%,#ea580c 100%);color:#000}
 .btn-primary:hover{filter:brightness(1.1);box-shadow:0 8px 30px var(--accent-dim)}
 .btn-secondary{background:transparent;border:1px solid var(--border);color:var(--fg)}
@@ -81,7 +82,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 .collapse-header{display:flex;align-items:center;justify-content:space-between;padding:14px;cursor:pointer;border-radius:10px;transition:background .2s}
 .collapse-header:hover{background:rgba(255,255,255,0.03)}
 .collapse-content{max-height:0;overflow:hidden;transition:max-height .35s ease}
-.collapse-content.open{max-height:800px}
+.collapse-content.open{max-height:1200px}
 .collapse-arrow{transition:transform .25s;flex-shrink:0}
 .collapse-header.expanded .collapse-arrow{transform:rotate(180deg)}
 .song-line{display:flex;align-items:baseline;padding:6px 10px;border-radius:8px;cursor:pointer;transition:background .2s}
@@ -116,7 +117,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 .filter-label{font-size:13px;color:var(--muted);margin-bottom:10px;display:block}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .modal-overlay.show{opacity:1;pointer-events:auto}
-.modal-content{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:420px;width:90%;transform:scale(0.9);transition:transform .3s ease}
+.modal-content{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:420px;width:90%;max-height:90vh;display:flex;flex-direction:column;transform:scale(0.9);transition:transform .3s ease}
 .modal-overlay.show .modal-content{transform:scale(1)}
 .modal-title{font-size:22px;font-weight:700;margin-bottom:12px;text-align:center}
 .modal-text{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:24px;text-align:center}
@@ -125,7 +126,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 .modal-info-item:last-child{border-bottom:none}
 .modal-info-label{color:var(--muted);font-size:13px}
 .modal-info-value{font-weight:600;font-size:14px}
-.modal-buttons{display:flex;gap:12px}
+.modal-buttons{display:flex;gap:12px;margin-top:auto}
 .modal-buttons .btn{flex:1}
 .lang-bar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:flex-end;align-items:center;padding:8px 16px;gap:4px;background:rgba(10,12,16,0.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .lang-btn{padding:5px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--muted);transition:all .2s}
@@ -137,14 +138,8 @@ textarea.input-area{resize:vertical;line-height:1.8}
 .format-example{background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;overflow-x:auto;margin:10px 0;color:var(--fg)}
 .format-note{color:var(--muted);font-size:13px;line-height:1.8;margin-top:8px}
 .format-note strong{color:var(--warning);font-weight:600}
-.mask-options{display:flex;gap:10px}
-.mask-option{flex:1;padding:14px 10px;border-radius:12px;border:2px solid var(--border);background:rgba(0,0,0,0.3);cursor:pointer;transition:all .2s;text-align:center}
-.mask-option:hover{border-color:var(--accent)}
-.mask-option.active{border-color:var(--accent);background:var(--accent-dim)}
-.mask-option .char{font-size:28px;font-weight:700;color:var(--fg);margin-bottom:4px}
-.mask-option .label{font-size:12px;color:var(--muted)}
 .settings-modal .modal-content{max-width:560px;max-height:85vh;display:flex;flex-direction:column}
-.settings-body{overflow-y:auto;flex:1;min-height:0}
+.settings-body{overflow-y:auto;flex:1;min-height:0;padding-right:4px}
 .settings-section{margin-bottom:20px}
 .settings-section-title{font-size:14px;font-weight:600;color:var(--fg);margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .settings-section-title svg{color:var(--accent);flex-shrink:0}
@@ -152,21 +147,46 @@ textarea.input-area{resize:vertical;line-height:1.8}
 .guide-content h4{color:var(--accent);font-size:14px;font-weight:600;margin:16px 0 8px}
 .guide-content h4:first-child{margin-top:0}
 .guide-content p{color:var(--muted);margin-bottom:6px}
-.guide-content ul{padding-left:18px;margin-bottom:10px}
+.guide-content ul{padding-left:18px;margin-bottom:10px;list-style-type:disc}
 .guide-content li{color:var(--muted);margin-bottom:4px}
-.guide-content .guide-note{background:rgba(234,179,8,0.08);border-left:3px solid var(--warning);padding:8px 12px;border-radius:0 8px 8px 0;margin:8px 0;font-size:12px;color:var(--warning)}
 .lookup-list{max-height:300px;overflow-y:auto}
 .lookup-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;transition:background .15s}
 .lookup-item:hover{background:rgba(255,255,255,0.03)}
 .lookup-game{font-weight:500}
-.lookup-count{font-size:12px;color:var(--muted);margin-left:auto}
-.lookup-song-item{font-size:13px;color:var(--muted);padding:4px 14px 4px 38px}
 .lookup-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.25);color:var(--info);cursor:pointer;transition:all .15s;margin-left:8px;flex-shrink:0;vertical-align:middle}
 .lookup-btn:hover{background:var(--info);color:white}
 .filter-char-types{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .filter-length-row{display:flex;align-items:center;gap:12px}
 .filter-length-row .count-input{width:100px}
 .filter-length-hint{font-size:12px;color:var(--muted)}
+
+/* Cheat Tool Specific CSS */
+.line-result-block{background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.line-result-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(0,0,0,0.3);border-bottom:1px solid var(--border)}
+.line-result-title{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent)}
+.line-result-count{font-size:12px;color:var(--muted)}
+.line-result-body{max-height:300px;overflow-y:auto;padding:8px}
+.result-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;transition:background .15s;margin-bottom:2px}
+.result-item:hover{background:rgba(255,255,255,0.03)}
+.result-song{flex:1;font-size:14px}
+.result-type{font-size:10px;padding:2px 6px;border-radius:4px;margin-left:8px;flex-shrink:0}
+.result-type.full{background:rgba(34,197,94,0.15);color:var(--success)}
+.result-type.start{background:rgba(59,130,246,0.15);color:var(--info)}
+.result-type.middle{background:rgba(234,179,8,0.15);color:var(--warning)}
+.song-filter-section{padding:8px 10px;border-top:1px solid var(--border);background:rgba(0,0,0,0.2)}
+.song-filter-row{display:flex;align-items:center;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+.song-filter-row:last-child{margin-bottom:0}
+.song-filter-label{font-size:10px;color:var(--muted);min-width:36px}
+.song-filter-chip{padding:2px 6px;border-radius:3px;font-size:10px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s}
+.song-filter-chip:hover{color:var(--fg);border-color:var(--accent)}
+.song-filter-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.range-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:4px;font-size:11px;color:var(--info)}
+
+/* Library Edit Modal Specific */
+.song-edit-list{max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px;background:rgba(0,0,0,0.3)}
+.song-edit-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border);font-size:13px}
+.song-edit-item:last-child{border-bottom:none}
+
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -207,10 +227,9 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div class="settings-body">
 <div class="settings-section">
 <div class="settings-section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg><span data-i18n="settingMaskTitle">Mask Character</span></div>
-<div class="mask-options" id="maskOptions">
-<div class="mask-option active" data-mask="?"><div class="char">?</div><div class="label">?</div></div>
-<div class="mask-option" data-mask="*"><div class="char">*</div><div class="label">*</div></div>
-<div class="mask-option" data-mask="×"><div class="char">×</div><div class="label">×</div></div>
+<div class="flex gap-4 items-center">
+    <input type="text" id="customMaskInput" class="input-area text-center text-xl font-bold p-2 w-16" maxlength="1" value="?">
+    <span class="text-sm" style="color:var(--muted);" data-i18n="settingMaskHint">You can type any single character</span>
 </div>
 </div>
 <div class="settings-section">
@@ -241,21 +260,20 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <strong>Bilibili:</strong> UID: 3546979370010679
 </div>
 </div>
-
 </div>
 </div>
 </div>
 
 <div id="customLibModal" class="modal-overlay">
 <div class="modal-content" style="max-width:400px">
-<div class="modal-title" data-i18n="importCustom">导入本地曲库</div>
-<div class="text-sm mb-3" style="color:var(--muted);" data-i18n="formatReqs">导入后需要您输入该曲库包含什么范围，一行一个。<br>因为代码内部内置了解析在线曲库的范围tag，若您的曲库没有在线曲库的范围，则无法解析。</div>
-<input type="text" id="customLibName" class="input-area w-full p-3 mb-3" data-i18n-ph="customLibName" placeholder="曲库名称 (可选)">
-<textarea id="customLibTags" class="input-area w-full p-3 mb-3" rows="4" data-i18n-ph="customLibTagsPh" placeholder="允许的范围标签 (一行一个)\n例如:\nPhigros\nArcaea"></textarea>
+<div class="modal-title" data-i18n="importCustom">Import Local</div>
+<div class="text-sm mb-3" style="color:var(--muted);" data-i18n="formatReqs">Specify range tags included (one per line).</div>
+<input type="text" id="customLibName" class="input-area w-full p-3 mb-3" data-i18n-ph="customLibName" placeholder="Library Name (Optional)">
+<textarea id="customLibTags" class="input-area w-full p-3 mb-3" rows="4" data-i18n-ph="customLibTagsPh" placeholder="Allowed tags (one per line)"></textarea>
 <input type="file" id="customLibFile" accept=".txt" class="block w-full text-sm mb-4" style="color:var(--fg);">
 <div class="modal-buttons">
-<button id="customLibCancel" class="btn btn-secondary"><span data-i18n="cancelBtn">取消</span></button>
-<button id="customLibConfirm" class="btn btn-primary"><span data-i18n="confirmBtn">导入</span></button>
+<button id="customLibCancel" class="btn btn-secondary"><span data-i18n="cancelBtn">Cancel</span></button>
+<button id="customLibConfirm" class="btn btn-primary"><span data-i18n="confirmBtn">Import</span></button>
 </div>
 </div>
 </div>
@@ -292,17 +310,49 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div class="modal-content" style="max-width:400px">
 <div class="modal-title" id="lookupTitle">-</div>
 <div id="lookupBody" class="lookup-list mb-4"></div>
-<button id="lookupClose" class="btn btn-secondary w-full"><span data-i18n="closeBtn">Close</span></button>
+<div class="flex gap-2 w-full">
+    <button id="lookupClose" class="btn btn-secondary flex-1"><span data-i18n="closeBtn">Close</span></button>
+    <button id="lookupCopyBtn" class="btn btn-primary flex-1"><span data-i18n="copy">Copy</span></button>
+</div>
 </div>
 </div>
 
 <div id="exportModal" class="modal-overlay">
 <div class="modal-content" style="max-width:90%; padding: 20px;">
-<div class="modal-title" style="font-size:18px; margin-bottom: 12px; color:var(--accent);" data-i18n="exportPreviewTitle">长按下方图片保存至相册</div>
+<div class="modal-title" style="font-size:18px; margin-bottom: 12px; color:var(--accent);" data-i18n="exportPreviewTitle">Long press image to save</div>
 <div style="max-height: 65vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); background: var(--bg);">
 <img id="exportImagePreview" style="width: 100%; display: block;" alt="Exported Result" />
 </div>
-<button id="closeExportModal" class="btn btn-secondary w-full mt-4"><span data-i18n="closeBtn">关闭</span></button>
+<button id="closeExportModal" class="btn btn-secondary w-full mt-4"><span data-i18n="closeBtn">Close</span></button>
+</div>
+</div>
+
+<div id="editLibModal" class="modal-overlay">
+<div class="modal-content">
+<div class="flex justify-between items-center mb-4">
+    <h3 class="font-bold text-xl" id="editLibTitle">Edit Range</h3>
+    <button id="editLibClose" class="settings-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+</div>
+<input type="text" id="editLibSearch" class="input-area w-full p-3 mb-4" data-i18n-ph="searchSong" placeholder="Search song...">
+<div id="editLibSongsList" class="song-edit-list mb-4"></div>
+<div class="flex gap-2 mb-4">
+    <input type="text" id="editLibAddInput" class="input-area flex-1 p-2 text-sm" data-i18n-ph="newSongName" placeholder="New song name">
+    <button id="editLibAddBtn" class="btn btn-primary btn-sm"><span data-i18n="addSong">Add</span></button>
+</div>
+<div class="modal-buttons">
+    <button id="editLibResetBtn" class="btn btn-warning"><span data-i18n="resetLib">Reset to Original</span></button>
+    <button id="editLibSaveBtn" class="btn btn-success" style="background:var(--success);color:#000;border:none;"><span data-i18n="saveBtn">Save</span></button>
+</div>
+</div>
+</div>
+
+<div id="rangeCheatModal" class="modal-overlay">
+<div class="modal-content" style="max-width:400px; padding:20px;">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold" data-i18n="rangeListTitle">Ranges</h3>
+        <button id="closeRangeCheatModal" class="btn btn-secondary btn-sm"><span data-i18n="closeBtn">Close</span></button>
+    </div>
+    <div id="rangeCheatModalContent"></div>
 </div>
 </div>
 
@@ -313,23 +363,19 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <p class="text-sm" style="color:var(--muted);" data-i18n="appSubtitle">Import the online library or enter songs manually to start your guessing game</p>
 </header>
 
-<div class="notice-box">
-<div class="title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span data-i18n="noticeTitle">Notice</span></div>
-<div class="content" data-i18n="noticeContent">First time deploying a website, apologies for any rough edges! If copy doesn't work, try another browser. The online library import is a bit of spaghetti code, so please double-check the extracted song names!</div>
-</div>
-
 <div class="tabs">
 <button class="tab-btn active" data-tab="import" data-i18n="tabLibrary">Library</button>
 <button class="tab-btn" data-tab="manual" data-i18n="tabManual">Manual Input</button>
+<button class="tab-btn" data-tab="cheat" data-i18n="tabCheat">Cheat Tool</button>
 </div>
 
 <div id="tab-import" class="tab-content active">
 <div class="card p-6 mb-5">
 <div class="flex items-center gap-2 mb-4">
 <select id="librarySelect" class="input-area flex-1 p-2 text-sm cursor-pointer"></select>
-<button id="importCustomBtn" class="btn btn-secondary btn-sm" data-i18n="importCustom">导入本地</button>
-<button id="renameLibBtn" class="btn btn-secondary btn-sm" data-i18n="renameLib">重命名</button>
-<button id="deleteLibBtn" class="btn btn-danger btn-sm" data-i18n="deleteLib">删除</button>
+<button id="importCustomBtn" class="btn btn-secondary btn-sm" data-i18n="importCustom">Import Local</button>
+<button id="renameLibBtn" class="btn btn-secondary btn-sm" data-i18n="renameLib">Rename</button>
+<button id="deleteLibBtn" class="btn btn-danger btn-sm" data-i18n="deleteLib">Delete</button>
 </div>
 
 <div class="help-box">
@@ -358,7 +404,6 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
 <span id="fileName" class="filename">-</span>
 <span id="fileStats" style="color:var(--muted);font-size:13px;"></span>
-<button id="clearFile" class="btn btn-danger btn-sm" style="display:none;"><span data-i18n="fileRemove">Remove</span></button>
 </div>
 </div>
 
@@ -428,7 +473,6 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 <textarea id="songInput" class="input-area mono w-full p-4" style="min-height:260px;" data-i18n-ph="songPlaceholder" placeholder="Paste song names, one per line."></textarea>
 </div>
-</div>
 
 <div class="card p-6 mb-5">
 <div class="collapse-header" id="sortToggle">
@@ -460,6 +504,38 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </button>
 <div id="statusHint" class="mt-5 text-center text-sm" style="color:var(--muted);"></div>
 </div>
+
+<div id="tab-cheat" class="tab-content">
+<div class="card p-6 mb-5">
+    <div class="section-title text-sm font-semibold mb-4" data-i18n="cheatMaskedTitle">Masked Text (Questions)</div>
+    <textarea id="cheatMaskedInput" class="input-area mono w-full p-4 mb-4" style="min-height: 150px;" data-i18n-ph="cheatMaskedPh" placeholder="Paste masked text here..."></textarea>
+    <button id="cheatParseBtn" class="btn btn-primary w-full"><span data-i18n="cheatParseBtn">Parse & Match</span></button>
+</div>
+<div class="card p-6 mb-5">
+    <div class="section-title text-sm font-semibold mb-4" data-i18n="cheatGuessedTitle">Guessed Characters</div>
+    <input type="text" id="cheatGuessedInput" class="input-area mono w-full p-4 text-center text-lg tracking-widest" data-i18n-ph="cheatGuessedPh" placeholder="Enter opened chars...">
+    <p class="text-xs mt-3" style="color:var(--muted);" data-i18n="cheatGuessedHint">Enter all opened characters to match remaining possibilities.</p>
+</div>
+<div class="card p-6 mb-5">
+    <div class="section-title text-sm font-semibold mb-4" data-i18n="cheatOptionsTitle">Match Options</div>
+    <div class="space-y-3">
+        <label class="checkbox-wrap"><input type="checkbox" id="cheatMatchStart"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="cheatMatchStart">Match Start</span></label>
+        <label class="checkbox-wrap"><input type="checkbox" id="cheatMatchMiddle"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="cheatMatchMiddle">Match Middle/End</span></label>
+        <label class="checkbox-wrap"><input type="checkbox" id="cheatSpaceStar"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="cheatSpaceStar">Space as Mask</span></label>
+    </div>
+</div>
+<div class="card p-6 mb-5">
+    <div class="flex items-center justify-between mb-4">
+        <div class="section-title text-sm font-semibold" data-i18n="cheatResultTitle">Match Results</div>
+        <span id="cheatResultCount" class="text-sm" style="color:var(--muted);"></span>
+    </div>
+    <div id="cheatResultContainer" class="max-h-[60vh] overflow-y-auto pr-2">
+        <div class="text-center py-8" style="color:var(--muted);" data-i18n="cheatEmptyResult">Import library and type text first</div>
+    </div>
+</div>
+</div>
+
+</div>
 </div>
 
 <div id="page2" class="page hidden">
@@ -481,9 +557,13 @@ textarea.input-area{resize:vertical;line-height:1.8}
 </div>
 
 <div class="card p-6 mb-5">
-<div class="flex items-center justify-between mb-4">
+<div class="flex items-center justify-between mb-4 flex-wrap gap-2">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span data-i18n="openChars">Open Characters</span></h2>
-<button id="resetChars" class="btn btn-ghost btn-sm"><span data-i18n="resetChars">Reset</span></button>
+<div class="flex gap-2 items-center">
+    <button id="undoBtn" class="btn btn-secondary btn-sm" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
+    <button id="redoBtn" class="btn btn-secondary btn-sm" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg></button>
+    <button id="resetChars" class="btn btn-ghost btn-sm"><span data-i18n="resetChars">Reset</span></button>
+</div>
 </div>
 <input type="text" id="charInput" class="input-area mono w-full p-4 text-xl text-center" style="letter-spacing:0.25em;" data-i18n-ph="charInputPlaceholder" placeholder="Type any character..." autocomplete="off" spellcheck="false">
 <div class="mt-4">
@@ -510,7 +590,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span data-i18n="resultTitle">Result</span></h2>
 <div class="flex gap-2">
-<button id="exportImgBtn" class="btn btn-ghost btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span data-i18n="exportImage">导出图片</span></button>
+<button id="exportImgBtn" class="btn btn-ghost btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span data-i18n="exportImage">Export Image</span></button>
 <button id="copyBtn" class="btn btn-secondary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span data-i18n="copyResult">Copy</span></button>
 </div>
 </div>
@@ -538,7 +618,10 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <div class="card p-6 mb-5">
 <div class="flex items-center justify-between mb-4">
 <h2 class="font-semibold flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span data-i18n="fullQuestions">Full Questions</span></h2>
-<button id="copyQuestions" class="btn btn-secondary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span data-i18n="copy">Copy</span></button>
+<div class="flex gap-2">
+    <button id="exportQuestionsImgBtn" class="btn btn-ghost btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span data-i18n="exportImage">Export</span></button>
+    <button id="copyQuestions" class="btn btn-secondary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span data-i18n="copy">Copy</span></button>
+</div>
 </div>
 <textarea id="questionsText" class="input-area mono w-full p-4" style="min-height:220px;resize:vertical;" readonly></textarea>
 </div>
@@ -556,28 +639,28 @@ textarea.input-area{resize:vertical;line-height:1.8}
 const I18N={
 en:{
 appTitle:'Song Letter Opener',appSubtitle:'Import the online library or enter songs manually to start your guessing game',
-noticeTitle:'Notice',noticeContent:'First time deploying a website, apologies for any rough edges! If copy doesn\'t work, try another browser. The online library import is a bit of spaghetti code, so please double-check the extracted song names!',
-tabLibrary:'Library',tabManual:'Manual Input',uploadOnline:'Import Online Library',uploadOnlineLoading:'Importing...',
+noticeTitle:'Notice',noticeContent:'First time deploying a website, apologies for any rough edges! The online library import might need a double check on names!',
+tabLibrary:'Library',tabManual:'Manual Input', tabCheat:'Cheat Tool', uploadOnline:'Import Online Library',uploadOnlineLoading:'Importing...',
 importCustom:'Import Local', renameLib:'Rename', deleteLib:'Delete',
 customLibName:'Library Name (Optional)', customLibTagsPh:'Allowed tags (one per line)\ne.g.\nPhigros\nArcaea',
-formatReqs:'After importing, you must specify the range tags included in this custom library (one per line). Built-in tags might conflict if omitted.',
+formatReqs:'After importing, specify the range tags included (one per line). Built-in tags conflict if omitted.',
 fileRemove:'Remove',fileStatsFormat:'{games} games / {songs} songs',
 selectRange:'Select Game Range',selectAll:'Select All',selectNone:'Clear',
-filterTitle:'Song Filter',filterCharTypes:'Character Types',filterLetter:'Letters',filterJapanese:'Japanese',filterHanzi:'Hanzi',filterAllowOther:'Allow other characters (symbols, etc.)',filterMinLength:'Minimum Character Length',filterMinLengthHint:'(including spaces, 0 = no limit)',
+filterTitle:'Song Filter',filterCharTypes:'Character Types',filterLetter:'Letters',filterJapanese:'Japanese',filterHanzi:'Hanzi',filterAllowOther:'Allow other chars',filterMinLength:'Min Length',filterMinLengthHint:'(includes spaces, 0=no limit)',
 filterMatchCount:'Matching songs: {count}',filterClear:'Clear Filters',
 extractTitle:'Extraction Settings',modeEqual:'Total Count',modeCustom:'Custom Count',
 totalCountLabel:'Total extraction count',totalCountPlaceholder:'Enter count',totalCountHelper:'Randomly extract the specified number from selected range',
 customCountHelper:'Specify extraction count per game:',generateBtn:'Generate Song List',
-songSequence:'Song List',clearSongs:'Clear',songPlaceholder:'Paste song names, one per line.\nOptional numbering (1.SongName) will be stripped.',
+songSequence:'Song List',clearSongs:'Clear',songPlaceholder:'Paste song names, one per line.',
 sortTitle:'Sort Options',sortRandom:'Random',sortByLength:'By Length',applySort:'Apply Sort',
 remarkTitle:'Remark',remarkPlaceholder:'Optional remark',
 parseAndStart:'Parse & Start Game',
-statusParsed:'Parsed {count} songs. Re-parsing will reset the current game.',
+statusParsed:'Parsed {count} songs. Re-parsing will reset game.',
 gameInProgress:'Game In Progress',gameClickHint:'Click a song to reveal its full name, click again to hide',
 pauseBtn:'Pause',resumeBtn:'Resume',endGameBtn:'End Game',
 openChars:'Open Characters',resetChars:'Reset',charInputPlaceholder:'Type any character...',
 sortedCharsLabel:'Sorted opened characters:',statSongs:'Songs',statChars:'Chars',statPercent:'Reveal %',
-hideRevealed:'Hide Guessed Songs',hideRevealedHint:'Click a song to reveal it, then click this button to remove it from the list',
+hideRevealed:'Hide Guessed Songs',hideRevealedHint:'Click a song to reveal it, then click this button to remove it',
 hiddenLabel:'Hidden',hiddenSongs:'songs',resultTitle:'Result',copyResult:'Copy',copy:'Copy', exportImage: 'Export Image',
 settlementTitle:'Game Over',settlementSubtitle:'Settlement info generated, ready to copy and share',
 settlementInfo:'Settlement Info',fullQuestions:'Full Questions',newGame:'New Game',backToEdit:'Back to Edit',
@@ -585,56 +668,63 @@ modalTitle:'Found Unfinished Game',modalText:'An unfinished game was detected. C
 modalSongCount:'Songs',modalCharCount:'Opened Chars',modalTime:'Time',modalPercent:'Reveal Rate',
 modalNewGame:'New Game',modalContinue:'Continue',
 formatTitle:'Library Format',formatDesc:'The library file uses the following structure:',
-formatNote:'<strong>[GameName]</strong> defines a game section. The name must match a defined tag.',
+formatNote:'<strong>[GameName]</strong> defines a game section.',
 formatNote2:'<strong>Songs</strong> are listed one per line under each section.',
 guessedPrefix:'guessed：',
 timeHours:'h ',timeMinutes:'m ',timeSeconds:'s',timeSecondsShort:'s',timeMinutesShort:'m',
-settlementHeader:'Letter Opener Settlement:',settlementTime:'Time: ',settlementTotalSongs:'Total songs: ',settlementAvgPerSong:'(avg {time}/song)',settlementOpenChars:'Opened chars: ',settlementAvgPerChar:'(avg {time}/char)',settlementRevealRate:'Reveal rate: ',songsUnit:'songs',revealClickHint:'(click to hide)',
-toastNoGameTag:'No valid game tags found',toastParseSuccess:'Parsed {games} games, {songs} songs',toastOnlineFail:'Failed to import online library.',
-toastSelectGame:'Please select at least one game',toastNoMatch:'No matching songs found',toastExtracted:'Extracted {count} songs',toastInvalidCount:'Please enter a valid count',
-toastInputSongs:'Please enter song names first',toastRandomized:'Randomized',toastSortedByLength:'Sorted by length',toastSelectSort:'Please select a sort method',toastCleared:'Cleared',
-toastNeedSong:'Please enter at least one song name',toastGameStart:'Game started!',toastResetChars:'All opened characters reset',
-toastNoRevealed:'No guessed songs. Click a song to reveal it first.',toastHidden:'Hidden {count} guessed songs',
-toastRestored:'Game restored. Timer paused.',toastRemoved:'Library removed', toastExported:'Image Exported', toastTagsRequired: 'Range tags are required for custom library', toastLibDeleted: 'Library deleted', toastLibRenamed: 'Library renamed',
+settlementHeader:'Letter Opener Settlement:',settlementTime:'Time: ',settlementTotalSongs:'Total songs: ',
+settlementGuessedCount: '(Guessed {count})', settlementAllGuessed: '(All Guessed)', settlementAvgSpeed: '({time} sec/song)',
+settlementOpenChars:'Opened chars: ',settlementAvgPerChar:'(avg {time}/char)', charUnit: ' chars', settlementRevealRate:'Reveal rate: ',songsUnit:'songs',revealClickHint:'(click to hide)',
+toastNoGameTag:'No valid tags found',toastParseSuccess:'Parsed {games} games, {songs} songs',toastOnlineFail:'Failed to import online library.',
+toastSelectGame:'Please select at least one game',toastNoMatch:'No matching songs found',toastExtracted:'Extracted {count} songs',toastInvalidCount:'Enter a valid count',
+toastInputSongs:'Enter song names first',toastRandomized:'Randomized',toastSortedByLength:'Sorted by length',toastSelectSort:'Select sort method',toastCleared:'Cleared',
+toastNeedSong:'Enter at least one song name',toastGameStart:'Game started!',toastResetChars:'All opened characters reset',
+toastNoRevealed:'No guessed songs to hide.',toastHidden:'Hidden {count} guessed songs',
+toastRestored:'Game restored. Timer paused.',toastRemoved:'Library removed', toastExported:'Image Exported', toastTagsRequired: 'Tags required for custom lib', toastLibDeleted: 'Library deleted', toastLibRenamed: 'Library renamed',
 toastExportMobile:'Long press the image to save',
-backConfirm:'Going back will end the current game. Continue?',endConfirm:'End the game?',
+backConfirm:'Going back ends current game. Continue?',endConfirm:'End the game?',
 noCopyContent:'Nothing to copy',copyFail:'Copy failed',copySuccess:'Copied to clipboard',copySettlementOk:'Settlement info copied',copyQuestionsOk:'Full questions copied',
-settingsTitle:'Settings',settingMaskTitle:'Mask Character',settingFuncTitle:'Function Toggles', contactTitle: 'Contact Developer',
+settingsTitle:'Settings',settingMaskTitle:'Mask Character',settingMaskHint:'You can type any single character',settingFuncTitle:'Function Toggles', contactTitle: 'Contact Developer',
 settingTimer:'Enable Timer',settingSettlement:'Enable Settlement',settingSpaceHidden:'Hide Spaces as Mask Character',
-settingAutoRemark:'Auto-fill Remark with Game Range',settingCharSort:'Sort Opened Characters',settingSongLookup:'Enable Song Source Lookup',
-settingFixedRatio: 'Fixed Export Image Ratio (9:16)',
+settingAutoRemark:'Auto-fill Remark with Range',settingCharSort:'Sort Opened Characters',settingSongLookup:'Enable Song Lookup',
+settingFixedRatio: 'Fixed Image Ratio (9:16)',
 settingGuideTitle:'Usage Guide',closeBtn:'Close',cancelBtn:'Cancel',confirmBtn:'Confirm',
 renameTitle:'Rename',exportPreviewTitle:'Long press image to save',
 autoRemarkPrefix:'Range: ',
 lookupTitle:'Song Source',lookupNotFound:'Not found in library',lookupInGames:'Appears in {count} game(s):',
 onlineLibName:'Online Library (Built-in)',
-guideHtml:'<h4>Getting Started</h4><ul><li>Import a library or manually enter song names</li><li>Configure filters and extraction settings as needed</li><li>Click "Parse & Start Game" to begin guessing</li></ul><h4>Libraries</h4><ul><li>You can load the default online library, or import your own .txt file.</li><li>For custom imports, you must specify the range tags.</li></ul>'
+cheatMaskedTitle:'Masked Text (Questions)', cheatMaskedPh:'Paste masked text here...', cheatParseBtn:'Parse & Match',
+cheatGuessedTitle:'Guessed Characters', cheatGuessedPh:'Enter opened chars...', cheatGuessedHint:'Enter all opened characters to match remaining possibilities.',
+cheatOptionsTitle:'Match Options', cheatMatchStart:'Match Start', cheatMatchMiddle:'Match Middle/End', cheatSpaceStar:'Space as Mask',
+cheatResultTitle:'Match Results', cheatEmptyResult:'Import library and type text first', rangeListTitle:'Ranges',
+searchSong: 'Search song...', newSongName: 'New song name', addSong: 'Add', resetLib: 'Reset to Original', saveBtn: 'Save',
+guideHtml:'<h4>Getting Started</h4><ul><li>Import a library or manually enter song names</li><li>Configure filters and extract settings</li><li>Click "Parse & Start"</li></ul><h4>Cheat Tool</h4><ul><li>Provides song matching based on masked strings and your known library.</li><li>Supports Match Start, Middle, and custom character filters per line.</li></ul><h4>Local Library Creation</h4><ul><li>TXT format: <code>[GameName]</code> on one line, followed by songs on subsequent lines.</li><li>When importing local libs, specify all GameName tags in the import dialog so it maps correctly!</li></ul><h4>Undo/Redo</h4><ul><li>Supports undo/redo for typing characters, revealing songs, hiding songs. Keep in mind it clears when parsing a new game.</li></ul>'
 },
 zh:{
 appTitle:'曲名开字母辅助器',appSubtitle:'导入在线曲库或手动输入，开始你的猜歌游戏',
-noticeTitle:'个人声明',noticeContent:'自己第一次部署网站，有些东西做的不好还请见谅！复制的时候如果复制不了就换个浏览器！还有那个导入在线曲库是屎山代码，大家用的时候注意一下抽取的曲名哈！',
-tabLibrary:'曲库',tabManual:'手动输入',uploadOnline:'导入在线曲库',uploadOnlineLoading:'正在导入...',
+noticeTitle:'个人声明',noticeContent:'自己第一次部署网站，有些东西做的不好还请见谅！导入在线曲库是屎山代码，用的时候注意检查！',
+tabLibrary:'曲库',tabManual:'手动输入', tabCheat:'开字母作弊器', uploadOnline:'导入在线曲库',uploadOnlineLoading:'正在导入...',
 importCustom:'导入本地', renameLib:'重命名', deleteLib:'删除',
 customLibName:'曲库名称 (可选)', customLibTagsPh:'允许的范围标签 (一行一个)\n例如:\nPhigros\nArcaea',
-formatReqs:'导入后需要您输入该曲库包含什么范围，一行一个。<br>因为代码内部内置了解析在线曲库的范围tag，若您的曲库没有内置范围，则无法解析。',
+formatReqs:'导入后需要您输入该曲库包含什么范围，一行一个。内置标签若不声明会冲突。',
 fileRemove:'移除',fileStatsFormat:'{games} 个游戏 / {songs} 首曲目',
 selectRange:'选择游戏范围',selectAll:'全选',selectNone:'清空',
-filterTitle:'曲目过滤',filterCharTypes:'字符类型',filterLetter:'字母',filterJapanese:'日文',filterHanzi:'汉字',filterAllowOther:'允许包含其他字符（符号等）',filterMinLength:'最少字符长度',filterMinLengthHint:'（包含空格，0 = 不限制）',
+filterTitle:'曲目过滤',filterCharTypes:'字符类型',filterLetter:'字母',filterJapanese:'日文',filterHanzi:'汉字',filterAllowOther:'允许其他字符',filterMinLength:'最少字符长度',filterMinLengthHint:'（包含空格，0=不限）',
 filterMatchCount:'符合条件的曲目: {count} 首',filterClear:'清除过滤',
 extractTitle:'抽取设置',modeEqual:'总数量模式',modeCustom:'定制数量模式',
 totalCountLabel:'总抽取数量',totalCountPlaceholder:'输入总数',totalCountHelper:'将从选中的范围内随机抽取指定数量的曲目',
-customCountHelper:'为每个游戏范围指定抽取数量：',generateBtn:'生成曲目列表',
+customCountHelper:'为每个游戏指定抽取数量：',generateBtn:'生成曲目列表',
 songSequence:'曲名序列',clearSongs:'清空',songPlaceholder:'粘贴曲名列表，每行一首曲名（无需序号）',
 sortTitle:'排列选项',sortRandom:'随机排列',sortByLength:'按长度排列',applySort:'应用排列',
 remarkTitle:'备注信息',remarkPlaceholder:'输入备注（可选）',
 parseAndStart:'解析并开始游戏',
-statusParsed:'已解析 {count} 首曲名，返回编辑后再次解析将重置游戏',
+statusParsed:'已解析 {count} 首曲名，再次解析将重置游戏',
 gameInProgress:'猜测进行中',gameClickHint:'点击曲名可显示完整名称，再次点击隐藏',
 pauseBtn:'暂停',resumeBtn:'继续',endGameBtn:'结束游戏',
 openChars:'开启字符',resetChars:'重置',charInputPlaceholder:'输入任意字符...',
 sortedCharsLabel:'已排序的开启字符：',statSongs:'曲名数',statChars:'已开字符',statPercent:'揭示率',
-hideRevealed:'隐藏已猜出的曲目',hideRevealedHint:'点击曲目显示完整曲名后，点击此按钮将其从列表中移除',
-hiddenLabel:'已隐藏',hiddenSongs:'首曲目',resultTitle:'解析结果',copyResult:'复制结果',copy:'复制', exportImage: '导出图片',
+hideRevealed:'隐藏已猜出',hideRevealedHint:'点击曲目显示完整曲名后，点击此按钮将其移除',
+hiddenLabel:'已隐藏',hiddenSongs:'首',resultTitle:'解析结果',copyResult:'复制结果',copy:'复制', exportImage: '导出图片',
 settlementTitle:'游戏结束',settlementSubtitle:'结算信息已生成，可复制分享',
 settlementInfo:'结算信息',fullQuestions:'完整题面',newGame:'开始新游戏',backToEdit:'返回编辑',
 modalTitle:'发现未完成的游戏',modalText:'检测到您上次有未完成的游戏，是否继续？',
@@ -645,17 +735,19 @@ formatNote:'<strong>[范围名称]</strong> 定义游戏分区。',
 formatNote2:'<strong>曲目</strong>在每个分区下逐行列出。',
 guessedPrefix:'guessed：',
 timeHours:'小时',timeMinutes:'分钟',timeSeconds:'秒',timeSecondsShort:'秒',timeMinutesShort:'分钟',
-settlementHeader:'本局开字母结算：',settlementTime:'用时：',settlementTotalSongs:'曲目总数：',settlementAvgPerSong:'（平均{time}/题）',settlementOpenChars:'开启字符数：',settlementAvgPerChar:'（平均{time}/个）',settlementRevealRate:'揭开字符率：',songsUnit:'首',revealClickHint:'（点击隐藏）',
-toastNoGameTag:'未能识别任何有效范围标签',toastParseSuccess:'成功解析 {games} 个范围、{songs} 首曲目',toastOnlineFail:'导入曲库失败，请检查网络连接',
+settlementHeader:'本局开字母结算：',settlementTime:'用时：',settlementTotalSongs:'曲目总数：',
+settlementGuessedCount: '（猜出{count}首）', settlementAllGuessed: '（全部猜出）', settlementAvgSpeed: '（{time}秒/首）',
+settlementOpenChars:'开启字符数：',settlementAvgPerChar:'（平均{time}/个）', charUnit: '个', settlementRevealRate:'揭开字符率：',songsUnit:'首',revealClickHint:'（点击隐藏）',
+toastNoGameTag:'未能识别有效标签',toastParseSuccess:'解析 {games} 个范围、{songs} 首曲目',toastOnlineFail:'导入失败，检查网络',
 toastSelectGame:'请至少选择一个游戏范围',toastNoMatch:'没有符合条件的曲目',toastExtracted:'已抽取 {count} 首曲目',toastInvalidCount:'请输入有效的总数量',
 toastInputSongs:'请先输入曲名',toastRandomized:'已随机排列',toastSortedByLength:'已按长度排列',toastSelectSort:'请先选择排列方式',toastCleared:'已清空曲名',
 toastNeedSong:'请输入至少一首曲名',toastGameStart:'游戏开始！',toastResetChars:'已重置所有开启字符',
 toastNoRevealed:'没有已猜出的曲目，请先点击曲目显示完整曲名',toastHidden:'已隐藏 {count} 首已猜出的曲目',
-toastRestored:'已恢复游戏，计时器已暂停，点击「继续」继续计时',toastRemoved:'已清空当前内容', toastExported:'已导出图片并保存', toastTagsRequired: '自定义曲库必须输入范围标签', toastLibDeleted: '曲库已删除', toastLibRenamed: '曲库已重命名',
+toastRestored:'已恢复游戏，计时器已暂停',toastRemoved:'已清空当前内容', toastExported:'已导出图片并保存', toastTagsRequired: '自定义曲库必须输入范围标签', toastLibDeleted: '曲库已删除', toastLibRenamed: '曲库已重命名',
 toastExportMobile:'请长按弹出的图片保存至相册',
 backConfirm:'返回编辑将结束当前游戏，确定吗？',endConfirm:'确定要结束游戏吗？',
 noCopyContent:'没有可复制的内容',copyFail:'复制失败，请手动复制',copySuccess:'已复制到剪贴板',copySettlementOk:'已复制结算信息',copyQuestionsOk:'已复制完整题面',
-settingsTitle:'设置',settingMaskTitle:'遮罩符号',settingFuncTitle:'功能开关', contactTitle:'联系开发者',
+settingsTitle:'设置',settingMaskTitle:'遮罩符号',settingMaskHint:'支持输入任意单个字符',settingFuncTitle:'功能开关', contactTitle:'联系开发者',
 settingTimer:'开启计时功能',settingSettlement:'开启结算功能',settingSpaceHidden:'空格也隐藏为遮罩符号',
 settingAutoRemark:'自动根据游戏范围填充备注',settingCharSort:'开启字符排序',settingSongLookup:'开启曲目来源查询',
 settingFixedRatio: '固定导出图片 9:16 比例',
@@ -664,66 +756,78 @@ renameTitle:'重命名',exportPreviewTitle:'长按下方图片保存至相册',
 autoRemarkPrefix:'范围：',
 lookupTitle:'曲目来源',lookupNotFound:'未在曲库中找到',lookupInGames:'出现在 {count} 个游戏中：',
 onlineLibName:'在线曲库 (内置)',
-guideHtml:'<h4>快速开始</h4><ul><li>导入在线/本地曲库或手动输入曲名</li><li>按需配置过滤和抽取设置</li><li>点击「解析并开始游戏」开始猜歌</li></ul><h4>多曲库支持</h4><ul><li>内置在线曲库包含常见音游，也可导入自定义本地曲库。</li><li>导入本地曲库时需按行声明包含的tag标签。</li></ul>'
+cheatMaskedTitle:'开字母文本 (带星号)', cheatMaskedPh:'粘贴开字母文本，每行一首，例如：\n1.****e ****\n2.*a***', cheatParseBtn:'解析并匹配',
+cheatGuessedTitle:'Guessed (已开字符)', cheatGuessedPh:'输入已开出的字符，如：abcde', cheatGuessedHint:'输入所有已开出的字符，程序会根据显示状态智能匹配',
+cheatOptionsTitle:'匹配选项', cheatMatchStart:'检索开头匹配', cheatMatchMiddle:'检索中间/结尾匹配', cheatSpaceStar:'空格视为星号',
+cheatResultTitle:'匹配结果', cheatEmptyResult:'请导入词库并输入开字母文本', rangeListTitle:'所属范围',
+searchSong: '搜索曲目...', newSongName: '新曲名', addSong: '添加', resetLib: '重置回初始状态', saveBtn: '保存修改',
+guideHtml:'<h4>快速开始</h4><ul><li>导入曲库或手动输入曲名，配置抽取设置后点击「解析并开始游戏」。</li></ul><h4>开字母作弊器</h4><ul><li>将含有星号（遮罩）的题目粘贴进文本框。</li><li>输入当前已开启的字符，工具会自动匹配符合条件的曲名。</li><li>支持单行条件过滤（只含字母、只含日文等）。</li></ul><h4>本地曲库制作与修改</h4><ul><li>TXT文件格式要求：一行<code>[游戏名]</code>作为范围声明，下面逐行写曲名。</li><li>导入后，您可以点击范围旁边的编辑按钮，直接对曲目进行增删改，修改将保存在本地，可通过重置按钮恢复。</li></ul><h4>撤销与重置</h4><ul><li>在猜歌过程中，输入的字符、显示完整曲名、隐藏曲名等操作均支持回退与重做。</li></ul>'
 },
 ja:{
-appTitle:'曲名文字開封ヘルパー',appSubtitle:'オンラインライブラリを導入するか、手動で入力してゲームを開始',
-noticeTitle:'お知らせ',noticeContent:'初めてウェブサイトを公開するので、不手際がありましたら申し訳ありません！',
-tabLibrary:'曲庫',tabManual:'手動入力',uploadOnline:'オンライン曲庫を導入',uploadOnlineLoading:'導入中...',
+appTitle:'曲名文字開封ヘルパー',appSubtitle:'ライブラリを導入するか、手動で入力してゲームを開始',
+noticeTitle:'お知らせ',noticeContent:'ウェブサイト初公開につき、不手際がありましたら申し訳ありません！',
+tabLibrary:'曲庫',tabManual:'手動入力', tabCheat:'文字開封チート', uploadOnline:'オンライン曲庫を導入',uploadOnlineLoading:'導入中...',
 importCustom:'ローカル導入', renameLib:'名前変更', deleteLib:'削除',
-customLibName:'曲庫名 (任意)', customLibTagsPh:'許可されたタグ (1行に1つ)',
-formatReqs:'導入後、この曲庫に含まれる範囲タグを入力する必要があります。',
+customLibName:'曲庫名 (任意)', customLibTagsPh:'許可タグ (1行に1つ)',
+formatReqs:'導入後、この曲庫に含まれる範囲タグを入力してください。',
 fileRemove:'削除',fileStatsFormat:'{games}ゲーム / {songs}曲',
 selectRange:'ゲーム範囲を選択',selectAll:'全選択',selectNone:'クリア',
-filterTitle:'曲フィルター',filterCharTypes:'文字タイプ',filterLetter:'字母',filterJapanese:'日本語',filterHanzi:'漢字',filterAllowOther:'その他の文字を許可（記号など）',filterMinLength:'最小文字数',filterMinLengthHint:'（スペース含む、0 = 制限なし）',
-filterMatchCount:'条件に合致する曲: {count}曲',filterClear:'フィルターをクリア',
-extractTitle:'抽出設定',modeEqual:'総数モード',modeCustom:'カスタム数モード',
-totalCountLabel:'総抽出数',totalCountPlaceholder:'数を入力',totalCountHelper:'選択範囲から指定数をランダムに抽出します',
-customCountHelper:'ゲームごとの抽出数を指定：',generateBtn:'曲リストを生成',
+filterTitle:'曲フィルター',filterCharTypes:'文字タイプ',filterLetter:'字母',filterJapanese:'日本語',filterHanzi:'漢字',filterAllowOther:'他文字許可',filterMinLength:'最小文字数',filterMinLengthHint:'（スペース含む、0=無制限）',
+filterMatchCount:'合致曲: {count}曲',filterClear:'クリア',
+extractTitle:'抽出設定',modeEqual:'総数モード',modeCustom:'カスタム数',
+totalCountLabel:'総抽出数',totalCountPlaceholder:'数を入力',totalCountHelper:'選択範囲から指定数を抽出します',
+customCountHelper:'ゲームごとの抽出数を指定：',generateBtn:'リストを生成',
 songSequence:'曲名リスト',clearSongs:'クリア',songPlaceholder:'曲名を貼り付け（1行に1曲）',
-sortTitle:'並び替えオプション',sortRandom:'ランダム',sortByLength:'長さ順',applySort:'並び替えを適用',
+sortTitle:'並び替え',sortRandom:'ランダム',sortByLength:'長さ順',applySort:'適用',
 remarkTitle:'備考',remarkPlaceholder:'備考を入力（任意）',
 parseAndStart:'解析してゲーム開始',
-statusParsed:'{count}曲を解析済み。再解析すると現在のゲームがリセットされます。',
+statusParsed:'{count}曲を解析済み。再解析でリセット。',
 gameInProgress:'ゲーム進行中',gameClickHint:'曲名をクリックで全文表示、もう一度クリックで非表示',
-pauseBtn:'一時停止',resumeBtn:'再開',endGameBtn:'ゲーム終了',
+pauseBtn:'一時停止',resumeBtn:'再開',endGameBtn:'終了',
 openChars:'文字を開く',resetChars:'リセット',charInputPlaceholder:'文字を入力...',
-sortedCharsLabel:'ソート済み開封文字：',statSongs:'曲数',statChars:'文字数',statPercent:'開封率',
-hideRevealed:'正解曲を非表示',hideRevealedHint:'曲名をクリックして全文表示後、このボタンでリストから非表示にします',
+sortedCharsLabel:'ソート済み文字：',statSongs:'曲数',statChars:'文字数',statPercent:'開封率',
+hideRevealed:'正解曲を非表示',hideRevealedHint:'曲名表示後、このボタンでリストから非表示',
 hiddenLabel:'非表示',hiddenSongs:'曲',resultTitle:'結果',copyResult:'コピー',copy:'コピー', exportImage:'画像出力',
 settlementTitle:'ゲーム終了',settlementSubtitle:'精算情報が生成されました。コピーして共有できます',
 settlementInfo:'精算情報',fullQuestions:'全問題',newGame:'新しいゲーム',backToEdit:'編集に戻る',
-modalTitle:'未完了のゲームがあります',modalText:'前回の未完了ゲームが検出されました。続けますか？',
-modalSongCount:'曲数',modalCharCount:'開封文字数',modalTime:'経過時間',modalPercent:'開封率',
-modalNewGame:'新しいゲーム',modalContinue:'続きから',
-formatTitle:'曲庫形式ガイド',formatDesc:'曲庫ファイルは以下の形式です：',
-formatNote:'<strong>[範囲名]</strong> でセクションを定義します。',
-formatNote2:'<strong>曲名</strong>は各セクションの下に1行ずつ記述します。',
+modalTitle:'未完了のゲームがあります',modalText:'未完了ゲームが検出されました。続けますか？',
+modalSongCount:'曲数',modalCharCount:'文字数',modalTime:'時間',modalPercent:'開封率',
+modalNewGame:'新ゲーム',modalContinue:'続きから',
+formatTitle:'曲庫形式ガイド',formatDesc:'曲庫ファイル形式：',
+formatNote:'<strong>[範囲名]</strong> でセクション定義。',
+formatNote2:'<strong>曲名</strong>は各セクション下に1行ずつ。',
 guessedPrefix:'guessed：',
 timeHours:'時間',timeMinutes:'分',timeSeconds:'秒',timeSecondsShort:'秒',timeMinutesShort:'分',
-settlementHeader:'文字開封精算：',settlementTime:'時間：',settlementTotalSongs:'総曲数：',settlementAvgPerSong:'（平均{time}/曲）',settlementOpenChars:'開封文字数：',settlementAvgPerChar:'（平均{time}/文字）',settlementRevealRate:'開封率：',songsUnit:'曲',revealClickHint:'（クリックで非表示）',
-toastNoGameTag:'有効なタグが見つかりませんでした',toastParseSuccess:'{games}ゲーム、{songs}曲を解析しました',toastOnlineFail:'オンライン曲庫の導入に失敗しました。',
-toastSelectGame:'少なくとも1つのゲームを選択してください',toastNoMatch:'条件に合致する曲がありません',toastExtracted:'{count}曲を抽出しました',toastInvalidCount:'有効な数を入力してください',
-toastInputSongs:'先に曲名を入力してください',toastRandomized:'ランダムに並び替えました',toastSortedByLength:'長さ順に並び替えました',toastSelectSort:'並び替え方法を選択してください',toastCleared:'クリアしました',
-toastNeedSong:'少なくとも1曲の曲名を入力してください',toastGameStart:'ゲーム開始！',toastResetChars:'開封文字を全てリセットしました',
-toastNoRevealed:'正解済みの曲がありません。',toastHidden:'{count}曲の正解済み曲を非表示にしました',
-toastRestored:'ゲームを復元しました。',toastRemoved:'曲庫を削除しました', toastExported:'画像を出力しました', toastTagsRequired:'タグが必要です', toastLibDeleted:'曲庫を削除しました', toastLibRenamed:'名前を変更しました',
-toastExportMobile:'プレビュー画像を長押しして保存してください',
-backConfirm:'編集に戻ると現在のゲームが終了します。よろしいですか？',endConfirm:'ゲームを終了しますか？',
-noCopyContent:'コピーする内容がありません',copyFail:'コピーに失敗しました',copySuccess:'クリップボードにコピーしました',copySettlementOk:'精算情報をコピーしました',copyQuestionsOk:'全問題をコピーしました',
-settingsTitle:'設定',settingMaskTitle:'マスク文字',settingFuncTitle:'機能切替', contactTitle:'開発者に連絡',
-settingTimer:'タイマーを有効化',settingSettlement:'精算を有効化',settingSpaceHidden:'スペースもマスク文字で隠す',
-settingAutoRemark:'ゲーム範囲で備考を自動入力',settingCharSort:'開封文字をソート',settingSongLookup:'曲の来源検索を有効化',
-settingFixedRatio: '画像出力の比率を9:16に固定',
-settingGuideTitle:'使用ガイド',closeBtn:'閉じる',cancelBtn:'キャンセル',confirmBtn:'確認',
-renameTitle:'名前変更',exportPreviewTitle:'画像を長押しして保存',
+settlementHeader:'文字開封精算：',settlementTime:'時間：',settlementTotalSongs:'総曲数：',
+settlementGuessedCount: '（正解{count}曲）', settlementAllGuessed: '（全曲正解）', settlementAvgSpeed: '（{time}秒/曲）',
+settlementOpenChars:'文字数：',settlementAvgPerChar:'（平均{time}/個）', charUnit:'個', settlementRevealRate:'開封率：',songsUnit:'曲',revealClickHint:'（クリックで非表示）',
+toastNoGameTag:'有効タグなし',toastParseSuccess:'{games}ゲーム、{songs}曲を解析',toastOnlineFail:'導入失敗。',
+toastSelectGame:'ゲームを選択してください',toastNoMatch:'合致曲なし',toastExtracted:'{count}曲抽出',toastInvalidCount:'有効な数を入力',
+toastInputSongs:'曲名を入力してください',toastRandomized:'ランダム化',toastSortedByLength:'長さ順',toastSelectSort:'並び替え方法を選択',toastCleared:'クリアしました',
+toastNeedSong:'曲名を入力してください',toastGameStart:'開始！',toastResetChars:'リセットしました',
+toastNoRevealed:'正解済みの曲がありません',toastHidden:'{count}曲を非表示にしました',
+toastRestored:'復元しました',toastRemoved:'削除しました', toastExported:'画像出力', toastTagsRequired:'タグが必要です', toastLibDeleted:'削除しました', toastLibRenamed:'名前変更',
+toastExportMobile:'長押しして保存',
+backConfirm:'現在のゲームを終了しますか？',endConfirm:'終了しますか？',
+noCopyContent:'内容がありません',copyFail:'コピー失敗',copySuccess:'コピーしました',copySettlementOk:'精算情報コピー',copyQuestionsOk:'全問題コピー',
+settingsTitle:'設定',settingMaskTitle:'マスク文字',settingMaskHint:'任意の1文字を入力可能',settingFuncTitle:'機能切替', contactTitle:'開発者に連絡',
+settingTimer:'タイマー有効化',settingSettlement:'精算有効化',settingSpaceHidden:'スペースも隠す',
+settingAutoRemark:'備考を自動入力',settingCharSort:'開封文字ソート',settingSongLookup:'曲の来源検索',
+settingFixedRatio: '画像比率を9:16に固定',
+settingGuideTitle:'ガイド',closeBtn:'閉じる',cancelBtn:'キャンセル',confirmBtn:'確認',
+renameTitle:'名前変更',exportPreviewTitle:'長押しして保存',
 autoRemarkPrefix:'範囲：',
-lookupTitle:'曲の来源',lookupNotFound:'曲庫に見つかりません',lookupInGames:'{count}個のゲームに登場：',
+lookupTitle:'曲の来源',lookupNotFound:'見つかりません',lookupInGames:'{count}個のゲームに登場：',
 onlineLibName:'オンライン曲庫 (内蔵)',
-guideHtml:'<h4>はじめに</h4><ul><li>曲庫を導入するか、手動で曲名を入力</li></ul>'
+cheatMaskedTitle:'開封テキスト (伏字)', cheatMaskedPh:'テキストを貼り付け...', cheatParseBtn:'解析・マッチング',
+cheatGuessedTitle:'開封済み文字', cheatGuessedPh:'文字を入力...', cheatGuessedHint:'開封済みの文字を全て入力',
+cheatOptionsTitle:'マッチング設定', cheatMatchStart:'前方一致', cheatMatchMiddle:'中間/後方一致', cheatSpaceStar:'スペースを伏字扱い',
+cheatResultTitle:'結果', cheatEmptyResult:'曲庫を導入してテキストを入力', rangeListTitle:'範囲',
+searchSong: '曲を検索...', newSongName: '新しい曲名', addSong: '追加', resetLib: '元に戻す', saveBtn: '保存',
+guideHtml:'<h4>ガイド</h4><ul><li>曲庫導入・設定をして「開始」を押す。</li></ul><h4>チートツール</h4><ul><li>伏字テキストを貼り付けて合致曲を検索。</li></ul>'
 }
 };
-let currentLang='en';
+let currentLang='zh';
 function t(key){return(I18N[currentLang]&&I18N[currentLang][key])||I18N.en[key]||key;}
 function updateAllText(){
 document.querySelectorAll('[data-i18n]').forEach(el=>{el.innerHTML=t(el.dataset.i18n);});
@@ -737,9 +841,21 @@ if(state.currentPage===2&&cs().songs.length>0)renderResult();
 if(state.currentPage===1){updateStatusHint();updateFilterCount();updateFileStats();}
 }
 // ========== Constants ==========
-const SUPPORTED_GAMES=["Phigros","Arcaea","Orzmic","Milthm","Berry Melody","Lanota","Rotaeno","Cytus II","KALPA","Muse Dash","Paradigm:Reboot","TAKUMI³","PJSK","maimai","CHUNITHM","オンゲキ","Notanote","Rizline","DanceRail3","vivid/stasis","Groove Coaster","ChainBeeT","Liminality","RYCEAM","Dynamix","Deemo II","WACCA","OverRapid","SDVX","太鼓の達人","Circle of Sparks","Polytone","SEVEN's CODE","SHINOBI SLASH","Simple","Sparkline","Siglota","Twirdora","Tone Sphere","WAVEAT","Beatmania IIDX","BanG Dream!","DJMAX","BOF","VOEZ","Piano Tiles 2","RAVON","ELLIA","Hachi Hachi","Zion","Other"];
+const SUPPORTED_GAMES=["Phigros","Arcaea","Orzmic","Milthm","Berry Melody","Lanota","Rotaeno","Cytus II","KALPA","Muse Dash","Paradigm:Reboot","TAKUMI³","PJSK","maimai","CHUNITHM","オンゲキ","Notanote","Rizline","DanceRail3","vivid/stasis","Groove Coaster","ChainBeeT","Liminality","RYCEAM","Dynamix","Deemo II","WACCA","OverRapid","SDVX","太鼓の達人","Circle of Sparks","Polytone","SEVEN's CODE","SHINOBI SLASH","Simple","Sparkline","Siglota","Twirdora","Tone Sphere","WAVEAT","Beatmania IIDX","BanG Dream!","DJMAX","BOF","VOEZ","Piano Tiles 2","RAVON","ELLIA","Hachi Hachi","Zion","OverEcho"];
 const ONLINE_LIBRARY_URL='https://raw.githubusercontent.com/FallOxygen/falloxygen.github.io/main/library/Songs.txt';
-const STORAGE_KEY='songLetterHelper_v14';
+const STORAGE_KEY='songLetterHelper_v15';
+
+// ========== Full-Width/Half-Width Mapping ==========
+const charEqMap = {'(':'（', ')':'）', '!':'！', '?':'？', ',':'，', '.':'。', ':':'：', ';':'；', '"':'“', "'":'‘', '[':'【', ']':'】', ' ':'\u3000'};
+const reverseCharEqMap = {};
+for(let k in charEqMap) { reverseCharEqMap[charEqMap[k]] = k; }
+function getEquiv(c) {
+    let eq = [c];
+    if (charEqMap[c]) eq.push(charEqMap[c]);
+    if (reverseCharEqMap[c]) eq.push(reverseCharEqMap[c]);
+    return eq;
+}
+
 // ========== Char Type ==========
 function isLetter(c){const code=c.charCodeAt(0);return(code>=65&&code<=90)||(code>=97&&code<=122);}
 function isHiragana(c){const code=c.charCodeAt(0);return code>=0x3040&&code<=0x309F;}
@@ -764,35 +880,91 @@ const charPriority={digit:1,upperLetter:2,lowerLetter:3,hiragana:4,katakana:5,pu
 function getCharType(c){const code=c.charCodeAt(0);if(code>=48&&code<=57)return'digit';if(code>=65&&code<=90)return'upperLetter';if(code>=97&&code<=122)return'lowerLetter';if(code>=0x3040&&code<=0x309F)return'hiragana';if(code>=0x30A0&&code<=0x30FF)return'katakana';const p='!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\uFF01\uFF02\uFF03\uFF04\uFF05\uFF06\uFF07\uFF08\uFF09\uFF0A\uFF0B\uFF0C\uFF0D\uFF0E\uFF0F\uFF1A\uFF1B\uFF1C\uFF1D\uFF1E\uFF1F\uFF20\uFF3B\uFF3C\uFF3D\uFF3E\uFF3F\uFF40\uFF5B\uFF5C\uFF5D\uFF5E\u300C\u300D\u300E\u300F\u3010\u3011\uFF08\uFF09\u3001\u3002\u30FB\u2026\u2014';if(p.includes(c))return'punctuation';if((code>=0x4E00&&code<=0x9FFF)||(code>=0x3400&&code<=0x4DBF))return'hanzi';return'other';}
 function sortChars(chars){return chars.sort((a,b)=>{const pA=charPriority[getCharType(a)],pB=charPriority[getCharType(b)];return pA!==pB?pA-pB:a.localeCompare(b,'ja');});}
 // ========== IndexedDB ==========
-const DB_NAME='SongLetterHelperDB',DB_VERSION=1,STORE_NAME='library';let db=null;
+const DB_NAME='SongLetterHelperDB',DB_VERSION=2,STORE_NAME='library';let db=null;
 function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onerror=()=>reject(r.error);r.onsuccess=()=>{db=r.result;resolve(db);};r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(STORE_NAME))d.createObjectStore(STORE_NAME,{keyPath:'id'});};});}
-function saveToDB(key,data){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readwrite');tx.objectStore(STORE_NAME).put({id:key,data:data}).onsuccess=()=>resolve();tx.onerror=()=>reject(tx.error);});}
-function loadFromDB(key){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readonly');const r=tx.objectStore(STORE_NAME).get(key);r.onsuccess=()=>resolve(r.result?r.result.data:null);r.onerror=()=>reject(r.error);});}
+function saveToDB(key,data,original=null){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readwrite');const obj={id:key,data:data};if(original)obj.original=original;tx.objectStore(STORE_NAME).put(obj).onsuccess=()=>resolve();tx.onerror=()=>reject(tx.error);});}
+function loadFromDB(key){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readonly');const r=tx.objectStore(STORE_NAME).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
 // ========== Default Sheet ==========
 function newSheet(){return{songInputText:'',songs:[],remark:'',sortType:'none',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{charTypes:[],allowOther:false,minLength:0},openedChars:'',revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0};}
 // ========== State ==========
 let state={
 sheets:[newSheet()],currentPage:1,activeTab:'import',
-fileName:'',currentLang:'en',
+fileName:'',currentLang:'zh',
 libraries: [{id: 'online', name: 'Online Library (Built-in)'}],
 currentLibId: 'online',
 settings:{maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false,fixedImageRatio:false}
 };
-let gameData={},elements={},timerInterval=null;
+let gameData={}, originalGameData={}, elements={}, timerInterval=null;
+let undoStack=[], redoStack=[], isMutatingHistory=false;
+
 function cs(){return state.sheets[0];}
 // ========== Utils ==========
 function showToast(message,type='success'){const toast=elements.toast;toast.textContent=message;toast.className='toast '+type;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2800);}
 function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
 function parseSongs(text){if(!text.trim())return[];const lines=text.trim().split('\n');const result=[];for(const line of lines){const trimmed=line.trim();if(!trimmed)continue;const match=trimmed.match(/^\d+[.)\s:：]+(.+)$/);result.push(match?match[1].trim():trimmed);}return result;}
 function revealChar(char,openedSet,spaceAsStar,maskChar){
-if(char===' '||char==='\u3000')return spaceAsStar?maskChar:char;
-if(openedSet.has(char))return char;
-const lower=char.toLowerCase();for(const c of openedSet){if(c.toLowerCase()===lower)return char;}
-return maskChar;
+    if(char===' '||char==='\u3000')return spaceAsStar?maskChar:char;
+    const equivalents = getEquiv(char);
+    for(const eq of equivalents) {
+        if(openedSet.has(eq)) return char;
+        const lower = eq.toLowerCase();
+        for(const c of openedSet) {
+            if(c.toLowerCase() === lower) return char;
+        }
+    }
+    return maskChar;
 }
 function formatTime(seconds){const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
 function formatTimeReadable(seconds){const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;if(h>0)return`${h}${t('timeHours')}${m}${t('timeMinutes')}${s}${t('timeSeconds')}`;if(m>0)return`${m}${t('timeMinutes')}${s}${t('timeSeconds')}`;return`${s}${t('timeSeconds')}`;}
-function formatAverageTime(seconds){if(seconds<60)return`${seconds.toFixed(1)}${t('timeSecondsShort')}`;if(seconds<3600){const m=Math.floor(seconds/60),s=Math.round(seconds%60);return s>0?`${m}${t('timeMinutesShort')}${s}${t('timeSecondsShort')}`:`${m}${t('timeMinutesShort')}`;}const h=Math.floor(seconds/3600),m=Math.round((seconds%3600)/60);return m>0?`${h}${t('timeHours')}${m}${t('timeMinutesShort')}`:`${h}${t('timeHours')}`;}
+
+// ========== Undo/Redo ==========
+function saveSnapshot(){
+    if(isMutatingHistory) return;
+    undoStack.push({
+        openedChars: cs().openedChars,
+        revealedFullIndices: [...cs().revealedFullIndices],
+        hiddenIndices: [...cs().hiddenIndices],
+        guessedSongs: [...cs().guessedSongs]
+    });
+    if(undoStack.length > 50) undoStack.shift();
+    redoStack = [];
+    updateUndoRedoUI();
+}
+function performUndo(){
+    if(undoStack.length === 0) return;
+    isMutatingHistory = true;
+    redoStack.push({
+        openedChars: cs().openedChars,
+        revealedFullIndices: [...cs().revealedFullIndices],
+        hiddenIndices: [...cs().hiddenIndices],
+        guessedSongs: [...cs().guessedSongs]
+    });
+    const stateObj = undoStack.pop();
+    Object.assign(cs(), stateObj);
+    elements.charInput.value = cs().openedChars;
+    saveState(); renderResult(); updateUndoRedoUI();
+    isMutatingHistory = false;
+}
+function performRedo(){
+    if(redoStack.length === 0) return;
+    isMutatingHistory = true;
+    undoStack.push({
+        openedChars: cs().openedChars,
+        revealedFullIndices: [...cs().revealedFullIndices],
+        hiddenIndices: [...cs().hiddenIndices],
+        guessedSongs: [...cs().guessedSongs]
+    });
+    const stateObj = redoStack.pop();
+    Object.assign(cs(), stateObj);
+    elements.charInput.value = cs().openedChars;
+    saveState(); renderResult(); updateUndoRedoUI();
+    isMutatingHistory = false;
+}
+function updateUndoRedoUI(){
+    document.getElementById('undoBtn').disabled = undoStack.length === 0;
+    document.getElementById('redoBtn').disabled = redoStack.length === 0;
+}
+
 // ========== Storage ==========
 function saveState(){
 const sheet=cs();
@@ -828,7 +1000,7 @@ return true;
 }
 }catch(e){}return false;
 }
-function clearSheetGame(sheet){sheet.openedChars='';sheet.revealedFullIndices=[];sheet.hiddenIndices=[];sheet.timerSeconds=0;sheet.timerRunning=false;sheet.timerPaused=false;sheet.gameStartTime=null;sheet.totalPauseTime=0;sheet.pauseStartTime=null;sheet.guessedSongs=[];sheet.currentRevealPercent=0;}
+function clearSheetGame(sheet){sheet.openedChars='';sheet.revealedFullIndices=[];sheet.hiddenIndices=[];sheet.timerSeconds=0;sheet.timerRunning=false;sheet.timerPaused=false;sheet.gameStartTime=null;sheet.totalPauseTime=0;sheet.pauseStartTime=null;sheet.guessedSongs=[];sheet.currentRevealPercent=0; undoStack=[]; redoStack=[]; updateUndoRedoUI();}
 
 // ========== Libraries ==========
 function updateLibrarySelect() {
@@ -842,10 +1014,15 @@ function updateLibrarySelect() {
 async function loadSelectedLibrary() {
   const libId = state.currentLibId;
   try {
-    const data = await loadFromDB(libId === 'online' ? 'gameData' : 'library_' + libId);
-    gameData = data || {};
+    const obj = await loadFromDB(libId === 'online' ? 'gameData' : 'library_' + libId);
+    if(obj) {
+        gameData = obj.data || {};
+        originalGameData = obj.original || JSON.parse(JSON.stringify(gameData));
+    } else {
+        gameData = {}; originalGameData = {};
+    }
   } catch(e) {
-    gameData = {};
+    gameData = {}; originalGameData = {};
   }
   
   if(Object.keys(gameData).length > 0) {
@@ -866,18 +1043,39 @@ function updatePauseButton(){const btn=document.getElementById('pauseBtn');if(!b
 
 // ========== Settlement ==========
 function showSettlement(){
-stopTimer();const sheet=cs();const totalSongs=sheet.songs.length,openedChars=sheet.openedChars.length,guessedPercent=sheet.currentRevealPercent;
-const avgTimePerSong=totalSongs>0?sheet.timerSeconds/totalSongs:0,avgTimePerChar=openedChars>0?sheet.timerSeconds/openedChars:0;
+stopTimer();const sheet=cs();
+const totalSongs=sheet.songs.length;
+const openedChars=sheet.openedChars.length;
+const guessedPercent=sheet.currentRevealPercent;
+
+const guessedCount = sheet.revealedFullIndices.length + sheet.hiddenIndices.length;
+const allGuessed = guessedCount === totalSongs;
+
+const avgTimePerSong = guessedCount > 0 ? sheet.timerSeconds / guessedCount : 0;
+const avgTimePerChar = openedChars > 0 ? sheet.timerSeconds / openedChars : 0;
+
 let txt=t('settlementHeader')+'\n';
 if(state.settings.enableTimer){txt+=t('settlementTime')+formatTimeReadable(sheet.timerSeconds)+'\n';}
-txt+=t('settlementTotalSongs')+totalSongs+t('songsUnit');
-if(state.settings.enableTimer&&avgTimePerSong>0)txt+=t('settlementAvgPerSong').replace('{time}',formatAverageTime(avgTimePerSong));txt+='\n';
-txt+=t('settlementOpenChars')+openedChars+t('timeSecondsShort');
-if(state.settings.enableTimer&&avgTimePerChar>0)txt+=t('settlementAvgPerChar').replace('{time}',formatAverageTime(avgTimePerChar));txt+='\n';
-txt+=t('settlementRevealRate')+guessedPercent+'%';
+
+let guessedStatusText = allGuessed ? t('settlementAllGuessed') : t('settlementGuessedCount').replace('{count}', guessedCount);
+txt += t('settlementTotalSongs') + totalSongs + t('songsUnit') + guessedStatusText;
+if(state.settings.enableTimer && avgTimePerSong > 0) {
+    txt += t('settlementAvgSpeed').replace('{time}', avgTimePerSong.toFixed(1));
+}
+txt += '\n';
+
+txt += t('settlementOpenChars') + openedChars + t('charUnit');
+if(state.settings.enableTimer && avgTimePerChar > 0) {
+    txt += t('settlementAvgPerChar').replace('{time}', avgTimePerChar.toFixed(1));
+}
+txt += '\n';
+txt += t('settlementRevealRate') + guessedPercent + '%';
+
 document.getElementById('settlementText').value=txt;
+
 let qtxt=sheet.songs.map((s,i)=>`${i+1}.${s}`).join('\n');if(sheet.remark.trim())qtxt+=`\n[${sheet.remark.trim()}]`;
 document.getElementById('questionsText').value=qtxt;
+
 clearSheetGame(sheet);switchToPage(3);
 }
 
@@ -885,7 +1083,7 @@ clearSheetGame(sheet);switchToPage(3);
 function applySettings(){
 const s=state.settings;
 document.getElementById('timerCard').style.display=s.enableTimer?'':'none';
-document.querySelectorAll('.mask-option').forEach(o=>{o.classList.toggle('active',o.dataset.mask===s.maskChar);});
+document.getElementById('customMaskInput').value=s.maskChar;
 document.getElementById('setEnableTimer').checked=s.enableTimer;
 document.getElementById('setEnableSettlement').checked=s.enableSettlement;
 document.getElementById('setSpaceAsStar').checked=s.spaceAsStar;
@@ -945,16 +1143,16 @@ continue;
 if(currentGame&&trimmed){
 const songMatch=trimmed.match(/^\d+[.)\s:：]+(.+)$/);
 const songName=songMatch?songMatch[1].trim():trimmed;
-if(songName)data[currentGame].push(songName);
+if(songName&&!data[currentGame].includes(songName))data[currentGame].push(songName);
 }
 }
 for(const game in data){if(data[game].length===0)delete data[game];}
 return data;
 }
 
+let currentEditGame = '';
 function renderGameList(){
 let games = Object.keys(gameData);
-// If online library, sort by supported games array, else alphabetical
 if (state.currentLibId === 'online') {
   games.sort((a,b)=>SUPPORTED_GAMES.indexOf(a)-SUPPORTED_GAMES.indexOf(b));
 } else {
@@ -962,9 +1160,89 @@ if (state.currentLibId === 'online') {
 }
 
 const sheet=cs();
-elements.gameList.innerHTML=games.map(game=>{const count=gameData[game].length;const checked=sheet.selectedGames.includes(game)?'checked':'';return`<div class="game-item"><label class="checkbox-wrap flex-1"><input type="checkbox" data-game="${escapeHtml(game)}" ${checked}><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="game-name">${escapeHtml(game)}</span><span class="game-count">${count}${t('songsUnit')}</span></label></div>`;}).join('');
+elements.gameList.innerHTML=games.map(game=>{
+    const count=gameData[game].length;
+    const checked=sheet.selectedGames.includes(game)?'checked':'';
+    return `<div class="game-item">
+        <label class="checkbox-wrap flex-1" style="padding:4px 0;">
+            <input type="checkbox" data-game="${escapeHtml(game)}" ${checked}>
+            <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span class="game-name">${escapeHtml(game)}</span>
+            <span class="game-count">${count}${t('songsUnit')}</span>
+        </label>
+        <button class="btn btn-ghost btn-sm px-2 py-1 ml-2 edit-game-btn" data-game="${escapeHtml(game)}" title="Edit">✎</button>
+    </div>`;
+}).join('');
 updateFileStats();updateCustomCounts();updateFilterCount();
+
+document.querySelectorAll('.edit-game-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentEditGame = btn.dataset.game;
+        openEditLibModal();
+    });
+});
 }
+
+function openEditLibModal() {
+    document.getElementById('editLibTitle').textContent = currentEditGame;
+    document.getElementById('editLibSearch').value = '';
+    renderEditLibSongs();
+    document.getElementById('editLibModal').classList.add('show');
+}
+
+function renderEditLibSongs() {
+    const term = document.getElementById('editLibSearch').value.toLowerCase();
+    const songs = gameData[currentEditGame] || [];
+    const list = document.getElementById('editLibSongsList');
+    
+    let html = '';
+    songs.forEach((song, idx) => {
+        if(song.toLowerCase().includes(term)) {
+            html += `<div class="song-edit-item">
+                <span class="mono flex-1">${escapeHtml(song)}</span>
+                <button class="btn btn-danger btn-sm py-1 px-2" onclick="removeLibSong(${idx})">X</button>
+            </div>`;
+        }
+    });
+    if(!html) html = '<div class="text-center text-muted p-4">No songs found</div>';
+    list.innerHTML = html;
+}
+
+window.removeLibSong = function(idx) {
+    if(gameData[currentEditGame]) {
+        gameData[currentEditGame].splice(idx, 1);
+        renderEditLibSongs();
+    }
+};
+
+document.getElementById('editLibSearch').addEventListener('input', renderEditLibSongs);
+document.getElementById('editLibAddBtn').addEventListener('click', () => {
+    const inp = document.getElementById('editLibAddInput');
+    const val = inp.value.trim();
+    if(val && gameData[currentEditGame]) {
+        if(!gameData[currentEditGame].includes(val)) {
+            gameData[currentEditGame].push(val);
+            inp.value = '';
+            renderEditLibSongs();
+        }
+    }
+});
+
+document.getElementById('editLibSaveBtn').addEventListener('click', async () => {
+    await saveToDB(state.currentLibId === 'online' ? 'gameData' : 'library_' + state.currentLibId, gameData, originalGameData);
+    document.getElementById('editLibModal').classList.remove('show');
+    renderGameList();
+});
+
+document.getElementById('editLibResetBtn').addEventListener('click', async () => {
+    if(confirm('Reset this game to original imported state?')) {
+        gameData[currentEditGame] = [...originalGameData[currentEditGame]];
+        renderEditLibSongs();
+    }
+});
+document.getElementById('editLibClose').addEventListener('click', () => document.getElementById('editLibModal').classList.remove('show'));
+
+
 function updateFileStats(){const totalGames=Object.keys(gameData).length,totalSongs=Object.values(gameData).reduce((s,a)=>s+a.length,0);document.getElementById('fileStats').textContent=t('fileStatsFormat').replace('{games}',totalGames).replace('{songs}',totalSongs);}
 function updateCustomCounts(){const games=Object.keys(gameData);const sheet=cs();elements.customCountsDiv.innerHTML=games.map(game=>{const count=gameData[game].length,savedCount=sheet.customCounts[game]||0,checked=sheet.selectedGames.includes(game);return`<div class="flex items-center gap-3 p-2 rounded-lg ${checked?'':'opacity-40'}"><span class="flex-1 text-sm truncate">${escapeHtml(game)}</span><span class="text-xs" style="color:var(--muted);">${count}${t('songsUnit')}</span><input type="number" class="count-input custom-count-input" data-game="${escapeHtml(game)}" value="${savedCount}" min="0" max="${count}" ${checked?'':'disabled'}></div>`;}).join('');}
 
@@ -1025,7 +1303,7 @@ html+=`<div class="song-line ${isHidden?'hidden-song':''} ${isRevealedFull?'reve
 });
 if(sheet.remark.trim())html+=`<div class="remark-line">[${escapeHtml(sheet.remark.trim())}]</div>`;
 document.getElementById('resultDisplay').innerHTML=html;
-document.querySelectorAll('.song-line').forEach(line=>{line.addEventListener('click',()=>{toggleRevealFull(parseInt(line.dataset.index));});});
+document.querySelectorAll('.song-line').forEach(line=>{line.addEventListener('click',()=>{saveSnapshot(); toggleRevealFull(parseInt(line.dataset.index));});});
 const visibleCount=sheet.songs.length-sheet.hiddenIndices.length;const percent=totalNonSpace>0?Math.round(revealedNonSpace/totalNonSpace*100):0;
 sheet.currentRevealPercent=percent;updateStats(visibleCount,percent);updateHideStats();
 }
@@ -1037,14 +1315,45 @@ function updateStatusHint(){const hint=document.getElementById('statusHint');if(
 function updateCheckboxStates(){elements.lengthSortLabel.classList.toggle('disabled',elements.randomSort.checked);elements.randomSortLabel.classList.toggle('disabled',elements.lengthSort.checked);}
 
 // ========== Hide Revealed ==========
-function hideRevealedSongs(){const sheet=cs();if(sheet.revealedFullIndices.length===0){showToast(t('toastNoRevealed'),'info');return;}for(const idx of sheet.revealedFullIndices){if(!sheet.hiddenIndices.includes(idx)){sheet.hiddenIndices.push(idx);sheet.guessedSongs.push({index:idx,time:sheet.timerSeconds});}}const count=sheet.revealedFullIndices.length;sheet.revealedFullIndices=[];saveState();renderResult();showToast(t('toastHidden').replace('{count}',count));}
+function hideRevealedSongs(){
+    const sheet=cs();
+    if(sheet.revealedFullIndices.length===0){showToast(t('toastNoRevealed'),'info');return;}
+    saveSnapshot();
+    for(const idx of sheet.revealedFullIndices){
+        if(!sheet.hiddenIndices.includes(idx)){
+            sheet.hiddenIndices.push(idx);
+            sheet.guessedSongs.push({index:idx,time:sheet.timerSeconds});
+        }
+    }
+    const count=sheet.revealedFullIndices.length;
+    sheet.revealedFullIndices=[];
+    saveState();renderResult();
+    showToast(t('toastHidden').replace('{count}',count));
+}
 
 // ========== Restore Modal ==========
 function showRestoreModal(){const sheet=cs();document.getElementById('restoreSongCount').textContent=(sheet.songs.length-sheet.hiddenIndices.length)+t('songsUnit');document.getElementById('restoreCharCount').textContent=sheet.openedChars.length;document.getElementById('restoreTime').textContent=formatTime(sheet.timerSeconds);document.getElementById('restorePercent').textContent=sheet.currentRevealPercent+'%';document.getElementById('restoreModal').classList.add('show');}
 function hideRestoreModal(){document.getElementById('restoreModal').classList.remove('show');}
 
 // ========== Song Lookup ==========
-function showSongLookup(songName){const modal=document.getElementById('lookupModal');document.getElementById('lookupTitle').textContent=t('lookupTitle');const body=document.getElementById('lookupBody');let html='';const foundGames=[];for(const game in gameData){if(gameData[game].includes(songName))foundGames.push(game);}if(foundGames.length===0){html=`<div style="text-align:center;padding:30px;color:var(--muted);">${t('lookupNotFound')}</div>`;}else{html+=`<div style="padding:8px 14px;font-size:13px;color:var(--muted);margin-bottom:8px;">${t('lookupInGames').replace('{count}',foundGames.length)}</div>`;foundGames.forEach(game=>{html+=`<div class="lookup-item"><span class="lookup-game">${escapeHtml(game)}</span></div>`;});}body.innerHTML=html;modal.classList.add('show');}
+let currentLookupText = "";
+function showSongLookup(songName){
+    const modal=document.getElementById('lookupModal');
+    document.getElementById('lookupTitle').textContent=t('lookupTitle');
+    const body=document.getElementById('lookupBody');
+    let html='';
+    const foundGames=[];
+    for(const game in gameData){if(gameData[game].includes(songName))foundGames.push(game);}
+    if(foundGames.length===0){
+        html=`<div style="text-align:center;padding:30px;color:var(--muted);">${t('lookupNotFound')}</div>`;
+        currentLookupText = `${songName}\n${t('lookupNotFound')}`;
+    }else{
+        html+=`<div style="padding:8px 14px;font-size:13px;color:var(--muted);margin-bottom:8px;">${t('lookupInGames').replace('{count}',foundGames.length)}</div>`;
+        foundGames.forEach(game=>{html+=`<div class="lookup-item"><span class="lookup-game">${escapeHtml(game)}</span></div>`;});
+        currentLookupText = `${songName}\n` + foundGames.join('\n');
+    }
+    body.innerHTML=html;modal.classList.add('show');
+}
 
 // ========== Export Result Logic ==========
 function getResultTextForExport() {
@@ -1072,20 +1381,93 @@ function getResultTextForExport() {
   return text.trim();
 }
 
+function exportImage(text) {
+  if(!text) { showToast(t('noCopyContent'), 'error'); return; }
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const lines = text.split('\n');
+
+  if (state.settings.fixedImageRatio) {
+    const baseWidth = 1080; const targetHeight = 1920; const paddingX = 80; const paddingY = 100;
+    const maxTextWidth = baseWidth - paddingX * 2; const fontSize = 42; const lineHeight = 64;
+    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+
+    const wrappedLines = [];
+    lines.forEach(line => {
+      if (line === '') { wrappedLines.push(''); return; }
+      let currentLine = '';
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const testLine = currentLine + char;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxTextWidth && i > 0) {
+          wrappedLines.push(currentLine); currentLine = char;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      wrappedLines.push(currentLine);
+    });
+
+    const contentHeight = wrappedLines.length * lineHeight;
+    const finalHeight = Math.max(targetHeight, contentHeight + paddingY * 2);
+
+    canvas.width = baseWidth; canvas.height = finalHeight;
+    ctx.fillStyle = '#12151c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#e8eaed'; ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+    ctx.textBaseline = 'top';
+
+    let startY = paddingY;
+    if (finalHeight === targetHeight) startY = (targetHeight - contentHeight) / 2;
+
+    wrappedLines.forEach((line, i) => { ctx.fillText(line, paddingX, startY + i * lineHeight); });
+  } else {
+    const fontSize = 24; const lineHeight = 40; const padding = 40;
+    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+    let maxWidth = 400;
+    lines.forEach(l => {
+      const w = ctx.measureText(l).width;
+      if(w > maxWidth) maxWidth = w;
+    });
+
+    canvas.width = maxWidth + padding * 2; canvas.height = lines.length * lineHeight + padding * 2;
+    ctx.fillStyle = '#12151c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#e8eaed'; ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
+    ctx.textBaseline = 'top';
+    lines.forEach((line, i) => { ctx.fillText(line, padding, padding + i * lineHeight); });
+  }
+
+  const dataUrl = canvas.toDataURL('image/png');
+  
+  if (isMobile) {
+    document.getElementById('exportImagePreview').src = dataUrl;
+    document.getElementById('exportModal').classList.add('show');
+    showToast(t('toastExportMobile'));
+  } else {
+    const link = document.createElement('a');
+    link.download = `LetterOpener_${Date.now()}.png`;
+    link.href = dataUrl;
+    link.click();
+    showToast(t('toastExported'));
+  }
+}
+
 // ========== Library Managers (Online & Custom) ==========
 async function processLibraryText(text,fileName, isCustom = false, customTags = null){
 const data=parseLibrary(text, customTags);
 if(Object.keys(data).length===0){showToast(t('toastNoGameTag'),'error');return;}
 gameData=data;
+originalGameData=JSON.parse(JSON.stringify(data));
 
 if(isCustom) {
   const libId = 'custom_' + Date.now();
   state.libraries.push({ id: libId, name: fileName, isCustom: true, tags: customTags });
   state.currentLibId = libId;
-  await saveToDB('library_' + libId, gameData);
+  await saveToDB('library_' + libId, gameData, originalGameData);
 } else {
   state.currentLibId = 'online';
-  await saveToDB('gameData', gameData);
+  await saveToDB('gameData', gameData, originalGameData);
 }
 
 saveState();
@@ -1111,19 +1493,274 @@ try{
 }
 }
 
-// ========== Clipboard & Canvas Export ==========
+// ========== Clipboard ==========
 async function copyText(text,successMsg,failMsg){try{await navigator.clipboard.writeText(text);showToast(successMsg);}catch(e){const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showToast(successMsg);}catch(err){showToast(failMsg,'error');}document.body.removeChild(ta);}}
+
+// ========== Cheat Tool Logic ==========
+const FILTER_TYPES = ['letter', 'japanese', 'hanzi', 'symbol', 'jp_hanzi'];
+function isSymbolCheat(c) {
+    if (c === ' ' || c === '　') return false;
+    return !isLetter(c) && !isJapanese(c) && !isHanzi(c);
+}
+function checkCheatFilter(song, type) {
+    const chars = [...song];
+    const hasLetter = chars.some(isLetter);
+    const hasJapanese = chars.some(isJapanese);
+    const hasHanzi = chars.some(isHanzi);
+    const hasSymbol = chars.some(isSymbolCheat);
+    const hasJpHanzi = hasJapanese && hasHanzi;
+    
+    const onlyLetter = chars.every(c => isLetter(c) || c === ' ' || c === '　');
+    const onlyJapanese = chars.every(c => isJapanese(c) || c === ' ' || c === '　');
+    const onlyHanzi = chars.every(c => isHanzi(c) || c === ' ' || c === '　');
+    const onlySymbol = chars.every(c => isSymbolCheat(c) || c === ' ' || c === '　');
+    const onlyJpHanzi = chars.every(c => isJapanese(c) || isHanzi(c) || c === ' ' || c === '　');
+    
+    switch (type) {
+        case 'letter': return { only: onlyLetter, has: hasLetter };
+        case 'japanese': return { only: onlyJapanese, has: hasJapanese };
+        case 'hanzi': return { only: onlyHanzi, has: hasHanzi };
+        case 'symbol': return { only: onlySymbol, has: hasSymbol };
+        case 'jp_hanzi': return { only: onlyJpHanzi, has: hasJpHanzi };
+    }
+    return { only: false, has: false };
+}
+function applyCheatFilters(song, filters) {
+    for (const f of filters.only) { if (!checkCheatFilter(song, f).only) return false; }
+    for (const f of filters.include) { if (!checkCheatFilter(song, f).has) return false; }
+    for (const f of filters.exclude) { if (checkCheatFilter(song, f).has) return false; }
+    return true;
+}
+
+let cheatLineFilters = {};
+
+function parseCheatMasked(text) {
+    const lines = text.split('\n');
+    const result = [];
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const match = trimmed.match(/^(\d+)[.)\s:：]+(.*)$/);
+        if (match) {
+            const lineNum = parseInt(match[1]);
+            const content = match[2].trim();
+            if (!content.includes('*')) continue;
+            result.push({ lineNum, content });
+        }
+    }
+    return result;
+}
+
+function matchCheatSong(masked, song, guessed, spaceAsStar, matchStart, matchMiddle) {
+    const guessedSet = new Set();
+    for (const c of guessed.toLowerCase()) {
+        const eq = getEquiv(c);
+        eq.forEach(x => guessedSet.add(x.toLowerCase()));
+    }
+    
+    const checkSlice = (mask, target) => {
+        if (mask.length !== target.length) return false;
+        for (let i = 0; i < mask.length; i++) {
+            const mc = mask[i];
+            const tc = target[i];
+            if (mc === '*') {
+                if (spaceAsStar) {
+                    if (guessedSet.has(tc.toLowerCase())) return false;
+                } else {
+                    if (tc === ' ' || tc === '　') return false;
+                    if (guessedSet.has(tc.toLowerCase())) return false;
+                }
+            } else if (mc === ' ' || mc === '　') {
+                if (spaceAsStar) {
+                    if (guessedSet.has(tc.toLowerCase())) return false;
+                } else {
+                    if (tc !== ' ' && tc !== '　') return false;
+                }
+            } else {
+                if (tc.toLowerCase() !== mc.toLowerCase()) return false;
+            }
+        }
+        return true;
+    };
+    
+    const results = [];
+    const maskLen = masked.length;
+    const songLen = song.length;
+    
+    if (maskLen === songLen) {
+        if (checkSlice(masked, song)) results.push({ type: 'full', song: song, matchStart: 0, matchLen: maskLen });
+    }
+    if (matchStart && maskLen < songLen) {
+        const slice = song.substring(0, maskLen);
+        if (checkSlice(masked, slice)) results.push({ type: 'start', song: song, matchStart: 0, matchLen: maskLen });
+    }
+    if (matchMiddle && maskLen < songLen) {
+        for (let start = 1; start <= songLen - maskLen; start++) {
+            const slice = song.substring(start, start + maskLen);
+            if (checkSlice(masked, slice)) results.push({ type: 'middle', song: song, matchStart: start, matchLen: maskLen });
+        }
+    }
+    return results.length > 0 ? results : null;
+}
+
+function renderCheatResults(results) {
+    const container = document.getElementById('cheatResultContainer');
+    const countEl = document.getElementById('cheatResultCount');
+    
+    if (results.length === 0) {
+        container.innerHTML = `<div class="text-center py-8" style="color: var(--muted);">${t('toastNoMatch')}</div>`;
+        countEl.textContent = '';
+        return;
+    }
+    
+    let totalMatches = 0;
+    results.forEach(r => totalMatches += r.matches.length);
+    countEl.textContent = `${results.length} Lines / ${totalMatches} Matches`;
+    
+    let html = '';
+    const FILTER_LABELS = { letter: t('filterLetter'), japanese: t('filterJapanese'), hanzi: t('filterHanzi'), symbol: 'Symbol', jp_hanzi: 'JP+Hanzi' };
+    
+    results.forEach((item) => {
+        const { masked, matches, lineNum } = item;
+        const currentFilters = cheatLineFilters[lineNum] || { only: [], include: [], exclude: [] };
+        
+        html += `<div class="line-result-block">`;
+        html += `<div class="line-result-header">`;
+        html += `<span class="line-result-title">${lineNum}. ${escapeHtml(masked)}</span>`;
+        html += `<span class="line-result-count">${matches.length} Results</span>`;
+        html += `</div>`;
+        
+        html += `<div class="song-filter-section">`;
+        html += `<div class="song-filter-row"><span class="song-filter-label">Only</span>`;
+        FILTER_TYPES.forEach(type => {
+            const isActive = currentFilters.only.includes(type);
+            html += `<button class="song-filter-chip ${isActive ? 'active' : ''}" data-line="${lineNum}" data-filter="only" data-type="${type}">${FILTER_LABELS[type]}</button>`;
+        });
+        html += `</div>`;
+        html += `<div class="song-filter-row"><span class="song-filter-label">Includes</span>`;
+        FILTER_TYPES.forEach(type => {
+            const isActive = currentFilters.include.includes(type);
+            html += `<button class="song-filter-chip ${isActive ? 'active' : ''}" data-line="${lineNum}" data-filter="include" data-type="${type}">${FILTER_LABELS[type]}</button>`;
+        });
+        html += `</div>`;
+        html += `<div class="song-filter-row"><span class="song-filter-label">Excludes</span>`;
+        FILTER_TYPES.forEach(type => {
+            const isActive = currentFilters.exclude.includes(type);
+            html += `<button class="song-filter-chip ${isActive ? 'active' : ''}" data-line="${lineNum}" data-filter="exclude" data-type="${type}">${FILTER_LABELS[type]}</button>`;
+        });
+        html += `</div></div>`;
+        
+        html += `<div class="line-result-body" id="lineBody-${lineNum}">`;
+        
+        matches.forEach(m => {
+            const typeClass = m.type === 'full' ? 'full' : (m.type === 'start' ? 'start' : 'middle');
+            const typeLabel = m.type === 'full' ? 'Full' : (m.type === 'start' ? 'Start' : 'Middle');
+            html += `
+                <div class="result-item" data-song="${escapeHtml(m.song)}">
+                    <span class="result-song mono">${escapeHtml(m.song)}</span>
+                    <span class="result-type ${typeClass}">${typeLabel}</span>
+                    <button class="btn btn-ghost btn-sm py-1 px-2 text-xs ml-2 view-range" data-song="${escapeHtml(m.song)}">Range</button>
+                </div>
+            `;
+        });
+        html += `</div></div>`;
+    });
+    
+    container.innerHTML = html;
+    
+    container.querySelectorAll('.song-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const lineNum = chip.dataset.line;
+            const filterType = chip.dataset.filter;
+            const filterValue = chip.dataset.type;
+            if (!cheatLineFilters[lineNum]) cheatLineFilters[lineNum] = { only: [], include: [], exclude: [] };
+            const filters = cheatLineFilters[lineNum][filterType];
+            const idx = filters.indexOf(filterValue);
+            if (idx >= 0) { filters.splice(idx, 1); chip.classList.remove('active'); }
+            else { filters.push(filterValue); chip.classList.add('active'); }
+            
+            const bodyEl = document.getElementById(`lineBody-${lineNum}`);
+            if(bodyEl) {
+                bodyEl.querySelectorAll('.result-item').forEach(item => {
+                    const song = item.dataset.song;
+                    const visible = applyCheatFilters(song, cheatLineFilters[lineNum]);
+                    item.style.display = visible ? 'flex' : 'none';
+                });
+            }
+        });
+    });
+    
+    container.querySelectorAll('.view-range').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const song = btn.dataset.song;
+            const ranges = [];
+            for(let r in gameData) {
+                if(gameData[r].includes(song)) ranges.push(r);
+            }
+            const modal = document.getElementById('rangeCheatModal');
+            const content = document.getElementById('rangeCheatModalContent');
+            content.innerHTML = `<div class="mono font-semibold mb-3">${escapeHtml(song)}</div><div class="flex flex-wrap gap-2">${ranges.map(r => `<span class="range-tag">${escapeHtml(r)}</span>`).join('')}</div>`;
+            modal.classList.add('show');
+        });
+    });
+}
+
+function doCheatMatch() {
+    const maskedText = document.getElementById('cheatMaskedInput').value;
+    const guessed = document.getElementById('cheatGuessedInput').value;
+    const spaceAsStar = document.getElementById('cheatSpaceStar').checked;
+    const matchStart = document.getElementById('cheatMatchStart').checked;
+    const matchMiddle = document.getElementById('cheatMatchMiddle').checked;
+    
+    if (!maskedText.trim()) return;
+    if (Object.keys(gameData).length === 0) { showToast(t('cheatEmptyResult'), 'error'); return; }
+    
+    const maskedLines = parseCheatMasked(maskedText);
+    const results = [];
+    
+    let allSongs = new Set();
+    // Default to all selected games, if none selected, all games in lib
+    const sheet = cs();
+    const targetGames = sheet.selectedGames.length > 0 ? sheet.selectedGames : Object.keys(gameData);
+    targetGames.forEach(range => {
+        if (gameData[range]) gameData[range].forEach(s => allSongs.add(s));
+    });
+    
+    maskedLines.forEach((lineData) => {
+        const { lineNum, content } = lineData;
+        const matches = [];
+        
+        allSongs.forEach(song => {
+            const matchResults = matchCheatSong(content, song, guessed, spaceAsStar, matchStart, matchMiddle);
+            if (matchResults) matchResults.forEach(m => matches.push(m));
+        });
+        
+        if (matches.length > 0) {
+            const uniqueMatches = [];
+            const seen = new Set();
+            matches.forEach(m => {
+                const key = m.song + m.type + m.matchStart;
+                if (!seen.has(key)) { seen.add(key); uniqueMatches.push(m); }
+            });
+            results.push({ masked: content, matches: uniqueMatches, lineNum });
+        }
+    });
+    
+    renderCheatResults(results);
+}
+
 
 // ========== Init ==========
 async function init(){
-elements={toast:document.getElementById('toast'),songInput:document.getElementById('songInput'),remarkInput:document.getElementById('remarkInput'),charInput:document.getElementById('charInput'),randomSort:document.getElementById('randomSort'),lengthSort:document.getElementById('lengthSort'),randomSortLabel:document.getElementById('randomSortLabel'),lengthSortLabel:document.getElementById('lengthSortLabel'),sortToggle:document.getElementById('sortToggle'),sortContent:document.getElementById('sortContent'),hideRevealed:document.getElementById('hideRevealed'),parsedSection:document.getElementById('parsedSection'),gameList:document.getElementById('gameList'),modeEqual:document.getElementById('modeEqual'),modeCustom:document.getElementById('modeCustom'),equalMode:document.getElementById('equalMode'),customMode:document.getElementById('customMode'),customCountsDiv:document.getElementById('customCounts'),totalCount:document.getElementById('totalCount'),generateBtn:document.getElementById('generateBtn'),selectAll:document.getElementById('selectAll'),selectNone:document.getElementById('selectNone'),clearFile:document.getElementById('clearFile'),importOnlineBtn:document.getElementById('importOnlineBtn'),filterAllowOther:document.getElementById('filterAllowOther'),filterMinLength:document.getElementById('filterMinLength'), librarySelect:document.getElementById('librarySelect')};
+elements={toast:document.getElementById('toast'),songInput:document.getElementById('songInput'),remarkInput:document.getElementById('remarkInput'),charInput:document.getElementById('charInput'),randomSort:document.getElementById('randomSort'),lengthSort:document.getElementById('lengthSort'),randomSortLabel:document.getElementById('randomSortLabel'),lengthSortLabel:document.getElementById('lengthSortLabel'),sortToggle:document.getElementById('sortToggle'),sortContent:document.getElementById('sortContent'),hideRevealed:document.getElementById('hideRevealed'),parsedSection:document.getElementById('parsedSection'),gameList:document.getElementById('gameList'),modeEqual:document.getElementById('modeEqual'),modeCustom:document.getElementById('modeCustom'),equalMode:document.getElementById('equalMode'),customMode:document.getElementById('customMode'),customCountsDiv:document.getElementById('customCounts'),totalCount:document.getElementById('totalCount'),generateBtn:document.getElementById('generateBtn'),selectAll:document.getElementById('selectAll'),selectNone:document.getElementById('selectNone'),importOnlineBtn:document.getElementById('importOnlineBtn'),filterAllowOther:document.getElementById('filterAllowOther'),filterMinLength:document.getElementById('filterMinLength'), librarySelect:document.getElementById('librarySelect')};
 try{await openDB();}catch(e){console.error('IndexedDB failed:',e);}
-loadState();currentLang=state.currentLang||'en';
+loadState();currentLang=state.currentLang||'zh';
 const sheet=cs();
 elements.songInput.value=sheet.songInputText||'';elements.remarkInput.value=sheet.remark||'';elements.charInput.value=sheet.openedChars||'';elements.totalCount.value=sheet.totalCount||10;
 if(sheet.sortType==='random')elements.randomSort.checked=true;else if(sheet.sortType==='length')elements.lengthSort.checked=true;
 updateCheckboxStates();
 updateLibrarySelect();
+updateUndoRedoUI();
 
 try{
   await loadSelectedLibrary();
@@ -1146,7 +1783,10 @@ document.querySelectorAll('.lang-btn').forEach(btn=>{btn.addEventListener('click
 // Settings modal
 document.getElementById('openSettings').addEventListener('click',()=>document.getElementById('settingsModal').classList.add('show'));
 document.getElementById('closeSettings').addEventListener('click',()=>document.getElementById('settingsModal').classList.remove('show'));
-document.querySelectorAll('.mask-option').forEach(o=>{o.addEventListener('click',()=>{state.settings.maskChar=o.dataset.mask;saveState();applySettings();});});
+document.getElementById('customMaskInput').addEventListener('input', e=>{
+    const val = e.target.value;
+    if(val) { state.settings.maskChar = val; saveState(); applySettings(); }
+});
 document.getElementById('setEnableTimer').addEventListener('change',e=>{state.settings.enableTimer=e.target.checked;saveState();applySettings();});
 document.getElementById('setEnableSettlement').addEventListener('change',e=>{state.settings.enableSettlement=e.target.checked;saveState();});
 document.getElementById('setSpaceAsStar').addEventListener('change',e=>{state.settings.spaceAsStar=e.target.checked;saveState();if(state.currentPage===2)renderResult();});
@@ -1184,9 +1824,7 @@ document.getElementById('importCustomBtn').addEventListener('click', () => {
   document.getElementById('customLibFile').value = '';
 });
 
-document.getElementById('customLibCancel').addEventListener('click', () => {
-  document.getElementById('customLibModal').classList.remove('show');
-});
+document.getElementById('customLibCancel').addEventListener('click', () => document.getElementById('customLibModal').classList.remove('show'));
 
 document.getElementById('customLibConfirm').addEventListener('click', async () => {
   const fileInput = document.getElementById('customLibFile');
@@ -1207,8 +1845,8 @@ document.getElementById('customLibConfirm').addEventListener('click', async () =
 
 document.getElementById('deleteLibBtn').addEventListener('click', async () => {
   if (state.currentLibId === 'online') {
-    gameData = {};
-    await saveToDB('gameData', {});
+    gameData = {}; originalGameData = {};
+    await saveToDB('gameData', {}, {});
     elements.parsedSection.style.display = 'none';
     showToast(t('toastRemoved'));
     return;
@@ -1241,7 +1879,7 @@ document.getElementById('renameConfirm').addEventListener('click',()=>{
   document.getElementById('renameModal').classList.remove('show');
 });
 
-document.getElementById('renameInput').addEventListener('keydown',e=>{if(e.key==='Enter'){document.getElementById('renameConfirm').click();}if(e.key==='Escape')document.getElementById('renameModal').classList.remove('show');});
+document.getElementById('renameInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('renameConfirm').click();if(e.key==='Escape')document.getElementById('renameModal').classList.remove('show');});
 
 // Game list
 elements.selectAll.addEventListener('click',()=>{elements.gameList.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=true);updateCustomCounts();updateFilterCount();saveState();});
@@ -1269,127 +1907,45 @@ if(state.settings.autoFillRemark&&sheet.selectedGames.length>0){
     elements.remarkInput.value=sheet.remark;
 }
 
-resetTimer();sheet.songs=songs;sheet.openedChars='';sheet.hiddenIndices=[];sheet.revealedFullIndices=[];sheet.guessedSongs=[];sheet.currentRevealPercent=0;elements.charInput.value='';saveState();showToast(t('toastGameStart'));switchToPage(2);
+resetTimer();sheet.songs=songs;
+clearSheetGame(sheet); // clears history and arrays
+saveState();showToast(t('toastGameStart'));switchToPage(2);
 });
 
 // Game page
 document.getElementById('backBtn').addEventListener('click',()=>{if(confirm(t('backConfirm'))){stopTimer();clearSheetGame(cs());switchToPage(1);}});
 elements.songInput.addEventListener('input',saveState);elements.remarkInput.addEventListener('input',saveState);
-elements.charInput.addEventListener('input',()=>{cs().openedChars=elements.charInput.value;saveState();renderResult();});
-document.getElementById('resetChars').addEventListener('click',()=>{elements.charInput.value='';cs().openedChars='';saveState();renderResult();showToast(t('toastResetChars'));});
+
+let lastCharValue = elements.charInput.value;
+elements.charInput.addEventListener('input',()=>{
+    if(elements.charInput.value !== lastCharValue) {
+        saveSnapshot();
+        cs().openedChars=elements.charInput.value;
+        saveState();renderResult();
+        lastCharValue = elements.charInput.value;
+    }
+});
+
+document.getElementById('resetChars').addEventListener('click',()=>{saveSnapshot(); elements.charInput.value='';cs().openedChars='';saveState();renderResult();showToast(t('toastResetChars'));});
 elements.hideRevealed.addEventListener('click',hideRevealedSongs);
 document.getElementById('pauseBtn').addEventListener('click',pauseTimer);
 document.getElementById('endGameBtn').addEventListener('click',()=>{if(state.settings.enableSettlement){if(confirm(t('endConfirm')))showSettlement();}else{if(confirm(t('endConfirm'))){stopTimer();clearSheetGame(cs());switchToPage(1);}}});
 
+// Undo/Redo
+document.getElementById('undoBtn').addEventListener('click', performUndo);
+document.getElementById('redoBtn').addEventListener('click', performRedo);
+
 // Copy & Export
 document.getElementById('copyBtn').addEventListener('click',async()=>{const text=getResultTextForExport(); if(!text){showToast(t('noCopyContent'),'error');return;} copyText(text,t('copySuccess'),t('copyFail'));});
-
-document.getElementById('exportImgBtn').addEventListener('click', () => {
-  const text = getResultTextForExport();
-  if(!text) { showToast(t('noCopyContent'), 'error'); return; }
-  
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
-  
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const lines = text.split('\n');
-
-  if (state.settings.fixedImageRatio) {
-    const baseWidth = 1080;
-    const targetHeight = 1920;
-    const paddingX = 80;
-    const paddingY = 100;
-    const maxTextWidth = baseWidth - paddingX * 2;
-    const fontSize = 42;
-    const lineHeight = 64;
-
-    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
-
-    const wrappedLines = [];
-    lines.forEach(line => {
-      if (line === '') { wrappedLines.push(''); return; }
-      let currentLine = '';
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        const testLine = currentLine + char;
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > maxTextWidth && i > 0) {
-          wrappedLines.push(currentLine);
-          currentLine = char;
-        } else {
-          currentLine = testLine;
-        }
-      }
-      wrappedLines.push(currentLine);
-    });
-
-    const contentHeight = wrappedLines.length * lineHeight;
-    const finalHeight = Math.max(targetHeight, contentHeight + paddingY * 2);
-
-    canvas.width = baseWidth;
-    canvas.height = finalHeight;
-
-    ctx.fillStyle = '#12151c';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = '#e8eaed';
-    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
-    ctx.textBaseline = 'top';
-
-    let startY = paddingY;
-    if (finalHeight === targetHeight) {
-        startY = (targetHeight - contentHeight) / 2;
-    }
-
-    wrappedLines.forEach((line, i) => {
-      ctx.fillText(line, paddingX, startY + i * lineHeight);
-    });
-
-  } else {
-    const fontSize = 24; const lineHeight = 40; const padding = 40;
-    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
-    let maxWidth = 400;
-    lines.forEach(l => {
-      const w = ctx.measureText(l).width;
-      if(w > maxWidth) maxWidth = w;
-    });
-
-    canvas.width = maxWidth + padding * 2;
-    canvas.height = lines.length * lineHeight + padding * 2;
-
-    ctx.fillStyle = '#12151c';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = '#e8eaed';
-    ctx.font = `600 ${fontSize}px "Noto Sans SC", "JetBrains Mono", sans-serif`;
-    ctx.textBaseline = 'top';
-    lines.forEach((line, i) => {
-      ctx.fillText(line, padding, padding + i * lineHeight);
-    });
-  }
-
-  const dataUrl = canvas.toDataURL('image/png');
-  
-  if (isMobile) {
-    document.getElementById('exportImagePreview').src = dataUrl;
-    document.getElementById('exportModal').classList.add('show');
-    showToast(t('toastExportMobile'));
-  } else {
-    const link = document.createElement('a');
-    link.download = `LetterOpener_${Date.now()}.png`;
-    link.href = dataUrl;
-    link.click();
-    showToast(t('toastExported'));
-  }
-});
-
+document.getElementById('exportImgBtn').addEventListener('click', () => exportImage(getResultTextForExport()));
 document.getElementById('closeExportModal').addEventListener('click',()=>document.getElementById('exportModal').classList.remove('show'));
 
 document.getElementById('copySettlement').addEventListener('click',()=>copyText(document.getElementById('settlementText').value,t('copySettlementOk'),t('copyFail')));
 document.getElementById('copyQuestions').addEventListener('click',()=>copyText(document.getElementById('questionsText').value,t('copyQuestionsOk'),t('copyFail')));
+document.getElementById('exportQuestionsImgBtn').addEventListener('click', () => exportImage(document.getElementById('questionsText').value));
 
 // Settlement page
-document.getElementById('newGameBtn').addEventListener('click',()=>{resetTimer();const sheet=cs();sheet.songs=[];sheet.hiddenIndices=[];sheet.revealedFullIndices=[];sheet.guessedSongs=[];sheet.openedChars='';sheet.currentRevealPercent=0;elements.charInput.value='';switchToPage(1);});
+document.getElementById('newGameBtn').addEventListener('click',()=>{resetTimer();const sheet=cs();clearSheetGame(sheet);switchToPage(1);});
 document.getElementById('backToEditBtn').addEventListener('click',()=>switchToPage(1));
 
 // Restore modal
@@ -1397,11 +1953,16 @@ document.getElementById('restoreContinue').addEventListener('click',()=>{hideRes
 document.getElementById('restoreNewGame').addEventListener('click',()=>{hideRestoreModal();clearSheetGame(cs());elements.charInput.value='';updateStatusHint();switchToPage(1);});
 // Lookup modal
 document.getElementById('lookupClose').addEventListener('click',()=>document.getElementById('lookupModal').classList.remove('show'));
+document.getElementById('lookupCopyBtn').addEventListener('click',() => copyText(currentLookupText, t('copySuccess'), t('copyFail')));
+
+// Cheat Tool
+document.getElementById('cheatParseBtn').addEventListener('click', doCheatMatch);
+document.getElementById('closeRangeCheatModal').addEventListener('click', () => document.getElementById('rangeCheatModal').classList.remove('show'));
 
 // Close modals on overlay click
-['settingsModal','renameModal','lookupModal','customLibModal','exportModal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');});});
+['settingsModal','renameModal','lookupModal','customLibModal','exportModal','editLibModal','rangeCheatModal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');});});
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
-</html>
+  </html>
