@@ -37,17 +37,23 @@
         /* 按钮基础样式 */
         .btn {
             padding: 12px 20px; border: none; border-radius: 8px; color: white; 
+            background-color: #3498db; /* 修复：添加丢失的按钮基础默认背景色 */
             font-size: 16px; cursor: pointer; transition: all 0.2s;
             margin: 8px 4px; width: calc(100% - 8px); font-weight: bold;
         }
         .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .btn:disabled { background-color: #bdc3c7 !important; cursor: not-allowed; transform: none; box-shadow: none; }
         
+        /* 各类特色按钮变体 */
         .btn-lv1 { background-color: #2ecc71; } .btn-lv1:hover { background-color: #27ae60; }
         .btn-lv2 { background-color: #e74c3c; } .btn-lv2:hover { background-color: #c0392b; }
         .btn-lv3 { background-color: #9b59b6; } .btn-lv3:hover { background-color: #8e44ad; }
         .btn-action { background-color: #f39c12; } .btn-action:hover { background-color: #d35400; }
         .btn-replay { background-color: #3498db; } .btn-replay:hover { background-color: #2980b9; }
+        
+        /* 修复：A与B专属选择按钮颜色，增加视觉分辨度 */
+        .btn-choice-a { background-color: #1abc9c; } .btn-choice-a:hover { background-color: #16a085; }
+        .btn-choice-b { background-color: #f39c12; } .btn-choice-b:hover { background-color: #d35400; }
         
         /* 状态框 */
         .status {
@@ -154,8 +160,8 @@
             <div class="status" id="lv1-status">连续正确 2 次可将累计错误清零。</div>
             <button class="btn btn-action" id="lv1-play-btn" onclick="playLv1Beats()">▶ 播放声音 A 与 B</button>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" id="lv1-btn-a" onclick="answerLv1('A')" disabled>A 更快</button>
-                <button class="btn" id="lv1-btn-b" onclick="answerLv1('B')" disabled>B 更快</button>
+                <button class="btn btn-choice-a" id="lv1-btn-a" onclick="answerLv1('A')" disabled>A 更快</button>
+                <button class="btn btn-choice-b" id="lv1-btn-b" onclick="answerLv1('B')" disabled>B 更快</button>
             </div>
             <button class="btn" style="background-color: #7f8c8d; margin-top: 15px;" onclick="returnToMenu()">返回主菜单</button>
         </div>
@@ -282,7 +288,7 @@
             };
         }
 
-        // ----------------- 第一级别：相对听感 -----------------
+        // ----------------- 第一级别：相对听感 (核心修复) -----------------
         const lv1Diffs = [100, 50, 30, 20, 15, 10, 8, 5, 3, 2, 1.5, 1, 0.8, 0.5, 0.3, 0.2, 0.1, 0.08, 0.05, 0.03, 0.01, 0.005, 0.001];
         let lv1CurrentStage = 0;
         let lv1Mistakes = 0;
@@ -290,8 +296,20 @@
         let lv1BpmA = 0, lv1BpmB = 0, lv1Faster = '', lv1RoundStarted = false;
 
         function startLevel1() {
-            lv1CurrentStage = 0; lv1Mistakes = 0; lv1ConsecutiveCorrect = 0; lv1RoundStarted = false;
+            const cfg = getBpmConfig();
+            const range = cfg.max - cfg.min;
+            
+            lv1CurrentStage = 0;
+            // 修复1：如果当前难度差距大于等于用户设置的BPM区间，则直接跳过该大差距阶段
+            while (lv1CurrentStage < lv1Diffs.length && lv1Diffs[lv1CurrentStage] >= range) {
+                lv1CurrentStage++;
+            }
+            // 防止区间设置得太离谱导致越界
+            if (lv1CurrentStage >= lv1Diffs.length) lv1CurrentStage = lv1Diffs.length - 1;
+
+            lv1Mistakes = 0; lv1ConsecutiveCorrect = 0; lv1RoundStarted = false;
             resetLv1PlayButton(); updateLv1UI();
+            
             const status = document.getElementById('lv1-status');
             status.className = 'status';
             status.innerHTML = '💡 <b>第一级规则：</b>听两段声音辨别谁快。差距逐步缩减。<br>🔥 <b>特效触发：</b>只要你<b>连续正确 2 次</b>，累计错误立刻归 0！';
@@ -322,8 +340,8 @@
 
             if (!lv1RoundStarted) {
                 let diff = lv1Diffs[lv1CurrentStage];
-                if (diff >= (cfg.max - cfg.min)) diff = (cfg.max - cfg.min) * 0.8;
 
+                // 算法生成基础 BPM (跳过大差距阶段后，这里的运算安全可靠)
                 const baseBpm = Math.random() * (cfg.max - cfg.min - diff) + cfg.min;
                 if (Math.random() > 0.5) {
                     lv1BpmA = baseBpm + diff; lv1BpmB = baseBpm; lv1Faster = 'A';
@@ -385,7 +403,7 @@
             updateLv1UI();
         }
 
-        // ----------------- 第二级别：绝对听感 (引入动态防作弊核心) -----------------
+        // ----------------- 第二级别：绝对听感 -----------------
         let lv2MaxRounds = 5, lv2Round = 1, lv2TotalScore = 0, lv2ActualBPM = 0, lv2RoundStarted = false;
 
         function startLevel2() {
@@ -397,7 +415,6 @@
             const statusBox = document.getElementById('lv2-status');
             const inputBox = document.getElementById('lv2-input');
             
-            // 动态UI替换：针对小区间作弊启用极严苛模式
             if (range <= 20) {
                 statusBox.innerHTML = '⚠️ <b>地狱防作弊模式已触发</b>：检测到区间极窄(≤20)，系统已启用 <b>2位小数</b> BPM，且判定严苛度被巨幅放大！';
                 inputBox.placeholder = "输入BPM (支持2位小数)";
@@ -417,8 +434,6 @@
         function resetLv2PlayButton() {
             const btn = document.getElementById('lv2-play-btn');
             btn.className = 'btn btn-action'; 
-            
-            // 按钮文字也根据是否有小数做个极小的动态适配反馈
             const cfg = getBpmConfig();
             btn.innerText = (cfg.max - cfg.min <= 50) ? '▶ 播放随机高精度 BPM 节拍' : '▶ 播放随机整数 BPM 节拍';
             btn.disabled = false;
@@ -445,7 +460,6 @@
                 const range = cfg.max - cfg.min;
                 let rawBpm = Math.random() * range + cfg.min;
                 
-                // 核心防作弊：根据区间动态决定小数点精度
                 if (range <= 20) {
                     lv2ActualBPM = parseFloat(rawBpm.toFixed(2));
                 } else if (range <= 50) {
@@ -468,7 +482,6 @@
         }
 
         function answerLv2() {
-            // 修改为 parseFloat 支持小作弊区间防守
             const guess = parseFloat(document.getElementById('lv2-input').value);
             if (isNaN(guess)) { alert("请务必输入有效的数值！"); return; }
 
@@ -476,8 +489,6 @@
             const range = cfg.max - cfg.min;
             const rawDiff = Math.abs(lv2ActualBPM - guess);
             
-            // ⚡ 核心算法：动态惩罚缩放（Dynamic Strictness）
-            // 设定宽容基准线为 range=100。如果区间被缩小，误差值将被成倍放大！
             const strictnessScale = Math.max(1, 100 / range); 
             const diff = rawDiff * strictnessScale;
 
@@ -492,7 +503,6 @@
             const statusBox = document.getElementById('lv2-status');
             statusBox.className = score >= 80 ? 'status success' : (score >= 50 ? 'status' : 'status error');
             
-            // 呈现作弊惩罚反馈
             let punishMsg = strictnessScale > 1 ? 
                 `<br><span style="color:#e74c3c; font-size:13px;">(检测到区间狭窄，系统已将你的误差计算惩罚放大 <b>${strictnessScale.toFixed(1)} 倍</b>！)</span>` : '';
 
@@ -509,7 +519,7 @@
                     let avg = Math.round(lv2TotalScore / lv2MaxRounds);
                     let rank = avg >= 95 ? "🏆 节奏之神(S)" : (avg >= 80 ? "🥇 专业大师(A)" : (avg >= 60 ? "🥈 普通乐手(B)" : "🥉 节奏黑洞(C)"));
                     endGame("绝对听感考查结束", `大局完成 ${lv2MaxRounds} 轮映射测试。<br>最终平均分: <b>${avg} / 100</b><br><br>声学成就评定: <b style='color:#e74c3c; font-size:22px;'>${rank}</b>`);
-                }, 2800); // 加长展示时间，方便看到作弊被惩罚的详情
+                }, 2800); 
             } else {
                 setTimeout(updateLv2UI, 2800);
             }
