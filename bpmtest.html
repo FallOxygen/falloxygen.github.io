@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPM 敏感度测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background-color: #f5f5f5; padding: 20px;
+        }
+        .container {
+            background: white; padding: 30px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 600px;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
+        
+        .panel { display: none; }
+        .panel.active { display: block; }
+        
+        .btn {
+            padding: 12px 20px; border: none; border-radius: 6px; background-color: #2196F3;
+            color: white; font-size: 16px; cursor: pointer; transition: all 0.3s;
+            margin: 10px 5px; width: calc(100% - 10px); font-weight: bold;
+        }
+        .btn:hover { background-color: #1976D2; transform: translateY(-1px); }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
+        
+        .btn-lv1 { background-color: #4CAF50; }
+        .btn-lv1:hover { background-color: #388E3C; }
+        .btn-lv2 { background-color: #F44336; }
+        .btn-lv2:hover { background-color: #D32F2F; }
+        .btn-action { background-color: #FF9800; }
+        .btn-action:hover { background-color: #F57C00; }
+        .btn-replay { background-color: #9C27B0; }
+        .btn-replay:hover { background-color: #7B1FA2; }
+        
+        .status {
+            margin: 15px 0; padding: 15px; border-radius: 6px; font-size: 16px;
+            background-color: #f0f7ff; color: #2196F3; line-height: 1.5;
+        }
+        .status.error { background-color: #fff0f0; color: #F44336; }
+        .status.success { background-color: #f0fff0; color: #388E3C; }
+        
+        .stats-bar {
+            display: flex; justify-content: space-between; margin-bottom: 20px;
+            font-weight: bold; color: #555; background: #eee; padding: 10px; border-radius: 6px;
+        }
+        
+        .input-box {
+            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px;
+            font-size: 20px; text-align: center; margin-bottom: 15px; outline: none;
+            transition: border 0.3s;
+        }
+        .input-box:focus { border-color: #2196F3; }
+        
+        .play-indicator {
+            height: 60px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; color: #bbb; transition: color 0.2s;
+        }
+        .play-indicator.playing { color: #2196F3; animation: pulse 0.5s infinite alternate; }
+        
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BPM 敏感度测试</h1>
+        <div class="subtitle" id="main-subtitle">支持无限回放</div>
+
+        <div id="menu-panel" class="panel active">
+            <button class="btn btn-lv1" onclick="startLevel1()">第一级别：相对听感</button>
+            <button class="btn btn-lv2" onclick="startLevel2()">第二级别：绝对听感</button>
+        </div>
+
+        <div id="lv1-panel" class="panel">
+            <div class="stats-bar">
+                <span id="lv1-round">阶段: 1</span>
+                <span id="lv1-diff">当前差距: 100 BPM</span>
+                <span id="lv1-mistakes" style="color: #F44336;">错误: 0/3</span>
+            </div>
+            
+            <div class="play-indicator" id="lv1-indicator">🎵 准备就绪</div>
+            <div class="status" id="lv1-status">点击下方按钮听取两段节拍，可反复回放</div>
+            
+            <button class="btn btn-action" id="lv1-play-btn" onclick="playLv1Beats()">▶ 播放声音 A 与 B</button>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" id="lv1-btn-a" onclick="answerLv1('A')" disabled>A 更快</button>
+                <button class="btn" id="lv1-btn-b" onclick="answerLv1('B')" disabled>B 更快</button>
+            </div>
+            <button class="btn" style="background-color: #777; margin-top: 20px;" onclick="returnToMenu()">返回主菜单</button>
+        </div>
+
+        <div id="lv2-panel" class="panel">
+            <div class="stats-bar">
+                <span id="lv2-round">轮次: 1/10</span>
+                <span id="lv2-score">当前得分: 0</span>
+            </div>
+            
+            <div class="play-indicator" id="lv2-indicator">🎵 准备就绪</div>
+            <div class="status" id="lv2-status">听取8拍后，输入你感知到的BPM</div>
+            
+            <button class="btn btn-action" id="lv2-play-btn" onclick="playLv2Beats()">▶ 播放随机 BPM 节拍</button>
+            
+            <input type="number" class="input-box" id="lv2-input" placeholder="输入BPM数值 (如: 125.5)" disabled>
+            <button class="btn btn-lv2" id="lv2-submit-btn" onclick="answerLv2()" disabled>提交答案</button>
+            <button class="btn" style="background-color: #777; margin-top: 20px;" onclick="returnToMenu()">返回主菜单</button>
+        </div>
+
+        <div id="result-panel" class="panel">
+            <h2 style="margin-bottom: 20px;" id="result-title">测试结束</h2>
+            <div class="status" id="result-desc" style="font-size: 18px; padding: 20px;"></div>
+            <button class="btn btn-action" onclick="returnToMenu()">返回主菜单</button>
+        </div>
+    </div>
+
+    <script>
+        // ----------------- Web Audio API 核心 -----------------
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        // 精准调度播放节拍
+        function playPreciseBeats(bpm, beatsCount, onComplete) {
+            initAudio();
+            const beatDuration = 60 / bpm;
+            const startTime = audioCtx.currentTime + 0.1; 
+
+            for (let i = 0; i < beatsCount; i++) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                // 4/4拍：第1拍高音，后3拍低音
+                osc.frequency.value = (i % 4 === 0) ? 880 : 440; 
+                
+                const time = startTime + i * beatDuration;
+                gain.gain.setValueAtTime(0.3, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+                
+                osc.start(time);
+                osc.stop(time + 0.1);
+            }
+
+            // 播放结束回调
+            setTimeout(onComplete, (beatsCount * beatDuration + 0.2) * 1000);
+        }
+
+        // ----------------- UI 路由控制 -----------------
+        function showPanel(id) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        function returnToMenu() { showPanel('menu-panel'); }
+
+        // ----------------- 第一级别：相对听感 -----------------
+        // 细化为23个阶段
+        const lv1Diffs = [100, 50, 30, 20, 15, 10, 8, 5, 3, 2, 1.5, 1, 0.8, 0.5, 0.3, 0.2, 0.1, 0.08, 0.05, 0.03, 0.01, 0.005, 0.001];
+        let lv1CurrentStage = 0;
+        let lv1Mistakes = 0;
+        let lv1BpmA = 0;
+        let lv1BpmB = 0;
+        let lv1Faster = ''; 
+        let lv1RoundStarted = false; // 回合状态锁，防止重听时刷新BPM
+
+        function startLevel1() {
+            lv1CurrentStage = 0;
+            lv1Mistakes = 0;
+            lv1RoundStarted = false;
+            resetLv1PlayButton();
+            updateLv1UI();
+            document.getElementById('lv1-status').className = 'status';
+            document.getElementById('lv1-status').innerText = '点击下方按钮听取两段节拍，可反复回放对比';
+            showPanel('lv1-panel');
+        }
+
+        function resetLv1PlayButton() {
+            const btn = document.getElementById('lv1-play-btn');
+            btn.className = 'btn btn-action';
+            btn.innerText = '▶ 播放声音 A 与 B';
+            btn.disabled = false;
+        }
+
+        function updateLv1UI() {
+            document.getElementById('lv1-round').innerText = `阶段: ${lv1CurrentStage + 1}/${lv1Diffs.length}`;
+            document.getElementById('lv1-diff').innerText = `当前差距: ${lv1Diffs[lv1CurrentStage]} BPM`;
+            document.getElementById('lv1-mistakes').innerText = `错误: ${lv1Mistakes}/3`;
+            document.getElementById('lv1-btn-a').disabled = !lv1RoundStarted;
+            document.getElementById('lv1-btn-b').disabled = !lv1RoundStarted;
+        }
+
+        function playLv1Beats() {
+            const btn = document.getElementById('lv1-play-btn');
+            const indicator = document.getElementById('lv1-indicator');
+            
+            // 锁定播放按钮防止重叠
+            btn.disabled = true;
+            document.getElementById('lv1-btn-a').disabled = true;
+            document.getElementById('lv1-btn-b').disabled = true;
+            document.getElementById('lv1-status').className = 'status';
+
+            // 如果是新回合，生成新的BPM；如果是重听，保留原BPM
+            if (!lv1RoundStarted) {
+                const diff = lv1Diffs[lv1CurrentStage];
+                const baseBpm = Math.floor(Math.random() * 60) + 90; // 基准 90-150
+                if (Math.random() > 0.5) {
+                    lv1BpmA = baseBpm + diff; lv1BpmB = baseBpm; lv1Faster = 'A';
+                } else {
+                    lv1BpmA = baseBpm; lv1BpmB = baseBpm + diff; lv1Faster = 'B';
+                }
+                lv1RoundStarted = true;
+            }
+            
+            indicator.innerText = "🔊 正在播放 A 段...";
+            indicator.className = "play-indicator playing";
+            
+            // 播放A段 (4拍)
+            playPreciseBeats(lv1BpmA, 4, () => {
+                indicator.innerText = "⏳ 间隔中...";
+                indicator.className = "play-indicator";
+                
+                setTimeout(() => {
+                    indicator.innerText = "🔊 正在播放 B 段...";
+                    indicator.className = "play-indicator playing";
+                    
+                    // 播放B段 (4拍)
+                    playPreciseBeats(lv1BpmB, 4, () => {
+                        indicator.innerText = "🤔 哪一段更快？";
+                        indicator.className = "play-indicator";
+                        
+                        // 播放完毕，解锁按钮并变更为回放样式
+                        btn.className = 'btn btn-replay';
+                        btn.innerText = '🔁 重新听取 (A 与 B)';
+                        btn.disabled = false;
+                        document.getElementById('lv1-btn-a').disabled = false;
+                        document.getElementById('lv1-btn-b').disabled = false;
+                    });
+                }, 1000); // 间隔1秒
+            });
+        }
+
+        function answerLv1(choice) {
+            const statusBox = document.getElementById('lv1-status');
+            const isCorrect = (choice === lv1Faster);
+            const msg = `实际情况: A=${lv1BpmA.toFixed(3)}, B=${lv1BpmB.toFixed(3)}。`;
+
+            if (isCorrect) {
+                statusBox.className = 'status success';
+                statusBox.innerText = `✅ 回答正确！${msg}`;
+                lv1CurrentStage++;
+            } else {
+                statusBox.className = 'status error';
+                statusBox.innerText = `❌ 回答错误！${msg}`;
+                lv1Mistakes++;
+            }
+
+            // 重置回合状态，准备下一题
+            lv1RoundStarted = false;
+            resetLv1PlayButton();
+
+            if (lv1Mistakes >= 3) {
+                endGame("测试结束", `你在差距为 ${lv1Diffs[lv1CurrentStage]} BPM 时累计错误3次。<br><br>你的极限分辨力大约停留在: <b>${lv1Diffs[Math.max(0, lv1CurrentStage - 1)]} BPM</b>`);
+                return;
+            }
+
+            if (lv1CurrentStage >= lv1Diffs.length) {
+                endGame("🎉 恭喜通关！", "你拥有神一般的耳朵！你成功分辨了 0.001 BPM 的微小差距！这绝对是人体节拍器级别！");
+                return;
+            }
+
+            updateLv1UI();
+        }
+
+        // ----------------- 第二级别：绝对听感 -----------------
+        const LV2_MAX_ROUNDS = 20;
+        let lv2Round = 1;
+        let lv2TotalScore = 0;
+        let lv2ActualBPM = 0;
+        let lv2RoundStarted = false;
+
+        function startLevel2() {
+            lv2Round = 1;
+            lv2TotalScore = 0;
+            lv2RoundStarted = false;
+            resetLv2PlayButton();
+            updateLv2UI();
+            document.getElementById('lv2-status').className = 'status';
+            document.getElementById('lv2-status').innerText = '听取8拍后，输入你感知到的BPM。可无限重听确认。';
+            showPanel('lv2-panel');
+        }
+
+        function resetLv2PlayButton() {
+            const btn = document.getElementById('lv2-play-btn');
+            btn.className = 'btn btn-action';
+            btn.innerText = '▶ 播放随机 BPM 节拍';
+            btn.disabled = false;
+        }
+
+        function updateLv2UI() {
+            document.getElementById('lv2-round').innerText = `轮次: ${lv2Round}/${LV2_MAX_ROUNDS}`;
+            document.getElementById('lv2-score').innerText = `当前总分: ${Math.round(lv2TotalScore)}`;
+            document.getElementById('lv2-submit-btn').disabled = !lv2RoundStarted;
+            document.getElementById('lv2-input').disabled = !lv2RoundStarted;
+            document.getElementById('lv2-input').value = '';
+        }
+
+        function playLv2Beats() {
+            const btn = document.getElementById('lv2-play-btn');
+            const indicator = document.getElementById('lv2-indicator');
+            
+            // 锁定按钮防止重叠
+            btn.disabled = true;
+            document.getElementById('lv2-submit-btn').disabled = true;
+            document.getElementById('lv2-input').disabled = true;
+            document.getElementById('lv2-status').className = 'status';
+            document.getElementById('lv2-status').innerText = '仔细听......';
+
+            if (!lv2RoundStarted) {
+                lv2ActualBPM = (Math.random() * 120 + 60).toFixed(1);
+                lv2RoundStarted = true;
+            }
+            
+            indicator.innerText = "🔊 正在播放...";
+            indicator.className = "play-indicator playing";
+            
+            // 播放8拍 (2个小节)
+            playPreciseBeats(lv2ActualBPM, 8, () => {
+                indicator.innerText = "✍️ 请输入答案";
+                indicator.className = "play-indicator";
+                
+                // 播放完毕，解锁并切换按钮为重听
+                btn.className = 'btn btn-replay';
+                btn.innerText = '🔁 重新听取节拍';
+                btn.disabled = false;
+                
+                document.getElementById('lv2-input').disabled = false;
+                document.getElementById('lv2-submit-btn').disabled = false;
+                document.getElementById('lv2-input').focus();
+            });
+        }
+
+        function answerLv2() {
+            const guess = parseFloat(document.getElementById('lv2-input').value);
+            if (isNaN(guess)) {
+                alert("请输入有效的数字！");
+                return;
+            }
+
+            const diff = Math.abs(lv2ActualBPM - guess);
+            // 满分100，每误差1BPM扣5分，最低0分
+            let score = Math.max(0, 100 - (diff * 5)); 
+            lv2TotalScore += score;
+
+            const statusBox = document.getElementById('lv2-status');
+            statusBox.className = score > 80 ? 'status success' : (score > 50 ? 'status' : 'status error');
+            statusBox.innerHTML = `实际BPM: <b>${lv2ActualBPM}</b><br>你的误差: ${diff.toFixed(1)} BPM<br>本轮得分: ${Math.round(score)}`;
+
+            lv2Round++;
+            lv2RoundStarted = false; // 重置回合锁
+            resetLv2PlayButton();
+            document.getElementById('lv2-submit-btn').disabled = true;
+            document.getElementById('lv2-input').disabled = true;
+            
+            if (lv2Round > LV2_MAX_ROUNDS) {
+                setTimeout(() => {
+                    let avgScore = Math.round(lv2TotalScore / LV2_MAX_ROUNDS);
+                    let rank = '';
+                    if (avgScore >= 95) rank = "🏆 活体节拍器 (S级)";
+                    else if (avgScore >= 80) rank = "🥇 优秀乐手 (A级)";
+                    else if (avgScore >= 60) rank = "🥈 节奏感尚可 (B级)";
+                    else rank = "🥉 节奏黑洞 (C级)";
+
+                    endGame("绝对听感测试完成", `完成 20 轮测试，平均得分: <b>${avgScore} / 100</b><br><br>综合评级: <span style="font-size:24px; color:#2196F3">${rank}</span>`);
+                }, 2000); 
+            } else {
+                setTimeout(updateLv2UI, 2000); // 留2秒给用户看成绩
+            }
+        }
+
+        // ----------------- 结算面板 -----------------
+        function endGame(title, htmlDesc) {
+            document.getElementById('result-title').innerText = title;
+            document.getElementById('result-desc').innerHTML = htmlDesc;
+            showPanel('result-panel');
+        }
+    </script>
+</body>
+</html>
