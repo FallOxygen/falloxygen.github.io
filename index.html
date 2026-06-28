@@ -1191,7 +1191,11 @@ function renderResult(){
             }
 
             if (char === ' ' || char === '\u3000') {
-                maskedStrHtml += '<span class="char-space"> </span>';
+                if (spaceAsStar) {
+                    maskedStrHtml += `<span class="char-hidden">${escapeHtml(maskChar)}</span>`;
+                } else {
+                    maskedStrHtml += '<span class="char-space"> </span>';
+                }
             } else if (isForced) {
                 maskedStrHtml += `<span class="char-revealed" style="color:var(--warning);">${escapeHtml(char)}</span>`;
             } else if (r !== maskChar) {
@@ -1802,6 +1806,31 @@ function bindEvents(){
         }
     });
     document.getElementById('editLibClose').addEventListener('click', () => document.getElementById('editLibModal').classList.remove('show'));
+    
+        // 修复：添加曲库编辑的“添加”按钮逻辑
+    document.getElementById('editLibAddBtn').addEventListener('click', () => {
+        const input = document.getElementById('editLibAddInput');
+        const val = input.value.trim();
+        if (val && gameData[currentEditGame]) {
+            if (!gameData[currentEditGame].includes(val)) {
+                gameData[currentEditGame].push(val);
+                input.value = '';
+                renderEditLibSongs();
+                showToast('已添加曲目');
+            } else {
+                showToast('曲目已存在', 'error');
+            }
+        }
+    });
+
+    // 修复：支持按回车键直接添加曲目
+    document.getElementById('editLibAddInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('editLibAddBtn').click();
+        }
+    });
+
 
     // Close modals on overlay click
     ['settingsModal','renameModal','lookupModal','customLibModal','exportModal','editLibModal','manualSelectModal', 'forceRevealModal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');});});
@@ -1809,4 +1838,4 @@ function bindEvents(){
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
-</html>
+    </html>
