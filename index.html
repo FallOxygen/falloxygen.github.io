@@ -467,6 +467,14 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <span class="filter-length-hint">（包含空格，0=不限）</span>
 </div>
 </div>
+<div class="filter-section mt-4">
+<label class="checkbox-wrap" style="padding:0;">
+    <input type="checkbox" id="filterExclusiveOnly">
+    <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+    <span style="font-size: 14px;">仅抽取独占/只有某个游戏收录曲目 (不包含出现在未选范围的曲目)</span>
+</label>
+</div>
+
 <div class="flex items-center justify-between mt-4 pt-4" style="border-top:1px solid var(--border);">
 <span id="filterCount" style="color:var(--muted);font-size:13px;"></span>
 <button id="clearFilters" class="btn btn-secondary btn-sm">清除过滤</button>
@@ -702,7 +710,7 @@ function saveToDB(key,data,original=null){return new Promise((resolve,reject)=>{
 function loadFromDB(key){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readonly');const r=tx.objectStore(STORE_NAME).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
 
 // ========== Default Sheet ==========
-function newSheet(){return{songInputText:'',songs:[],remark:'',sortType:'none',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{charTypes:[],allowOther:false,minLength:0},openedChars:'',revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0, forcedReveals:{}, songSources:[], generatedSources:{}};}
+function newSheet(){return{songInputText:'',songs:[],remark:'',sortType:'none',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{charTypes:[],allowOther:false,minLength:0,exclusiveOnly:false},openedChars:'',revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0, forcedReveals:{}, songSources:[], generatedSources:{}};}
 
 // ========== State ==========
 let state={
@@ -803,6 +811,8 @@ function saveState(){
     document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{if(cb.checked)sheet.filters.charTypes.push(cb.dataset.chartype);});
     sheet.filters.allowOther=elements.filterAllowOther.checked;
     sheet.filters.minLength=parseInt(elements.filterMinLength.value)||0;
+    sheet.filters.exclusiveOnly=elements.filterExclusiveOnly.checked;
+
     
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) { console.error('存储失败:', e); }
 }
@@ -1051,15 +1061,39 @@ function updateFileStats(){const totalGames=Object.keys(gameData).length,totalSo
 function updateCustomCounts(){const games=Object.keys(gameData);const sheet=cs();elements.customCountsDiv.innerHTML=games.map(game=>{const count=gameData[game].length,savedCount=sheet.customCounts[game]||0,checked=sheet.selectedGames.includes(game);return`<div class="flex items-center gap-3 p-2 rounded-lg ${checked?'':'opacity-40'}"><span class="flex-1 text-sm truncate">${escapeHtml(game)}</span><span class="text-xs" style="color:var(--muted);">${count}首</span><input type="number" class="count-input custom-count-input" data-game="${escapeHtml(game)}" value="${savedCount}" min="0" max="${count}" ${checked?'':'disabled'}></div>`;}).join('');}
 
 // ========== Filter ==========
-function getFilteredSongs(songs){const sheet=cs();const{charTypes,allowOther,minLength}=sheet.filters;return songs.filter(song=>checkNewFilter(song,charTypes,allowOther,minLength));}
-function updateFilterCount(){const selectedGames=Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.game);let allSongs=[];for(const game of selectedGames)if(gameData[game])allSongs=allSongs.concat(gameData[game]);const filtered=getFilteredSongs(allSongs);document.getElementById('filterCount').textContent=`符合条件的曲目: ${filtered.length} 首`;}
+function getFilteredSongs(songs, selectedGames = null){
+    const sheet=cs();
+    const {charTypes, allowOther, minLength, exclusiveOnly}=sheet.filters;
+    return songs.filter(song=>{
+        if(!checkNewFilter(song, charTypes, allowOther, minLength)) return false;
+        // 如果开启了独占模式，检查该曲目是否存在于任何【未被选中】的范围内
+        if(exclusiveOnly && selectedGames){
+            for(const game in gameData){
+                if(!selectedGames.includes(game) && gameData[game].includes(song)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    });
+}
+
+function updateFilterCount(){
+    const selectedGames=Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.game);
+    let allSongs = new Set();
+    for(const game of selectedGames) {
+        if(gameData[game]) gameData[game].forEach(s => allSongs.add(s));
+    }
+    const filtered = getFilteredSongs(Array.from(allSongs), selectedGames);
+    document.getElementById('filterCount').textContent = `符合条件的曲目: ${filtered.length} 首`;
+}
 
 // ========== Extract ==========
 function generateSongs(){
     const sheet=cs();
     const selectedGames=Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.game);
     if(selectedGames.length===0){showToast('请至少选择一个游戏范围','error');return;}
-    const gameSongMap={};for(const game of selectedGames)if(gameData[game])gameSongMap[game]=getFilteredSongs([...gameData[game]]);
+    const gameSongMap={};for(const game of selectedGames)if(gameData[game])gameSongMap[game]=getFilteredSongs([...gameData[game]], selectedGames);
     const totalFiltered=Object.values(gameSongMap).reduce((s,a)=>s+a.length,0);
     if(totalFiltered===0){showToast('没有符合条件的曲目','error');return;}
     
@@ -1508,7 +1542,8 @@ async function copyText(text,successMsg,failMsg){try{await navigator.clipboard.w
 
 // ========== Init ==========
 async function init(){
-    elements={toast:document.getElementById('toast'),songInput:document.getElementById('songInput'),remarkInput:document.getElementById('remarkInput'),charInput:document.getElementById('charInput'),randomSort:document.getElementById('randomSort'),lengthSort:document.getElementById('lengthSort'),randomSortLabel:document.getElementById('randomSortLabel'),lengthSortLabel:document.getElementById('lengthSortLabel'),sortToggle:document.getElementById('sortToggle'),sortContent:document.getElementById('sortContent'),hideRevealed:document.getElementById('hideRevealed'),parsedSection:document.getElementById('parsedSection'),gameList:document.getElementById('gameList'),modeEqual:document.getElementById('modeEqual'),modeCustom:document.getElementById('modeCustom'),equalMode:document.getElementById('equalMode'),customMode:document.getElementById('customMode'),customCountsDiv:document.getElementById('customCounts'),totalCount:document.getElementById('totalCount'),generateBtn:document.getElementById('generateBtn'),selectAll:document.getElementById('selectAll'),selectNone:document.getElementById('selectNone'),importOnlineBtn:document.getElementById('importOnlineBtn'),filterAllowOther:document.getElementById('filterAllowOther'),filterMinLength:document.getElementById('filterMinLength'), librarySelect:document.getElementById('librarySelect')};
+    elements={toast:document.getElementById('toast'),songInput:document.getElementById('songInput'),remarkInput:document.getElementById('remarkInput'),charInput:document.getElementById('charInput'),randomSort:document.getElementById('randomSort'),lengthSort:document.getElementById('lengthSort'),randomSortLabel:document.getElementById('randomSortLabel'),lengthSortLabel:document.getElementById('lengthSortLabel'),sortToggle:document.getElementById('sortToggle'),sortContent:document.getElementById('sortContent'),hideRevealed:document.getElementById('hideRevealed'),parsedSection:document.getElementById('parsedSection'),gameList:document.getElementById('gameList'),modeEqual:document.getElementById('modeEqual'),modeCustom:document.getElementById('modeCustom'),equalMode:document.getElementById('equalMode'),customMode:document.getElementById('customMode'),customCountsDiv:document.getElementById('customCounts'),totalCount:document.getElementById('totalCount'),generateBtn:document.getElementById('generateBtn'),selectAll:document.getElementById('selectAll'),selectNone:document.getElementById('selectNone'),importOnlineBtn:document.getElementById('importOnlineBtn'),filterAllowOther:document.getElementById('filterAllowOther'),filterMinLength:document.getElementById('filterMinLength'), filterExclusiveOnly:document.getElementById('filterExclusiveOnly'), librarySelect:document.getElementById('librarySelect')};
+
     try{await openDB();}catch(e){console.error('IndexedDB failed:',e);}
     loadState();
     const sheet=cs();
@@ -1524,6 +1559,8 @@ async function init(){
         sheet.filters.charTypes.forEach(f=>{const cb=document.querySelector(`#filterCharTypes input[data-chartype="${f}"]`);if(cb)cb.checked=true;});
         elements.filterAllowOther.checked=sheet.filters.allowOther||false;
         elements.filterMinLength.value=sheet.filters.minLength||0;
+               elements.filterExclusiveOnly.checked=sheet.filters.exclusiveOnly||false;
+ 
         if(sheet.extractMode==='custom'){elements.modeEqual.classList.remove('active');elements.modeCustom.classList.add('active');elements.equalMode.style.display='none';elements.customMode.style.display='block';}
       }
     }catch(e){console.warn('Load library failed:',e);}
@@ -1672,7 +1709,22 @@ function bindEvents(){
     document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{cb.addEventListener('change',()=>{updateFilterCount();saveState();});});
     elements.filterAllowOther.addEventListener('change',()=>{updateFilterCount();saveState();});
     elements.filterMinLength.addEventListener('input',()=>{updateFilterCount();saveState();});
-    document.getElementById('clearFilters').addEventListener('click',()=>{document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(c=>c.checked=false);elements.filterAllowOther.checked=false;elements.filterMinLength.value=0;updateFilterCount();saveState();});
+        // 1. 新增：当勾选或取消“独占曲目”时，立刻刷新过滤数量并保存状态
+    elements.filterExclusiveOnly.addEventListener('change', () => {
+        updateFilterCount();
+        saveState();
+    });
+
+    // 2. 修改：重写“清除过滤”按钮的功能，加上把独占勾选框也取消掉的动作
+    document.getElementById('clearFilters').addEventListener('click', () => {
+        document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(c => c.checked = false);
+        elements.filterAllowOther.checked = false;
+        elements.filterMinLength.value = 0;
+        elements.filterExclusiveOnly.checked = false; 
+        updateFilterCount();
+        saveState();
+    });
+    
     // Extract mode
     elements.modeEqual.addEventListener('click',()=>{elements.modeEqual.classList.add('active');elements.modeCustom.classList.remove('active');elements.equalMode.style.display='block';elements.customMode.style.display='none';cs().extractMode='equal';saveState();});
     elements.modeCustom.addEventListener('click',()=>{elements.modeCustom.classList.add('active');elements.modeEqual.classList.remove('active');elements.customMode.style.display='block';elements.equalMode.style.display='none';cs().extractMode='custom';updateCustomCounts();saveState();});
