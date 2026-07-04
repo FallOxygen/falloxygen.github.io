@@ -144,6 +144,45 @@
         textarea:focus {
             border-color: #2196F3;
         }
+        
+        /* ---------- 新增：音量控制调节样式 ---------- */
+        .volume-box {
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        .volume-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .volume-row:last-child {
+            margin-bottom: 0;
+        }
+        .volume-row label {
+            width: 100px;
+            margin-bottom: 0;
+            font-size: 14px;
+            color: #444;
+        }
+        .volume-row input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+        }
+        .volume-val {
+            width: 50px;
+            font-size: 13px;
+            color: #666;
+            text-align: right;
+            font-weight: bold;
+        }
+
         .btn {
             padding: 10px 18px;
             border: none;
@@ -316,6 +355,23 @@
             <div class="status default" id="audio-status">点击“选择文件”导入音乐，将自动识别并删除开头空白</div>
         </div>
 
+        <!-- 新增：平衡音量控制区域 -->
+        <div class="control-group">
+            <label>音量混音器</label>
+            <div class="volume-box">
+                <div class="volume-row">
+                    <label for="metro-volume">节拍器音量:</label>
+                    <input type="range" id="metro-volume" min="0" max="3" step="0.05" value="1">
+                    <span class="volume-val" id="metro-volume-val">100%</span>
+                </div>
+                <div class="volume-row">
+                    <label for="music-volume">导入音乐音量:</label>
+                    <input type="range" id="music-volume" min="0" max="1" step="0.02" value="0.8">
+                    <span class="volume-val" id="music-volume-val">80%</span>
+                </div>
+            </div>
+        </div>
+
         <!-- 2. 编排输入区域 -->
         <div class="control-group">
             <label for="schedule-input">节拍编排（每行一个指令）</label>
@@ -377,7 +433,7 @@
             }
         });
 
-        // 以下保留高精度时钟的全部核心逻辑
+        // 以下保留高精度时钟的全部核心逻辑并扩展音量控制
         const audioFileInput = document.getElementById('audio-file');
         const audioInfo = document.getElementById('audio-info');
         const audioStatus = document.getElementById('audio-status');
@@ -396,11 +452,20 @@
         const currentBeatEl = document.getElementById('current-beat');
         const singlePlayBtn = document.getElementById('single-play-btn');
 
+        // 新增音量控制 DOM 引用
+        const metroVolumeInput = document.getElementById('metro-volume');
+        const musicVolumeInput = document.getElementById('music-volume');
+        const metroVolumeVal = document.getElementById('metro-volume-val');
+        const musicVolumeVal = document.getElementById('music-volume-val');
+
         let audioContext = null;
         let originalAudioBuffer = null;
         let trimmedAudioBuffer = null;
         let audioSource = null;
         let isAudioPlaying = false;
+
+        // 新增：全局音量控制节点 (GainNode)
+        let musicGainNode = null;
 
         let isPlaying = false; 
         let playMode = 'single';
@@ -427,8 +492,28 @@
             if (audioContext.state === 'suspended') {
                 audioContext.resume();
             }
+            // 初始化全局音乐增益节点
+            if (!musicGainNode) {
+                musicGainNode = audioContext.createGain();
+                musicGainNode.gain.setValueAtTime(parseFloat(musicVolumeInput.value), audioContext.currentTime);
+                musicGainNode.connect(audioContext.destination);
+            }
             return audioContext;
         }
+
+        // 新增：监听音量条滑动
+        metroVolumeInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            metroVolumeVal.textContent = Math.round(val * 100) + '%';
+        });
+
+        musicVolumeInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            musicVolumeVal.textContent = Math.round(val * 100) + '%';
+            if (musicGainNode && audioContext) {
+                musicGainNode.gain.setValueAtTime(val, audioContext.currentTime);
+            }
+        });
 
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
@@ -496,7 +581,10 @@
             gainNode.connect(audioContext.destination);
 
             osc.frequency.setValueAtTime(isFirstBeat ? 880 : 440, time);
-            gainNode.gain.setValueAtTime(0.3, time);
+            
+            // 优化：在此处乘上用户滑动选择的“节拍器音量”基数 (0% ~ 300%)
+            const baseVol = parseFloat(metroVolumeInput.value) * 0.3; // 保持原有0.3的听感基准
+            gainNode.gain.setValueAtTime(baseVol, time);
             gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
 
             osc.start(time);
@@ -570,7 +658,6 @@
                 return;
             }
 
-            // 读取手动调整的参数（用于单节拍模式支持手动修改输入框）
             const bpmVal = parseFloat(currentBpmInput.value);
             if (!isNaN(bpmVal) && bpmVal > 0) currentBpm = bpmVal;
             const sigParts = currentTimeSigInput.value.split('/');
@@ -596,7 +683,10 @@
             if (mode === 'sync' && trimmedAudioBuffer) {
                 audioSource = audioContext.createBufferSource();
                 audioSource.buffer = trimmedAudioBuffer;
-                audioSource.connect(audioContext.destination);
+                
+                // 优化：将音乐连接到音量控制器，而不是直接连目的地
+                audioSource.connect(musicGainNode);
+                
                 audioSource.start(nextNoteTime);
                 isAudioPlaying = true;
                 syncPlayBtn.textContent = '停止同步播放';
@@ -717,7 +807,10 @@
             } else if (trimmedAudioBuffer) {
                 audioSource = audioContext.createBufferSource();
                 audioSource.buffer = trimmedAudioBuffer;
-                audioSource.connect(audioContext.destination);
+                
+                // 优化：单独播放处理后的音乐时，也经过音量节点
+                audioSource.connect(musicGainNode);
+                
                 audioSource.start(0);
                 isAudioPlaying = true;
                 audioPlayBtn.textContent = '暂停音乐';
