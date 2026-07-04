@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>带音乐导入的编排节拍器 (全能优化版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f5f5;
+            gap: 20px;
+            padding: 12px;
+        }
+        .metronome-container {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+        
+        /* ---------- 新增：折叠指南样式 ---------- */
+        .guide-wrapper {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .guide-toggle {
+            width: 100%;
+            background-color: #eceff1;
+            color: #455a64;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .guide-toggle:hover {
+            background-color: #cfd8dc;
+        }
+        .guide-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #fafafa;
+            border-radius: 6px;
+        }
+        .guide-content.open {
+            max-height: 1000px; /* 给一个足够大的高度允许展开 */
+            overflow-y: auto;
+            margin-top: 8px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .guide-box h3 {
+            font-size: 15px;
+            color: #1e88e5;
+            margin-bottom: 6px;
+            margin-top: 12px;
+            border-left: 3px solid #1e88e5;
+            padding-left: 6px;
+        }
+        .guide-box h3:first-child { margin-top: 0; }
+        .guide-box ul, .guide-box ol {
+            padding-left: 20px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .guide-box code {
+            background: #eaeaea;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #c2185b;
+        }
+
+        /* ---------- 基础核心布局 ---------- */
+        .control-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+        input[type="number"], input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.3s;
+            text-align: center;
+        }
+        input:focus {
+            border-color: #2196F3;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.3s;
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        textarea:focus {
+            border-color: #2196F3;
+        }
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            background-color: #2196F3;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background-color: #1976D2;
+        }
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .btn-play-schedule { background-color: #FF9800; }
+        .btn-play-schedule:hover { background-color: #F57C00; }
+        .btn-parse { background-color: #9C27B0; margin-bottom: 10px; }
+        .btn-parse:hover { background-color: #7B1FA2; }
+        .btn-audio { background-color: #4CAF50; display: inline-block; width: 100%; text-align: center;}
+        .btn-audio:hover { background-color: #388E3C; }
+        .btn-sync { background-color: #F44336; }
+        .btn-sync:hover { background-color: #D32F2F; }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .main-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .beat-display {
+            margin: 20px 0;
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background-color: #fafafa;
+            position: relative;
+        }
+        .current-beat {
+            font-size: 60px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .current-beat.active {
+            animation: pulse 0.1s ease-out;
+            color: #4CAF50;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1.0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1.0); }
+        }
+        .time-signature {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 16px;
+            color: #777;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.4;
+        }
+        .status.default { background-color: #f0f7ff; color: #2196F3; }
+        .status.success { background-color: #f0fff0; color: #388E3C; }
+        .status.error { background-color: #fff0f0; color: #F44336; }
+        .status.process { background-color: #fff8e1; color: #FF8F00; }
+        .hint {
+            font-size: 13px;
+            color: #777;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+        .audio-import {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px 15px;
+            margin: 15px 0;
+            transition: border 0.3s;
+        }
+        .audio-import:hover {
+            border-color: #2196F3;
+        }
+        #audio-file {
+            display: none;
+        }
+        .audio-info {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        /* 响应式媒体查询 */
+        @media (max-width: 480px) {
+            .metronome-container { padding: 16px; }
+            h1 { font-size: 18px; }
+            input[type="number"], input[type="text"], textarea { font-size: 14px; }
+            .current-beat { font-size: 52px; }
+        }
+        @media (min-width: 481px) {
+            .main-controls { flex-direction: row; }
+            .main-controls .btn-action { flex: 1; margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="metronome-container">
+        <h1>带音乐导入的编排节拍器</h1>
+
+        <!-- 使用指南隐藏控制按钮 -->
+        <div class="guide-wrapper">
+            <button class="guide-toggle" id="guide-toggle-btn">
+                <span>📖 查看使用指南与高级指令详解</span>
+            </button>
+            <div class="guide-content" id="guide-content-box">
+                <div class="guide-box">
+                    <h3>💡 核心机制</h3>
+                    <ul>
+                        <li><strong>绝对精准：</strong>采用 Web Audio 硬件时钟调度，在高密集状态下不卡顿不减速。</li>
+                        <li><strong>自动切白：</strong>导入音频时，系统会自动扫描并删除开头振幅低于阈值的静音部分，确保音乐与第一拍完美咬合。</li>
+                    </ul>
+
+                    <h3>🎵 编排语法说明 (每行一个指令)</h3>
+                    <ol>
+                        <li><strong>标准指令：</strong><code>BPM 拍号</code>。例如 <code>140 5/4</code>，表示以 140 速度播放一小节 5/4 拍。</li>
+                        <li><strong>省写BPM：</strong><code>拍号</code>。例如 <code>6/4</code>，将继承上一行的速度。</li>
+                        <li><strong>省写拍号：</strong><code>BPM</code>。例如 <code>130</code>，将继承上一行的拍号。</li>
+                        <li><strong>重复小节：</strong><code>指令×次数</code>。例如 <code>130 4/4×4</code> 或 <code>7/4×2</code>，连续重复该小节 N 次。</li>
+                        <li><strong>复合多拍号 (高级)：</strong>用 <code>+</code> 连接。例如 <code>140 3/4+4/4×2</code>，表示在 140 速度下，先走一小节 3/4，紧接着走两小节 4/4。</li>
+                    </ol>
+
+                    <h3>🚀 快速上手步骤</h3>
+                    <ol>
+                        <li>在<strong>“当前状态”</strong>中设置基本参数，点击<strong>“单节拍播放”</strong>即可作为普通节拍器使用。</li>
+                        <li>若要使用曲目编排，在文本框编辑好指令后，必须先点击<strong>“解析编排”</strong>。</li>
+                        <li>若要带伴奏练习，先导入本地音频文件，待提示“处理完成”后，点击<strong>“音乐+节拍同步播放”</strong>。</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. 音乐导入与处理区域 -->
+        <div class="control-group">
+            <label>音乐导入（自动裁剪开头空白）</label>
+            <div class="audio-import">
+                <label for="audio-file" class="btn btn-audio">选择本地音乐文件（MP3/WAV）</label>
+                <input type="file" id="audio-file" accept="audio/*">
+                <div class="audio-info" id="audio-info">未选择文件 | 支持格式：MP3、WAV、OGG</div>
+                <button class="btn btn-sync btn-action" id="audio-play-btn" disabled>播放处理后的音乐</button>
+            </div>
+            <div class="status default" id="audio-status">点击“选择文件”导入音乐，将自动识别并删除开头空白</div>
+        </div>
+
+        <!-- 2. 编排输入区域 -->
+        <div class="control-group">
+            <label for="schedule-input">节拍编排（每行一个指令）</label>
+            <textarea id="schedule-input" placeholder="示例：
+140 4/4
+6/4
+3/4
+130 3/4×2
+140
+150
+160 3/4×2+4/4×3
+2/4×3+6/4×2">140 4/4
+6/4
+3/4
+130 3/4×2
+140
+150
+160 3/4×2+4/4×3
+2/4×3+6/4×2</textarea>
+            <button class="btn btn-parse btn-action" id="parse-btn">解析编排</button>
+            <div class="status default" id="schedule-status">点击“解析编排”生成播放序列</div>
+        </div>
+
+        <!-- 3. 实时状态显示 -->
+        <div class="control-group">
+            <label>当前状态</label>
+            <div class="input-row">
+                <input type="number" id="current-bpm" value="140.000" step="0.001" min="1.000" placeholder="当前BPM">
+                <input type="text" id="current-time-sig" value="5/4" placeholder="当前拍号">
+                <input type="text" id="audio-duration" value="00:00" readonly placeholder="音乐时长">
+            </div>
+        </div>
+
+        <!-- 4. 节拍可视化 -->
+        <div class="beat-display">
+            <div class="current-beat" id="current-beat">1</div>
+            <div class="time-signature" id="display-time-sig">5/4</div>
+        </div>
+
+        <!-- 5. 核心控制按钮 -->
+        <div class="main-controls">
+            <button class="btn btn-action" id="single-play-btn">单节拍播放</button>
+            <button class="btn btn-action btn-play-schedule" id="schedule-play-btn" disabled>编排播放</button>
+            <button class="btn btn-action btn-sync" id="sync-play-btn" disabled>音乐+节拍同步播放</button>
+        </div>
+    </div>
+
+    <script>
+        // 新增：使用指南折叠交互逻辑
+        const guideToggleBtn = document.getElementById('guide-toggle-btn');
+        const guideContentBox = document.getElementById('guide-content-box');
+        
+        guideToggleBtn.addEventListener('click', () => {
+            guideContentBox.classList.toggle('open');
+            if (guideContentBox.classList.contains('open')) {
+                guideToggleBtn.querySelector('span').textContent = '❌ 关闭使用指南';
+            } else {
+                guideToggleBtn.querySelector('span').textContent = '📖 查看使用指南与高级指令详解';
+            }
+        });
+
+        // 以下保留高精度时钟的全部核心逻辑
+        const audioFileInput = document.getElementById('audio-file');
+        const audioInfo = document.getElementById('audio-info');
+        const audioStatus = document.getElementById('audio-status');
+        const audioPlayBtn = document.getElementById('audio-play-btn');
+        const audioDurationInput = document.getElementById('audio-duration');
+        const syncPlayBtn = document.getElementById('sync-play-btn');
+        
+        const scheduleInput = document.getElementById('schedule-input');
+        const parseBtn = document.getElementById('parse-btn');
+        const scheduleStatus = document.getElementById('schedule-status');
+        const schedulePlayBtn = document.getElementById('schedule-play-btn');
+        
+        const currentBpmInput = document.getElementById('current-bpm');
+        const currentTimeSigInput = document.getElementById('current-time-sig');
+        const displayTimeSig = document.getElementById('display-time-sig');
+        const currentBeatEl = document.getElementById('current-beat');
+        const singlePlayBtn = document.getElementById('single-play-btn');
+
+        let audioContext = null;
+        let originalAudioBuffer = null;
+        let trimmedAudioBuffer = null;
+        let audioSource = null;
+        let isAudioPlaying = false;
+
+        let isPlaying = false; 
+        let playMode = 'single';
+
+        let timerId = null; 
+        let nextNoteTime = 0.0;
+        const lookahead = 25.0;
+        const scheduleAheadTime = 0.1;
+
+        let currentBeat = 1;
+        let currentBpm = parseFloat(currentBpmInput.value);
+        let currentTimeSig = { numerator: 5, denominator: 4 };
+
+        let scheduleQueue = [];
+        let currentScheduleIndex = 0;
+        let currentRepeatCount = 0;
+
+        let notesInQueue = [];
+
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            return audioContext;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateUI() {
+            if (!isPlaying) return;
+
+            const currentTime = audioContext.currentTime;
+            while (notesInQueue.length > 0 && notesInQueue[0].time < currentTime) {
+                const note = notesInQueue.shift();
+                
+                currentBeatEl.textContent = note.beat;
+                displayTimeSig.textContent = `${note.timeSig.numerator}/${note.timeSig.denominator}`;
+                currentTimeSigInput.value = `${note.timeSig.numerator}/${note.timeSig.denominator}`;
+                currentBpmInput.value = note.bpm.toFixed(3);
+
+                currentBeatEl.classList.remove('active');
+                void currentBeatEl.offsetWidth; 
+                currentBeatEl.classList.add('active');
+
+                if (note.statusText) {
+                    scheduleStatus.className = 'status process';
+                    scheduleStatus.textContent = note.statusText;
+                }
+            }
+            requestAnimationFrame(updateUI);
+        }
+
+        function stopAll() {
+            isPlaying = false;
+            clearTimeout(timerId);
+            notesInQueue = [];
+
+            currentBeat = 1;
+            currentScheduleIndex = 0;
+            currentRepeatCount = 0;
+            currentBeatEl.textContent = "1";
+            currentBeatEl.classList.remove('active');
+
+            singlePlayBtn.textContent = '单节拍播放';
+            schedulePlayBtn.textContent = '编排播放';
+            syncPlayBtn.textContent = '音乐+节拍同步播放';
+
+            if (audioSource) {
+                try { audioSource.stop(); } catch(e){}
+                audioSource = null;
+            }
+            isAudioPlaying = false;
+            audioPlayBtn.textContent = '播放处理后的音乐';
+        }
+        
+        function getBeatLength() {
+            const quarterNoteSec = 60.0 / currentBpm;
+            return quarterNoteSec * (4.0 / currentTimeSig.denominator);
+        }
+
+        function scheduleNote(beatNumber, time, isFirstBeat) {
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            osc.frequency.setValueAtTime(isFirstBeat ? 880 : 440, time);
+            gainNode.gain.setValueAtTime(0.3, time);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+
+            osc.start(time);
+            osc.stop(time + 0.08);
+        }
+
+        function advanceNote() {
+            const beatLength = getBeatLength();
+            nextNoteTime += beatLength;
+
+            currentBeat++;
+            
+            if (currentBeat > currentTimeSig.numerator) {
+                currentBeat = 1;
+
+                if (playMode === 'schedule' || playMode === 'sync') {
+                    currentRepeatCount++;
+                    const currentItem = scheduleQueue[currentScheduleIndex];
+
+                    if (currentRepeatCount >= currentItem.repeat) {
+                        currentScheduleIndex++;
+                        
+                        if (currentScheduleIndex >= scheduleQueue.length) {
+                            setTimeout(() => {
+                                stopAll();
+                                scheduleStatus.className = 'status success';
+                                scheduleStatus.textContent = '✅ 编排播放完成！';
+                            }, (nextNoteTime - audioContext.currentTime) * 1000);
+                            return;
+                        }
+
+                        const nextItem = scheduleQueue[currentScheduleIndex];
+                        currentBpm = nextItem.bpm;
+                        currentTimeSig = { numerator: nextItem.timeSig.n, denominator: nextItem.timeSig.d };
+                        currentRepeatCount = 0;
+                    }
+                }
+            }
+        }
+
+        function scheduler() {
+            while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
+                const isFirstBeat = (currentBeat === 1);
+                scheduleNote(currentBeat, nextNoteTime, isFirstBeat);
+
+                let statusText = "";
+                if ((playMode === 'schedule' || playMode === 'sync') && scheduleQueue[currentScheduleIndex]) {
+                    const item = scheduleQueue[currentScheduleIndex];
+                    statusText = `📽️ 播放第${currentScheduleIndex+1}/${scheduleQueue.length}项（${item.bpm}BPM ${item.timeSig.n}/${item.timeSig.d} ×${item.repeat}）`;
+                }
+
+                notesInQueue.push({
+                    time: nextNoteTime,
+                    beat: currentBeat,
+                    bpm: currentBpm,
+                    timeSig: { ...currentTimeSig },
+                    statusText: statusText
+                });
+
+                advanceNote();
+            }
+            if (isPlaying) {
+                timerId = setTimeout(scheduler, lookahead);
+            }
+        }
+
+        function startEngine(mode) {
+            initAudioContext();
+            if (isPlaying) {
+                stopAll();
+                return;
+            }
+
+            // 读取手动调整的参数（用于单节拍模式支持手动修改输入框）
+            const bpmVal = parseFloat(currentBpmInput.value);
+            if (!isNaN(bpmVal) && bpmVal > 0) currentBpm = bpmVal;
+            const sigParts = currentTimeSigInput.value.split('/');
+            if (sigParts.length === 2 && !isNaN(parseInt(sigParts[0])) && !isNaN(parseInt(sigParts[1]))) {
+                currentTimeSig = { numerator: parseInt(sigParts[0]), denominator: parseInt(sigParts[1]) };
+            }
+
+            isPlaying = true;
+            playMode = mode;
+
+            if (mode === 'single') {
+                singlePlayBtn.textContent = '单节拍暂停';
+            } else {
+                const firstItem = scheduleQueue[0];
+                currentBpm = firstItem.bpm;
+                currentTimeSig = { numerator: firstItem.timeSig.n, denominator: firstItem.timeSig.d };
+                schedulePlayBtn.textContent = '编排暂停';
+            }
+
+            currentBeat = 1;
+            nextNoteTime = audioContext.currentTime + 0.05; 
+
+            if (mode === 'sync' && trimmedAudioBuffer) {
+                audioSource = audioContext.createBufferSource();
+                audioSource.buffer = trimmedAudioBuffer;
+                audioSource.connect(audioContext.destination);
+                audioSource.start(nextNoteTime);
+                isAudioPlaying = true;
+                syncPlayBtn.textContent = '停止同步播放';
+            }
+
+            scheduler();
+            requestAnimationFrame(updateUI);
+        }
+        
+        function detectStartSilence(buffer, threshold = 0.01) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = buffer.sampleRate;
+            let startIndex = 0;
+
+            for (let i = 0; i < channelData.length; i++) {
+                if (Math.abs(channelData[i]) > threshold) {
+                    startIndex = i;
+                    break;
+                }
+            }
+            const silenceDuration = startIndex / sampleRate;
+            audioStatus.textContent = `✅ 空白识别完成：开头空白约${silenceDuration.toFixed(2)}秒`;
+            return startIndex;
+        }
+
+        function trimAudioStart(originalBuffer, startIndex) {
+            const sampleRate = originalBuffer.sampleRate;
+            const channels = originalBuffer.numberOfChannels;
+            const totalSamples = originalBuffer.length - startIndex;
+
+            const trimmedBuffer = initAudioContext().createBuffer(channels, totalSamples, sampleRate);
+
+            for (let ch = 0; ch < channels; ch++) {
+                trimmedBuffer.getChannelData(ch).set(originalBuffer.getChannelData(ch).subarray(startIndex));
+            }
+            return trimmedBuffer;
+        }
+
+        function processAudioFile(file) {
+            audioInfo.textContent = `正在处理：${file.name}（${(file.size / 1024 / 1024).toFixed(2)}MB）`;
+            audioStatus.className = 'status process';
+            audioStatus.textContent = '⏳ 正在读取音频文件...';
+            audioPlayBtn.disabled = true;
+            syncPlayBtn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                audioStatus.textContent = '⏳ 正在解码音频...';
+                initAudioContext().decodeAudioData(e.target.result)
+                    .then(buffer => {
+                        originalAudioBuffer = buffer;
+                        audioDurationInput.value = formatTime(buffer.duration);
+
+                        const startIndex = detectStartSilence(buffer);
+                        trimmedAudioBuffer = trimAudioStart(buffer, startIndex);
+
+                        audioStatus.className = 'status success';
+                        audioStatus.textContent = `✅ 音频处理完成！裁剪后时长：${formatTime(trimmedAudioBuffer.duration)}`;
+                        audioPlayBtn.disabled = false;
+                        if (scheduleQueue.length > 0) syncPlayBtn.disabled = false;
+                    })
+                    .catch(err => {
+                        audioStatus.className = 'status error';
+                        audioStatus.textContent = `❌ 音频处理失败：${err.message}`;
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function parseScheduleInput(input) {
+            const queue = [];
+            const lines = input.trim().split('\n').filter(line => line.trim() !== '');
+            let lastBpm = null;
+            let lastTimeSig = { n: 4, d: 4 };
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                const parts = line.split(/\s+/);
+                let isTimeSigOnly = parts[0].includes('/');
+
+                if (!isTimeSigOnly) {
+                    lastBpm = parseFloat(parts[0]);
+                }
+                
+                let timeSigCmds = isTimeSigOnly ? parts[0] : (parts.length > 1 ? parts[1] : '');
+                if (timeSigCmds === '') {
+                    queue.push({ bpm: lastBpm, timeSig: lastTimeSig, repeat: 1 });
+                    continue;
+                }
+
+                const sigList = timeSigCmds.split('+');
+                for (const sig of sigList) {
+                    const repeatParts = sig.split('×');
+                    const sigStr = repeatParts[0].trim();
+                    const repeat = repeatParts.length > 1 ? parseInt(repeatParts[1]) : 1;
+
+                    const ndParts = sigStr.split('/');
+                    const n = parseInt(ndParts[0]);
+                    const d = parseInt(ndParts[1]);
+
+                    queue.push({ bpm: lastBpm, timeSig: { n, d }, repeat });
+                    lastTimeSig = { n, d };
+                }
+            }
+            return queue;
+        }
+        
+        audioFileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) processAudioFile(e.target.files[0]);
+        });
+
+        audioPlayBtn.addEventListener('click', () => {
+            initAudioContext();
+            if (isAudioPlaying) {
+                if (audioSource) { audioSource.stop(); audioSource = null; }
+                isAudioPlaying = false;
+                audioPlayBtn.textContent = '播放处理后的音乐';
+            } else if (trimmedAudioBuffer) {
+                audioSource = audioContext.createBufferSource();
+                audioSource.buffer = trimmedAudioBuffer;
+                audioSource.connect(audioContext.destination);
+                audioSource.start(0);
+                isAudioPlaying = true;
+                audioPlayBtn.textContent = '暂停音乐';
+                audioSource.onended = () => {
+                    isAudioPlaying = false;
+                    audioPlayBtn.textContent = '播放处理后的音乐';
+                };
+            }
+        });
+
+        parseBtn.addEventListener('click', () => {
+            try {
+                scheduleQueue = parseScheduleInput(scheduleInput.value);
+                scheduleStatus.className = 'status success';
+                scheduleStatus.textContent = `✅ 解析成功！共${scheduleQueue.length}项编排`;
+                schedulePlayBtn.disabled = false;
+                if (trimmedAudioBuffer) syncPlayBtn.disabled = false;
+
+                const firstItem = scheduleQueue[0];
+                currentBpmInput.value = firstItem.bpm.toFixed(3);
+                currentTimeSigInput.value = `${firstItem.timeSig.n}/${firstItem.timeSig.d}`;
+                displayTimeSig.textContent = `${firstItem.timeSig.n}/${firstItem.timeSig.d}`;
+            } catch (err) {
+                scheduleStatus.className = 'status error';
+                scheduleStatus.textContent = `❌ 解析失败：${err.message}`;
+            }
+        });
+
+        singlePlayBtn.addEventListener('click', () => startEngine('single'));
+        schedulePlayBtn.addEventListener('click', () => startEngine('schedule'));
+        syncPlayBtn.addEventListener('click', () => startEngine('sync'));
+    </script>
+</body>
+</html>
