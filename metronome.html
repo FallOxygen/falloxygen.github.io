@@ -232,6 +232,14 @@
             background-color: #fafafa;
             position: relative;
         }
+        .bpm-display {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+
         .current-beat {
             font-size: 60px;
             font-weight: bold;
@@ -407,6 +415,7 @@
 
         <!-- 4. 节拍可视化 -->
         <div class="beat-display">
+            <div class="bpm-display" id="display-bpm">0 BPM</div>
             <div class="current-beat" id="current-beat">1</div>
             <div class="time-signature" id="display-time-sig">5/4</div>
         </div>
@@ -530,6 +539,7 @@
                 
                 currentBeatEl.textContent = note.beat;
                 displayTimeSig.textContent = `${note.timeSig.numerator}/${note.timeSig.denominator}`;
+                document.getElementById('display-bpm').textContent = `${Math.round(note.bpm)} BPM`;
                 currentTimeSigInput.value = `${note.timeSig.numerator}/${note.timeSig.denominator}`;
                 currentBpmInput.value = note.bpm.toFixed(3);
 
