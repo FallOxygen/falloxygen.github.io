@@ -1037,10 +1037,10 @@ function parseLibrary(text, allowedTags = null){
             }
         }
         if(currentGame&&trimmed){
-            const songMatch=trimmed.match(/^\d+[.)\s:：]+(.+)$/);
-            const songName=songMatch?songMatch[1].trim():trimmed;
-            if(songName&&!data[currentGame].includes(songName))data[currentGame].push(songName);
+    const songName=trimmed;
+    if(songName&&!data[currentGame].includes(songName))data[currentGame].push(songName);
         }
+
     }
     for(const game in data){if(data[game].length===0)delete data[game];}
     return data;
@@ -1950,4 +1950,4 @@ function bindEvents(){
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
-    </html>
+</html>
