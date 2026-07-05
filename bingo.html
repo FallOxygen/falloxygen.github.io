@@ -1,0 +1,2630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终极自定义 BINGO 引擎</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            /* 基础色彩与样式 */
+            --card-bg: #ffffff;
+            --grid-border: #000000;
+            --cell-bg: #ffffff;
+            --text-color: #000000;
+            --highlight-bg: #ffcccc;
+            --font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            --border-radius: 0px;
+            --border-width: 3px;
+            --border-style: solid;
+            
+            /* 排版与形状变量 */
+            --grid-cols: 5;
+            --cell-gap: 0px;
+            --cell-ratio: 1; /* 1为正方形，1.5为长方形等 */
+            --card-width: 800px;
+        }
+
+        body {
+            font-family: sans-serif; background-color: #e9ecef;
+            display: flex; margin: 0; min-height: 100vh;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
+
+        /* 左侧控制台 */
+        .sidebar {
+            width: 340px; background: #fff; padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto;
+            display: flex; flex-direction: column; gap: 15px; z-index: 10;
+        }
+        .sidebar h2 { margin-top: 0; font-size: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        
+        /* 控件分组样式 */
+        .control-section { border: 1px solid #eee; padding: 12px; border-radius: 8px; background: #fafafa; display: flex; flex-direction: column; gap: 10px;}
+        .control-section-title { font-size: 13px; color: #888; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .control-group { display: flex; flex-direction: column; gap: 4px; }
+        .control-group label { font-weight: bold; font-size: 13px; color: #333; }
+        .control-group input[type="number"], .control-group select, .control-group input[type="color"] {
+            width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        .row-col-inputs { display: flex; gap: 10px; }
+        
+        .btn {
+            padding: 12px; font-size: 15px; cursor: pointer; border: none; border-radius: 6px;
+            color: white; font-weight: bold; transition: all 0.2s; text-align: center;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background-color: #007bff; }
+        .btn-success { background-color: #28a745; }
+        .btn-warning { background-color: #fd7e14; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-outline { background-color: transparent; border: 2px dashed #007bff; color: #007bff; padding: 8px; font-size: 13px; }
+        .btn-outline:hover { background-color: #e6f2ff; }
+
+        /* 右侧预览区 */
+        .preview-area {
+            flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 40px 20px; overflow-y: auto;
+        }
+
+        /* 卡片主体 */
+        .bingo-card {
+            background-color: var(--card-bg); width: var(--card-width); max-width: 95vw;
+            padding: 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            font-family: var(--font-family); transition: width 0.3s ease, background-color 0.3s ease;
+            box-sizing: border-box; position: relative;
+        }
+
+        /* 头部和尾部文本区 */
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: clamp(32px, 5vw, 64px); margin: 0 0 10px 0; color: var(--text-color); outline: none; font-weight: 900; word-break: break-all;}
+        .subtitle-container { padding-bottom: 10px; margin-bottom: 20px; }
+        .extra-text { font-size: 18px; margin: 8px 0; color: var(--text-color); font-weight: bold; outline: none; word-break: break-all; }
+        .footer { text-align: center; margin-top: 20px; }
+        .footer-text { color: var(--text-color); opacity: 0.8; font-size: 16px; outline: none; display: inline-block; margin: 5px 0;}
+
+        /* 分割线独立出来，只在连体网格模式下显示 */
+        .divider-line { height: var(--border-width); background-color: var(--grid-border); margin-bottom: 20px; transition: all 0.2s;}
+
+        /* 网格核心引擎 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-cols), 1fr);
+            width: 100%; transition: all 0.3s;
+        }
+
+        /* 单元格通用属性 */
+        .cell {
+            aspect-ratio: var(--cell-ratio); display: flex; align-items: center; justify-content: center;
+            box-sizing: border-box; cursor: pointer; transition: background-color 0.2s, transform 0.1s;
+            padding: 10px; position: relative; background-color: var(--cell-bg);
+            overflow: hidden; /* 防止文字溢出 */
+        }
+        .cell-content {
+            width: 100%; max-height: 100%; text-align: center; font-weight: bold;
+            color: var(--text-color); outline: none; word-break: break-word; line-height: 1.3;
+            position: relative; z-index: 2;
+        }
+
+        /* === 形状模式 1: 经典连体 (Seamless) === */
+        .grid.seamless {
+            border-top: var(--border-width) var(--border-style) var(--grid-border);
+            border-left: var(--border-width) var(--border-style) var(--grid-border);
+            gap: 0;
+        }
+        .grid.seamless .cell {
+            border-right: var(--border-width) var(--border-style) var(--grid-border);
+            border-bottom: var(--border-width) var(--border-style) var(--grid-border);
+        }
+
+        /* === 形状模式 2: 独立方块/圆角 (Separated) === */
+        .grid.separated { border: none; gap: var(--cell-gap); }
+        .grid.separated .cell {
+            border: var(--border-width) var(--border-style) var(--grid-border);
+            border-radius: var(--border-radius);
+        }
+        
+        /* === 形状模式 3: 圆形/椭圆 (Circle) === */
+        .grid.circle { border: none; gap: var(--cell-gap); }
+        .grid.circle .cell {
+            border: var(--border-width) var(--border-style) var(--grid-border);
+            border-radius: 50%;
+        }
+
+        /* === 形状模式 4: 菱形 (Rhombus) === */
+        .grid.rhombus { border: none; gap: var(--cell-gap); }
+        .grid.rhombus .cell {
+            border: none; /* Clip-path 会裁掉原生的边框，所以隐藏 */
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            /* 用阴影模拟边框 */
+            box-shadow: inset 0 0 0 var(--border-width) var(--grid-border); 
+        }
+
+        /* 盖章系统 */
+        .stamp-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-size: clamp(30px, 4vw, 80px); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1; pointer-events: none; color: #ff3b30;
+        }
+        .cell.active { background-color: var(--highlight-bg); }
+        .cell.active .stamp-overlay { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+
+        /* ==========================================
+           全 局 编 辑 高 亮 模 式 (神级功能)
+           ========================================== */
+        body.edit-mode [contenteditable="true"] {
+            outline: 3px dashed #ff9800 !important;
+            outline-offset: 4px;
+            background-color: rgba(255, 152, 0, 0.15) !important;
+            border-radius: 4px;
+            min-height: 1em;
+            transition: all 0.2s;
+            cursor: text;
+        }
+        /* 格子内的文字特殊处理，防止撑破 */
+        body.edit-mode .cell-content[contenteditable="true"] { outline-offset: -2px; }
+        
+        @media (max-width: 850px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; max-height: 40vh; box-sizing: border-box; }
+            .preview-area { padding: 10px; }
+            .bingo-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 左侧控制台 -->
+    <div class="sidebar">
+        <h2>⚙️ 超级自定义控制台</h2>
+        <div class="control-section" style="border: 2px solid #007bff; background: #e6f2ff;">
+            <div class="control-section-title" style="color: #007bff;">🎨 模板库 (40+ 预设)</div>
+            <div class="control-group">
+                <label>选择模板主题</label>
+                <select id="templateSelect" onchange="previewTemplate()">
+                    <option value="">-- 请选择一个模板 --</option>
+                    <option value="0">🎮 年度游戏大赏</option>
+                    <option value="1">🎬 电影观影清单</option>
+                    <option value="2">📚 读书挑战</option>
+                    <option value="3">💪 健身打卡</option>
+                    <option value="4">📖 学习自律</option>
+                    <option value="5">✈️ 旅行目的地</option>
+                    <option value="6">🍜 美食探店</option>
+                    <option value="7">💻 程序员日常</option>
+                    <option value="8">🏢 社畜生存</option>
+                    <option value="9">💕 恋爱甜蜜</option>
+                    <option value="10">🎉 周末活动</option>
+                    <option value="11">📷 摄影挑战</option>
+                    <option value="12">🎵 音乐品味</option>
+                    <option value="13">🐱 宠物日常</option>
+                    <option value="14">✍️ 手账打卡</option>
+                    <option value="15">☕ 咖啡品鉴</option>
+                    <option value="16">🌿 极简生活</option>
+                    <option value="17">🎌 动漫追番</option>
+                    <option value="18">💄 化妆护肤</option>
+                    <option value="19">🏠 居家整理</option>
+                    <option value="20">🧘 冥想正念</option>
+                    <option value="21">🌱 植物养护</option>
+                    <option value="22">🍰 烘焙挑战</option>
+                    <option value="23">🌍 语言学习</option>
+                    <option value="24">💰 理财计划</option>
+                    <option value="25">👗 穿搭挑战</option>
+                    <option value="26">🌙 夜生活</option>
+                    <option value="27">⛺ 露营清单</option>
+                    <option value="28">🌊 海洋/潜水</option>
+                    <option value="29">❄️ 冬季活动</option>
+                    <option value="30">☀️ 夏季活动</option>
+                    <option value="31">👻 恐怖游戏</option>
+                    <option value="32">🎮 独立游戏</option>
+                    <option value="33">🕹️ 复古游戏</option>
+                    <option value="34">🌃 赛博朋克</option>
+                    <option value="35">⚫ 极简黑白</option>
+                    <option value="36">🧡 暖色温馨</option>
+                    <option value="37">🔵 冷色科技</option>
+                    <option value="38">🔴 圆形可爱</option>
+                    <option value="39">💎 菱形艺术</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="applyTemplate()" style="margin-top: 5px;">✨ 应用选中模板</button>
+            <div id="templatePreview" style="font-size: 12px; color: #666; margin-top: 8px; line-height: 1.4;"></div>
+        </div>
+
+        
+        <button id="modeBtn" class="btn btn-success" onclick="toggleMode()">🎲 切换：当前为【打卡模式】</button>
+        <button class="btn btn-secondary" onclick="resetGrid()">🧹 清空所有盖章</button>
+        
+        <div class="control-section">
+            <div class="control-section-title">无限网格与比例</div>
+            <div class="row-col-inputs">
+                <div class="control-group" style="flex:1"><label>行数 (Rows)</label><input type="number" id="gridRows" value="5" min="1" onchange="generateGrid()"></div>
+                <div class="control-group" style="flex:1"><label>列数 (Cols)</label><input type="number" id="gridCols" value="5" min="1" onchange="generateGrid()"></div>
+            </div>
+            <div class="control-group">
+                <label>格子长宽比 (左:高 右:扁)</label>
+                <input type="range" id="cellRatio" min="30" max="250" value="100" oninput="applyLayoutSettings()">
+            </div>
+            <div class="control-group">
+                <label>整体卡片宽度调整 (适配长短图)</label>
+                <input type="range" min="400" max="1800" value="800" oninput="document.documentElement.style.setProperty('--card-width', this.value + 'px'); adjustAllCells();">
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="control-section-title">排版与多变形状</div>
+            <div class="control-group">
+                <label>网格布局形态</label>
+                <select id="layoutStyle" onchange="applyLayoutSettings()">
+                    <option value="seamless">经典连体网格 (无缝接合)</option>
+                    <option value="separated">独立方块/圆角块</option>
+                    <option value="circle">纯正圆形 / 椭圆形</option>
+                    <option value="rhombus">创意菱形 (钻石形)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>格子间距 (Gap - 仅独立形态有效)</label>
+                <input type="range" id="gridGap" min="0" max="40" value="10" oninput="applyLayoutSettings()">
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="control-section-title">自由排版附加组件</div>
+            <button class="btn btn-outline" onclick="addExtraText('extra-header-texts')">➕ 在标题下方添加一行副标题</button>
+            <button class="btn btn-outline" onclick="addExtraText('extra-footer-texts')">➕ 在底部添加一行注脚</button>
+        </div>
+
+        <div class="control-section">
+            <div class="control-section-title">视觉微调与印章</div>
+            <div class="control-group">
+                <label>印章图案</label>
+                <select id="stampStyle" onchange="updateStampStyle()">
+                    <option value="color">仅底色高亮 (无图案)</option>
+                    <option value="⭕">⭕ 红色圈圈</option>
+                    <option value="❌">❌ 红色大叉</option>
+                    <option value="🐾">🐾 宠物爪印</option>
+                    <option value="💖">💖 爱心标记</option>
+                    <option value="💯">💯 满分好评</option>
+                    <option value="✔️">✔️ 绿色对勾</option>
+                </select>
+            </div>
+            <div class="control-group"><label>圆角大小</label><input type="range" min="0" max="50" value="0" oninput="document.documentElement.style.setProperty('--border-radius', this.value + 'px')"></div>
+            <div class="control-group"><label>边框粗细</label><input type="range" min="0" max="10" value="3" oninput="document.documentElement.style.setProperty('--border-width', this.value + 'px')"></div>
+            <div class="row-col-inputs">
+                <div class="control-group"><label>卡片底色</label><input type="color" value="#ffffff" oninput="document.documentElement.style.setProperty('--card-bg', this.value)"></div>
+                <div class="control-group"><label>格子底色</label><input type="color" value="#ffffff" oninput="document.documentElement.style.setProperty('--cell-bg', this.value)"></div>
+                <div class="control-group"><label>线条颜色</label><input type="color" value="#000000" oninput="document.documentElement.style.setProperty('--grid-border', this.value)"></div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top: 10px;" onclick="downloadImage()">📸 渲染并保存为图片</button>
+    </div>
+
+    <!-- 右侧预览区 -->
+    <div class="preview-area">
+        <div class="bingo-card" id="bingo-card">
+            <div class="header">
+                <h1 id="main-title">年度游戏 BINGO 大赏</h1>
+                <div class="subtitle-container" id="extra-header-texts">
+                    <div class="extra-text">(看看你今年受过多少苦/享受过多少神作)</div>
+                </div>
+                <!-- 仅在连体模式下显示的主分割线 -->
+                <div class="divider-line" id="main-divider"></div>
+            </div>
+
+            <div class="grid seamless" id="grid"></div>
+
+            <div class="footer" id="extra-footer-texts">
+                <div class="footer-text">(清空文字即可删除这一行)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isEditMode = false;
+        let currentStamp = 'color';
+
+        // 核心：根据行列重新生成网格
+        function generateGrid() {
+            const rows = parseInt(document.getElementById('gridRows').value) || 1;
+            const cols = parseInt(document.getElementById('gridCols').value) || 1;
+            const gridElement = document.getElementById('grid');
+            
+            // 设置 CSS 变量
+            document.documentElement.style.setProperty('--grid-cols', cols);
+            
+            // 保留原有文字（如果扩充格子，旧文字不丢，新格子为空）
+            const existingCells = Array.from(document.querySelectorAll('.cell-content')).map(el => el.innerText);
+            gridElement.innerHTML = '';
+
+            const totalCells = rows * cols;
+            for (let i = 0; i < totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                const content = document.createElement('div');
+                content.className = 'cell-content';
+                content.innerText = existingCells[i] !== undefined ? existingCells[i] : `内容 ${i+1}`;
+                
+                // 监听输入，实时调整大小
+                content.addEventListener('input', () => adjustFontSize(cell));
+
+                // 印章层
+                const stamp = document.createElement('div');
+                stamp.className = 'stamp-overlay';
+                stamp.innerText = currentStamp === 'color' ? '' : currentStamp;
+                if(currentStamp === '✔️') stamp.style.color = '#28a745';
+
+                cell.appendChild(content);
+                cell.appendChild(stamp);
+
+                // 点击盖章逻辑
+                cell.addEventListener('click', function() {
+                    if (!isEditMode) this.classList.toggle('active');
+                });
+                gridElement.appendChild(cell);
+            }
+
+            // 如果处于编辑模式，新生成的格子也要赋可编辑属性
+            if (isEditMode) {
+                document.querySelectorAll('.cell-content').forEach(el => el.setAttribute('contenteditable', 'true'));
+            }
+
+            setTimeout(adjustAllCells, 50);
+        }
+
+        // 核心：应用形状与排版设置
+        function applyLayoutSettings() {
+            const style = document.getElementById('layoutStyle').value;
+            const gap = document.getElementById('gridGap').value;
+            const ratioSlider = document.getElementById('cellRatio').value;
+            
+            const root = document.documentElement.style;
+            const grid = document.getElementById('grid');
+            const divider = document.getElementById('main-divider');
+
+            // 转换 ratio (100 = 1:1, 200 = 2:1)
+            root.setProperty('--cell-ratio', ratioSlider / 100);
+            
+            // 切换形状 Class
+            grid.className = `grid ${style}`;
+
+            // 根据布局形态动态调整 CSS 变量
+            if (style === 'seamless') {
+                root.setProperty('--cell-gap', '0px');
+                divider.style.opacity = '1';
+            } else {
+                root.setProperty('--cell-gap', gap + 'px');
+                divider.style.opacity = '0'; // 独立块模式下隐藏主分割线更好看
+            }
+
+            adjustAllCells();
+        }
+
+        // 字体自适应引擎
+        function adjustFontSize(cell) {
+            const content = cell.querySelector('.cell-content');
+            if (!content) return;
+            let currentSize = 40; 
+            const minSize = 10;   
+            content.style.fontSize = currentSize + 'px';
+            
+            // 考虑边距，防止贴边
+            const padding = 12; 
+            while ((content.scrollHeight > cell.clientHeight - padding || content.scrollWidth > cell.clientWidth - padding) && currentSize > minSize) {
+                currentSize -= 1; 
+                content.style.fontSize = currentSize + 'px';
+            }
+        }
+        function adjustAllCells() {
+            document.querySelectorAll('.cell').forEach(adjustFontSize);
+        }
+
+        // 添加自由文本
+        function addExtraText(containerId) {
+            const container = document.getElementById(containerId);
+            const newElement = document.createElement('div');
+            // 根据位置赋予不同基础样式
+            newElement.className = containerId.includes('header') ? 'extra-text' : 'footer-text';
+            newElement.innerText = "✏️ 新添加的自定义文本 (清空即可删除)";
+            
+            if (isEditMode) newElement.setAttribute('contenteditable', 'true');
+            
+            // 失去焦点且内容为空时自动删除
+            newElement.addEventListener('blur', function() {
+                if (this.innerText.trim() === '') this.remove();
+            });
+            
+            container.appendChild(newElement);
+        }
+
+        // 全局编辑/打卡模式切换
+        function toggleMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('modeBtn');
+            const editables = [
+                ...document.querySelectorAll('.cell-content'), 
+                document.getElementById('main-title'),
+                ...document.querySelectorAll('.extra-text'),
+                ...document.querySelectorAll('.footer-text')
+            ];
+
+            if (isEditMode) {
+                document.body.classList.add('edit-mode');
+                btn.innerHTML = "📝 切换：当前为【编辑模式】<br><small>点击任意高亮框修改，清空文本可删除元素</small>";
+                btn.className = "btn btn-warning";
+                editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+                resetGrid(); // 编辑时取消所有红底高亮，防止视觉混淆
+            } else {
+                document.body.classList.remove('edit-mode');
+                btn.innerHTML = "🎲 切换：当前为【打卡模式】<br><small>点击格子即可盖章</small>";
+                btn.className = "btn btn-success";
+                
+                // 退出编辑时，清理空元素并重新排版
+                document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                    el.setAttribute('contenteditable', 'false');
+                    el.innerText = el.innerText.trim();
+                    if (el.innerText === '' && (el.classList.contains('extra-text') || el.classList.contains('footer-text'))) {
+                        el.remove();
+                    }
+                });
+                adjustAllCells();
+            }
+        }
+
+        function resetGrid() {
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('active'));
+        }
+
+        function updateStampStyle() {
+            currentStamp = document.getElementById('stampStyle').value;
+            document.querySelectorAll('.stamp-overlay').forEach(stamp => {
+                stamp.innerText = currentStamp === 'color' ? '' : currentStamp;
+                if(currentStamp === '✔️') stamp.style.color = '#28a745';
+                else stamp.style.color = '#ff3b30'; 
+            });
+        }
+
+        function downloadImage() {
+            const wasEditMode = isEditMode;
+            if (wasEditMode) toggleMode(); // 强制退出编辑模式，去除高亮虚线框
+            
+            const card = document.getElementById('bingo-card');
+            const btn = document.querySelector('.btn-primary');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ 正在生成超清大图...";
+            btn.disabled = true;
+
+            const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim() || '#ffffff';
+
+            html2canvas(card, { scale: 2, backgroundColor: bgColor }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = (document.getElementById('main-title').innerText || 'BINGO') + '.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                
+                btn.innerText = originalText;
+                btn.disabled = false;
+                if (wasEditMode) toggleMode(); // 恢复编辑模式
+            }).catch(err => {
+                alert("生成图片失败！");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        window.addEventListener('resize', adjustAllCells);
+        // 初始化运行
+        
+        // 模板数据
+        const TEMPLATES = [
+    {
+        "name": "🎮 年度游戏大赏",
+        "rows": 5,
+        "cols": 5,
+        "title": "年度游戏 BINGO 大赏",
+        "subtitle": "看看你今年受过多少苦 / 享受过多少神作",
+        "footer": "通关即正义，白金是信仰",
+        "cells": [
+            "魂系受苦",
+            "开放世界迷路",
+            "独立神作",
+            "JRPG爆肝",
+            "FPS菜鸡",
+            "联机掉线",
+            "抽卡沉船",
+            "剧情泪目",
+            "全成就达成",
+            "速通挑战",
+            "恐怖游戏尖叫",
+            "模拟经营",
+            "音游手残",
+            "格斗被虐",
+            "Roguelike",
+            "策略烧脑",
+            "体育竞技",
+            "赛车漂移",
+            "潜行暗杀",
+            "生存建造",
+            "恐怖解密",
+            "视觉小说",
+            "MMO搬砖",
+            "云通关",
+            "买了没玩"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#ffffff",
+            "cellBg": "#ffffff",
+            "gridBorder": "#000000",
+            "textColor": "#000000",
+            "highlightBg": "#ffcccc",
+            "stampStyle": "❌",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🎬 电影观影清单",
+        "rows": 5,
+        "cols": 5,
+        "title": "电影迷 BINGO 挑战",
+        "subtitle": "100部必看经典，你打卡了多少？",
+        "footer": "电影是每秒24格的真理",
+        "cells": [
+            "奥斯卡最佳",
+            "黑白经典",
+            "科幻神作",
+            "悬疑反转",
+            "爱情催泪",
+            "恐怖惊悚",
+            "动画长片",
+            "纪录片",
+            "外语佳作",
+            "独立电影",
+            "超级英雄",
+            "公路片",
+            "犯罪黑帮",
+            "战争史诗",
+            "音乐歌舞",
+            "喜剧爆笑",
+            "文艺闷片",
+            "cult邪典",
+            "系列完结",
+            "导演剪辑版",
+            "IMAX体验",
+            "电影节展映",
+            "重映补票",
+            "午夜场",
+            "一个人看哭"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#1a1a2e",
+            "cellBg": "#16213e",
+            "gridBorder": "#e94560",
+            "textColor": "#ffffff",
+            "highlightBg": "#e94560",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "📚 读书挑战",
+        "rows": 5,
+        "cols": 5,
+        "title": "年度阅读 BINGO",
+        "subtitle": "让灵魂在书页间旅行",
+        "footer": "书卷多情似故人",
+        "cells": [
+            "诺贝尔文学奖",
+            "科幻巨著",
+            "推理小说",
+            "历史传记",
+            "哲学思辨",
+            "诗歌散文",
+            "心理学",
+            "经济学",
+            "科普读物",
+            "设计美学",
+            "古典文学",
+            "现代小说",
+            "网文爽文",
+            "漫画绘本",
+            "工具书",
+            "大部头",
+            "一小时读完",
+            "重读经典",
+            "签名本",
+            "图书馆借书",
+            "电子书",
+            "听书",
+            "做读书笔记",
+            "推荐给别人",
+            "读完系列"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#f5f0e8",
+            "cellBg": "#faf8f3",
+            "gridBorder": "#8b4513",
+            "textColor": "#3e2723",
+            "highlightBg": "#d7ccc8",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "💪 健身打卡",
+        "rows": 5,
+        "cols": 5,
+        "title": "健身达人 BINGO",
+        "subtitle": "自律给我自由",
+        "footer": "No Pain No Gain",
+        "cells": [
+            "晨跑5公里",
+            "健身房打卡",
+            "瑜伽冥想",
+            "HIIT训练",
+            "游泳",
+            "骑行",
+            "登山徒步",
+            "跳绳",
+            "拳击",
+            "普拉提",
+            "深蹲100",
+            "平板支撑",
+            "引体向上",
+            "卧推",
+            "硬拉",
+            "拉伸放松",
+            "蛋白粉",
+            "减脂餐",
+            "断糖一天",
+            "早睡早起",
+            "步数过万",
+            "戒奶茶",
+            "喝水2L",
+            "体脂下降",
+            "拍照对比"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 6,
+            "borderRadius": 12,
+            "borderWidth": 2,
+            "cardBg": "#0f3460",
+            "cellBg": "#16213e",
+            "gridBorder": "#e94560",
+            "textColor": "#ffffff",
+            "highlightBg": "#e94560",
+            "stampStyle": "💯",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "📖 学习自律",
+        "rows": 5,
+        "cols": 5,
+        "title": "学霸养成 BINGO",
+        "subtitle": "每天进步一点点",
+        "footer": "学如不及，犹恐失之",
+        "cells": [
+            "早起学习",
+            "专注2小时",
+            "背单词50",
+            "刷题100",
+            "整理笔记",
+            "看公开课",
+            "读论文",
+            "写代码",
+            "做思维导图",
+            "复盘总结",
+            "预习新课",
+            "复习旧知",
+            "错题整理",
+            "模拟考试",
+            "请教老师",
+            "小组讨论",
+            "图书馆",
+            "番茄工作法",
+            "远离手机",
+            "制定计划",
+            "完成待办",
+            "学习新技能",
+            "考证通过",
+            "奖学金",
+            "全勤打卡"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#ffffff",
+            "cellBg": "#ffffff",
+            "gridBorder": "#2c3e50",
+            "textColor": "#2c3e50",
+            "highlightBg": "#3498db",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "✈️ 旅行目的地",
+        "rows": 5,
+        "cols": 5,
+        "title": "环球旅行 BINGO",
+        "subtitle": "世界那么大，我想去看看",
+        "footer": "旅行是心灵的阅读",
+        "cells": [
+            "海岛度假",
+            "古城漫步",
+            "雪山攀登",
+            "沙漠穿越",
+            "森林探险",
+            "草原骑马",
+            "湖泊泛舟",
+            "瀑布观赏",
+            "温泉泡汤",
+            "古镇民宿",
+            "露营星空",
+            "自驾公路",
+            "火车慢旅",
+            "异国街头",
+            "美食寻味",
+            "博物馆",
+            "寺庙祈福",
+            "音乐节",
+            "潜水看鱼",
+            "极光追逐",
+            "热气球",
+            "跳伞挑战",
+            "滑雪速降",
+            "骑行川藏",
+            "护照盖章"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 10,
+            "borderRadius": 16,
+            "borderWidth": 2,
+            "cardBg": "#e8f6f3",
+            "cellBg": "#ffffff",
+            "gridBorder": "#1abc9c",
+            "textColor": "#16a085",
+            "highlightBg": "#a3e4d7",
+            "stampStyle": "🐾",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🍜 美食探店",
+        "rows": 5,
+        "cols": 5,
+        "title": "吃货打卡 BINGO",
+        "subtitle": "人生苦短，再来一碗",
+        "footer": "唯有爱与美食不可辜负",
+        "cells": [
+            "火锅涮肉",
+            "烧烤撸串",
+            "日料刺身",
+            "法式大餐",
+            "街头小吃",
+            "甜品奶茶",
+            "咖啡探店",
+            "早茶点心",
+            "川菜麻辣",
+            "粤菜清淡",
+            "东北炖菜",
+            "西北面食",
+            "云南米线",
+            "新疆大盘鸡",
+            "泰式酸辣",
+            "韩式烤肉",
+            "意大利面",
+            "汉堡炸鸡",
+            "素食主义",
+            "分子料理",
+            "私房菜",
+            "路边摊",
+            "深夜食堂",
+            "自己做饭",
+            "米其林"
+        ],
+        "style": {
+            "layoutStyle": "circle",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 12,
+            "borderRadius": 50,
+            "borderWidth": 3,
+            "cardBg": "#fff5e6",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ff6b6b",
+            "textColor": "#c0392b",
+            "highlightBg": "#ffcccc",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "💻 程序员日常",
+        "rows": 5,
+        "cols": 5,
+        "title": "码农生存 BINGO",
+        "subtitle": "It's not a bug, it's a feature",
+        "footer": "Talk is cheap, show me the code",
+        "cells": [
+            "凌晨改Bug",
+            "StackOverflow",
+            "Git冲突",
+            "代码重构",
+            "需求变更",
+            "Deadline提前",
+            "线上事故",
+            "代码Review",
+            "写单元测试",
+            "技术分享",
+            "学新框架",
+            "删库跑路",
+            "咖啡续命",
+            "机械键盘",
+            "双屏办公",
+            "Dark模式",
+            "Vim/Emacs",
+            "正则表达式",
+            "递归思考",
+            "注释写小说",
+            "复制粘贴",
+            "变量命名",
+            "Debug一天",
+            "Commit写fix",
+            "周末加班"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#1e1e1e",
+            "cellBg": "#252526",
+            "gridBorder": "#007acc",
+            "textColor": "#d4d4d4",
+            "highlightBg": "#264f78",
+            "stampStyle": "❌",
+            "fontFamily": "Consolas, Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🏢 社畜生存",
+        "rows": 5,
+        "cols": 5,
+        "title": "打工人 BINGO",
+        "subtitle": "早安，打工人！",
+        "footer": "努力不一定被看见，但休息一定会",
+        "cells": [
+            "周一综合症",
+            "早会摸鱼",
+            "PPT画饼",
+            "Excel做表",
+            "邮件已读不回",
+            "钉钉轰炸",
+            "带薪拉屎",
+            "下班开会",
+            "周末团建",
+            "年会抽奖",
+            "调休补班",
+            "请假羞耻",
+            "绩效面谈",
+            "升职加薪",
+            "跳槽面试",
+            "背锅侠",
+            "甩锅大师",
+            "职场PUA",
+            "摸鱼技巧",
+            "外卖午餐",
+            "通勤地狱",
+            "地铁睡觉",
+            "加班打车",
+            "深夜改稿",
+            "辞职念头"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#2c3e50",
+            "cellBg": "#34495e",
+            "gridBorder": "#f39c12",
+            "textColor": "#ecf0f1",
+            "highlightBg": "#e74c3c",
+            "stampStyle": "⭕",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "💕 恋爱甜蜜",
+        "rows": 5,
+        "cols": 5,
+        "title": "恋爱日常 BINGO",
+        "subtitle": "记录每一个心动瞬间",
+        "footer": "斯人若彩虹，遇上方知有",
+        "cells": [
+            "早安晚安",
+            "牵手散步",
+            "一起做饭",
+            "看电影",
+            "互送礼物",
+            "纪念日",
+            "吃醋撒娇",
+            "煲电话粥",
+            "视频通话",
+            "一起旅行",
+            "拍合照",
+            "发朋友圈",
+            "见家长",
+            "吵架和好",
+            "说我想你",
+            "拥抱充电",
+            "分享歌单",
+            "逛超市",
+            "养宠物",
+            "规划未来",
+            "同居生活",
+            "一起打游戏",
+            "深夜聊天",
+            "互相鼓励",
+            "说我爱你"
+        ],
+        "style": {
+            "layoutStyle": "circle",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 10,
+            "borderRadius": 50,
+            "borderWidth": 3,
+            "cardBg": "#ffe6f0",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ff69b4",
+            "textColor": "#c71585",
+            "highlightBg": "#ffb6c1",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🎉 周末活动",
+        "rows": 5,
+        "cols": 5,
+        "title": "周末不宅 BINGO",
+        "subtitle": "把周末过得像假期",
+        "footer": "Work hard, Play harder",
+        "cells": [
+            "睡到自然醒",
+            "Brunch早午餐",
+            "逛展看画",
+            "公园野餐",
+            "CityWalk",
+            "逛街购物",
+            "KTV嗨唱",
+            "桌游聚会",
+            "剧本杀",
+            "密室逃脱",
+            "运动健身",
+            "爬山远足",
+            "骑行兜风",
+            "摄影扫街",
+            "咖啡馆发呆",
+            "书店看书",
+            "DIY手工",
+            "烘焙甜点",
+            "大扫除",
+            "追剧补番",
+            "打游戏",
+            "朋友聚餐",
+            "家庭聚会",
+            "学习充电",
+            "提前规划"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#f0f8ff",
+            "cellBg": "#ffffff",
+            "gridBorder": "#4169e1",
+            "textColor": "#2f4f4f",
+            "highlightBg": "#87ceeb",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "📷 摄影挑战",
+        "rows": 5,
+        "cols": 5,
+        "title": "365天摄影 BINGO",
+        "subtitle": "用镜头记录世界",
+        "footer": "摄影是光与影的诗歌",
+        "cells": [
+            "日出日落",
+            "城市夜景",
+            "街头人文",
+            "建筑几何",
+            "自然风光",
+            "微距世界",
+            "长曝光",
+            "黑白摄影",
+            "人像写真",
+            "动物萌宠",
+            "美食静物",
+            "星空银河",
+            "雨后彩虹",
+            "倒影对称",
+            "剪影艺术",
+            "运动瞬间",
+            "光影对比",
+            "极简构图",
+            "复古胶片",
+            "双重曝光",
+            "无人机航拍",
+            "手机摄影",
+            "后期调色",
+            "参加影展",
+            "打印照片"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#1a1a1a",
+            "cellBg": "#2d2d2d",
+            "gridBorder": "#f5f5f5",
+            "textColor": "#f5f5f5",
+            "highlightBg": "#555555",
+            "stampStyle": "⭕",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🎵 音乐品味",
+        "rows": 5,
+        "cols": 5,
+        "title": "音乐发烧友 BINGO",
+        "subtitle": "耳机是当代年轻人的输氧管",
+        "footer": "音乐是流动的建筑",
+        "cells": [
+            "黑胶唱片",
+            "现场Live",
+            "音乐节",
+            "演唱会",
+            "古典交响",
+            "爵士蓝调",
+            "摇滚现场",
+            "说唱Battle",
+            "电子舞曲",
+            "民谣弹唱",
+            "KTV麦霸",
+            "乐器演奏",
+            "写歌创作",
+            "翻唱录制",
+            "音乐制作",
+            "发现新歌",
+            "怀旧老歌",
+            "外语歌曲",
+            "影视原声",
+            "游戏配乐",
+            "耳机收藏",
+            "音响设备",
+            "音乐APP",
+            "年度歌单",
+            "深夜听歌"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 12,
+            "borderWidth": 2,
+            "cardBg": "#2d132c",
+            "cellBg": "#801336",
+            "gridBorder": "#c72c41",
+            "textColor": "#ee4540",
+            "highlightBg": "#c72c41",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🐱 宠物日常",
+        "rows": 5,
+        "cols": 5,
+        "title": "铲屎官 BINGO",
+        "subtitle": "主子虐我千百遍，我待主子如初恋",
+        "footer": "执子之爪，铲屎到老",
+        "cells": [
+            "早起喂食",
+            "清理猫砂",
+            "梳毛护理",
+            "洗澡大战",
+            "剪指甲",
+            "驱虫体检",
+            "买新玩具",
+            "猫爬架",
+            "钻纸箱",
+            "踩奶",
+            "蹭头撒娇",
+            "跑酷发疯",
+            "深夜蹦迪",
+            "偷看洗澡",
+            "霸占键盘",
+            "打翻水杯",
+            "呕吐毛球",
+            "躲猫猫",
+            "晒太阳",
+            "拍丑照",
+            "发社交圈",
+            "宠物医院",
+            "自制零食",
+            "训练握手",
+            "一起睡觉"
+        ],
+        "style": {
+            "layoutStyle": "circle",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 10,
+            "borderRadius": 50,
+            "borderWidth": 3,
+            "cardBg": "#fff8dc",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ff8c00",
+            "textColor": "#8b4513",
+            "highlightBg": "#ffe4b5",
+            "stampStyle": "🐾",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "✍️ 手账打卡",
+        "rows": 5,
+        "cols": 5,
+        "title": "手账er BINGO",
+        "subtitle": "记录生活的小确幸",
+        "footer": "手账是时间的礼物",
+        "cells": [
+            "每日一页",
+            "周计划",
+            "月复盘",
+            "旅行手账",
+            "观影笔记",
+            "读书摘抄",
+            "美食记录",
+            "开支记账",
+            "习惯追踪",
+            "心情日记",
+            "胶带拼贴",
+            "手绘插画",
+            "印章盖印",
+            "便签装饰",
+            "照片打印",
+            "子弹笔记",
+            "复古风",
+            "极简风",
+            "可爱风",
+            "旅行票据",
+            "植物标本",
+            "和纸胶带",
+            "彩色荧光笔",
+            "钢笔书写",
+            "收藏展示"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 6,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#faf0e6",
+            "cellBg": "#ffffff",
+            "gridBorder": "#d2691e",
+            "textColor": "#8b4513",
+            "highlightBg": "#f5deb3",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "☕ 咖啡品鉴",
+        "rows": 4,
+        "cols": 4,
+        "title": "咖啡猎人 BINGO",
+        "subtitle": "从速溶到精品的进化之路",
+        "footer": "人生无解，多喝拿铁",
+        "cells": [
+            "手冲单品",
+            "意式浓缩",
+            "拿铁拉花",
+            "冷萃咖啡",
+            "法压壶",
+            "摩卡壶",
+            "虹吸壶",
+            "爱乐压",
+            "杯测体验",
+            "瑰夏豆",
+            "耶加雪菲",
+            "蓝山咖啡",
+            "猫屎咖啡",
+            "冰滴咖啡",
+            "创意特调",
+            "咖啡烘焙",
+            "挂耳包",
+            "冻干粉",
+            "咖啡探店",
+            "自家烘焙",
+            "咖啡器具",
+            "咖啡书籍",
+            "咖啡师证",
+            "咖啡庄园"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 120,
+            "cardWidth": 700,
+            "gridGap": 10,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#3e2723",
+            "cellBg": "#5d4037",
+            "gridBorder": "#d7ccc8",
+            "textColor": "#efebe9",
+            "highlightBg": "#8d6e63",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🌿 极简生活",
+        "rows": 4,
+        "cols": 4,
+        "title": "极简主义 BINGO",
+        "subtitle": "少即是多，断舍离",
+        "footer": "拥有的越少，越自由",
+        "cells": [
+            "断舍离",
+            "清空衣柜",
+            "数字极简",
+            "无消费日",
+            "自带杯",
+            "拒绝塑料袋",
+            "二手交易",
+            "捐赠物品",
+            " capsule wardrobe",
+            "冥想",
+            "单任务处理",
+            "无社交媒体",
+            "纸质书优先",
+            "自己做饭",
+            "步行通勤",
+            "减少订阅",
+            "整理收纳",
+            "一物多用",
+            "修理代替购买",
+            "体验代替拥有",
+            "感恩日记",
+            "慢生活",
+            "亲近自然",
+            "质量优于数量"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 700,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 2,
+            "cardBg": "#fafafa",
+            "cellBg": "#ffffff",
+            "gridBorder": "#bdbdbd",
+            "textColor": "#424242",
+            "highlightBg": "#e0e0e0",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🎌 动漫追番",
+        "rows": 5,
+        "cols": 5,
+        "title": "二次元 BINGO",
+        "subtitle": "此生无悔入二次元",
+        "footer": "动漫是梦开始的地方",
+        "cells": [
+            "热血战斗",
+            "治愈日常",
+            "悬疑推理",
+            "恋爱狗粮",
+            "异世界转生",
+            "机甲高达",
+            "运动竞技",
+            "美食番",
+            "音乐番",
+            "恐怖惊悚",
+            "催泪神作",
+            "搞笑沙雕",
+            "科幻未来",
+            "历史架空",
+            "魔法少女",
+            "校园青春",
+            "职场番",
+            "泡面番",
+            "长篇连载",
+            "剧场版",
+            "OVA补完",
+            "漫画原作",
+            "轻小说",
+            "Cosplay",
+            "漫展参展",
+            "周边收藏",
+            "声优厨",
+            "OP不跳",
+            "弹幕互动",
+            "N刷经典"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#fce4ec",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ec407a",
+            "textColor": "#880e4f",
+            "highlightBg": "#f8bbd0",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "💄 化妆护肤",
+        "rows": 5,
+        "cols": 5,
+        "title": "美妆达人 BINGO",
+        "subtitle": "今天的你也要闪闪发光",
+        "footer": "没有丑女人，只有懒女人",
+        "cells": [
+            "完美底妆",
+            "眉毛对称",
+            "眼线不抖",
+            "睫毛卷翘",
+            "腮红自然",
+            "高光修容",
+            "口红试色",
+            "眼影盘",
+            "定妆喷雾",
+            "卸妆彻底",
+            "敷面膜",
+            "精华护肤",
+            "防晒每天",
+            "早C晚A",
+            "刷酸体验",
+            "美容仪",
+            "医美项目",
+            "美甲DIY",
+            "发型变换",
+            "香水收藏",
+            "成分党",
+            "空瓶记",
+            "种草拔草",
+            "代购海淘",
+            "美妆教程"
+        ],
+        "style": {
+            "layoutStyle": "circle",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 10,
+            "borderRadius": 50,
+            "borderWidth": 3,
+            "cardBg": "#fff0f5",
+            "cellBg": "#ffffff",
+            "gridBorder": "#db7093",
+            "textColor": "#c71585",
+            "highlightBg": "#ffc0cb",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🏠 居家整理",
+        "rows": 5,
+        "cols": 5,
+        "title": "收纳大师 BINGO",
+        "subtitle": "让家成为最舒适的港湾",
+        "footer": "整洁的房间，整洁的心",
+        "cells": [
+            "衣柜换季",
+            "书架整理",
+            "厨房收纳",
+            "冰箱清洁",
+            "床品更换",
+            "窗帘清洗",
+            "地板打蜡",
+            "绿植养护",
+            "墙面装饰",
+            "灯光改造",
+            "香薰氛围",
+            "换门锁",
+            "修水龙头",
+            "组装家具",
+            "贴壁纸",
+            "地毯清洁",
+            "鞋柜整理",
+            "化妆台",
+            "工作台",
+            "游戏角",
+            "阅读角",
+            "咖啡角",
+            "阳台花园",
+            "玄关布置",
+            "全屋大扫除"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#f5f5dc",
+            "cellBg": "#ffffff",
+            "gridBorder": "#8fbc8f",
+            "textColor": "#556b2f",
+            "highlightBg": "#c5e1a5",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🧘 冥想正念",
+        "rows": 4,
+        "cols": 4,
+        "title": "正念生活 BINGO",
+        "subtitle": "活在当下，觉察每一刻",
+        "footer": "呼吸是通往当下的桥梁",
+        "cells": [
+            "晨间冥想",
+            "呼吸练习",
+            "身体扫描",
+            "正念饮食",
+            "行走冥想",
+            "睡前放松",
+            "瑜伽配合",
+            "感恩练习",
+            "情绪觉察",
+            "放下评判",
+            "专注当下",
+            "数字排毒",
+            "自然冥想",
+            "引导音频",
+            "冥想APP",
+            "打卡记录",
+            "正念工作",
+            "正念沟通",
+            "慈悲冥想",
+            "观呼吸",
+            "数呼吸",
+            "冥想垫",
+            " candles",
+            "安静空间"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 120,
+            "cardWidth": 700,
+            "gridGap": 10,
+            "borderRadius": 16,
+            "borderWidth": 2,
+            "cardBg": "#e8f5e9",
+            "cellBg": "#ffffff",
+            "gridBorder": "#66bb6a",
+            "textColor": "#2e7d32",
+            "highlightBg": "#a5d6a7",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🌱 植物养护",
+        "rows": 4,
+        "cols": 4,
+        "title": "植物杀手逆袭 BINGO",
+        "subtitle": "从杀手到园丁的蜕变",
+        "footer": "种一棵树最好的时间是十年前，其次是现在",
+        "cells": [
+            "多肉入门",
+            "绿萝爆盆",
+            "吊兰垂吊",
+            "龟背竹",
+            "琴叶榕",
+            "虎皮兰",
+            "发财树",
+            "水培植物",
+            "播种育苗",
+            "换盆换土",
+            "施肥追肥",
+            "修剪枝叶",
+            "防治虫害",
+            "叶片擦拭",
+            "空气湿度",
+            "光照管理",
+            "自动浇水",
+            "植物APP",
+            "花架布置",
+            "阳台花园",
+            "室内森林",
+            "鲜花插花",
+            "干花制作",
+            "植物日记"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 120,
+            "cardWidth": 700,
+            "gridGap": 10,
+            "borderRadius": 12,
+            "borderWidth": 2,
+            "cardBg": "#e0f2f1",
+            "cellBg": "#ffffff",
+            "gridBorder": "#00897b",
+            "textColor": "#00695c",
+            "highlightBg": "#80cbc4",
+            "stampStyle": "🐾",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🍰 烘焙挑战",
+        "rows": 5,
+        "cols": 5,
+        "title": "烘焙新手 BINGO",
+        "subtitle": "烤箱是通往幸福的传送门",
+        "footer": "烘焙是科学也是艺术",
+        "cells": [
+            "曲奇饼干",
+            "戚风蛋糕",
+            "提拉米苏",
+            "马卡龙",
+            "泡芙",
+            "蛋挞",
+            "面包发酵",
+            "披萨饼底",
+            "布朗尼",
+            "芝士蛋糕",
+            "千层蛋糕",
+            "慕斯蛋糕",
+            "杯子蛋糕",
+            "司康饼",
+            "华夫饼",
+            "舒芙蕾",
+            "焦糖布丁",
+            "奶冻",
+            "果酱",
+            "巧克力",
+            "翻糖装饰",
+            "奶油裱花",
+            "面包机",
+            "厨师机",
+            "测温计"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#fff3e0",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ff9800",
+            "textColor": "#e65100",
+            "highlightBg": "#ffcc80",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🌍 语言学习",
+        "rows": 5,
+        "cols": 5,
+        "title": "多语言大师 BINGO",
+        "subtitle": "每学会一门语言，就多一个灵魂",
+        "footer": "Language is the road map of a culture",
+        "cells": [
+            "英语流利",
+            "日语N1",
+            "韩语TOPIK",
+            "法语DELF",
+            "德语B2",
+            "西班牙语",
+            "意大利语",
+            "俄语入门",
+            "阿拉伯语",
+            "拉丁语",
+            "手语学习",
+            "编程语言",
+            "背单词APP",
+            "看剧学语言",
+            "听歌学语言",
+            "语言交换",
+            "外教对话",
+            "阅读原版",
+            "写作练习",
+            "翻译练习",
+            "影子跟读",
+            "语法攻克",
+            "发音纠正",
+            "考试通过",
+            "多语切换"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#e3f2fd",
+            "cellBg": "#ffffff",
+            "gridBorder": "#1976d2",
+            "textColor": "#0d47a1",
+            "highlightBg": "#90caf9",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "💰 理财计划",
+        "rows": 4,
+        "cols": 4,
+        "title": "财富自由 BINGO",
+        "subtitle": "你不理财，财不理你",
+        "footer": "复利是世界第八大奇迹",
+        "cells": [
+            "记账习惯",
+            "紧急备用金",
+            "基金定投",
+            "股票投资",
+            "债券配置",
+            "保险规划",
+            "房产投资",
+            "黄金储备",
+            "退休计划",
+            "税务优化",
+            "预算管理",
+            "减少负债",
+            "被动收入",
+            "副业开源",
+            "理财书籍",
+            "财经新闻",
+            "投资课程",
+            "模拟盘",
+            "止盈止损",
+            "资产配置",
+            "风险评估",
+            "长期持有",
+            "定期复盘",
+            "财务自由"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 120,
+            "cardWidth": 700,
+            "gridGap": 8,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#1b5e20",
+            "cellBg": "#2e7d32",
+            "gridBorder": "#a5d6a7",
+            "textColor": "#e8f5e9",
+            "highlightBg": "#66bb6a",
+            "stampStyle": "💯",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "👗 穿搭挑战",
+        "rows": 5,
+        "cols": 5,
+        "title": "时尚穿搭 BINGO",
+        "subtitle": "每天都要穿得像去见前任",
+        "footer": "风格是无需言语的自我介绍",
+        "cells": [
+            "胶囊衣橱",
+            "同色系搭配",
+            "撞色穿搭",
+            "复古风",
+            "极简风",
+            "街头风",
+            "职场OL",
+            "约会穿搭",
+            "运动休闲",
+            "度假风",
+            "叠穿技巧",
+            "配饰点睛",
+            "丝巾用法",
+            "帽子搭配",
+            "鞋包呼应",
+            " vintage淘货",
+            "设计师品牌",
+            "快时尚",
+            "可持续时尚",
+            "旧衣新穿",
+            "裁缝改衣",
+            "穿搭博主",
+            "街拍灵感",
+            "时装周",
+            "个人风格"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#f3e5f5",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ab47bc",
+            "textColor": "#4a148c",
+            "highlightBg": "#ce93d8",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🌙 夜生活",
+        "rows": 4,
+        "cols": 4,
+        "title": "夜猫子 BINGO",
+        "subtitle": "城市的夜晚才刚刚开始",
+        "footer": "白天归顺生活，夜晚臣服灵魂",
+        "cells": [
+            "深夜食堂",
+            "酒吧小酌",
+            "LiveHouse",
+            "夜店蹦迪",
+            "夜市扫街",
+            "24h书店",
+            "深夜电影",
+            "通宵KTV",
+            "网咖开黑",
+            "深夜散步",
+            "天台看星",
+            "便利店夜宵",
+            "外卖烧烤",
+            "追剧到天亮",
+            "熬夜加班",
+            "凌晨灵感",
+            "夜跑",
+            "深夜电台",
+            "ASMR",
+            "失眠数羊",
+            "褪黑素",
+            "晚安酒",
+            "夜猫子群",
+            "日出而归"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 120,
+            "cardWidth": 700,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#311b92",
+            "cellBg": "#4527a0",
+            "gridBorder": "#7e57c2",
+            "textColor": "#d1c4e9",
+            "highlightBg": "#5e35b1",
+            "stampStyle": "🌙",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "⛺ 露营清单",
+        "rows": 5,
+        "cols": 5,
+        "title": "露营玩家 BINGO",
+        "subtitle": "人生是旷野，不是轨道",
+        "footer": "露营是成年人的过家家",
+        "cells": [
+            "帐篷搭建",
+            "睡袋温标",
+            "充气床垫",
+            "天幕遮阳",
+            "露营椅",
+            "卡式炉",
+            "手冲咖啡",
+            "篝火晚会",
+            "星空摄影",
+            "户外烧烤",
+            "徒步路线",
+            "溯溪玩水",
+            "钓鱼野采",
+            "观鸟识虫",
+            "野外求生",
+            "指南针",
+            "急救包",
+            "头灯手电",
+            "防蚊驱虫",
+            "天气预报",
+            "无痕露营",
+            "垃圾分类",
+            "日出早起",
+            "野餐布",
+            "吊床午睡"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#e8f5e9",
+            "cellBg": "#ffffff",
+            "gridBorder": "#43a047",
+            "textColor": "#1b5e20",
+            "highlightBg": "#a5d6a7",
+            "stampStyle": "🐾",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🌊 海洋/潜水",
+        "rows": 5,
+        "cols": 5,
+        "title": "海洋探索 BINGO",
+        "subtitle": "蓝色鸦片，一旦上瘾终身难戒",
+        "footer": "We protect what we love",
+        "cells": [
+            "浮潜体验",
+            "深潜证书",
+            "夜潜",
+            "洞潜",
+            "沉船潜",
+            "放流潜水",
+            "高氧潜水",
+            "自由潜水",
+            "美人鱼",
+            "水下摄影",
+            "珊瑚保育",
+            "海龟同游",
+            "鲨鱼共舞",
+            "鲸鲨邂逅",
+            "manta ray",
+            "海豚互动",
+            "水母湖",
+            "蓝洞",
+            "大堡礁",
+            "马尔代夫",
+            "帕劳",
+            "诗巴丹",
+            "红海",
+            "加拉帕戈斯",
+            "船宿"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#e0f7fa",
+            "cellBg": "#ffffff",
+            "gridBorder": "#00bcd4",
+            "textColor": "#006064",
+            "highlightBg": "#80deea",
+            "stampStyle": "🐾",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "❄️ 冬季活动",
+        "rows": 5,
+        "cols": 5,
+        "title": "冬日限定 BINGO",
+        "subtitle": "冬天不只有被窝",
+        "footer": "Winter is coming, and I'm ready",
+        "cells": [
+            "滑雪双板",
+            "滑雪单板",
+            "冰雕观赏",
+            "温泉泡汤",
+            "火锅聚餐",
+            "糖葫芦",
+            "烤红薯",
+            "围炉煮茶",
+            "暖气房",
+            "电热毯",
+            "羽绒服",
+            "围巾手套",
+            "雪地拍照",
+            "堆雪人",
+            "打雪仗",
+            "冰湖漫步",
+            "雾凇观赏",
+            "极光追逐",
+            "圣诞集市",
+            "跨年烟花",
+            "冬眠模式",
+            "热可可",
+            "姜饼人",
+            "冬眠",
+            "新年许愿"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#e3f2fd",
+            "cellBg": "#ffffff",
+            "gridBorder": "#1976d2",
+            "textColor": "#0d47a1",
+            "highlightBg": "#90caf9",
+            "stampStyle": "❄️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "☀️ 夏季活动",
+        "rows": 5,
+        "cols": 5,
+        "title": "夏日狂欢 BINGO",
+        "subtitle": "夏天是青春的味道",
+        "footer": "Summer vibes only",
+        "cells": [
+            "海边游泳",
+            "冲浪体验",
+            "漂流",
+            "水上乐园",
+            "冰淇淋",
+            "西瓜中心",
+            "空调房",
+            "短袖短裤",
+            "凉鞋",
+            "防晒霜",
+            "墨镜",
+            "遮阳帽",
+            "夜市烧烤",
+            "露天电影",
+            "音乐节",
+            "露营",
+            "骑行",
+            "晨跑",
+            "晚霞拍照",
+            "萤火虫",
+            "荷花池",
+            "暴雨踩水",
+            "台风天",
+            "暑假作业",
+            "毕业旅行"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 10,
+            "borderWidth": 2,
+            "cardBg": "#fffde7",
+            "cellBg": "#ffffff",
+            "gridBorder": "#fbc02d",
+            "textColor": "#f57f17",
+            "highlightBg": "#fff59d",
+            "stampStyle": "☀️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "👻 恐怖游戏",
+        "rows": 5,
+        "cols": 5,
+        "title": "恐怖游戏 BINGO",
+        "subtitle": "又菜又爱玩",
+        "footer": "恐怖游戏玩家的自我修养",
+        "cells": [
+            "生化危机",
+            "寂静岭",
+            "逃生",
+            "恶灵附身",
+            "死亡空间",
+            "直到黎明",
+            "心灵杀手",
+            "零系列",
+            "恐鬼症",
+            "层层恐惧",
+            "甜蜜之家",
+            "黑暗欺骗",
+            "玩具熊",
+            "瘦长鬼影",
+            "SCP",
+            "克苏鲁",
+            "Jump Scare",
+            "关灯游玩",
+            "耳机全音量",
+            "单人深夜",
+            "尖叫出声",
+            "暂停缓一缓",
+            "查攻略",
+            "云通关",
+            "又菜又爱玩"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#0a0a0a",
+            "cellBg": "#1a1a1a",
+            "gridBorder": "#8b0000",
+            "textColor": "#ff4444",
+            "highlightBg": "#330000",
+            "stampStyle": "❌",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🎮 独立游戏",
+        "rows": 5,
+        "cols": 5,
+        "title": "独立游戏鉴赏 BINGO",
+        "subtitle": "小团队，大创意",
+        "footer": "Indie games, big hearts",
+        "cells": [
+            "空洞骑士",
+            "蔚蓝",
+            "哈迪斯",
+            "死亡细胞",
+            "星露谷物语",
+            "传说之下",
+            "见证者",
+            "风之旅人",
+            "光遇",
+            "奥日",
+            "茶杯头",
+            "以撒",
+            "杀戮尖塔",
+            "挺进地牢",
+            "节奏地牢",
+            "去月球",
+            "寻找天堂",
+            "极乐迪斯科",
+            "邪恶冥刻",
+            "循环英雄",
+            "戴森球",
+            "太吾绘卷",
+            "修仙模拟器",
+            "鬼谷八荒",
+            "国产之光"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#263238",
+            "cellBg": "#37474f",
+            "gridBorder": "#00e676",
+            "textColor": "#eceff1",
+            "highlightBg": "#1b5e20",
+            "stampStyle": "✔️",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🕹️ 复古游戏",
+        "rows": 5,
+        "cols": 5,
+        "title": "复古游戏怀旧 BINGO",
+        "subtitle": "像素风永不过时",
+        "footer": "Old school never dies",
+        "cells": [
+            "红白机",
+            "超级玛丽",
+            "魂斗罗",
+            "坦克大战",
+            "俄罗斯方块",
+            "贪吃蛇",
+            "街机厅",
+            "拳皇97",
+            "合金弹头",
+            "三国志",
+            "世嘉MD",
+            "索尼克",
+            "GameBoy",
+            "口袋妖怪",
+            "塞尔达",
+            "恶魔城",
+            "超级银河战士",
+            "最终幻想6",
+            "时空之轮",
+            "暗黑破坏神2",
+            "星际争霸",
+            "魔兽争霸",
+            "模拟器",
+            "CRT显示器",
+            "手柄搓招"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 3,
+            "cardBg": "#1a1a2e",
+            "cellBg": "#16213e",
+            "gridBorder": "#e94560",
+            "textColor": "#f5f5f5",
+            "highlightBg": "#533483",
+            "stampStyle": "⭕",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🌃 赛博朋克",
+        "rows": 5,
+        "cols": 5,
+        "title": "赛博朋克 BINGO",
+        "subtitle": "High Tech, Low Life",
+        "footer": "The future is now, old man",
+        "cells": [
+            "霓虹灯",
+            "义体改造",
+            "黑客入侵",
+            "人工智能",
+            "虚拟现实",
+            "赛博空间",
+            "反乌托邦",
+            "巨型公司",
+            "贫民窟",
+            "飞行汽车",
+            "全息广告",
+            "脑机接口",
+            "数字永生",
+            "记忆植入",
+            "机械义肢",
+            "黑客帝国",
+            "银翼杀手",
+            "攻壳机动队",
+            "赛博朋克2077",
+            "Akira",
+            "蒸汽波",
+            "合成器音乐",
+            "故障艺术",
+            " glitch",
+            "夜之城"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 4,
+            "borderWidth": 2,
+            "cardBg": "#0d0221",
+            "cellBg": "#120458",
+            "gridBorder": "#ff00ff",
+            "textColor": "#00ffff",
+            "highlightBg": "#ff00ff",
+            "stampStyle": "💖",
+            "fontFamily": "Consolas, Microsoft YaHei"
+        }
+    },
+    {
+        "name": "⚫ 极简黑白",
+        "rows": 5,
+        "cols": 5,
+        "title": "极简黑白 BINGO",
+        "subtitle": "less is more",
+        "footer": "黑与白之间，有千万种灰",
+        "cells": [
+            "断舍离",
+            "留白",
+            "线条",
+            "几何",
+            "对比",
+            "光影",
+            "单色",
+            "素描",
+            "书法",
+            "水墨",
+            "黑白摄影",
+            "极简设计",
+            "无印良品",
+            "性冷淡风",
+            "包豪斯",
+            "黑白穿搭",
+            "棋盘格",
+            "斑马线",
+            "钢琴键",
+            "围棋",
+            "太极",
+            "阴阳",
+            "昼夜",
+            "明暗",
+            "纯粹"
+        ],
+        "style": {
+            "layoutStyle": "seamless",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 0,
+            "borderRadius": 0,
+            "borderWidth": 2,
+            "cardBg": "#000000",
+            "cellBg": "#111111",
+            "gridBorder": "#ffffff",
+            "textColor": "#ffffff",
+            "highlightBg": "#333333",
+            "stampStyle": "⭕",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🧡 暖色温馨",
+        "rows": 5,
+        "cols": 5,
+        "title": "暖色温馨 BINGO",
+        "subtitle": "温暖每一个平凡的日子",
+        "footer": "人间烟火气，最抚凡人心",
+        "cells": [
+            "早安咖啡",
+            "阳光早餐",
+            "鲜花插瓶",
+            "香薰蜡烛",
+            "毛毯抱枕",
+            "木质家具",
+            "暖黄灯光",
+            "手写便签",
+            "烘焙香气",
+            "热汤面",
+            "毛衣围巾",
+            "壁炉取暖",
+            "猫咪呼噜",
+            "午后小憩",
+            "窗边阅读",
+            "雨声白噪",
+            "老友聚会",
+            "家庭晚餐",
+            "拥抱",
+            "微笑",
+            "感谢",
+            "陪伴",
+            "小确幸",
+            "慢时光",
+            "温柔以待"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 10,
+            "borderRadius": 16,
+            "borderWidth": 2,
+            "cardBg": "#fff8e1",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ffb74d",
+            "textColor": "#e65100",
+            "highlightBg": "#ffe0b2",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🔵 冷色科技",
+        "rows": 5,
+        "cols": 5,
+        "title": "冷色科技 BINGO",
+        "subtitle": "科技改变生活",
+        "footer": "The future is closer than you think",
+        "cells": [
+            "AI助手",
+            "智能家居",
+            "无人机",
+            "VR眼镜",
+            "智能手表",
+            "电动汽车",
+            "无线充电",
+            "人脸识别",
+            "语音控制",
+            "区块链",
+            "元宇宙",
+            "量子计算",
+            "基因编辑",
+            "太空旅行",
+            "火星殖民",
+            "机器人",
+            "自动驾驶",
+            "5G网络",
+            "云计算",
+            "大数据",
+            "物联网",
+            "3D打印",
+            "纳米技术",
+            "可穿戴设备",
+            "脑机接口"
+        ],
+        "style": {
+            "layoutStyle": "separated",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 8,
+            "borderRadius": 8,
+            "borderWidth": 2,
+            "cardBg": "#0d1b2a",
+            "cellBg": "#1b263b",
+            "gridBorder": "#00b4d8",
+            "textColor": "#caf0f8",
+            "highlightBg": "#0077b6",
+            "stampStyle": "✔️",
+            "fontFamily": "Consolas, Microsoft YaHei"
+        }
+    },
+    {
+        "name": "🔴 圆形可爱",
+        "rows": 5,
+        "cols": 5,
+        "title": "可爱治愈 BINGO",
+        "subtitle": "今天也要元气满满",
+        "footer": "可爱即正义",
+        "cells": [
+            "撸猫",
+            "吸狗",
+            "看萌宠视频",
+            "买盲盒",
+            "收集贴纸",
+            "喝奶茶",
+            "吃甜品",
+            "看动画",
+            "听儿歌",
+            "穿粉色",
+            "扎双马尾",
+            "用可爱文具",
+            "拍立得",
+            "手账装饰",
+            "毛绒玩具",
+            "泡泡浴",
+            "敷面膜",
+            "涂指甲油",
+            "蝴蝶结",
+            "星星灯",
+            "彩虹",
+            "云朵",
+            "棉花糖",
+            "气球",
+            "糖果色"
+        ],
+        "style": {
+            "layoutStyle": "circle",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 12,
+            "borderRadius": 50,
+            "borderWidth": 3,
+            "cardBg": "#fff0f5",
+            "cellBg": "#ffffff",
+            "gridBorder": "#ff69b4",
+            "textColor": "#db7093",
+            "highlightBg": "#ffc0cb",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    },
+    {
+        "name": "💎 菱形艺术",
+        "rows": 5,
+        "cols": 5,
+        "title": "艺术鉴赏 BINGO",
+        "subtitle": "艺术是生活的镜子",
+        "footer": "Art is not what you see, but what you make others see",
+        "cells": [
+            "印象派",
+            "抽象表现",
+            "立体主义",
+            "超现实主义",
+            "波普艺术",
+            "极简主义",
+            "装置艺术",
+            "行为艺术",
+            "街头涂鸦",
+            "数字艺术",
+            "NFT",
+            "艺术展览",
+            "博物馆",
+            "画廊",
+            "拍卖会",
+            "艺术史",
+            "色彩理论",
+            "构图法则",
+            "透视原理",
+            "光影技法",
+            "素描基础",
+            "油画体验",
+            "水彩画",
+            "版画",
+            "雕塑"
+        ],
+        "style": {
+            "layoutStyle": "rhombus",
+            "cellRatio": 100,
+            "cardWidth": 800,
+            "gridGap": 15,
+            "borderRadius": 0,
+            "borderWidth": 2,
+            "cardBg": "#fafafa",
+            "cellBg": "#ffffff",
+            "gridBorder": "#9c27b0",
+            "textColor": "#4a148c",
+            "highlightBg": "#e1bee7",
+            "stampStyle": "💖",
+            "fontFamily": "Microsoft YaHei"
+        }
+    }
+];
+
+        function previewTemplate() {
+            const idx = document.getElementById('templateSelect').value;
+            const preview = document.getElementById('templatePreview');
+            if (idx === '') {
+                preview.innerHTML = '';
+                return;
+            }
+            const t = TEMPLATES[idx];
+            preview.innerHTML = `<strong>${t.name}</strong><br>
+                📐 ${t.rows}×${t.cols} | 🎨 ${t.style.layoutStyle} | 🖌️ ${t.style.stampStyle}<br>
+                <span style="opacity:0.7">${t.subtitle}</span>`;
+        }
+
+        function applyTemplate() {
+            const idx = document.getElementById('templateSelect').value;
+            if (idx === '') {
+                alert('请先选择一个模板！');
+                return;
+            }
+            const t = TEMPLATES[idx];
+            const s = t.style;
+
+            // 如果当前在编辑模式，先退出
+            if (isEditMode) toggleMode();
+
+            // 1. 设置行列
+            document.getElementById('gridRows').value = t.rows;
+            document.getElementById('gridCols').value = t.cols;
+
+            // 2. 设置文本内容
+            document.getElementById('main-title').innerText = t.title;
+
+            // 清空并设置副标题
+            const headerContainer = document.getElementById('extra-header-texts');
+            headerContainer.innerHTML = '';
+            if (t.subtitle) {
+                const sub = document.createElement('div');
+                sub.className = 'extra-text';
+                sub.innerText = t.subtitle;
+                headerContainer.appendChild(sub);
+            }
+
+            // 清空并设置底部
+            const footerContainer = document.getElementById('extra-footer-texts');
+            footerContainer.innerHTML = '';
+            if (t.footer) {
+                const foot = document.createElement('div');
+                foot.className = 'footer-text';
+                foot.innerText = t.footer;
+                footerContainer.appendChild(foot);
+            }
+
+            // 3. 生成网格并填充内容
+            generateGrid();
+            const cells = document.querySelectorAll('.cell-content');
+            t.cells.forEach((text, i) => {
+                if (cells[i]) cells[i].innerText = text;
+            });
+
+            // 4. 应用样式变量
+            const root = document.documentElement.style;
+            root.setProperty('--cell-ratio', s.cellRatio / 100);
+            root.setProperty('--card-width', s.cardWidth + 'px');
+            root.setProperty('--cell-gap', s.gridGap + 'px');
+            root.setProperty('--border-radius', s.borderRadius + 'px');
+            root.setProperty('--border-width', s.borderWidth + 'px');
+            root.setProperty('--card-bg', s.cardBg);
+            root.setProperty('--cell-bg', s.cellBg);
+            root.setProperty('--grid-border', s.gridBorder);
+            root.setProperty('--text-color', s.textColor);
+            root.setProperty('--highlight-bg', s.highlightBg);
+            root.setProperty('--font-family', s.fontFamily);
+
+            // 5. 应用布局样式
+            document.getElementById('layoutStyle').value = s.layoutStyle;
+            document.getElementById('gridGap').value = s.gridGap;
+            document.getElementById('cellRatio').value = s.cellRatio;
+
+            // 同步卡片宽度滑块（如果有对应的input）
+            const widthInputs = document.querySelectorAll('input[type="range"]');
+            widthInputs.forEach(inp => {
+                if (inp.min === '400' && inp.max === '1800') inp.value = s.cardWidth;
+                if (inp.min === '0' && inp.max === '50') inp.value = s.borderRadius;
+                if (inp.min === '0' && inp.max === '10') inp.value = s.borderWidth;
+            });
+
+            // 6. 应用印章样式
+            document.getElementById('stampStyle').value = s.stampStyle;
+            updateStampStyle();
+
+            // 7. 应用布局
+            applyLayoutSettings();
+
+            // 8. 调整字体
+            setTimeout(adjustAllCells, 100);
+
+            // 提示
+            const btn = document.querySelector('.control-section button[onclick="applyTemplate()"]');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ 已应用！';
+            setTimeout(() => btn.innerText = originalText, 1500);
+        }
+
+        window.onload = () => {
+            generateGrid();
+        };
+    </script>
+</body>
+</html>
