@@ -1147,7 +1147,32 @@ function generateSongs(){
     const sheet=cs();
     const selectedGames=Array.from(elements.gameList.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.dataset.game);
     if(selectedGames.length===0){showToast('请至少选择一个游戏范围','error');return;}
-    const gameSongMap={};for(const game of selectedGames)if(gameData[game])gameSongMap[game]=getFilteredSongs([...gameData[game]], selectedGames);
+    
+    // ========== 修复：独占模式预处理 ==========
+    let gameSongMap={};
+    for(const game of selectedGames) {
+        if(!gameData[game]) continue;
+        let songs = getFilteredSongs([...gameData[game]], selectedGames);
+        
+        // 如果开启了独占模式，进一步过滤：只保留"仅出现在当前选中范围"的曲目
+        if(sheet.filters.exclusiveOnly) {
+            songs = songs.filter(song => {
+                // 检查这首歌是否只出现在当前这一个选中范围内
+                let appearCount = 0;
+                for(const g of selectedGames) {
+                    if(gameData[g] && gameData[g].includes(song)) {
+                        appearCount++;
+                        if(appearCount > 1) return false; // 出现在多个选中范围中，不是独占
+                    }
+                }
+                return appearCount === 1; // 必须恰好只出现在当前范围
+            });
+        }
+        
+        gameSongMap[game] = songs;
+    }
+    // ==========================================
+    
     const totalFiltered=Object.values(gameSongMap).reduce((s,a)=>s+a.length,0);
     if(totalFiltered===0){showToast('没有符合条件的曲目','error');return;}
     
@@ -1950,4 +1975,4 @@ function bindEvents(){
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
-</html>
+    </html>
