@@ -119,9 +119,11 @@
                     <a href="#sec1-1" class="sub">- 在线导入</a>
                     <a href="#sec1-2" class="sub">- 本地导入与格式</a>
                     <a href="#sec1-3" class="sub">- 曲库管理与编辑</a>
+                    <a href="#sec1-4" class="sub">- 曲库导出</a>
                     <a href="#sec2">2. 配置出题序列</a>
                     <a href="#sec2-1" class="sub">- 抽取与过滤</a>
                     <a href="#sec2-2" class="sub">- 手动输入与选曲</a>
+                    <a href="#sec2-3" class="sub">- 难度增强（显示变换）</a>
                     <a href="#sec3">3. 游戏进行中</a>
                     <a href="#sec3-1" class="sub">- 开字母与统计</a>
                     <a href="#sec3-2" class="sub">- 曲目交互</a>
@@ -155,7 +157,7 @@
                                 <div style="font-size: 14px; color: var(--muted); line-height: 1.8;">
                                     如果在线导入因网络问题失败，你可以手动下载曲库文件，然后通过"导入本地"功能导入：
                                     <ol style="margin: 8px 0; padding-left: 20px; color: #c1c4cc;">
-                                        <li>打开 <a href="https://github.com/FallOxygen/falloxygen.github.io/blob/main/library/Songs.txt" target="_blank" style="color: var(--accent); text-decoration: underline;">GitHub 曲库文件</a>，点击右上角的 "↓” 按钮下载文本。</li>
+                                        <li>打开 <a href="https://github.com/FallOxygen/falloxygen.github.io/blob/main/library/Songs.txt" target="_blank" style="color: var(--accent); text-decoration: underline;">GitHub 曲库文件</a>，点击右上角的下载按钮下载。</li>
                                         <li>回到工具页面，点击"导入本地"，选择保存的 <code class="mono">.txt</code> 文件。</li>
                                         <li>在"允许的范围标签"中填入以下范围名称（一行一个）：</li>
                                     </ol>
@@ -231,18 +233,16 @@ OverEcho<br>
                         <p><strong>TXT 文件格式要求：</strong></p>
                         <ul class="li-arrow">
                             <li>一行 <code class="mono" style="color:var(--warning)">[游戏名]</code> 作为范围声明。</li>
-                            <li>下面逐行写曲名。</li>
+                            <li>下面逐行写曲名，可以不带序号，系统会自动去除前缀序号（如 <code class="mono">1.</code>、<code class="mono">2)</code> 等）。</li>
                         </ul>
                         <div class="code-block mono">
 [Phigros]<br>
-Distorted Fate<br>
-DESTRUCTION 3,2,1<br>
-Glaciaxion<br>
-……<br>                            
+1.Distorted Fate<br>
+2.DESTRUCTION 3,2,1<br>
+3.Glaciaxion<br>
 [Arcaea]<br>
-Sheriruth<br>
-Arcahv<br>
-……                            
+1.Sheriruth<br>
+2.Arcahv
                         </div>
                         <div class="alert alert-warn">
                             <div>
@@ -269,6 +269,17 @@ Arcahv<br>
                             </div>
                         </div>
                     </div>
+
+                    <div id="sec1-4">
+                        <h3>1.4 曲库导出</h3>
+                        <p>在设置面板底部新增了 <span class="tag tag-btn">曲库导出</span> 功能。你可以：</p>
+                        <ul class="li-arrow">
+                            <li>在下拉框中选择要导出的游戏范围。</li>
+                            <li>勾选"仅导出只有这个游戏收录的曲目"，可过滤掉与其他范围共享的曲目，只保留独占曲目。</li>
+                            <li>点击"导出为 TXT"后，系统会生成标准格式的曲库文件并自动下载。</li>
+                        </ul>
+                        <p>此功能方便你将编辑后的曲库或某个范围的独占曲目备份为本地文件。</p>
+                    </div>
                 </section>
 
                 <!-- Section 2 -->
@@ -283,6 +294,8 @@ Arcahv<br>
                             <li><strong>字符类型：</strong>限制曲名必须包含（或不包含）字母、日文、汉字。未勾选的字符类型将被排除。</li>
                             <li><strong>允许其他字符：</strong>勾选后，曲名中可以包含标点、数字等非字母/日文/汉字字符；不勾选则仅允许已选字符类型。</li>
                             <li><strong>最少字符长度：</strong>过滤掉名字太短的歌（计算时包含空格）。设为 0 表示不限。</li>
+                            <li><strong>排除字符：</strong>曲名中不能包含你输入的任何字符。</li>
+                            <li><strong>包含字符：</strong>曲名必须包含你输入的字符。可勾选"必须同时包含所有输入的字符"来启用严格模式。</li>
                             <li><strong>仅抽取独占曲目：</strong>开启后，只会抽取"仅出现在已选范围中"的曲目。如果某首歌同时出现在已选范围和未选范围中，则会被排除。适合制作"独占猜歌"挑战。</li>
                         </ul>
                         <p>过滤条件会实时显示"符合条件的曲目"数量，方便你调整参数。</p>
@@ -308,6 +321,24 @@ Arcahv<br>
 
                         <p><strong>排列选项：</strong>你可以将当前文本框中的曲目进行"随机排列"或"按长度排列"。点击"应用排列"生效。</p>
                         <p>最后，可以在"备注信息"中填写如"范围：Phigros, Arcaea"等提示信息，点击 <span class="tag tag-btn">解析并开始游戏</span> 正式进入游戏界面。</p>
+                    </div>
+
+                    <div id="sec2-3">
+                        <h3>2.4 难度增强（显示变换）</h3>
+                        <p>在设置面板中，新增了"难度增强（显示变换）"板块。在开始游戏前，你可以对曲名进行多种变换处理，大幅提升猜歌难度：</p>
+                        <ul class="li-arrow">
+                            <li><strong>空格隐藏为遮罩符号：</strong>开启后，曲名中的空格也会显示为遮罩符号（如 <code class="mono">?</code>），玩家无法通过空格位置判断单词边界。</li>
+                            <li><strong>英文字母大小写：</strong>可选择"不转换"、"全部小写"或"全部大写"。例如原曲名 <code class="mono">Distorted Fate</code> 在"全部小写"模式下会显示为 <code class="mono">distorted fate</code>。</li>
+                            <li><strong>字符换位程度：</strong>0% 到 100% 的滑块。系统会随机交换曲名中字符的位置，百分比越高，打乱程度越大。例如 50% 可能会将 <code class="mono">Hello</code> 变为 <code class="mono">eHllo</code>。</li>
+                            <li><strong>字母替换程度：</strong>0% 到 100% 的滑块。系统会随机将曲名中的英文字母替换为其他随机字母。例如 30% 可能会将 <code class="mono">Arcahv</code> 变为 <code class="mono">Akcahx</code>。</li>
+                            <li><strong>最大拼合曲数：</strong>设为 1 时不拼合（默认）。设为大于 1 的数字后，系统会将<strong>同一范围</strong>的多个曲名随机拼合成一个长字符串，中间以空格分隔。例如将 <code class="mono">Distorted Fate</code> 和 <code class="mono">Glaciaxion</code> 拼合为 <code class="mono">Distorted Fate Glaciaxion</code>。拼合后的曲目在游戏中作为一个整体进行开字母和猜测。</li>
+                        </ul>
+                        <div class="alert alert-warn">
+                            <div>
+                                <div class="alert-title">变换顺序说明</div>
+                                <div style="font-size: 14px; color: var(--muted);">系统实际执行的变换顺序为：先拼合 → 再换位 → 再替换 → 最后大小写转换。这意味着大小写转换会覆盖在其他变换之上。单独提示字符和查询来源功能始终基于变换后的显示文本操作，但查询来源会同时显示原始曲名。</div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -342,10 +373,10 @@ Arcahv<br>
                         <h3>3.4 曲目交互操作</h3>
                         <p>在"解析结果"列表中，每首歌右侧有两个小图标按钮：</p>
                         <ul class="li-arrow">
-                            <li><strong>查询来源 (放大镜图标)：</strong>如果开启了"曲目来源查询"设置，点击此按钮可查看该曲目出现在哪些游戏范围中。结果可以一键复制。</li>
-                            <li><strong>单独提示 (太阳图标)：</strong>点击会弹出一个模态框，展示该曲目的所有字符。你可以点击任意字符将其<strong>强制单独公开</strong>（显示为黄色高亮），这不会影响全局的已开字符计数和揭示率。适合作为特殊提示或主持人给线索。</li>
+                            <li><strong>查询来源 (放大镜图标)：</strong>如果开启了"曲目来源查询"设置，点击此按钮可查看该曲目出现在哪些游戏范围中。如果曲目是拼合的，会分别查询每个原始曲目的来源。结果可以一键复制。</li>
+                            <li><strong>单独提示 (太阳图标)：</strong>点击会弹出一个模态框，展示该曲目的所有字符（已应用显示变换后的字符）。你可以点击任意字符将其<strong>强制单独公开</strong>（显示为黄色高亮），这不会影响全局的已开字符计数和揭示率。适合作为特殊提示或主持人给线索。再次点击可取消单独提示。</li>
                         </ul>
-                        <p><strong>显示全名与隐藏：</strong>直接点击曲目行，会显示完整的曲名（绿色高亮）。当玩家猜对后，你可以点击 <span class="tag tag-warn">隐藏已猜出</span> 按钮，将所有处于"显示全名"状态的曲目从列表中移除（移入隐藏状态）。隐藏的数量会显示在按钮左侧。</p>
+                        <p><strong>显示全名与隐藏：</strong>直接点击曲目行，会显示完整的曲名（绿色高亮）。当曲目经过拼合变换后，显示的全名会是所有拼合的原始曲名，以 <code class="mono"> / </code> 分隔。当玩家猜对后，你可以点击 <span class="tag tag-warn">隐藏已猜出</span> 按钮，将所有处于"显示全名"状态的曲目从列表中移除（移入隐藏状态）。隐藏的数量会显示在按钮左侧。</p>
                     </div>
 
                     <div id="sec3-3">
@@ -364,7 +395,7 @@ Arcahv<br>
                         <li><strong>未猜出的曲目：</strong>列出玩家没能猜出来的歌曲全名及序号。如果全部猜出，会显示"太棒了，全部都猜出来了！"</li>
                         <li><strong>完整题面：</strong>本局游戏的所有曲目全名及备注，用于复盘和存档。</li>
                     </ul>
-                    <p>每个部分都有 <span class="tag tag-btn">复制</span> 和 <span class="tag tag-btn">导出图片</span> 按钮。导出图片功能会将文本生成为一张图片并直接下载保存。你可以通过"导出图片颜色设置"自定义图片的背景色和文字颜色。</p>
+                    <p>每个部分都有 <span class="tag tag-btn">复制</span> 和 <span class="tag tag-btn">导出图片</span> 按钮。导出图片功能会将文本生成为一张图片并直接下载保存。你可以通过"导出图片颜色设置"自定义图片的背景色和文字颜色，也可以开启"固定导出图片 9:16 比例"来生成适合手机分享的竖屏图片。</p>
                     <p>结算完毕后，可以选择"开始新游戏"或"返回编辑"。</p>
                 </section>
 
@@ -395,8 +426,28 @@ Arcahv<br>
                             <li><strong>自动根据游戏范围填充备注：</strong>生成曲目或开始游戏时，自动在备注栏写入"范围：XXX, YYY"。</li>
                             <li><strong>开启字符排序：</strong>将你输入的乱序字符按"数字 → 大写字母 → 小写字母 → 平假名 → 片假名 → 标点 → 汉字 → 其他"的顺序自动排序显示在顶部。</li>
                             <li><strong>开启曲目来源查询：</strong>在游戏界面每首歌旁显示放大镜按钮，用于查询来源。</li>
+                            <li><strong>输出中显示开字母限制进度：</strong>导出/复制结果时，在顶部附加当前字符限制和揭开率的进度信息。</li>
+                            <li><strong>输出中显示各范围未出曲目统计：</strong>导出/复制结果时，在顶部附加各范围剩余未猜出曲目的统计信息。</li>
                             <li><strong>固定导出图片 9:16 比例：</strong>导出图片时强制使用 1080×1920 的竖屏比例，适合手机分享。不勾选则按内容自适应宽高。</li>
                         </ul>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-top: 0;">难度增强（显示变换）</h3>
+                        <p>这是 v17 版本新增的核心功能，用于在出题阶段对曲名进行多种变换，大幅提升猜歌难度。所有变换在点击"解析并开始游戏"时一次性应用，游戏中不可再修改。</p>
+                        <ul class="li-arrow">
+                            <li><strong>空格隐藏为遮罩符号：</strong>与功能开关中的同名选项效果相同，曲名中的空格显示为遮罩符号。</li>
+                            <li><strong>英文字母大小写：</strong>可选择"不转换"（保持原样）、"全部小写"（如 <code class="mono">Arcahv → arcahv</code>）或"全部大写"（如 <code class="mono">Arcahv → ARCAHV</code>）。注意：大小写转换是最后一步执行的，会覆盖在其他变换之上。</li>
+                            <li><strong>字符换位程度（0% ~ 100%）：</strong>随机交换曲名中字符的位置。0% 为不换位，100% 为完全打乱。例如 50% 的 <code class="mono">Hello</code> 可能变为 <code class="mono">eHllo</code>。</li>
+                            <li><strong>字母替换程度（0% ~ 100%）：</strong>随机将曲名中的英文字母替换为其他随机字母。0% 为不替换，100% 为所有字母都被替换。例如 30% 的 <code class="mono">Arcahv</code> 可能变为 <code class="mono">Akcahx</code>。</li>
+                            <li><strong>最大拼合曲数（1 为不拼合）：</strong>将同一来源范围的多个曲名随机拼合成一个长字符串显示。例如设为 3 时，可能将 2~3 首同范围的曲名拼在一起。拼合后的曲目作为一个整体进行开字母，点击显示全名时会展示所有拼合的原始曲名。</li>
+                        </ul>
+                        <div class="alert alert-info" style="margin-top: 12px;">
+                            <div>
+                                <div class="alert-title">变换执行顺序</div>
+                                <div style="font-size: 14px; color: var(--muted);">系统内部执行顺序为：拼合 → 换位 → 替换 → 大小写转换。这意味着如果你同时开启了多种变换，大小写转换会最后生效，且单独提示字符功能作用于最终变换后的文本。</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card">
@@ -422,6 +473,11 @@ Arcahv<br>
                             </div>
                         </div>
                     </div>
+
+                    <div class="card">
+                        <h3 style="margin-top: 0;">曲库导出</h3>
+                        <p>在设置面板底部，你可以选择任意一个已导入的范围，将其曲目导出为 TXT 文件。支持勾选"仅导出只有这个游戏收录的曲目"来过滤独占曲目。导出的文件格式与导入格式一致，可直接用于备份或分享。</p>
+                    </div>
                 </section>
 
                 <!-- Section 6 -->
@@ -434,10 +490,13 @@ Arcahv<br>
                         <p>A: 游戏状态保存在浏览器的 localStorage 中，曲库数据保存在 IndexedDB 中。清除浏览器数据会导致丢失，建议保留原始曲库文件备份。</p>
 
                         <p><strong>Q: 为什么有些字符开了没反应？</strong></p>
-                        <p>A: 请检查是否开启了"空格也隐藏为遮罩符号"，以及是否达到了"最大开字符数"或"最大揭开率"的限制。</p>
+                        <p>A: 请检查是否开启了"空格也隐藏为遮罩符号"，以及是否达到了"最大开字符数"或"最大揭开率"的限制。另外，如果曲名经过"字母替换"变换，原始字母可能已被替换，导致无法匹配。</p>
 
                         <p><strong>Q: 独占曲目过滤是什么意思？</strong></p>
                         <p>A: 开启后，只保留"仅出现在你勾选的范围中"的曲目。如果一首歌同时出现在已选范围和未选范围，则会被过滤掉。</p>
+
+                        <p><strong>Q: 拼合曲名后怎么算猜对？</strong></p>
+                        <p>A: 拼合后的曲目作为一个整体条目存在。玩家需要猜出所有拼合的曲名才算猜对这一"条"。点击曲目行显示全名时，会展示所有拼合的原始曲名，以 <code class="mono"> / </code> 分隔。</p>
 
                         <p><strong>Q: 导出图片为什么不显示预览？</strong></p>
                         <p>A: 当前版本导出图片后直接触发下载，不再显示预览弹窗。如需调整图片样式，请先在设置中修改"导出图片颜色"。</p>
