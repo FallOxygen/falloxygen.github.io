@@ -238,6 +238,42 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <label class="checkbox-wrap"><input type="checkbox" id="setAutoFillRemark"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>自动根据游戏范围填充备注</span></label>
 <label class="checkbox-wrap"><input type="checkbox" id="setCharSort" checked><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>开启字符排序</span></label>
 <label class="checkbox-wrap"><input type="checkbox" id="setSongLookup"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>开启曲目来源查询</span></label>
+<div class="settings-section">
+<div class="settings-section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg><span>难度增强（显示变换）</span></div>
+
+<div class="flex items-center gap-3 mb-3 mt-2">
+    <span class="text-sm" style="color:var(--muted);width:120px;">英文字母大小写：</span>
+    <select id="setLetterCase" class="input-area p-2 text-sm">
+        <option value="none">不转换</option>
+        <option value="lower">全部小写</option>
+        <option value="upper">全部大写</option>
+    </select>
+</div>
+
+<div class="mb-3">
+    <div class="flex justify-between mb-1">
+        <span class="text-sm" style="color:var(--muted);">字符换位程度</span>
+        <span class="text-sm font-bold" style="color:var(--accent);" id="shuffleLevelVal">0%</span>
+    </div>
+    <input type="range" id="setShuffleLevel" min="0" max="100" value="0" style="width:100%; accent-color:var(--accent);">
+</div>
+
+<div class="mb-3">
+    <div class="flex justify-between mb-1">
+        <span class="text-sm" style="color:var(--muted);">字母替换程度</span>
+        <span class="text-sm font-bold" style="color:var(--accent);" id="replaceLevelVal">0%</span>
+    </div>
+    <input type="range" id="setReplaceLevel" min="0" max="100" value="0" style="width:100%; accent-color:var(--accent);">
+</div>
+
+<div class="flex items-center gap-3">
+    <span class="text-sm" style="color:var(--muted);width:120px;">最大拼合曲数：</span>
+    <input type="number" id="setMaxJoinCount" class="count-input w-24" min="1" value="1">
+    <span class="text-xs" style="color:var(--muted);">(1为不拼合，相同范围才拼合)</span>
+</div>
+</div>
+<label class="checkbox-wrap"><input type="checkbox" id="setShowLimitProgress"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>输出中显示开字母限制进度</span></label>
+<label class="checkbox-wrap"><input type="checkbox" id="setShowUnguessedStats"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>输出中显示各范围未出曲目统计</span></label>
 <label class="checkbox-wrap"><input type="checkbox" id="setFixedImageRatio"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>固定导出图片 9:16 比例</span></label>
 </div>
 
@@ -302,6 +338,16 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <strong>Bilibili:</strong> UID: 3546979370010679
 </div>
 </div>
+
+<div class="settings-section">
+<div class="settings-section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>曲库导出</span></div>
+<div class="flex flex-col gap-2">
+    <select id="exportRangeSelect" class="input-area p-2 text-sm mb-2"></select>
+    <label class="checkbox-wrap mb-2"><input type="checkbox" id="exportExclusiveOnly"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>仅导出只有这个游戏收录的曲目</span></label>
+    <button id="exportRangeBtn" class="btn btn-primary btn-sm w-full">导出为 TXT</button>
+</div>
+</div>
+
 </div>
 </div>
 </div>
@@ -509,12 +555,28 @@ textarea.input-area{resize:vertical;line-height:1.8}
 <span class="filter-length-hint">（包含空格，0=不限）</span>
 </div>
 </div>
+<div class="filter-section">
+    <span class="filter-label">排除字符（曲名不含这些字符）</span>
+    <input type="text" id="filterExcludeChars" class="input-area w-full p-3" placeholder="输入要排除的字符，如 abc123">
+</div>
+
+<div class="filter-section">
+    <span class="filter-label">包含字符（曲名必须含这些字符）</span>
+    <input type="text" id="filterIncludeChars" class="input-area w-full p-3 mb-2" placeholder="输入要包含的字符，如 abc123">
+    <label class="checkbox-wrap" style="padding:0;">
+        <input type="checkbox" id="filterIncludeAll">
+        <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span style="font-size:14px;">必须同时包含所有输入的字符</span>
+    </label>
+</div>
+
 <div class="filter-section mt-4">
-<label class="checkbox-wrap" style="padding:0;">
-    <input type="checkbox" id="filterExclusiveOnly">
-    <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-    <span style="font-size: 14px;">仅抽取独占/只有某个游戏收录曲目 (不包含出现在未选范围的曲目)</span>
-</label>
+    <label class="checkbox-wrap" style="padding:0;">
+        <input type="checkbox" id="filterExclusiveOnly">
+        <span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span style="font-size: 14px;">仅抽取独占/只有某个游戏收录曲目 (不包含出现在未选范围的曲目)</span>
+    </label>
+</div>
 </div>
 
 <div class="flex items-center justify-between mt-4 pt-4" style="border-top:1px solid var(--border);">
@@ -752,7 +814,7 @@ function saveToDB(key,data,original=null){return new Promise((resolve,reject)=>{
 function loadFromDB(key){return new Promise((resolve,reject)=>{const tx=db.transaction([STORE_NAME],'readonly');const r=tx.objectStore(STORE_NAME).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
 
 // ========== Default Sheet ==========
-function newSheet(){return{songInputText:'',songs:[],remark:'',sortType:'none',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{charTypes:[],allowOther:false,minLength:0,exclusiveOnly:false},openedChars:'',revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0, forcedReveals:{}, songSources:[], generatedSources:{}};}
+function newSheet(){return{songInputText:'',songs:[],remark:'',sortType:'none',selectedGames:[],customCounts:{},extractMode:'equal',totalCount:10,filters:{charTypes:[],allowOther:false,minLength:0,exclusiveOnly:false,excludeChars:'',includeChars:'',includeAllChars:false},openedChars:'',revealedFullIndices:[],hiddenIndices:[],timerSeconds:0,timerRunning:false,timerPaused:false,gameStartTime:null,totalPauseTime:0,pauseStartTime:null,guessedSongs:[],currentRevealPercent:0, forcedReveals:{}, songSources:[], generatedSources:{}};}
 
 // ========== State ==========
 let state={
@@ -853,6 +915,9 @@ function saveState(){
     document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{if(cb.checked)sheet.filters.charTypes.push(cb.dataset.chartype);});
     sheet.filters.allowOther=elements.filterAllowOther.checked;
     sheet.filters.minLength=parseInt(elements.filterMinLength.value)||0;
+    sheet.filters.excludeChars=document.getElementById('filterExcludeChars').value;
+sheet.filters.includeChars=document.getElementById('filterIncludeChars').value;
+sheet.filters.includeAllChars=document.getElementById('filterIncludeAll').checked;
     sheet.filters.exclusiveOnly=elements.filterExclusiveOnly.checked;
 
     
@@ -866,8 +931,14 @@ function loadState(){
             if(parsed.sheets&&parsed.sheets.length>0){
                 state={...state,...parsed};
                 if(state.sheets.length>1) state.sheets=[state.sheets[state.currentSheetIndex||0]];
-                if(!state.settings)state.settings={maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false,fixedImageRatio:false,maxOpenedChars:0,maxRevealPercent:0,exportBgColor:'#12151c',exportTextColor:'#e8eaed'};
+                if(!state.settings)state.settings={maskChar:'?',enableTimer:true,enableSettlement:true,spaceAsStar:false,autoFillRemark:false,enableCharSort:true,enableSongLookup:false,showLimitProgress:false,showUnguessedStats:false,fixedImageRatio:false,letterCase:'none',shuffleLevel:0,replaceLevel:0,maxJoinCount:1,maxOpenedChars:0,maxRevealPercent:0,exportBgColor:'#12151c',exportTextColor:'#e8eaed'};
+                if(state.settings.showLimitProgress===undefined)state.settings.showLimitProgress=false;
+                if(state.settings.showUnguessedStats===undefined)state.settings.showUnguessedStats=false;
                 if(state.settings.fixedImageRatio===undefined)state.settings.fixedImageRatio=false;
+                if(state.settings.letterCase===undefined)state.settings.letterCase='none';
+if(state.settings.shuffleLevel===undefined)state.settings.shuffleLevel=0;
+if(state.settings.replaceLevel===undefined)state.settings.replaceLevel=0;
+if(state.settings.maxJoinCount===undefined)state.settings.maxJoinCount=1;
                 if(state.settings.maxOpenedChars===undefined)state.settings.maxOpenedChars=0;
                 if(state.settings.maxRevealPercent===undefined)state.settings.maxRevealPercent=0;
                 if(state.settings.exportBgColor===undefined)state.settings.exportBgColor='#12151c';
@@ -884,6 +955,9 @@ function loadState(){
                 if(!cs().forcedReveals) cs().forcedReveals = {};
                 if(!cs().songSources) cs().songSources = [];
                 if(!cs().generatedSources) cs().generatedSources = {};
+                if(!cs().displaySongs)cs().displaySongs=[];
+if(!cs().displaySources)cs().displaySources=[];
+if(!cs().songJoinMap)cs().songJoinMap=[];
                 return true;
             }
         }
@@ -892,10 +966,16 @@ function loadState(){
 function clearSheetGame(sheet){
     sheet.openedChars='';sheet.revealedFullIndices=[];sheet.hiddenIndices=[];sheet.timerSeconds=0;sheet.timerRunning=false;
     sheet.timerPaused=false;sheet.gameStartTime=null;sheet.totalPauseTime=0;sheet.pauseStartTime=null;sheet.guessedSongs=[];
-    sheet.currentRevealPercent=0; sheet.forcedReveals={}; undoStack=[]; redoStack=[]; updateUndoRedoUI();
+    sheet.currentRevealPercent=0;sheet.displaySongs=[]; sheet.displaySources=[]; sheet.songJoinMap=[];sheet.forcedReveals={}; undoStack=[]; redoStack=[]; updateUndoRedoUI();
 }
 
 // ========== Libraries ==========
+function updateExportRangeSelect(){
+    const sel=document.getElementById('exportRangeSelect');
+    if(!sel)return;
+    const games=Object.keys(gameData).sort();
+    sel.innerHTML=games.map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+}
 function updateLibrarySelect() {
   const sel = document.getElementById('librarySelect');
   sel.innerHTML = state.libraries.map(l => {
@@ -917,7 +997,8 @@ async function loadSelectedLibrary() {
   } catch(e) {
     gameData = {}; originalGameData = {};
   }
-  
+      updateExportRangeSelect();
+
   if(Object.keys(gameData).length > 0) {
     elements.parsedSection.style.display = 'block';
     renderGameList();
@@ -1019,7 +1100,16 @@ function applySettings(){
     document.getElementById('setAutoFillRemark').checked=s.autoFillRemark;
     document.getElementById('setCharSort').checked=s.enableCharSort;
     document.getElementById('setSongLookup').checked=s.enableSongLookup;
+        document.getElementById('setShowLimitProgress').checked=s.showLimitProgress;
+    document.getElementById('setShowUnguessedStats').checked=s.showUnguessedStats;
     document.getElementById('setFixedImageRatio').checked=s.fixedImageRatio;
+    document.getElementById('setSpaceAsStar').checked=s.spaceAsStar;
+document.getElementById('setLetterCase').value=s.letterCase||'none';
+document.getElementById('setShuffleLevel').value=s.shuffleLevel||0;
+document.getElementById('shuffleLevelVal').textContent=(s.shuffleLevel||0)+'%';
+document.getElementById('setReplaceLevel').value=s.replaceLevel||0;
+document.getElementById('replaceLevelVal').textContent=(s.replaceLevel||0)+'%';
+document.getElementById('setMaxJoinCount').value=s.maxJoinCount||1;
     if(state.currentPage===2)renderResult();
 }
 
@@ -1033,6 +1123,92 @@ function switchToPage(pageNum,isRestore=false){
     else if(pageNum===3){stopTimer();}
 }
 function switchTab(tabName){state.activeTab=tabName;document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.toggle('active',btn.dataset.tab===tabName);});document.querySelectorAll('.tab-content').forEach(c=>{c.classList.toggle('active',c.id==='tab-'+tabName);});saveState();}
+function applyTransforms(){
+    const sheet=cs();
+    if(!sheet.songs||sheet.songs.length===0)return;
+    const songs=[...sheet.songs];
+    const sources=[...(sheet.songSources||[])];
+    
+    let joinedSongs=[], joinedSources=[], joinMap=[];
+    const maxJoin=state.settings.maxJoinCount||1;
+    
+    // (4) 拼合同范围曲名
+    if(maxJoin>1){
+        let sourceGroups={};
+        songs.forEach((song,idx)=>{
+            const src=sources[idx]||'未知';
+            if(!sourceGroups[src])sourceGroups[src]=[];
+            sourceGroups[src].push(idx);
+        });
+        for(const src in sourceGroups){
+            const indices=[...sourceGroups[src]];
+            for(let i=indices.length-1;i>0;i--){
+                const j=Math.floor(Math.random()*(i+1));
+                [indices[i],indices[j]]=[indices[j],indices[i]];
+            }
+            let currentGroup=[];
+            indices.forEach(idx=>{
+                currentGroup.push(idx);
+                const targetLen=Math.floor(Math.random()*maxJoin)+1;
+                if(currentGroup.length>=targetLen){
+                    joinedSongs.push(currentGroup.map(i=>songs[i]).join(' '));
+                    joinedSources.push(src);
+                    joinMap.push([...currentGroup]);
+                    currentGroup=[];
+                }
+            });
+            if(currentGroup.length>0){
+                joinedSongs.push(currentGroup.map(i=>songs[i]).join(' '));
+                joinedSources.push(src);
+                joinMap.push([...currentGroup]);
+            }
+        }
+    }else{
+        joinedSongs=songs; joinedSources=sources;
+        joinMap=songs.map((_,i)=>[i]);
+    }
+    
+    // (2) 字符换位
+    const shuffleLevel=state.settings.shuffleLevel||0;
+    if(shuffleLevel>0){
+        joinedSongs=joinedSongs.map(song=>{
+            const chars=[...song];
+            const swaps=Math.max(1,Math.floor(chars.length*shuffleLevel/100));
+            for(let i=0;i<swaps;i++){
+                const a=Math.floor(Math.random()*chars.length);
+                const b=Math.floor(Math.random()*chars.length);
+                [chars[a],chars[b]]=[chars[b],chars[a]];
+            }
+            return chars.join('');
+        });
+    }
+    
+    // (3) 字母随机替换
+    const replaceLevel=state.settings.replaceLevel||0;
+    if(replaceLevel>0){
+        const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        joinedSongs=joinedSongs.map(song=>{
+            return [...song].map(c=>{
+                if(/[a-zA-Z]/.test(c)&&Math.random()*100<replaceLevel){
+                    return letters[Math.floor(Math.random()*letters.length)];
+                }
+                return c;
+            }).join('');
+        });
+    }
+    
+    // (1) 大小写转换
+    const letterCase=state.settings.letterCase||'none';
+    if(letterCase==='lower'){
+        joinedSongs=joinedSongs.map(s=>s.replace(/[A-Z]/g,c=>c.toLowerCase()));
+    }else if(letterCase==='upper'){
+        joinedSongs=joinedSongs.map(s=>s.replace(/[a-z]/g,c=>c.toUpperCase()));
+    }
+    
+    sheet.displaySongs=joinedSongs;
+    sheet.displaySources=joinedSources;
+    sheet.songJoinMap=joinMap;
+}
 
 // ========== Library Parse ==========
 function parseLibrary(text, allowedTags = null){
@@ -1085,7 +1261,7 @@ function renderGameList(){
             <button class="btn btn-ghost btn-sm px-2 py-1 ml-2 edit-game-btn" data-game="${escapeHtml(game)}" title="编辑">✎</button>
         </div>`;
     }).join('');
-    updateFileStats();updateCustomCounts();updateFilterCount();
+    updateFileStats();updateCustomCounts();updateFilterCount();    updateExportRangeSelect();
 
     document.querySelectorAll('.edit-game-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1133,15 +1309,29 @@ function updateCustomCounts(){const games=Object.keys(gameData);const sheet=cs()
 // ========== Filter ==========
 function getFilteredSongs(songs, selectedGames = null){
     const sheet=cs();
-    const {charTypes, allowOther, minLength, exclusiveOnly}=sheet.filters;
+    const {charTypes, allowOther, minLength, exclusiveOnly, 
+           excludeChars, includeChars, includeAllChars}=sheet.filters;
     return songs.filter(song=>{
         if(!checkNewFilter(song, charTypes, allowOther, minLength)) return false;
-        // 如果开启了独占模式，检查该曲目是否存在于任何【未被选中】的范围内
         if(exclusiveOnly && selectedGames){
             for(const game in gameData){
                 if(!selectedGames.includes(game) && gameData[game].includes(song)) {
                     return false;
                 }
+            }
+        }
+        // 排除字符
+        if(excludeChars){
+            for(const c of excludeChars){ if(song.includes(c)) return false; }
+        }
+        // 包含字符
+        if(includeChars){
+            if(includeAllChars){
+                for(const c of includeChars){ if(!song.includes(c)) return false; }
+            }else{
+                let hasAny=false;
+                for(const c of includeChars){ if(song.includes(c)){ hasAny=true; break; } }
+                if(!hasAny) return false;
             }
         }
         return true;
@@ -1294,64 +1484,85 @@ window.toggleManualSelect = function(song) {
 
 // ========== Render ==========
 function renderResult(){
-    const sheet=cs();const openedSet=new Set(elements.charInput.value);
-    const maskChar=state.settings.maskChar;const spaceAsStar=state.settings.spaceAsStar;
+    const sheet=cs();
+    const displaySongs=sheet.displaySongs||sheet.songs||[];
+    const openedSet=new Set(elements.charInput.value);
+    const maskChar=state.settings.maskChar;
+    const spaceAsStar=state.settings.spaceAsStar;
     let sortedOpened=Array.from(openedSet);
     if(state.settings.enableCharSort)sortedOpened=sortChars(sortedOpened);
     document.getElementById('sortedCharsDisplay').innerHTML=sortedOpened.length===0?'<span style="color:var(--muted);">-</span>':sortedOpened.map(c=>`<span class="char-tag">${escapeHtml(c)}</span>`).join('');
-    if(sheet.songs.length===0){document.getElementById('resultDisplay').innerHTML='<span style="color:var(--muted);">-</span>';updateStats(0,"0.00");return;}
+    if(displaySongs.length===0){document.getElementById('resultDisplay').innerHTML='<span style="color:var(--muted);">-</span>';updateStats(0,"0.00");return;}
+    
     const displayChars=state.settings.enableCharSort?sortedOpened:Array.from(openedSet);
     let html=`<div class="guessed-line">guessed：${escapeHtml(displayChars.join(''))}</div>`;
     let totalNonSpace=0,revealedNonSpace=0;
     
-    sheet.songs.forEach((song,idx)=>{
-        const isHidden=sheet.hiddenIndices.includes(idx),isRevealedFull=sheet.revealedFullIndices.includes(idx);
-        const forced = sheet.forcedReveals[idx] || [];
+    displaySongs.forEach((displaySong,displayIdx)=>{
+        const joinGroup=sheet.songJoinMap?sheet.songJoinMap[displayIdx]:[displayIdx];
+        const isHidden=joinGroup.every(i=>sheet.hiddenIndices.includes(i));
+        const isRevealedFull=joinGroup.every(i=>sheet.revealedFullIndices.includes(i));
+        const forced=sheet.forcedReveals[displayIdx]||[];
         
-        let maskedStrHtml = '';
-        for(let charIdx = 0; charIdx < song.length; charIdx++) {
-            const char = song[charIdx];
-            const isForced = forced.includes(charIdx);
-            const r = revealChar(char, openedSet, spaceAsStar, maskChar);
+        let maskedStrHtml='';
+        for(let charIdx=0;charIdx<displaySong.length;charIdx++){
+            const char=displaySong[charIdx];
+            const isForced=forced.includes(charIdx);
+            const r=revealChar(char,openedSet,spaceAsStar,maskChar);
             
-            if (char !== ' ' && char !== '\u3000') {
+            if(char!==' '&&char!=='\u3000'){
                 totalNonSpace++;
-                if (r !== maskChar || isForced) revealedNonSpace++;
+                if(r!==maskChar||isForced)revealedNonSpace++;
             }
-
-            if (char === ' ' || char === '\u3000') {
-                if (spaceAsStar) {
-                    maskedStrHtml += `<span class="char-hidden">${escapeHtml(maskChar)}</span>`;
-                } else {
-                    maskedStrHtml += '<span class="char-space"> </span>';
-                }
-            } else if (isForced) {
-                maskedStrHtml += `<span class="char-revealed" style="color:var(--warning);">${escapeHtml(char)}</span>`;
-            } else if (r !== maskChar) {
-                maskedStrHtml += `<span class="char-revealed">${escapeHtml(char)}</span>`;
-            } else {
-                maskedStrHtml += `<span class="char-hidden">${escapeHtml(maskChar)}</span>`;
+            if(char===' '||char==='\u3000'){
+                maskedStrHtml+=spaceAsStar?`<span class="char-hidden">${escapeHtml(maskChar)}</span>`:'<span class="char-space"> </span>';
+            }else if(isForced){
+                maskedStrHtml+=`<span class="char-revealed" style="color:var(--warning);">${escapeHtml(char)}</span>`;
+            }else if(r!==maskChar){
+                maskedStrHtml+=`<span class="char-revealed">${escapeHtml(char)}</span>`;
+            }else{
+                maskedStrHtml+=`<span class="char-hidden">${escapeHtml(maskChar)}</span>`;
             }
         }
-
-        let btns='';
-        if(state.settings.enableSongLookup)btns+=`<button class="lookup-btn" data-song="${escapeHtml(song)}" onclick="event.stopPropagation();showSongLookup('${escapeHtml(song.replace(/'/g,"\\'"))}')" title="查询来源"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>`;
         
-        // Single hint button triggers the positional modal
-        btns += `<button class="lookup-btn hint-btn" onclick="event.stopPropagation();openForceRevealModal(${idx})" title="单独提示字符"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></button>`;
-
-        html+=`<div class="song-line ${isHidden?'hidden-song':''} ${isRevealedFull?'revealed-full':''}" data-index="${idx}"><span class="masked-title"><span class="line-number">${idx+1}.</span>${maskedStrHtml}${btns}</span><span class="full-title"><span class="line-number">${idx+1}.</span>${escapeHtml(song)}</span>${isRevealedFull?`<span class="full-reveal-hint">（点击隐藏）</span>`:''}</div>`;
+        let btns='';
+        if(state.settings.enableSongLookup){
+            const originalNames=joinGroup.map(i=>sheet.songs[i]);
+            const lookupQuery=originalNames.join(',').replace(/'/g,"\\'");
+            btns+=`<button class="lookup-btn" onclick="event.stopPropagation();showSongLookup('${escapeHtml(lookupQuery)}')" title="查询来源"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>`;
+        }
+        btns+=`<button class="lookup-btn hint-btn" onclick="event.stopPropagation();openForceRevealModal(${displayIdx})" title="单独提示字符"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></button>`;
+        
+        const fullTitleText=joinGroup.map(i=>sheet.songs[i]).join(' / ');
+        html+=`<div class="song-line ${isHidden?'hidden-song':''} ${isRevealedFull?'revealed-full':''}" data-index="${displayIdx}"><span class="masked-title"><span class="line-number">${displayIdx+1}.</span>${maskedStrHtml}${btns}</span><span class="full-title"><span class="line-number">${displayIdx+1}.</span>${escapeHtml(fullTitleText)}</span>${isRevealedFull?`<span class="full-reveal-hint">（点击隐藏）</span>`:''}</div>`;
     });
     
     if(sheet.remark.trim())html+=`<div class="remark-line">[${escapeHtml(sheet.remark.trim())}]</div>`;
     document.getElementById('resultDisplay').innerHTML=html;
-    document.querySelectorAll('.song-line').forEach(line=>{line.addEventListener('click',()=>{saveSnapshot(); toggleRevealFull(parseInt(line.dataset.index));});});
-    const visibleCount=sheet.songs.length-sheet.hiddenIndices.length;
+    document.querySelectorAll('.song-line').forEach(line=>{line.addEventListener('click',()=>{saveSnapshot();toggleRevealFull(parseInt(line.dataset.index));});});
+    
+    const hiddenDisplayCount=(sheet.songJoinMap||[]).filter(g=>g.every(i=>sheet.hiddenIndices.includes(i))).length;
+    const visibleCount=displaySongs.length-hiddenDisplayCount;
     const percent=totalNonSpace>0?(revealedNonSpace/totalNonSpace*100).toFixed(2):"0.00";
     sheet.currentRevealPercent=percent;updateStats(visibleCount,percent);updateHideStats();
     updateUnguessedRanges();
 }
-function toggleRevealFull(idx){const sheet=cs();const i=sheet.revealedFullIndices.indexOf(idx);if(i>=0)sheet.revealedFullIndices.splice(i,1);else sheet.revealedFullIndices.push(idx);saveState();renderResult();}
+function toggleRevealFull(displayIdx){
+    const sheet=cs();
+    const joinGroup=sheet.songJoinMap?sheet.songJoinMap[displayIdx]:[displayIdx];
+    const allRevealed=joinGroup.every(i=>sheet.revealedFullIndices.includes(i));
+    if(allRevealed){
+        joinGroup.forEach(i=>{
+            const idx=sheet.revealedFullIndices.indexOf(i);
+            if(idx>=0)sheet.revealedFullIndices.splice(idx,1);
+        });
+    }else{
+        joinGroup.forEach(i=>{
+            if(!sheet.revealedFullIndices.includes(i))sheet.revealedFullIndices.push(i);
+        });
+    }
+    saveState();renderResult();
+}
 function updateStats(songCount,percent){document.getElementById('statSongs').textContent=songCount;document.getElementById('statChars').textContent=elements.charInput.value.length;document.getElementById('statPercent').textContent=percent+'%';}
 function updateHideStats(){const el=document.getElementById('hideStats'),cnt=document.getElementById('hiddenCount');if(cs().hiddenIndices.length>0){el.style.display='flex';cnt.textContent=cs().hiddenIndices.length;}else el.style.display='none';}
 function updateStatusHint(){const hint=document.getElementById('statusHint');if(cs().songs.length>0){hint.textContent=`已解析 ${cs().songs.length} 首曲名，再次解析将重置游戏`;hint.style.color='var(--accent)';}else hint.textContent='';}
@@ -1401,18 +1612,26 @@ function updateUnguessedRanges() {
 // ========== Hide Revealed ==========
 function hideRevealedSongs(){
     const sheet=cs();
+    const displaySongs=sheet.displaySongs||sheet.songs||[];
     if(sheet.revealedFullIndices.length===0){showToast('没有已猜出的曲目，请先点击曲目显示完整曲名','info');return;}
     saveSnapshot();
-    for(const idx of sheet.revealedFullIndices){
-        if(!sheet.hiddenIndices.includes(idx)){
-            sheet.hiddenIndices.push(idx);
-            sheet.guessedSongs.push({index:idx,time:sheet.timerSeconds});
+    let hiddenDisplayCount=0;
+    displaySongs.forEach((_,displayIdx)=>{
+        const joinGroup=sheet.songJoinMap?sheet.songJoinMap[displayIdx]:[displayIdx];
+        const allRevealed=joinGroup.every(i=>sheet.revealedFullIndices.includes(i));
+        if(allRevealed){
+            joinGroup.forEach(i=>{
+                if(!sheet.hiddenIndices.includes(i)){
+                    sheet.hiddenIndices.push(i);
+                    sheet.guessedSongs.push({index:i,time:sheet.timerSeconds});
+                }
+            });
+            hiddenDisplayCount++;
         }
-    }
-    const count=sheet.revealedFullIndices.length;
+    });
     sheet.revealedFullIndices=[];
     saveState();renderResult();
-    showToast(`已隐藏 ${count} 首已猜出的曲目`);
+    showToast(`已隐藏 ${hiddenDisplayCount} 首已猜出的曲目`);
 }
 
 // ========== Restore Modal ==========
@@ -1421,100 +1640,140 @@ function hideRestoreModal(){document.getElementById('restoreModal').classList.re
 
 // ========== Song Lookup ==========
 let currentLookupText = "";
-function showSongLookup(songName){
+function showSongLookup(query){
     const modal=document.getElementById('lookupModal');
     document.getElementById('lookupTitle').textContent='曲目来源';
     const body=document.getElementById('lookupBody');
     let html='';
-    const foundGames=[];
-    for(const game in gameData){if(gameData[game].includes(songName))foundGames.push(game);}
-    if(foundGames.length===0){
+    const songNames=query.split(',');
+    const songGames=[];
+    songNames.forEach(name=>{
+        const found=[];
+        for(const game in gameData){if(gameData[game].includes(name))found.push(game);}
+        songGames.push(found);
+    });
+    let commonGames=[...songGames[0]];
+    for(let i=1;i<songGames.length;i++){
+        commonGames=commonGames.filter(g=>songGames[i].includes(g));
+    }
+    const allGames=new Set();
+    songGames.forEach(g=>g.forEach(gg=>allGames.add(gg)));
+    
+    if(allGames.size===0){
         html=`<div style="text-align:center;padding:30px;color:var(--muted);">未在曲库中找到</div>`;
-        currentLookupText = `${songName}\n未在曲库中找到`;
+        currentLookupText=`${query}\n未在曲库中找到`;
     }else{
-        html+=`<div style="padding:8px 14px;font-size:13px;color:var(--muted);margin-bottom:8px;">出现在 ${foundGames.length} 个游戏中：</div>`;
-        foundGames.forEach(game=>{html+=`<div class="lookup-item"><span class="lookup-game">${escapeHtml(game)}</span></div>`;});
-        currentLookupText = `${songName}\n` + foundGames.join('\n');
+        html+=`<div style="padding:8px 14px;font-size:13px;color:var(--muted);margin-bottom:8px;">查询结果：</div>`;
+        songNames.forEach((name,idx)=>{
+            html+=`<div style="padding:6px 14px;font-weight:600;">${escapeHtml(name)}</div>`;
+            songGames[idx].forEach(game=>{html+=`<div class="lookup-item"><span class="lookup-game">${escapeHtml(game)}</span></div>`;});
+        });
+        if(songNames.length>1&&commonGames.length>0){
+            html+=`<div style="padding:8px 14px;font-size:13px;color:var(--accent);margin-top:8px;border-top:1px solid var(--border);">共同范围：</div>`;
+            commonGames.forEach(game=>{html+=`<div class="lookup-item"><span class="lookup-game">${escapeHtml(game)}</span></div>`;});
+        }
+        currentLookupText=songNames.join('\n')+'\n\n共同范围:\n'+commonGames.join('\n');
     }
     body.innerHTML=html;modal.classList.add('show');
 }
 
 // ========== Interactive Force Reveal Modal ==========
-window.openForceRevealModal = function(idx) {
-    const sheet = cs();
-    const song = sheet.songs[idx];
-    const forced = sheet.forcedReveals[idx] || [];
-    const container = document.getElementById('forceRevealContainer');
-    container.innerHTML = '';
-    
+window.openForceRevealModal=function(displayIdx){
+    const sheet=cs();
+    const song=(sheet.displaySongs||sheet.songs)[displayIdx];
+    const forced=sheet.forcedReveals[displayIdx]||[];
+    const container=document.getElementById('forceRevealContainer');
+    container.innerHTML='';
     document.getElementById('forceRevealModal').classList.add('show');
-    
-    song.split('').forEach((char, charIdx) => {
-        const span = document.createElement('span');
-        span.textContent = char;
-        
-        if (char === ' ' || char === '\u3000') {
-            span.className = 'force-char-space';
-            span.innerHTML = '&nbsp;';
-        } else {
-            span.className = 'force-char-box ' + (forced.includes(charIdx) ? 'active' : 'inactive');
-            span.onclick = () => {
-                let currForced = cs().forcedReveals[idx] || [];
-                if (currForced.includes(charIdx)) {
-                    currForced = currForced.filter(i => i !== charIdx);
-                    span.className = 'force-char-box inactive';
-                } else {
-                    currForced.push(charIdx);
-                    span.className = 'force-char-box active';
+    song.split('').forEach((char,charIdx)=>{
+        const span=document.createElement('span');
+        span.textContent=char;
+        if(char===' '||char==='\u3000'){
+            span.className='force-char-space';span.innerHTML='&nbsp;';
+        }else{
+            span.className='force-char-box '+(forced.includes(charIdx)?'active':'inactive');
+            span.onclick=()=>{
+                let currForced=cs().forcedReveals[displayIdx]||[];
+                if(currForced.includes(charIdx)){
+                    currForced=currForced.filter(i=>i!==charIdx);
+                    span.className='force-char-box inactive';
+                }else{
+                    currForced.push(charIdx);span.className='force-char-box active';
                 }
-                cs().forcedReveals[idx] = currForced;
-                saveState(); // Saves instantly so background logic is updated
+                cs().forcedReveals[displayIdx]=currForced;
+                saveState();
             };
         }
         container.appendChild(span);
     });
-
-    document.getElementById('closeForceReveal').onclick = () => {
+    document.getElementById('closeForceReveal').onclick=()=>{
         document.getElementById('forceRevealModal').classList.remove('show');
-        saveSnapshot();
-        renderResult(); // Recalculate stats and visuals
+        saveSnapshot();renderResult();
     };
 };
 
 // ========== Export Result Logic ==========
-function getResultTextForExport() {
-  const sheet=cs();
-  if(sheet.songs.length===0) return '';
-  const openedSet=new Set(elements.charInput.value);
-  const maskChar=state.settings.maskChar;
-  const spaceAsStar=state.settings.spaceAsStar;
-  let sortedOpened=Array.from(openedSet);
-  if(state.settings.enableCharSort) sortedOpened=sortChars(sortedOpened);
-  const displayChars=state.settings.enableCharSort?sortedOpened:Array.from(openedSet);
-  
-  let text=`guessed：${displayChars.join('')}\n`;
-  sheet.songs.forEach((song,idx)=>{
-    if(sheet.hiddenIndices.includes(idx)) return;
-    if(sheet.revealedFullIndices.includes(idx)){
-      text+=`${idx+1}. ${song}\n`;
-    } else {
-      const revealed=[];
-      const forced = sheet.forcedReveals[idx] || [];
-      for(let charIdx = 0; charIdx < song.length; charIdx++) {
-          const char = song[charIdx];
-          const isForced = forced.includes(charIdx);
-          const r = revealChar(char, openedSet, spaceAsStar, maskChar);
-          if (isForced) {
-              revealed.push(char);
-          } else {
-              revealed.push(r);
-          }
-      }
-      text+=`${idx+1}. ${revealed.join('')}\n`;
+function getResultTextForExport(){
+    const sheet=cs();
+    const displaySongs=sheet.displaySongs||sheet.songs||[];
+    if(displaySongs.length===0)return'';
+    const openedSet=new Set(elements.charInput.value);
+    const maskChar=state.settings.maskChar;
+    const spaceAsStar=state.settings.spaceAsStar;
+    let sortedOpened=Array.from(openedSet);
+    if(state.settings.enableCharSort)sortedOpened=sortChars(sortedOpened);
+    const displayChars=state.settings.enableCharSort?sortedOpened:Array.from(openedSet);
+    
+    let text='';
+    
+    if(state.settings.showLimitProgress){
+        const maxChars=state.settings.maxOpenedChars;
+        const maxPct=state.settings.maxRevealPercent;
+        const openedChars=elements.charInput.value.length;
+        const currentPct=sheet.currentRevealPercent;
+        text+='【开字母限制】\n';
+        text+=maxChars>0?`字符限制: ${openedChars}/${maxChars} 个\n`:'字符限制: 无限制\n';
+        text+=maxPct>0?`揭开率限制: ${currentPct}/${maxPct}%\n`:'揭开率限制: 无限制\n';
+        text+='\n';
     }
-  });
-  if(sheet.remark.trim()) text+=`\n[${sheet.remark.trim()}]`;
-  return text.trim();
+    
+    if(state.settings.showUnguessedStats){
+        const counts={};
+        sheet.songs.forEach((song,idx)=>{
+            if(!sheet.hiddenIndices.includes(idx)&&!sheet.revealedFullIndices.includes(idx)){
+                let source=sheet.songSources[idx]||'未知';
+                if(!counts[source])counts[source]=0;
+                counts[source]++;
+            }
+        });
+        if(Object.keys(counts).length>0){
+            text+='【各范围未出曲目统计】\n';
+            Object.entries(counts).forEach(([g,c])=>{text+=`[${g}] ${c}首\n`;});
+            text+='\n';
+        }
+    }
+    
+    text+=`guessed：${displayChars.join('')}\n`;
+    displaySongs.forEach((displaySong,displayIdx)=>{
+        const joinGroup=sheet.songJoinMap?sheet.songJoinMap[displayIdx]:[displayIdx];
+        const isHidden=joinGroup.every(i=>sheet.hiddenIndices.includes(i));
+        if(isHidden)return;
+        const isRevealedFull=joinGroup.every(i=>sheet.revealedFullIndices.includes(i));
+        if(isRevealedFull){
+            text+=`${displayIdx+1}. ${joinGroup.map(i=>sheet.songs[i]).join(' / ')}\n`;
+        }else{
+            const revealed=[];
+            for(let charIdx=0;charIdx<displaySong.length;charIdx++){
+                const char=displaySong[charIdx];
+                const forced=(sheet.forcedReveals[displayIdx]||[]).includes(charIdx);
+                if(forced){revealed.push(char);continue;}
+                revealed.push(revealChar(char,openedSet,spaceAsStar,maskChar));
+            }
+            text+=`${displayIdx+1}. ${revealed.join('')}\n`;
+        }
+    });
+    if(sheet.remark.trim())text+=`\n[${sheet.remark.trim()}]`;
+    return text.trim();
 }
 
 function exportImage(text) {
@@ -1648,6 +1907,9 @@ async function init(){
         elements.filterAllowOther.checked=sheet.filters.allowOther||false;
         elements.filterMinLength.value=sheet.filters.minLength||0;
                elements.filterExclusiveOnly.checked=sheet.filters.exclusiveOnly||false;
+               if(sheet.filters.excludeChars!==undefined) document.getElementById('filterExcludeChars').value=sheet.filters.excludeChars;
+if(sheet.filters.includeChars!==undefined) document.getElementById('filterIncludeChars').value=sheet.filters.includeChars;
+if(sheet.filters.includeAllChars!==undefined) document.getElementById('filterIncludeAll').checked=sheet.filters.includeAllChars;
  
         if(sheet.extractMode==='custom'){elements.modeEqual.classList.remove('active');elements.modeCustom.classList.add('active');elements.equalMode.style.display='none';elements.customMode.style.display='block';}
       }
@@ -1714,7 +1976,13 @@ function bindEvents(){
     document.getElementById('setAutoFillRemark').addEventListener('change',e=>{state.settings.autoFillRemark=e.target.checked;saveState();});
     document.getElementById('setCharSort').addEventListener('change',e=>{state.settings.enableCharSort=e.target.checked;saveState();if(state.currentPage===2)renderResult();});
     document.getElementById('setSongLookup').addEventListener('change',e=>{state.settings.enableSongLookup=e.target.checked;saveState();if(state.currentPage===2)renderResult();});
+        document.getElementById('setShowLimitProgress').addEventListener('change',e=>{state.settings.showLimitProgress=e.target.checked;saveState();});
+    document.getElementById('setShowUnguessedStats').addEventListener('change',e=>{state.settings.showUnguessedStats=e.target.checked;saveState();});
     document.getElementById('setFixedImageRatio').addEventListener('change',e=>{state.settings.fixedImageRatio=e.target.checked;saveState();});
+        document.getElementById('setLetterCase').addEventListener('change',e=>{state.settings.letterCase=e.target.value;saveState();});
+    document.getElementById('setShuffleLevel').addEventListener('input',e=>{state.settings.shuffleLevel=parseInt(e.target.value);document.getElementById('shuffleLevelVal').textContent=e.target.value+'%';saveState();});
+    document.getElementById('setReplaceLevel').addEventListener('input',e=>{state.settings.replaceLevel=parseInt(e.target.value);document.getElementById('replaceLevelVal').textContent=e.target.value+'%';saveState();});
+    document.getElementById('setMaxJoinCount').addEventListener('input',e=>{state.settings.maxJoinCount=parseInt(e.target.value)||1;saveState();});
 
         document.getElementById('guideToggle').addEventListener('click', () => {
         window.open('https://falloxygen.github.io/user-guide.html', '_blank');
@@ -1832,6 +2100,9 @@ function bindEvents(){
     document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{cb.addEventListener('change',()=>{updateFilterCount();saveState();});});
     elements.filterAllowOther.addEventListener('change',()=>{updateFilterCount();saveState();});
     elements.filterMinLength.addEventListener('input',()=>{updateFilterCount();saveState();});
+    document.getElementById('filterExcludeChars').addEventListener('input',()=>{updateFilterCount();saveState();});
+document.getElementById('filterIncludeChars').addEventListener('input',()=>{updateFilterCount();saveState();});
+document.getElementById('filterIncludeAll').addEventListener('change',()=>{updateFilterCount();saveState();});
         // 1. 新增：当勾选或取消“独占曲目”时，立刻刷新过滤数量并保存状态
     elements.filterExclusiveOnly.addEventListener('change', () => {
         updateFilterCount();
@@ -1841,6 +2112,9 @@ function bindEvents(){
     // 2. 修改：重写“清除过滤”按钮的功能，加上把独占勾选框也取消掉的动作
     document.getElementById('clearFilters').addEventListener('click', () => {
         document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(c => c.checked = false);
+        document.getElementById('filterExcludeChars').value='';
+document.getElementById('filterIncludeChars').value='';
+document.getElementById('filterIncludeAll').checked=false;
         elements.filterAllowOther.checked = false;
         elements.filterMinLength.value = 0;
         elements.filterExclusiveOnly.checked = false; 
@@ -1868,7 +2142,7 @@ function bindEvents(){
 
         resetTimer();
         clearSheetGame(sheet);
-        sheet.songs=songs;
+        sheet.songs=songs;applyTransforms();
         
         // Match Source ranges intelligently
         sheet.songSources = songs.map(song => {
@@ -1997,7 +2271,30 @@ function bindEvents(){
             }
         }
     });
-
+    document.getElementById('exportRangeBtn').addEventListener('click',()=>{
+        const game=document.getElementById('exportRangeSelect').value;
+        const exclusiveOnly=document.getElementById('exportExclusiveOnly').checked;
+        if(!game||!gameData[game]){showToast('请选择有效的范围','error');return;}
+        let songs=[...gameData[game]];
+        if(exclusiveOnly){
+            songs=songs.filter(song=>{
+                for(const otherGame in gameData){
+                    if(otherGame!==game&&gameData[otherGame].includes(song))return false;
+                }
+                return true;
+            });
+        }
+        if(songs.length===0){showToast('该范围没有符合条件的曲目','error');return;}
+        const text=`[${game}]\n${songs.join('\n')}`;
+        const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download=`${game}_${exclusiveOnly?'exclusive':'all'}_${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`已导出 ${songs.length} 首曲目`);
+    });
     // 修复：支持按回车键直接添加曲目
     document.getElementById('editLibAddInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
