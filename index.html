@@ -770,6 +770,7 @@ textarea.input-area{resize:vertical;line-height:1.8}
 // ========== Constants ==========
 const SUPPORTED_GAMES=["Phigros","Arcaea","Orzmic","Milthm","Berry Melody","Lanota","Rotaeno","Cytus","Cytus II","KALPA","Muse Dash","Paradigm:Reboot","TAKUMI³","PJSK","maimai","CHUNITHM","オンゲキ","Notanote","Rizline","节奏大师","DanceRail3","vivid/stasis","Bleap","Groove Coaster","ChainBeeT","Liminality","RYCEAM","Dynamix","Deemo","Deemo II","WACCA","OverRapid","SDVX","Jubeat","太鼓の達人","Circle of Sparks","Polytone","SEVEN's CODE","SHINOBI SLASH","Sixtar Gate: STARTRAIL","Simple","Sparkline","Siglota","Twirdora","Tone Sphere","WAVEAT","Beatmania IIDX","pop'n music","D4DJ Groovy Mix","BanG Dream!","DJMAX","BOF","osu!(大杂烩)","VOEZ","Piano Tiles 2","RAVON","ELLIA","Hachi Hachi","Zion","OverEcho","东方Project","米哈游","术力口","曲师大杂烩(233名)","化学方程式"];
 const ONLINE_LIBRARY_URL='https://raw.githubusercontent.com/FallOxygen/falloxygen.github.io/main/library/Songs.zip';
+const ONLINE_LIBRARY_TXT_URL='https://raw.githubusercontent.com/FallOxygen/falloxygen.github.io/main/library/Songs.txt';
 // Bumping storage key to v17 to guarantee a fresh local storage format and no broken legacy data
 const STORAGE_KEY='songLetterHelper_v17'; 
 
@@ -1872,28 +1873,75 @@ async function processLibraryText(text,fileName, isCustom = false, customTags = 
 }
 
 async function importOnlineLibrary(){
-    const btn=document.getElementById('importOnlineBtn');const orig=btn.innerHTML;
-    btn.disabled=true;btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg><span>正在导入...</span>`;
-    try{
-      const response=await fetch(ONLINE_LIBRARY_URL);
-      if(!response.ok)throw new Error(`HTTP ${response.status}`);
-      
-      // 获取 zip 二进制数据并解压
-      const arrayBuffer = await response.arrayBuffer();
-      const zip = await JSZip.loadAsync(arrayBuffer);
-      
-      const txtFile = zip.file('Songs.txt');
-      if (!txtFile) {
-        throw new Error('ZIP 中未找到 Songs.txt');
-      }
-      
-      const text = await txtFile.async('string');
-      await processLibraryText(text, '在线曲库 (内置)', false);
-      
-    }catch(e){
-      console.error(e);showToast('导入失败，检查网络或ZIP格式','error');
-    }finally{
-      btn.disabled=false;btn.innerHTML=orig;
+    const btn = document.getElementById('importOnlineBtn');
+    const orig = btn.innerHTML;
+    
+    // 显示加载状态
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg><span>正在导入...</span>`;
+    
+    try {
+        // ========== 第一步：尝试 ZIP 格式 ==========
+        let response = await fetch(ONLINE_LIBRARY_URL);
+        
+        if (response.ok) {
+            // 检查内容类型，确认是 ZIP 文件
+            const contentType = response.headers.get('content-type') || '';
+            const contentLength = response.headers.get('content-length');
+            
+            // 如果响应头表明是 ZIP，或者 URL 以 .zip 结尾
+            if (contentType.includes('zip') || ONLINE_LIBRARY_URL.endsWith('.zip')) {
+                try {
+                    const arrayBuffer = await response.arrayBuffer();
+                    
+                    // 检查是否是有效的 ZIP（ZIP 文件头魔数是 0x50 0x4B）
+                    const firstByte = new Uint8Array(arrayBuffer)[0];
+                    const secondByte = new Uint8Array(arrayBuffer)[1];
+                    
+                    if (firstByte === 0x50 && secondByte === 0x4B) {
+                        const zip = await JSZip.loadAsync(arrayBuffer);
+                        const txtFile = zip.file('Songs.txt');
+                        
+                        if (txtFile) {
+                            const text = await txtFile.async('string');
+                            await processLibraryText(text, '在线曲库 (内置)', false);
+                            showToast('ZIP 曲库导入成功');
+                            return; // 成功，结束函数
+                        }
+                    }
+                } catch (zipError) {
+                    console.warn('ZIP 解析失败，尝试 TXT 格式:', zipError);
+                    // ZIP 解析失败，继续往下执行，尝试 TXT
+                }
+            }
+        }
+        
+        // ========== 第二步：ZIP 失败，回退到 TXT 格式 ==========
+        showToast('ZIP 获取失败，尝试 TXT 格式...', 'info');
+        
+        response = await fetch(ONLINE_LIBRARY_TXT_URL);
+        
+        if (!response.ok) {
+            throw new Error(`TXT 也获取失败: HTTP ${response.status}`);
+        }
+        
+        const text = await response.text();
+        
+        // 简单验证：TXT 内容不能为空且应该包含 [标签] 格式
+        if (!text.trim() || !text.includes('[')) {
+            throw new Error('TXT 内容格式无效');
+        }
+        
+        await processLibraryText(text, '在线曲库 (内置)', false);
+        showToast('TXT 曲库导入成功');
+        
+    } catch (e) {
+        console.error('导入失败:', e);
+        showToast('导入失败，ZIP 和 TXT 均无法获取', 'error');
+    } finally {
+        // 恢复按钮状态
+        btn.disabled = false;
+        btn.innerHTML = orig;
     }
 }
 
