@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle 模拟器</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f7;
+            --correct-color: #799a60;  /* 示例图中的绿 */
+            --present-color: #c4b057;  /* 示例图中的黄 */
+            --absent-color: #6e6e73;   /* 示例图中的灰 */
+            --empty-color: #ffffff;
+            --border-color: #8e8e93;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        label {
+            font-weight: bold;
+            min-width: 100px;
+        }
+
+        input[type="text"], input[type="number"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: #4a90e2;
+        }
+
+        button {
+            padding: 10px 18px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .download-btn {
+            background-color: #27ae60;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .download-btn:hover {
+            background-color: #219150;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            overflow-x: auto;
+        }
+
+        canvas {
+            border-radius: 4px;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Wordle 模拟器</h1>
+
+<div class="container">
+    <!-- 设置区域 -->
+    <div class="section" id="setup-section">
+        <h3>游戏设置</h3>
+        <div class="input-group">
+            <label for="target-word">目标单词：</label>
+            <input type="text" id="target-word" placeholder="例如：SCANDAL (仅限英文字母)" uppercase>
+        </div>
+        <div class="input-group">
+            <label for="max-attempts">最大轮数：</label>
+            <input type="number" id="max-attempts" value="6" min="1" max="15">
+        </div>
+        <button id="start-btn" onclick="initGame()">开始 / 重置游戏</button>
+        <div id="setup-error" class="error-msg"></div>
+    </div>
+
+    <!-- 游戏进行区域 -->
+    <div class="section" id="game-section" style="display: none;">
+        <h3>提交猜测</h3>
+        <div class="input-group">
+            <input type="text" id="guess-input" placeholder="输入你的猜测..." autocomplete="off">
+            <button id="guess-btn" onclick="makeGuess()">猜测</button>
+        </div>
+        <div id="game-error" class="error-msg"></div>
+    </div>
+
+    <!-- 画布与下载区域 -->
+    <div class="canvas-container">
+        <canvas id="wordle-canvas"></canvas>
+    </div>
+    <button id="download-btn" class="download-btn" onclick="downloadImage()" style="display: none;">下载开板结果图片</button>
+</div>
+
+<script>
+    let targetWord = "";
+    let maxAttempts = 6;
+    let wordLength = 0;
+    let guesses = []; // 保存每次猜测：{ word: "...", result: ['correct', 'present', 'absent'] }
+    let isGameOver = false;
+
+    // 画布相关配置 (匹配图片风格)
+    const BOX_SIZE = 50;
+    const BOX_GAP = 8;
+    const PADDING = 20;
+    const COLORS = {
+        correct: '#799a60', // 绿
+        present: '#c4b057', // 黄
+        absent: '#6e6e73',  // 灰
+        emptyBg: '#ffffff',
+        emptyBorder: '#8e8e93',
+        text: '#ffffff'
+    };
+
+    function initGame() {
+        const wordInput = document.getElementById('target-word').value.trim().toUpperCase();
+        const attemptsInput = parseInt(document.getElementById('max-attempts').value);
+        const setupError = document.getElementById('setup-error');
+
+        // 校验输入
+        if (!/^[A-Z]+$/.test(wordInput)) {
+            setupError.textContent = "错误：目标单词必须只包含英文字母！";
+            return;
+        }
+        if (isNaN(attemptsInput) || attemptsInput < 1 || attemptsInput > 15) {
+            setupError.textContent = "错误：请输入合理的猜测轮数 (1-15)！";
+            return;
+        }
+
+        setupError.textContent = "";
+        targetWord = wordInput;
+        wordLength = wordInput.length;
+        maxAttempts = attemptsInput;
+        guesses = [];
+        isGameOver = false;
+
+        // UI 状态重置
+        document.getElementById('game-section').style.display = 'block';
+        document.getElementById('download-btn').style.display = 'block';
+        document.getElementById('guess-input').value = '';
+        document.getElementById('guess-input').maxLength = wordLength;
+        document.getElementById('guess-input').placeholder = `输入 ${wordLength} 个字母的单词...`;
+        document.getElementById('guess-input').disabled = false;
+        document.getElementById('guess-btn').disabled = false;
+        document.getElementById('game-error').textContent = '';
+
+        drawBoard();
+    }
+
+    function makeGuess() {
+        if (isGameOver) return;
+
+        const guessInput = document.getElementById('guess-input');
+        const gameError = document.getElementById('game-error');
+        const guess = guessInput.value.trim().toUpperCase();
+
+        // 校验猜测合法性
+        if (!/^[A-Z]+$/.test(guess)) {
+            gameError.textContent = "错误：猜测必须只包含英文字母！";
+            return;
+        }
+        if (guess.length !== wordLength) {
+            gameError.textContent = `错误：猜测长度必须正好为 ${wordLength} 个字母！`;
+            return;
+        }
+
+        gameError.textContent = "";
+
+        // 计算Wordle匹配算法 (处理重复字母的精确规则)
+        const result = new Array(wordLength).fill('absent');
+        const targetArr = targetWord.split('');
+        const guessArr = guess.split('');
+        const targetLetterCounts = {};
+
+        // 统计目标单词中各字母频率
+        for (let char of targetArr) {
+            targetLetterCounts[char] = (targetLetterCounts[char] || 0) + 1;
+        }
+
+        // 第一遍：标记全对 (correct)
+        for (let i = 0; i < wordLength; i++) {
+            if (guessArr[i] === targetArr[i]) {
+                result[i] = 'correct';
+                targetLetterCounts[guessArr[i]]--;
+            }
+        }
+
+        // 第二遍：标记存在但位置错 (present)
+        for (let i = 0; i < wordLength; i++) {
+            if (result[i] !== 'correct') {
+                const char = guessArr[i];
+                if (targetLetterCounts[char] && targetLetterCounts[char] > 0) {
+                    result[i] = 'present';
+                    targetLetterCounts[char]--;
+                }
+            }
+        }
+
+        guesses.push({ word: guess, result: result });
+        guessInput.value = '';
+
+        drawBoard();
+
+        // 检查胜负条件
+        if (guess === targetWord) {
+            gameError.style.color = '#27ae60';
+            gameError.textContent = "恭喜你！猜对了！";
+            endGame();
+        } else if (guesses.length >= maxAttempts) {
+            gameError.style.color = '#e74c3c';
+            gameError.textContent = `游戏结束，轮数已用尽。正确答案是：${targetWord}`;
+            endGame();
+        }
+    }
+
+    function endGame() {
+        isGameOver = true;
+        document.getElementById('guess-input').disabled = true;
+        document.getElementById('guess-btn').disabled = true;
+    }
+
+    function drawBoard() {
+        const canvas = document.getElementById('wordle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 动态计算画布尺寸
+        const width = PADDING * 2 + wordLength * BOX_SIZE + (wordLength - 1) * BOX_GAP;
+        const height = PADDING * 2 + maxAttempts * BOX_SIZE + (maxAttempts - 1) * BOX_GAP;
+
+        // 设置高清屏抗锯齿画布分辨率
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.scale(dpr, dpr);
+
+        // 绘制背景 (白色底)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+
+        // 绘制所有格行
+        for (let row = 0; row < maxAttempts; row++) {
+            const hasGuess = row < guesses.length;
+            const currentGuess = hasGuess ? guesses[row] : null;
+
+            for (let col = 0; col < wordLength; col++) {
+                const x = PADDING + col * (BOX_SIZE + BOX_GAP);
+                const y = PADDING + row * (BOX_SIZE + BOX_GAP);
+
+                if (hasGuess) {
+                    // 已猜测过的行
+                    const status = currentGuess.result[col];
+                    const letter = currentGuess.word[col];
+
+                    // 绘制有颜色的填充方块
+                    ctx.fillStyle = COLORS[status];
+                    ctx.fillRect(x, y, BOX_SIZE, BOX_SIZE);
+
+                    // 绘制字母 (加粗衬线体风格)
+                    ctx.fillStyle = COLORS.text;
+                    ctx.font = 'bold 28px "Georgia", "Times New Roman", serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(letter, x + BOX_SIZE / 2, y + BOX_SIZE / 2 + 2);
+                } else {
+                    // 未猜测的空行 (绘制边框)
+                    ctx.strokeStyle = COLORS.emptyBorder;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x + 1, y + 1, BOX_SIZE - 2, BOX_SIZE - 2);
+                }
+            }
+        }
+    }
+
+    function downloadImage() {
+        const canvas = document.getElementById('wordle-canvas');
+        const imageURI = canvas.toDataURL("image/png");
+        
+        const link = document.createElement('a');
+        link.download = `Wordle_${targetWord}_Result.png`;
+        link.href = imageURI;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // 绑定 Enter 键快捷提交
+    document.getElementById('guess-input').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            makeGuess();
+        }
+    });
+
+    document.getElementById('target-word').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            initGame();
+        }
+    });
+
+    // 默认初始化一次
+    document.getElementById('target-word').value = "SCANDAL";
+    initGame();
+</script>
+
+</body>
+</html>
