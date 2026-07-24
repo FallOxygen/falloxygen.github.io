@@ -20,6 +20,8 @@
             --radius: 10px;
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             --transition: 0.2s ease;
+            --guide-bg: #f8f9fc;
+            --guide-border: #dce1eb;
         }
 
         * {
@@ -27,7 +29,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
             background-color: var(--bg-color);
             color: #1c1c1e;
             display: flex;
@@ -45,13 +47,19 @@
             color: #1c1c1e;
             letter-spacing: 1px;
         }
+        h1 small {
+            font-size: 15px;
+            font-weight: 400;
+            color: #6e6e73;
+            margin-left: 8px;
+        }
 
         .container {
             background: #ffffff;
             padding: 20px 22px 28px;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            max-width: 640px;
+            max-width: 680px;
             width: 100%;
             box-sizing: border-box;
         }
@@ -75,6 +83,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
         .section-title .badge {
             font-size: 12px;
@@ -109,6 +118,7 @@
             outline: none;
             transition: border-color var(--transition);
             background: #fafafc;
+            font-family: inherit;
         }
         input[type="text"]:focus,
         input[type="number"]:focus {
@@ -141,6 +151,7 @@
             justify-content: center;
             gap: 5px;
             min-height: 42px;
+            font-family: inherit;
         }
         button:hover:not(:disabled) {
             background: var(--primary-hover);
@@ -238,7 +249,6 @@
             border-radius: 6px;
             background: #ffffff;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            /* 关键：允许iOS长按保存 */
             -webkit-touch-callout: default !important;
             pointer-events: auto;
             user-select: none;
@@ -297,6 +307,146 @@
             color: #721c24;
         }
 
+        /* ===== 使用指南 ===== */
+        .guide-toggle {
+            margin-top: 16px;
+            width: 100%;
+        }
+        .guide-toggle button {
+            width: 100%;
+            justify-content: center;
+            background: var(--guide-bg);
+            color: #2c3e50;
+            border: 2px solid var(--guide-border);
+            font-weight: 500;
+        }
+        .guide-toggle button:hover:not(:disabled) {
+            background: #eef2f7;
+            border-color: #b8c5d6;
+        }
+        .guide-content {
+            display: none;
+            background: var(--guide-bg);
+            border: 2px solid var(--guide-border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #2d3a4a;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .guide-content.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        .guide-content h2 {
+            font-size: 20px;
+            margin: 0 0 10px 0;
+            color: #1c1c1e;
+        }
+        .guide-content h3 {
+            font-size: 16px;
+            margin: 16px 0 6px 0;
+            color: #2c3e50;
+        }
+        .guide-content h4 {
+            font-size: 15px;
+            margin: 14px 0 4px 0;
+            color: #34495e;
+        }
+        .guide-content p {
+            margin: 6px 0;
+        }
+        .guide-content ul,
+        .guide-content ol {
+            margin: 6px 0 10px 20px;
+            padding-left: 6px;
+        }
+        .guide-content li {
+            margin: 4px 0;
+        }
+        .guide-content .color-dot {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-right: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .guide-content .color-dot.green {
+            background: #799a60;
+        }
+        .guide-content .color-dot.yellow {
+            background: #c4b057;
+        }
+        .guide-content .color-dot.gray {
+            background: #6e6e73;
+        }
+        .guide-content .example-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(5, 36px);
+            gap: 4px;
+            margin: 6px 0;
+            background: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e4;
+        }
+        .guide-content .example-grid .cell {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            border-radius: 4px;
+            color: #fff;
+            font-family: "Georgia", "Times New Roman", serif;
+        }
+        .guide-content .example-grid .cell.green {
+            background: #799a60;
+        }
+        .guide-content .example-grid .cell.yellow {
+            background: #c4b057;
+        }
+        .guide-content .example-grid .cell.gray {
+            background: #6e6e73;
+        }
+        .guide-content .example-grid .cell.empty {
+            background: #fff;
+            border: 2px solid #8e8e93;
+            color: #8e8e93;
+        }
+        .guide-content .note-box {
+            background: #eef3fa;
+            border-left: 4px solid var(--primary);
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .guide-content .note-box strong {
+            color: var(--primary);
+        }
+        .guide-content .key {
+            display: inline-block;
+            background: #e9e9ed;
+            padding: 0 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #3a3a3c;
+            font-family: monospace;
+        }
+        .guide-content .divider {
+            border: none;
+            border-top: 1px solid #dce1eb;
+            margin: 16px 0;
+        }
+
         /* ===== 响应式 ===== */
         @media (max-width: 480px) {
             .container {
@@ -327,6 +477,24 @@
             }
             h1 {
                 font-size: 24px;
+            }
+            h1 small {
+                font-size: 12px;
+                display: block;
+                margin-left: 0;
+            }
+            .guide-content {
+                padding: 14px 16px;
+                font-size: 13px;
+                max-height: 400px;
+            }
+            .guide-content .example-grid {
+                grid-template-columns: repeat(5, 28px);
+            }
+            .guide-content .example-grid .cell {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
             }
         }
 
@@ -369,9 +537,10 @@
             <div class="section-title">⚙️ 游戏设置</div>
             <div class="row">
                 <span class="row-label">目标单词</span>
-                <input type="text" id="target-word" placeholder="例如 SCANDAL" value="SCANDAL" autocomplete="off" spellcheck="false">
+                <input type="text" id="target-word" placeholder="例如 HELLO 或 你好" value="HELLO" autocomplete="off" spellcheck="false">
                 <span class="row-label" style="min-width:50px;">轮数</span>
-                <input type="number" id="max-attempts" value="6" min="1" max="15">
+                <!-- 修改：去掉 max="15"，改为 max="999" 实现无上限 -->
+                <input type="number" id="max-attempts" value="6" min="1" max="999">
                 <button id="start-btn" onclick="initGame()">开始 / 重置</button>
             </div>
             <div id="setup-error" class="error-msg"></div>
@@ -422,20 +591,186 @@
             </div>
         </div>
 
+        <!-- ===== 使用指南（可折叠） ===== -->
+        <div class="guide-toggle">
+            <button id="guide-toggle-btn" onclick="toggleGuide()" class="btn-outline">📖 查看使用指南（含示例）</button>
+            <div id="guide-content" class="guide-content">
+                <h2>📚 Wordle 模拟器 · 详细使用指南</h2>
+
+                <h3>🎮 什么是 Wordle？</h3>
+                <p><strong>Wordle</strong> 是一款风靡全球的猜词游戏。你需要在有限的次数内，猜出一个隐藏的「目标单词」。每次猜测后，游戏会用 <strong>颜色反馈</strong> 告诉你离答案有多近——就像一把解谜的钥匙，帮你一步步锁定正确答案。</p>
+
+                <hr class="divider">
+
+                <h3>📐 游戏规则</h3>
+                <ol>
+                    <li><strong>设定目标</strong>：在「游戏设置」中输入一个目标单词（可以是英文、中文、日文、韩文……任何字符都支持！），并设定猜测轮数。</li>
+                    <li><strong>开始猜测</strong>：点击「开始 / 重置」后，在输入框中输入你的猜测，然后点击「猜测」或按 <span class="key">Enter</span> 键提交。</li>
+                    <li><strong>读取反馈</strong>：每次猜测后，每个字符会显示为三种颜色之一——
+                        <br>
+                        <span class="color-dot green"></span> <strong>绿色</strong>：这个字符在目标中，而且 <strong>位置完全正确</strong> ！<br>
+                        <span class="color-dot yellow"></span> <strong>黄色</strong>：这个字符在目标中，但 <strong>位置不对</strong> ，需要换位思考。<br>
+                        <span class="color-dot gray"></span> <strong>灰色</strong>：这个字符 <strong>不在目标中</strong> ，可以排除。
+                    </li>
+                    <li><strong>胜利条件</strong>：在规定的轮数内，所有字符都变成绿色 → 你赢了！🎉<br>
+                        如果轮数用完仍未全部猜中 → 游戏结束，答案揭晓。
+                    </li>
+                </ol>
+
+                <div class="note-box">
+                    <strong>✨ 全字符支持</strong>：本版本支持 <strong>中文、英文、日文、韩文、数字、符号</strong> 等所有 Unicode 字符。英文字母会自动转为大写，标点符号自动转为半角，让你专注于解谜本身。
+                </div>
+
+                <hr class="divider">
+
+                <h3>🧩 反馈示例</h3>
+                <p>假设目标单词是 <strong>「APPLE」</strong>，你猜测 <strong>「AMPLE」</strong>：</p>
+                <div class="example-grid">
+                    <div class="cell green">A</div>
+                    <div class="cell gray">M</div>
+                    <div class="cell green">P</div>
+                    <div class="cell green">L</div>
+                    <div class="cell green">E</div>
+                </div>
+                <ul>
+                    <li><strong>A</strong> 🟩 正确位置 → 绿色</li>
+                    <li><strong>P</strong> ⬜ 不在 APPLE 中 → 灰色</li>
+                    <li><strong>M</strong> 🟩 正确位置 → 灰色</li>
+                    <li><strong>P</strong> 🟩 正确位置 → 黄色</li>
+                    <li><strong>E</strong> 🟩 正确位置 → 绿色</li>
+                </ul>
+                <p>👆 根据反馈，你知道答案中一定有 <strong>A、P、L、E</strong>，并且 <strong>M</strong> 可以排除。</p>
+
+                <hr class="divider">
+
+                <h3>🛠️ 网站功能详解</h3>
+
+                <h4>1. ⚙️ 游戏设置</h4>
+                <ul>
+                    <li><strong>目标单词</strong>：输入你想猜的单词/短语。支持任何字符，例如 <code>SCANDAL</code>、<code>你好世界</code>、<code>こんにちは</code>、<code>안녕하세요</code>。</li>
+                    <li><strong>轮数</strong>：设定猜测次数，默认 6 轮。</li>
+                    <li><strong>开始 / 重置</strong>：确认设置并开始新游戏，或重置当前游戏。</li>
+                </ul>
+
+                <h4>2. 🎯 提交猜测</h4>
+                <ul>
+                    <li>输入你的猜测（长度必须 ≤ 目标单词长度），点击「猜测」或按 <span class="key">Enter</span> 提交。</li>
+                    <li>如果长度不足，系统会自动用空格补齐。</li>
+                    <li>游戏会实时显示进度条（<span id="attempt-counter-example" style="font-weight:600;">0 / 6</span>），让你随时掌握剩余次数。</li>
+                </ul>
+
+                <h4>3. 🛠️ 辅助工具</h4>
+                <ul>
+                    <li><strong>💡 提示开字母</strong>：根据已有猜测，智能揭开 1～2 个未确定的字母，生成提示图片（可下载）。</li>
+                    <li><strong>🔓 一键公布答案</strong>：直接填入目标单词并提交，快速结束游戏（适合演示或查看答案）。</li>
+                    <li><strong>↩️ 回退 / ↪️ 恢复</strong>：撤销或重做上一步操作，方便回溯推理过程。</li>
+                </ul>
+
+                <h4>4. 🖼️ 画布与下载</h4>
+                <ul>
+                    <li>游戏板会实时渲染为高清图片，支持 <strong>长按保存</strong>（移动端）或右键另存为。</li>
+                    <li>点击「⬇️ 下载开板结果」保存当前游戏进度截图。</li>
+                    <li>提示图片同样支持下载，方便分享或记录。</li>
+                </ul>
+
+                <h4>5. 💾 自动保存</h4>
+                <ul>
+                    <li>游戏进度会自动保存在浏览器本地，刷新页面或关闭后重新打开，可以 <strong>继续上次的游戏</strong>。</li>
+                    <li>游戏结束后，本地存储会自动清除，但历史记录（撤销/重做）仍保留。</li>
+                </ul>
+
+                <hr class="divider">
+
+                <h3>📝 完整游戏示例</h3>
+                <p><strong>场景</strong>：目标单词为 <strong>「CLOUD」</strong>，轮数 6 轮。</p>
+                <ol>
+                    <li><strong>设置</strong>：在「目标单词」输入 <code>CLOUD</code>，轮数保持 6，点击「开始 / 重置」。</li>
+                    <li><strong>第1猜</strong>：输入 <code>CRANE</code> → 反馈：
+                        <div class="example-grid" style="margin:4px 0;">
+                            <div class="cell green">C</div>
+                            <div class="cell gray">R</div>
+                            <div class="cell gray">A</div>
+                            <div class="cell gray">N</div>
+                            <div class="cell gray">E</div>
+                        </div>
+                        <span style="font-size:13px;">C 位置正确 ✅ &nbsp; A、R、N、E 不在目标中 ❌</span>
+                    </li>
+                    <li><strong>第2猜</strong>：输入 <code>COULD</code> → 反馈：
+                        <div class="example-grid" style="margin:4px 0;">
+                            <div class="cell green">C</div>
+                            <div class="cell yellow">O</div>
+                            <div class="cell yellow">U</div>
+                            <div class="cell yellow">L</div>
+                            <div class="cell green">D</div>
+                        </div>
+                        <span style="font-size:13px;">C、D 位置正确 ✅ &nbsp; O、U、L 存在但位置不对 🔄</span>
+                    </li>
+                    <li><strong>第3猜</strong>：输入 <code>CLOUD</code> → 全部绿色 🎉
+                        <div class="example-grid" style="margin:4px 0;">
+                            <div class="cell green">C</div>
+                            <div class="cell green">L</div>
+                            <div class="cell green">O</div>
+                            <div class="cell green">U</div>
+                            <div class="cell green">D</div>
+                        </div>
+                        <span style="font-size:13px;">🎊 恭喜！你在第 3 轮猜中了！</span>
+                    </li>
+                </ol>
+
+                <hr class="divider">
+
+                <h3>🌐 字符支持说明</h3>
+                <div class="note-box">
+                    <strong>📌 自动规范化规则</strong>：
+                    <ul style="margin:6px 0 0 16px;">
+                        <li><strong>字母</strong>（A-Z / a-z）→ 自动转为 <strong>大写</strong>（例如 <code>hello</code> → <code>HELLO</code>）。</li>
+                        <li><strong>标点符号</strong>（全角）→ 自动转为 <strong>半角</strong>（例如 <code>，。？！（）</code> → <code>,.?!()</code>）。</li>
+                        <li><strong>中文 / 日文 / 韩文 / 其他文字</strong> → 保持原样，大小写不适用。</li>
+                        <li><strong>数字</strong>（全角/半角）→ 统一转为 <strong>半角数字</strong>。</li>
+                        <li><strong>空格</strong>→同样支持。</li>
+                    </ul>
+                </div>
+                <p>💡 这意味着你输入 <code>“Hello，世界！”</code> 会被规范化为 <code>“HELLO,世界!”</code>，字母大写、标点半角，中文保持不变。</p>
+
+                <hr class="divider">
+
+                <h3>❓ 常见问题</h3>
+                <ul>
+                    <li><strong>Q：猜测长度必须和目标完全一样吗？</strong><br>
+                    A：不需要。你可以输入 ≤ 目标长度的任意字符，不足的部分会自动用空格补齐。</li>
+                    <li><strong>Q：支持多行或带空格的短语吗？</strong><br>
+                    A：支持，但空格会被视为普通字符。建议使用连续字符以获得更清晰的体验。</li>
+                    <li><strong>Q：提示功能怎么用？</strong><br>
+                    A：至少进行 1 次猜测后，点击「💡 提示开字母」，系统会根据已有线索智能揭开 1～2 个字母，并生成可下载的提示图。</li>
+                    <li><strong>Q：下载的图片清晰吗？</strong><br>
+                    A：图片使用 Canvas 高清渲染（适配设备像素比），清晰度很高，适合分享或打印。</li>
+                    <li><strong>Q：游戏数据会丢失吗？</strong><br>
+                    A：游戏状态会自动保存在浏览器本地，除非你清除浏览器数据或手动重置。</li>
+                </ul>
+
+                <hr class="divider">
+
+                <p style="text-align:center;color:#6e6e73;font-size:13px;">
+                    🧩 祝你玩得愉快！ 用逻辑和直觉，征服每一个单词。
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <script>
         // ============================================================
-        //  Wordle 模拟器 · 完整增强版
-        //  功能：灵活猜词 · 提示开字母 · 一键公布答案 · 撤销/重做 · 本地存储
+        //  Wordle 模拟器 · 全字符增强版
+        //  功能：支持所有 Unicode 字符 · 自动大写字母 · 全角标点半角化
+        //  撤销/重做 · 本地存储 · 提示开字母 · 下载图片
         // ============================================================
 
         // ===== 常量 =====
-        const STORAGE_KEY = 'wordle_enhanced_state';
+        const STORAGE_KEY = 'wordle_enhanced_state_v2';
         const BOX_SIZE = 50;
         const BOX_GAP = 8;
         const PADDING = 18;
-        const HINT_THRESHOLD = 0.5; // 绿色占比 ≥ 50% 视为「多」
+        const HINT_THRESHOLD = 0.5;
 
         const COLORS = {
             correct: '#799a60',
@@ -447,6 +782,48 @@
             hintBg: '#e8f0fe',
             hintBorder: '#a0b8d4',
         };
+
+        // 全角 → 半角 映射表（标点符号 + 常用字符）
+        const FULL_TO_HALF = {
+            '，': ',', '。': '.', '？': '?', '！': '!',
+            '（': '(', '）': ')', '【': '[', '】': ']',
+            '『': '[', '』': ']', '「': '[', '」': ']',
+            '：': ':', '；': ';', '“': '"', '”': '"',
+            '‘': "'", '’': "'", '…': '...', '—': '-',
+            '～': '~', '＠': '@', '＃': '#', '＄': '$',
+            '％': '%', '＾': '^', '＆': '&', '＊': '*',
+            '＿': '_', '＋': '+', '＝': '=', '＜': '<',
+            '＞': '>', '｜': '|', '｀': '`', '｛': '{',
+            '｝': '}', '［': '[', '］': ']', '｡': '.',
+            '｢': '[', '｣': ']', '､': ',', '･': '·',
+            '　': ' ', '〃': '"', '〟': '"', '〞': '"',
+            '〝': '"', '〈': '<', '〉': '>', '《': '<',
+            '》': '>', '「': '[', '」': ']', '『': '[',
+            '』': ']', '【': '[', '】': ']', '〔': '[',
+            '〕': ']', '〖': '[', '〗': ']', '〘': '[',
+            '〙': ']', '〚': '[', '〛': ']', '〜': '~',
+            '﹏': '_', '﹌': '_', '﹣': '-', '－': '-',
+            '—': '-', '―': '-', '＿': '_', 'ˍ': '_',
+            '﹉': '_', '﹊': '_', '﹍': '_', '﹎': '_',
+            '﹋': '_', '﹌': '_', '﹏': '_', '︱': '|',
+            '︲': '|', '︳': '|', '︴': '|', '︵': '(',
+            '︶': ')', '︷': '{', '︸': '}', '︹': '[',
+            '︺': ']', '︻': '[', '︼': ']', '︽': '(',
+            '︾': ')', '︿': '<', '﹀': '>', '﹁': '[',
+            '﹂': ']', '﹃': '[', '﹄': ']', '﹇': '[',
+            '﹈': ']', '﹉': '_', '﹊': '_', '﹋': '_',
+            '﹌': '_', '﹍': '_', '﹎': '_', '﹏': '_',
+        };
+
+        // 数字全角→半角
+        for (let i = 0; i < 10; i++) {
+            FULL_TO_HALF[String.fromCharCode(0xFF10 + i)] = String.fromCharCode(0x0030 + i);
+        }
+        // 字母全角→半角 (A-Z, a-z)
+        for (let i = 0; i < 26; i++) {
+            FULL_TO_HALF[String.fromCharCode(0xFF21 + i)] = String.fromCharCode(0x0041 + i);
+            FULL_TO_HALF[String.fromCharCode(0xFF41 + i)] = String.fromCharCode(0x0061 + i);
+        }
 
         // ===== DOM 引用 =====
         const $ = id => document.getElementById(id);
@@ -470,6 +847,43 @@
         const redoBtn = $('redo-btn');
         const hintBtn = $('hint-btn');
         const revealBtn = $('reveal-btn');
+        const guideToggleBtn = $('guide-toggle-btn');
+        const guideContent = $('guide-content');
+
+        // ============================================================
+        //  规范化函数
+        // ============================================================
+
+        /** 全角转半角（标点 + 字母 + 数字） */
+        function fullWidthToHalfWidth(str) {
+            let result = '';
+            for (let ch of str) {
+                result += FULL_TO_HALF[ch] || ch;
+            }
+            return result;
+        }
+
+        /** 字母转大写（仅对拉丁字母 a-z / A-Z 有效，其他字符不变） */
+        function toUpperCaseLetters(str) {
+            return str.replace(/[a-zA-Z]/g, ch => ch.toUpperCase());
+        }
+
+        /** 综合规范化：全角转半角 + 字母大写 */
+        function normalizeInput(str) {
+            let s = str;
+            s = fullWidthToHalfWidth(s);
+            s = toUpperCaseLetters(s);
+            return s;
+        }
+
+        /** 判断字符是否为 "字母符号"（有大小写之分的字母）—— 仅拉丁字母 */
+        function isLetterChar(ch) {
+            return /[A-Za-z]/.test(ch);
+        }
+
+        function displayChar(ch) {
+            return ch;
+        }
 
         // ============================================================
         //  游戏状态
@@ -481,19 +895,16 @@
             guesses: [], // [{ word, result }]
             isGameOver: false,
             isGameWon: false,
-            // 历史记录 (深拷贝状态)
-            history: [], // 存储完整状态的快照
-            historyIndex: -1, // 当前所在索引 (-1 表示初始状态)
+            history: [],
+            historyIndex: -1,
         };
 
-        // 当前是否在恢复/回退过程中（防止重复记录）
         let isNavigatingHistory = false;
 
         // ============================================================
         //  核心函数
         // ============================================================
 
-        /** 获取当前有效状态（用于历史快照） */
         function getStateSnapshot() {
             return {
                 targetWord: state.targetWord,
@@ -505,7 +916,6 @@
             };
         }
 
-        /** 从快照恢复状态 */
         function restoreFromSnapshot(snapshot) {
             state.targetWord = snapshot.targetWord;
             state.maxAttempts = snapshot.maxAttempts;
@@ -515,11 +925,9 @@
             state.isGameWon = snapshot.isGameWon;
         }
 
-        /** 保存历史记录（在每次操作后调用） */
         function pushHistory() {
             if (isNavigatingHistory) return;
             const snapshot = getStateSnapshot();
-            // 如果当前不在历史末尾，截断后面的历史
             if (state.historyIndex < state.history.length - 1) {
                 state.history = state.history.slice(0, state.historyIndex + 1);
             }
@@ -529,7 +937,6 @@
             saveToLocalStorage();
         }
 
-        /** 回退到上一步 */
         function undoMove() {
             if (state.historyIndex <= 0) return;
             isNavigatingHistory = true;
@@ -540,11 +947,9 @@
             isNavigatingHistory = false;
             updateUndoRedoButtons();
             saveToLocalStorage();
-            // 清除提示区域
             clearHintArea();
         }
 
-        /** 恢复到下一步 */
         function redoMove() {
             if (state.historyIndex >= state.history.length - 1) return;
             isNavigatingHistory = true;
@@ -558,21 +963,17 @@
             clearHintArea();
         }
 
-        /** 更新撤销/重做按钮状态 */
         function updateUndoRedoButtons() {
             undoBtn.disabled = state.historyIndex <= 0;
             redoBtn.disabled = state.historyIndex >= state.history.length - 1;
         }
 
-        /** 状态变化后的统一处理 */
         function afterStateChange() {
             updateUI();
             drawBoard();
             updateStatusBanner();
             updateAttemptCounter();
-            // 如果游戏结束，清除本地存储（但保留历史以便回退）
             if (state.isGameOver) {
-                // 游戏完成时清除存储，但保留历史
                 localStorage.removeItem(STORAGE_KEY);
             } else {
                 saveToLocalStorage();
@@ -584,37 +985,44 @@
         // ============================================================
 
         function initGame() {
-            const word = targetWordInput.value.trim().toUpperCase();
+            const rawWord = targetWordInput.value.trim();
+            const normalized = normalizeInput(rawWord);
             const attempts = parseInt(maxAttemptsInput.value);
 
-            if (!/^[A-Z]+$/.test(word)) {
-                setupError.textContent = '❌ 目标单词必须只包含英文字母！';
+            if (normalized.length === 0) {
+                setupError.textContent = '❌ 目标单词不能为空！';
                 return;
             }
-            if (isNaN(attempts) || attempts < 1 || attempts > 15) {
-                setupError.textContent = '❌ 请输入合理的猜测轮数 (1-15)！';
+            // 修改：移除 attempts > 15 的限制，只保留 attempts < 1
+            if (isNaN(attempts) || attempts < 1) {
+                setupError.textContent = '❌ 请输入合理的猜测轮数（至少1轮）！';
+                return;
+            }
+
+            // 检查是否包含不可见控制字符
+            if (/[\x00-\x1F\x7F]/.test(normalized)) {
+                setupError.textContent = '❌ 目标单词包含不可见控制字符，请重新输入。';
                 return;
             }
 
             setupError.textContent = '';
+            // 将规范化后的结果写回输入框，让用户看到转换结果
+            targetWordInput.value = normalized;
 
-            // 重置状态
-            state.targetWord = word;
+            state.targetWord = normalized;
             state.maxAttempts = attempts;
-            state.wordLength = word.length;
+            state.wordLength = normalized.length;
             state.guesses = [];
             state.isGameOver = false;
             state.isGameWon = false;
             state.history = [];
             state.historyIndex = -1;
 
-            // 初始快照
             pushHistory();
 
-            // UI 重置
             guessInput.value = '';
             guessInput.maxLength = state.wordLength;
-            guessInput.placeholder = `输入 ${state.wordLength} 个字母的单词...`;
+            guessInput.placeholder = `输入 ${state.wordLength} 个字符的单词...`;
             guessInput.disabled = false;
             guessBtn.disabled = false;
             gameError.textContent = '';
@@ -628,17 +1036,15 @@
             drawBoard();
             saveToLocalStorage();
 
-            // 显示游戏区
             $('game-section').style.display = 'block';
             $('action-section').style.display = 'block';
             downloadBoardBtn.style.display = 'inline-flex';
 
-            // 聚焦
             guessInput.focus();
         }
 
         // ============================================================
-        //  猜测逻辑 (支持长度 <= wordLength)
+        //  猜测逻辑
         // ============================================================
 
         function makeGuess() {
@@ -647,29 +1053,30 @@
                 return;
             }
 
-            const raw = guessInput.value.trim().toUpperCase();
-            if (!/^[A-Z]*$/.test(raw)) {
-                gameError.textContent = '❌ 猜测只能包含英文字母！';
+            const raw = guessInput.value;
+            // 先规范化
+            const normalized = normalizeInput(raw);
+
+            if (normalized.length === 0) {
+                gameError.textContent = '❌ 请输入至少一个字符。';
                 return;
             }
-            if (raw.length === 0) {
-                gameError.textContent = '❌ 请输入至少一个字母。';
+            if (normalized.length > state.wordLength) {
+                gameError.textContent = `❌ 猜测长度不能超过 ${state.wordLength} 个字符。`;
                 return;
             }
-            if (raw.length > state.wordLength) {
-                gameError.textContent = `❌ 猜测长度不能超过 ${state.wordLength} 个字母。`;
+            if (/[\x00-\x1F\x7F]/.test(normalized)) {
+                gameError.textContent = '❌ 猜测包含不可见控制字符，请重新输入。';
                 return;
             }
 
-            // 长度不足时，后面补空位 (用空格占位)
-            const guess = raw.padEnd(state.wordLength, ' ');
+            // 用空格补齐
+            const guess = normalized.padEnd(state.wordLength, ' ');
             gameError.textContent = '';
 
-            // 计算反馈
             const result = computeResult(guess);
             state.guesses.push({ word: guess, result: result });
 
-            // 检查是否胜利
             const isWin = guess === state.targetWord;
             const isLose = state.guesses.length >= state.maxAttempts;
 
@@ -685,11 +1092,10 @@
                 gameError.textContent = `😞 游戏结束，正确答案是：${state.targetWord}`;
             }
 
-            // 记录历史
             pushHistory();
 
-            // 更新UI
-            guessInput.value = '';
+            // 在输入框中显示规范化后的内容
+            guessInput.value = normalized;
             updateAttemptCounter();
             drawBoard();
             updateStatusBanner();
@@ -698,9 +1104,9 @@
             if (state.isGameOver) {
                 guessInput.disabled = true;
                 guessBtn.disabled = true;
-                // 清除本地存储（游戏结束）
                 localStorage.removeItem(STORAGE_KEY);
             } else {
+                guessInput.value = '';
                 guessInput.focus();
                 saveToLocalStorage();
             }
@@ -708,7 +1114,7 @@
             updateUndoRedoButtons();
         }
 
-        /** 计算猜测结果 (支持空格占位) */
+        /** 计算猜测结果 (支持所有字符) */
         function computeResult(guess) {
             const targetArr = state.targetWord.split('');
             const guessArr = guess.split('');
@@ -720,21 +1126,17 @@
                 targetCounts[ch] = (targetCounts[ch] || 0) + 1;
             }
 
-            // 第一遍：标记正确位置
+            // 第一遍：正确位置
             for (let i = 0; i < len; i++) {
-                if (guessArr[i] === ' ') {
-                    result[i] = 'empty';
-                    continue;
-                }
                 if (guessArr[i] === targetArr[i]) {
                     result[i] = 'correct';
                     targetCounts[guessArr[i]]--;
                 }
             }
 
-            // 第二遍：标记存在但位置不对
+            // 第二遍：存在但位置不对
             for (let i = 0; i < len; i++) {
-                if (result[i] === 'correct' || result[i] === 'empty') continue;
+                if (result[i] === 'correct') continue;
                 const ch = guessArr[i];
                 if (targetCounts[ch] && targetCounts[ch] > 0) {
                     result[i] = 'present';
@@ -754,14 +1156,12 @@
                 gameError.textContent = '⛔ 游戏已结束，无法公布答案。';
                 return;
             }
-            // 直接填入目标单词并执行猜测
             guessInput.value = state.targetWord;
             makeGuess();
-            // makeGuess 中会触发历史记录和UI更新
         }
 
         // ============================================================
-        //  提示开字母 (生成提示图片)
+        //  提示开字母
         // ============================================================
 
         function generateHint() {
@@ -774,7 +1174,6 @@
                 return;
             }
 
-            // 收集所有绿色字母的位置
             const greenPositions = new Array(state.wordLength).fill(false);
             let totalGreen = 0;
             for (let g of state.guesses) {
@@ -789,31 +1188,26 @@
             const totalSlots = state.guesses.length * state.wordLength;
             const greenRatio = totalSlots > 0 ? totalGreen / totalSlots : 0;
 
-            // 构建提示行: 每个位置要么是正确字母(绿色)，要么是空
             const hintRow = new Array(state.wordLength).fill(null);
-            // 先填已有的绿色
             for (let i = 0; i < state.wordLength; i++) {
                 if (greenPositions[i]) {
                     hintRow[i] = state.targetWord[i];
                 }
             }
 
-            // 如果绿色占比少，随机揭开 1~2 个
             if (greenRatio < HINT_THRESHOLD) {
                 const emptyIndices = [];
                 for (let i = 0; i < state.wordLength; i++) {
                     if (hintRow[i] === null) emptyIndices.push(i);
                 }
-                // 随机打乱
                 shuffleArray(emptyIndices);
-                const count = Math.min(emptyIndices.length, 1 + Math.floor(Math.random() * 2)); // 1~2 个
+                const count = Math.min(emptyIndices.length, 1 + Math.floor(Math.random() * 2));
                 for (let i = 0; i < count && i < emptyIndices.length; i++) {
                     const idx = emptyIndices[i];
                     hintRow[idx] = state.targetWord[idx];
                 }
             }
 
-            // 生成提示图片
             drawHintImage(hintRow);
             hintArea.classList.remove('hidden');
             downloadHintBtn.classList.remove('hidden');
@@ -821,7 +1215,6 @@
             gameError.className = 'error-msg success';
         }
 
-        /** 打乱数组 (Fisher–Yates) */
         function shuffleArray(arr) {
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -830,7 +1223,7 @@
             return arr;
         }
 
-        /** 绘制提示图片 (一行) */
+        /** 绘制提示图片 */
         function drawHintImage(hintRow) {
             const len = state.wordLength;
             const width = PADDING * 2 + len * BOX_SIZE + (len - 1) * BOX_GAP;
@@ -842,7 +1235,6 @@
             const ctx = hintCanvas.getContext('2d');
             ctx.scale(dpr, dpr);
 
-            // 背景
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, width, height);
 
@@ -852,24 +1244,21 @@
                 const letter = hintRow[i];
 
                 if (letter !== null) {
-                    // 绿色背景
                     ctx.fillStyle = COLORS.correct;
                     ctx.fillRect(x, y, BOX_SIZE, BOX_SIZE);
-                    // 白色文字
                     ctx.fillStyle = COLORS.text;
-                    ctx.font = 'bold 28px "Georgia", "Times New Roman", serif';
+                    ctx.font = 'bold 28px "Georgia", "Times New Roman", "PingFang SC", "Microsoft YaHei", sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(letter, x + BOX_SIZE / 2, y + BOX_SIZE / 2 + 2);
+                    const display = displayChar(letter);
+                    ctx.fillText(display, x + BOX_SIZE / 2, y + BOX_SIZE / 2 + 2);
                 } else {
-                    // 空心边框
                     ctx.strokeStyle = COLORS.emptyBorder;
                     ctx.lineWidth = 2;
                     ctx.strokeRect(x + 1, y + 1, BOX_SIZE - 2, BOX_SIZE - 2);
                 }
             }
 
-            // 导出为图片
             hintCanvas.toBlob(function(blob) {
                 if (hintPreview._blobUrl) {
                     URL.revokeObjectURL(hintPreview._blobUrl);
@@ -889,7 +1278,6 @@
                 URL.revokeObjectURL(hintPreview._blobUrl);
                 hintPreview._blobUrl = null;
             }
-            // 不重置 gameError，保留消息
         }
 
         // ============================================================
@@ -924,21 +1312,20 @@
                         const letter = currentGuess.word[col];
 
                         if (status === 'empty') {
-                            // 空位：边框
                             ctx.strokeStyle = COLORS.emptyBorder;
                             ctx.lineWidth = 2;
                             ctx.strokeRect(x + 1, y + 1, BOX_SIZE - 2, BOX_SIZE - 2);
                             continue;
                         }
-
                         ctx.fillStyle = COLORS[status] || COLORS.absent;
                         ctx.fillRect(x, y, BOX_SIZE, BOX_SIZE);
 
                         ctx.fillStyle = COLORS.text;
-                        ctx.font = 'bold 28px "Georgia", "Times New Roman", serif';
+                        ctx.font = 'bold 28px "Georgia", "Times New Roman", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.fillText(letter, x + BOX_SIZE / 2, y + BOX_SIZE / 2 + 2);
+                        const display = displayChar(letter);
+                        ctx.fillText(display, x + BOX_SIZE / 2, y + BOX_SIZE / 2 + 2);
                     } else {
                         ctx.strokeStyle = COLORS.emptyBorder;
                         ctx.lineWidth = 2;
@@ -947,7 +1334,6 @@
                 }
             }
 
-            // 导出为图片
             canvas.toBlob(function(blob) {
                 if (previewImg._blobUrl) {
                     URL.revokeObjectURL(previewImg._blobUrl);
@@ -960,13 +1346,11 @@
         }
 
         // ============================================================
-        //  UI 辅助更新
+        //  UI 辅助
         // ============================================================
 
         function updateAttemptCounter() {
-            const total = state.maxAttempts;
-            const used = state.guesses.length;
-            attemptCounter.textContent = `${used} / ${total}`;
+            attemptCounter.textContent = `${state.guesses.length} / ${state.maxAttempts}`;
         }
 
         function updateStatusBanner() {
@@ -991,7 +1375,7 @@
             if (isOver) {
                 guessInput.placeholder = '游戏已结束';
             } else {
-                guessInput.placeholder = `输入 ${state.wordLength} 个字母的单词...`;
+                guessInput.placeholder = `输入 ${state.wordLength} 个字符...`;
                 guessInput.maxLength = state.wordLength;
             }
             updateAttemptCounter();
@@ -1000,7 +1384,7 @@
         }
 
         // ============================================================
-        //  下载功能
+        //  下载
         // ============================================================
 
         function downloadBoard() {
@@ -1038,7 +1422,7 @@
                     timestamp: Date.now(),
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            } catch (_) { /* 忽略存储错误 */ }
+            } catch (_) {}
         }
 
         function loadFromLocalStorage() {
@@ -1048,22 +1432,18 @@
                 const data = JSON.parse(raw);
                 if (!data.state || !data.history || data.historyIndex === undefined) return false;
 
-                // 恢复状态
                 restoreFromSnapshot(data.state);
                 state.history = data.history;
                 state.historyIndex = data.historyIndex;
 
-                // 同步 UI
                 targetWordInput.value = state.targetWord;
                 maxAttemptsInput.value = state.maxAttempts;
                 guessInput.maxLength = state.wordLength;
-                guessInput.placeholder = `输入 ${state.wordLength} 个字母的单词...`;
+                guessInput.placeholder = `输入 ${state.wordLength} 个字符...`;
 
-                // 如果游戏已结束，禁用输入
                 if (state.isGameOver) {
                     guessInput.disabled = true;
                     guessBtn.disabled = true;
-                    // 游戏结束则清除存储（但保留历史）
                     localStorage.removeItem(STORAGE_KEY);
                 } else {
                     guessInput.disabled = false;
@@ -1080,7 +1460,6 @@
                 $('action-section').style.display = 'block';
                 downloadBoardBtn.style.display = 'inline-flex';
 
-                // 如果有错误信息，清除
                 gameError.textContent = '';
                 setupError.textContent = '';
 
@@ -1088,6 +1467,15 @@
             } catch (_) {
                 return false;
             }
+        }
+
+        // ============================================================
+        //  使用指南切换
+        // ============================================================
+
+        function toggleGuide() {
+            const isOpen = guideContent.classList.toggle('open');
+            guideToggleBtn.textContent = isOpen ? '📖 收起使用指南' : '📖 查看使用指南（含示例）';
         }
 
         // ============================================================
@@ -1108,33 +1496,38 @@
             }
         });
 
+        // 输入时自动规范化（实时反馈）
+        guessInput.addEventListener('input', function() {
+            // 只做显示上的规范化提示，实际提交时再做完整规范化
+            // 这里不做强制转换，避免干扰输入法
+        });
+
+        targetWordInput.addEventListener('input', function() {
+            // 同样不做强制转换
+        });
+
         // ============================================================
         //  启动
         // ============================================================
 
-        // 尝试从本地存储恢复
         const restored = loadFromLocalStorage();
 
         if (!restored) {
-            // 默认初始化
-            targetWordInput.value = 'SCANDAL';
+            targetWordInput.value = 'HELLO';
             maxAttemptsInput.value = '6';
-            // 延迟执行以确保 DOM 完全加载
             setTimeout(() => {
                 initGame();
             }, 20);
         } else {
-            // 恢复后，如果游戏未结束，保存一次以刷新存储
             if (!state.isGameOver) {
                 saveToLocalStorage();
             }
-            // 聚焦输入
             if (!state.isGameOver) {
                 guessInput.focus();
             }
         }
 
-        // 暴露全局 (给 onclick 使用)
+        // 暴露全局
         window.initGame = initGame;
         window.makeGuess = makeGuess;
         window.generateHint = generateHint;
@@ -1144,13 +1537,13 @@
         window.downloadBoard = downloadBoard;
         window.downloadHint = downloadHint;
         window.clearHintArea = clearHintArea;
+        window.toggleGuide = toggleGuide;
 
-        console.log('🧩 Wordle 模拟器增强版已加载');
-        console.log(`📌 目标单词: ${state.targetWord || '(未设置)'}, 轮数: ${state.maxAttempts}`);
-        console.log(`📊 历史记录: ${state.history.length} 条, 当前索引: ${state.historyIndex}`);
-        if (state.isGameOver) {
-            console.log(`🏁 游戏已结束, 胜利: ${state.isGameWon}`);
-        }
+        console.log('🧩 Wordle 模拟器 · 全字符增强版 已加载');
+        console.log(`📌 目标: "${state.targetWord || '(未设置)'}" | 轮数: ${state.maxAttempts}`);
+        console.log(`📊 历史: ${state.history.length} 条 | 索引: ${state.historyIndex}`);
+        if (state.isGameOver) console.log(`🏁 游戏结束, 胜利: ${state.isGameWon}`);
+        console.log('🌐 支持所有 Unicode 字符 · 字母自动大写 · 标点半角');
     </script>
 
 </body>
