@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Berry Melody查分工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/forge/1.3.1/forge.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <style>
+        /* 完整样式（与之前一致） */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .container { max-width: 900px; width: 100%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+        h2 { text-align: center; margin-bottom: 15px; }
+        textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: monospace; font-size: 14px; resize: vertical; }
+        .big-area { height: 200px; background: #fafafa; }
+        .input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .input-row input, .input-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 10px; }
+        button:active { background: #0056b3; }
+        .btn-stats-orange { background: #fd7e14; }
+        .btn-sm { width: auto; padding: 8px 16px; font-size: 14px; display: inline-block; margin: 5px 0; }
+        .log-box { background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 10px 0; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px; white-space: pre-wrap; }
+        .log-box .log-info { color: #0056b3; }
+        .log-box .log-success { color: #28a745; }
+        .log-box .log-error { color: #dc3545; }
+        .log-box .log-warning { color: #fd7e14; }
+        .file-import-wrap { text-align: center; margin-bottom: 10px; }
+        .file-import-wrap label { display: inline-block; background: #007bff; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .file-input { display: none; }
+        #diagnosticOutput { display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; white-space: pre-wrap; font-family: monospace; font-size: 13px; max-height: 400px; overflow-y: auto; }
+        #visualContainer { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background: #f8f9fa; background-size: cover; background-position: center; }
+        .vis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; }
+        .b-card { background: rgba(255,255,255,0.92); border: 1px solid #e0e0e0; border-radius: 6px; padding: 8px; text-align: center; }
+        .b-card .img-wrapper { width: 100%; aspect-ratio: 1; background: #f0f0f0; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .b-card .img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .b-card .rank { font-size: 12px; font-weight: bold; color: #666; background: #f0f0f0; padding: 2px; border-radius: 4px; margin: 3px 0; }
+        .b-card .cname { font-size: 10px; font-weight: 600; word-break: break-word; }
+        .b-card .cinfo { font-size: 10px; color: #555; display: flex; justify-content: space-between; padding: 0 4px; }
+        .b-card .grade { font-size: 12px; font-weight: bold; margin-top: 2px; }
+        .b30-header { background: rgba(255,255,255,0.85); padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 6px; border: 1px solid #e0e0e0; backdrop-filter: blur(4px); }
+        .b30-header .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .b30-header .player-block { display: flex; align-items: center; gap: 12px; }
+        .b30-header .player-block img { width: 45px; height: 45px; border-radius: 50%; background: #e0e0e0; object-fit: cover; }
+        .b30-header .player-block .name { font-size: 16px; font-weight: bold; }
+        .b30-header .player-block .sub { font-size: 11px; color: #888; }
+        .b30-header .resource-block { text-align: right; font-size: 12px; color: #555; line-height: 1.6; }
+        .b30-header .calc-block { font-size: 12px; text-align: center; background: rgba(240,244,248,0.8); padding: 6px; border-radius: 4px; color: #333; }
+        .b30-header .calc-block strong { color: #d9534f; }
+        .b30-header .matrix-table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 4px; text-align: center; background: rgba(255,255,255,0.8); }
+        .b30-header .matrix-table td, .b30-header .matrix-table th { border: 1px solid #ddd; padding: 4px 0; }
+        .bg-settings { margin-top: 10px; border-top: 1px solid #e9ecef; padding-top: 15px; }
+        .bg-settings .btn-group-bg { display: flex; gap: 10px; flex-wrap: wrap; }
+        .bg-settings .btn-group-bg button { flex: 1; min-width: 80px; padding: 8px 12px; font-size: 14px; border: none; border-radius: 4px; color: white; cursor: pointer; }
+        .bg-settings .btn-group-bg .btn-import { background: #17a2b8; }
+        .bg-settings .btn-group-bg .btn-random { background: #6c757d; }
+        .bg-settings .btn-group-bg .btn-clear { background: #dc3545; }
+        #saveVisBtn { margin-top: 10px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        #saveVisBtn button { width: auto; padding: 10px 20px; font-size: 16px; margin: 0; }
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 6px; }
+        .status-badge.ok { background: #d4edda; color: #155724; }
+        .status-badge.fail { background: #f8d7da; color: #721c24; }
+        .status-badge.loading { background: #fff3cd; color: #856404; }
+        #depStatus { font-size: 13px; text-align: center; margin-bottom: 10px; padding: 6px; background: #f8f9fa; border-radius: 4px; }
+        .query-section { margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 15px; }
+        .query-section h3 { font-size: 18px; margin-bottom: 10px; }
+        .query-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .query-inputs .full-width { grid-column: 1 / -1; }
+        .query-inputs label { font-weight: normal; font-size: 13px; margin-bottom: 2px; color: #555; }
+        .query-inputs input, .query-inputs select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .query-result { margin-top: 15px; width: 100%; }
+        .query-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; }
+        .query-card .q-top { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+        .query-card .q-img { width: 120px; height: 120px; flex-shrink: 0; background: #f0f0f0; border-radius: 6px; overflow: hidden; }
+        .query-card .q-img img { width: 100%; height: 100%; object-fit: cover; }
+        .query-card .q-info { flex: 1; min-width: 200px; }
+        .query-card .q-title { font-size: 20px; font-weight: bold; margin-bottom: 6px; }
+        .query-card .q-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 20px; }
+        .query-card .q-meta span { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding: 2px 0; }
+        .query-card .q-meta .label { color: #888; font-weight: 500; }
+        .query-card .q-meta .value { font-weight: 600; }
+        .query-card .q-diff-table { margin-top: 12px; border-top: 2px solid #e9ecef; padding-top: 10px; }
+        .query-card .q-diff-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .query-card .q-diff-table th, .query-card .q-diff-table td { border: 1px solid #ddd; padding: 4px 6px; text-align: center; }
+        .query-card .q-diff-table th { background: #f8f9fa; font-weight: 600; }
+        .query-card .q-diff-table .grade-badge { display: inline-block; padding: 0 8px; border-radius: 10px; color: white; font-weight: bold; }
+        .query-save-btns { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .query-save-btns button { width: auto; padding: 8px 20px; font-size: 14px; }
+        @media (max-width: 600px) {
+            .query-inputs { grid-template-columns: 1fr; }
+            .query-card .q-top { flex-direction: column; align-items: center; }
+            .query-card .q-img { width: 100%; max-width: 200px; height: auto; aspect-ratio: 1/1; }
+            .query-card .q-meta { grid-template-columns: 1fr; }
+            .vis-grid { grid-template-columns: repeat(3, 1fr); }
+            .query-card .q-diff-table table { font-size: 11px; }
+        }
+        .file-load-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+        .file-load-bar button { width: auto; padding: 8px 18px; font-size: 15px; margin: 0; background: #28a745; }
+        .file-load-bar .hint { font-size: 13px; color: #888; }
+
+        .guess-section { margin-top: 30px; border-top: 2px solid #e9ecef; padding-top: 15px; }
+        .guess-section h3 { font-size: 18px; margin-bottom: 10px; }
+        .guess-settings { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; }
+        .guess-settings label { font-size: 14px; font-weight: 500; }
+        .guess-settings input[type="number"] { width: 70px; padding: 6px; border: 1px solid #ddd; border-radius: 6px; }
+        .guess-settings input[type="checkbox"] { width: 18px; height: 18px; margin-right: 4px; }
+        .guess-status { display: flex; flex-wrap: wrap; gap: 20px; background: #f8f9fa; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 15px; font-weight: 600; }
+        .guess-status span { color: #d9534f; }
+        .guess-puzzle { font-family: monospace; font-size: 16px; line-height: 2; background: #fcfcfc; padding: 12px; border-radius: 6px; border: 1px solid #eee; margin: 10px 0; white-space: pre-wrap; word-break: break-all; }
+        .guess-puzzle .revealed { color: #28a745; }
+        .guess-puzzle .hidden { color: #999; }
+        .guess-input-area { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 15px 0; }
+        .guess-input-area input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; }
+        .guess-input-area button { width: auto; padding: 8px 20px; font-size: 15px; margin: 0; }
+        .guess-result { font-size: 15px; margin-top: 10px; padding: 10px; border-radius: 6px; background: #f0f8ff; border: 1px solid #cce5ff; }
+        .guess-result .win { color: #28a745; font-weight: bold; }
+        .guess-result .lose { color: #dc3545; font-weight: bold; }
+        .guess-result .info { color: #0056b3; }
+        .guess-btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+        .guess-btn-group button { flex: 1; min-width: 100px; }
+        @media (max-width: 600px) {
+            .guess-settings { flex-direction: column; align-items: stretch; }
+            .guess-input-area { flex-direction: column; align-items: stretch; }
+            .guess-input-area input { width: 100%; }
+        }
+
+        /* 新增关于区域样式 */
+        .about-section {
+            margin-top: 30px;
+            border-top: 2px solid #e9ecef;
+            padding-top: 18px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .about-section strong {
+            color: #333;
+        }
+        .about-section .highlight {
+            color: #007bff;
+        }
+        .hint-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🔐 Berry Melody 查分工具</h2>
+    <p class="hint">流程：解码 → 定数表 → 文本诊断 → 曲绘包 → 可视化 / 单曲查询 / 猜歌</p>
+
+    <div id="depStatus">
+        <span>依赖加载中...</span>
+        <span class="status-badge loading" id="forgeStatus">⏳ forge</span>
+        <span class="status-badge loading" id="jszipStatus">⏳ JSZip</span>
+        <span class="status-badge loading" id="xlsxStatus">⏳ XLSX</span>
+        <span class="status-badge loading" id="h2cStatus">⏳ html2canvas</span>
+    </div>
+
+    <div class="file-load-bar">
+        <button onclick="document.getElementById('archiveFilePicker').click()">📂 选择 FormalSave.txt</button>
+        <span class="hint">安卓路径: /Android/data/com.skywaystudio.BerryMelody/FormalSave.txt</span>
+        <input type="file" id="archiveFilePicker" accept=".txt" style="display:none" onchange="loadArchiveFile(event)">
+    </div>
+
+    <label for="fullInput">完整存档 (从 &lt;RSAKeyValue&gt; 开始)</label>
+    <textarea id="fullInput" class="big-area" placeholder="粘贴存档内容..."></textarea>
+    <button id="decryptBtn" onclick="performDecryption()">① 解码</button>
+    <div id="warningMsg" style="color:#d9534f; font-size:14px; margin:10px 0; text-align:center; font-weight:bold;"></div>
+
+    <div class="log-box" id="debugLog">等待开始解码...</div>
+
+    <div id="statsSection" style="display:none; border-top:1px solid #eee; padding-top:15px;">
+        <!-- 定数表导入 -->
+        <div class="file-import-wrap">
+            <input type="file" id="excelFileInput" accept="*/*" class="file-input">
+            <label for="excelFileInput">② 导入特制定数表 (.xlsx)</label>
+            <div class="hint-text">获取：加 Berry Melody 官方 QQ 群 <span class="highlight">760171942</span>，群文件「查分器」文件夹</div>
+        </div>
+
+        <button class="btn-stats" onclick="outputTextDiagnostic()" style="margin-top:-5px; margin-bottom:10px; background-color:#17a2b8;">②-1 输出文本诊断</button>
+        <div id="diagnosticOutput"></div>
+
+        <!-- 曲绘包 -->
+        <div class="file-import-wrap" style="margin-top:5px;">
+            <input type="file" id="zipFileInput" accept="*/*" class="file-input">
+            <label for="zipFileInput">③ 导入曲绘图片包 (.zip)</label>
+            <div class="hint-text">获取：加 Berry Melody 官方 QQ 群 <span class="highlight">760171942</span>，群文件「查分器」文件夹</div>
+        </div>
+
+        <!-- 背景设置 -->
+        <div class="bg-settings">
+            <div style="font-size:14px; font-weight:bold; margin-bottom:8px;">🖼️ 背景设置</div>
+            <div class="btn-group-bg">
+                <input type="file" id="bgFileInput" accept="image/*" style="display:none;">
+                <button class="btn-import" onclick="document.getElementById('bgFileInput').click()">导入自定义背景</button>
+                <button class="btn-random" onclick="applyRandomBackground()">🎲 随机背景 1-10</button>
+                <button class="btn-clear" onclick="clearBackground()">重置背景</button>
+            </div>
+            <div id="bgStatus" style="font-size:12px; color:#888; text-align:center; margin-top:5px;">当前背景：无</div>
+        </div>
+
+        <!-- B30 生成 -->
+        <div class="input-row" style="margin-top:15px;">
+            <input type="number" id="topNInput" value="30" min="1" max="999" placeholder="输入n">
+            <button class="btn-stats-orange" onclick="generateVisualization()">④ 生成可视化 Bn 图</button>
+        </div>
+
+        <div id="visualContainer">
+            <div id="visHeaderBlock"></div>
+            <div id="visGridContainer" class="vis-grid"></div>
+            <div id="saveVisBtn" style="display:none; margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button class="btn-sm" style="background:#28a745;" onclick="downloadVisualization(1.5)">💾 普清截图 (1.5x)</button>
+                <button class="btn-sm" style="background:#007bff;" onclick="downloadVisualization(3.0)">💾 高清截图 (3x) 可能较慢</button>
+            </div>
+        </div>
+
+        <!-- 单曲查询 -->
+        <div class="query-section">
+            <h3>⑤ 单曲查询 / 随机歌曲</h3>
+            <p class="hint" style="font-size:12px;">填写条件，留空则忽略。曲名支持多语言智能匹配，自动选择最相似的歌曲。</p>
+            <div class="query-inputs">
+                <div class="full-width">
+                    <label>曲名 (模糊搜索，智能匹配)</label>
+                    <input type="text" id="qName" placeholder="如 Let's get wild 或 输入中文/日文名">
+                </div>
+                <div>
+                    <label>曲师</label>
+                    <input type="text" id="qArtist" placeholder="如 P4koo">
+                </div>
+                <div>
+                    <label>章节</label>
+                    <input type="text" id="qChapter" placeholder="如 单曲精选集">
+                </div>
+                <div>
+                    <label>BPM 范围 (最小值)</label>
+                    <input type="number" id="qBpmMin" placeholder="120">
+                </div>
+                <div>
+                    <label>BPM 范围 (最大值)</label>
+                    <input type="number" id="qBpmMax" placeholder="200">
+                </div>
+                <div>
+                    <label>定数范围 (最小值)</label>
+                    <input type="number" step="0.1" id="qConstMin" placeholder="1.0">
+                </div>
+                <div>
+                    <label>定数范围 (最大值)</label>
+                    <input type="number" step="0.1" id="qConstMax" placeholder="15.0">
+                </div>
+                <div>
+                    <label>谱师</label>
+                    <input type="text" id="qCharter" placeholder="如 qqxqqx">
+                </div>
+                <div>
+                    <label>难度 (可选)</label>
+                    <select id="qDiff">
+                        <option value="">不限 (显示所有)</option>
+                        <option value="RL">REALITY (RL)</option>
+                        <option value="IL">ILLUSION (IL)</option>
+                        <option value="TT">TWIST (TT)</option>
+                        <option value="RU">RUIN (RU) 含 VOID</option>
+                        <option value="DM">DREAMY (DM)</option>
+                        <option value="FL">FOOL (FL)</option>
+                    </select>
+                </div>
+                <div class="full-width" style="display:flex; gap:10px;">
+                    <button class="btn-sm" style="background:#17a2b8; flex:1;" onclick="querySong(false)">🎲 随机一首</button>
+                    <button class="btn-sm" style="background:#fd7e14; flex:1;" onclick="querySong(true)">🔍 精确查找 (曲名非空)</button>
+                </div>
+            </div>
+            <div id="queryResultContainer" class="query-result"></div>
+            <div id="querySaveBtns" class="query-save-btns" style="display:none;">
+                <button class="btn-sm" style="background:#28a745;" onclick="saveQueryCard(1.5)">💾 普清截图 (1.5x)</button>
+                <button class="btn-sm" style="background:#007bff;" onclick="saveQueryCard(3.0)">💾 高清截图 (3x) 可能较慢</button>
+            </div>
+        </div>
+
+        <!-- 猜歌模块 -->
+        <div class="guess-section">
+            <h3>⑥ 开字母猜歌曲</h3>
+            <div class="guess-settings">
+                <label>曲数 n: <input type="number" id="guessN" value="5" min="1" max="20" onchange="updateGuessY()"></label>
+                <label>开字母 x: <input type="number" id="guessX" value="10" min="1" max="50"></label>
+                <label>猜测 y: <input type="number" id="guessY" value="10" min="1" max="50"></label>
+                <label><input type="checkbox" id="hideArtist" checked onchange="refreshPuzzleDisplay()"> 隐藏曲师</label>
+                <button class="btn-sm" style="background:#17a2b8; width:auto; padding:8px 20px;" onclick="generatePuzzle()">🎲 生成题目</button>
+            </div>
+
+            <div class="guess-status" id="guessStatus">
+                剩余开字母: <span id="remainX">0</span> &nbsp;|&nbsp; 剩余猜测: <span id="remainY">0</span> &nbsp;|&nbsp; 已猜中: <span id="guessedCount">0</span> / <span id="totalCount">0</span>
+            </div>
+
+            <div class="guess-puzzle" id="guessPuzzle">点击“生成题目”开始</div>
+
+            <div class="guess-input-area">
+                <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; width:100%;">
+                    <label style="font-weight:500;">开字母：</label>
+                    <input type="text" id="letterInput" placeholder="输入单个字符" style="flex:1; min-width:120px;">
+                    <button class="btn-sm" style="background:#fd7e14;" onclick="openLetter()">🔓 开字母</button>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; width:100%; margin-top:5px;">
+                    <label style="font-weight:500;">猜曲名：</label>
+                    <input type="number" id="guessIdx" placeholder="序号" style="width:80px;">
+                    <input type="text" id="guessName" placeholder="输入英文曲名" style="flex:2; min-width:120px;">
+                    <button class="btn-sm" style="background:#007bff;" onclick="guessSong()">🎯 猜</button>
+                </div>
+            </div>
+
+            <div class="guess-result" id="guessResult"></div>
+        </div>
+
+        <!-- ==================== 新增：关于区域 ==================== -->
+        <div class="about-section">
+            <p><strong>📢 获取特制定数表和曲绘图片包：</strong>
+                加入 Berry Melody 官方 QQ 群（群号：<span class="highlight">760171942</span>），
+                在群文件中找到「查分器」文件夹，下载其中的 <code>.xlsx</code>（特制定数表）和 <code>.zip</code>（曲绘图片包）。</p>
+            <p><strong>👨‍💻 关于本工具：</strong>
+                原作者为 <strong>漫书</strong>（QQ 366768808），由 <strong>落氧_FallOxygen</strong>（QQ 3962976891）代投至 Github，已经过原作者授权。
+                欢迎来到 Berry Melody 官方 QQ 群交流：<span class="highlight">760171942</span></p>
+        </div>
+        <!-- ======================================================== -->
+
+    </div> <!-- end statsSection -->
+</div> <!-- end container -->
+
+<script>
+    // ============================================================
+    //  依赖状态
+    // ============================================================
+    (function updateDepStatus() {
+        const el = (id) => document.getElementById(id);
+        const fStatus = el('forgeStatus');
+        const jStatus = el('jszipStatus');
+        const xStatus = el('xlsxStatus');
+        const hStatus = el('h2cStatus');
+
+        function checkAll() {
+            let allOk = true;
+            if (typeof forge !== 'undefined') { fStatus.className = 'status-badge ok';
+                fStatus.textContent = '✅ forge'; } else { fStatus.className = 'status-badge fail';
+                fStatus.textContent = '❌ forge';
+                allOk = false; }
+            if (typeof JSZip !== 'undefined') { jStatus.className = 'status-badge ok';
+                jStatus.textContent = '✅ JSZip'; } else { jStatus.className = 'status-badge fail';
+                jStatus.textContent = '❌ JSZip';
+                allOk = false; }
+            if (typeof XLSX !== 'undefined') { xStatus.className = 'status-badge ok';
+                xStatus.textContent = '✅ XLSX'; } else { xStatus.className = 'status-badge fail';
+                xStatus.textContent = '❌ XLSX';
+                allOk = false; }
+            if (typeof html2canvas !== 'undefined') { hStatus.className = 'status-badge ok';
+                hStatus.textContent = '✅ html2canvas'; } else { hStatus.className = 'status-badge fail';
+                hStatus.textContent = '❌ html2canvas';
+                allOk = false; }
+
+            const depDiv = document.getElementById('depStatus');
+            if (allOk) {
+                depDiv.innerHTML =
+                    '<span style="color:#28a745;">✅ 所有依赖已就绪</span> <span class="status-badge ok">forge</span> <span class="status-badge ok">JSZip</span> <span class="status-badge ok">XLSX</span> <span class="status-badge ok">html2canvas</span>';
+            } else {
+                depDiv.innerHTML =
+                    '<span style="color:#dc3545;">⚠️ 部分依赖未加载，请刷新页面或检查网络</span> <span class="status-badge fail">forge</span> <span class="status-badge fail">JSZip</span> <span class="status-badge fail">XLSX</span> <span class="status-badge fail">html2canvas</span>';
+            }
+        }
+        checkAll();
+        setInterval(checkAll, 800);
+    })();
+
+    // ============================================================
+    //  全局
+    // ============================================================
+    let lastDecryptedJSON = null;
+    let songConstantsMap = null;
+    let imageLocalUrlMap = {};
+    let titleIdx = -1,
+        rlIdx = -1,
+        ilIdx = -1,
+        ttIdx = -1;
+    let extraTypeIdx = -1,
+        extraCharterIdx = -1,
+        extraConstIdx = -1;
+
+    // ============================================================
+    //  日志
+    // ============================================================
+    function logMessage(msg, type = 'info') {
+        const debugLog = document.getElementById('debugLog');
+        if (!debugLog) return;
+        const cls = type === 'error' ? 'log-error' : type === 'success' ? 'log-success' : type === 'warning' ?
+            'log-warning' : 'log-info';
+        debugLog.innerHTML += `<div class="${cls}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+        debugLog.scrollTop = debugLog.scrollHeight;
+    }
+
+    // ============================================================
+    //  工具：Levenshtein 距离
+    // ============================================================
+    function levenshtein(a, b) {
+        if (a.length === 0) return b.length;
+        if (b.length === 0) return a.length;
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b[i - 1] === a[j - 1]) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j] + 1
+                    );
+                }
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    function similarity(a, b) {
+        if (a.length === 0 || b.length === 0) return 0;
+        const maxLen = Math.max(a.length, b.length);
+        const dist = levenshtein(a.toLowerCase(), b.toLowerCase());
+        return 1 - dist / maxLen;
+    }
+
+    // ============================================================
+    //  1. 解密
+    // ============================================================
+    function parseCSharpXmlToForgeKey(xmlStr) {
+        if (typeof forge === 'undefined') throw new Error('forge 库未加载');
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
+
+        function getB64(tagName) {
+            const el = xmlDoc.getElementsByTagName(tagName)[0];
+            return el ? el.textContent.trim().replace(/\s/g, '') : null;
+        }
+
+        function b64ToBigInt(b64) {
+            if (!b64) return null;
+            try {
+                const bytes = forge.util.decode64(b64);
+                return new forge.jsbn.BigInteger(forge.util.bytesToHex(bytes), 16);
+            } catch (e) { return null; }
+        }
+        const modulus = b64ToBigInt(getB64('Modulus'));
+        const exponent = b64ToBigInt(getB64('Exponent'));
+        const d = b64ToBigInt(getB64('D'));
+        const p = b64ToBigInt(getB64('P'));
+        const q = b64ToBigInt(getB64('Q'));
+        const dp = b64ToBigInt(getB64('DP'));
+        const dq = b64ToBigInt(getB64('DQ'));
+        const qi = b64ToBigInt(getB64('InverseQ'));
+        if (!modulus || !exponent || !d) throw new Error("XML 解析失败");
+        return forge.pki.rsa.setPrivateKey(modulus, exponent, d, p, q, dp, dq, qi);
+    }
+
+    function performDecryption() {
+        const fullInput = document.getElementById('fullInput').value.trim();
+        const warn = document.getElementById('warningMsg');
+        if (!fullInput) { warn.innerText = "⚠️ 请粘贴存档！"; return; }
+        if (typeof forge === 'undefined') { warn.innerText = "⚠️ forge 库未加载"; return; }
+
+        document.getElementById('visualContainer').style.display = 'none';
+        document.getElementById('diagnosticOutput').style.display = 'none';
+        warn.innerText = '';
+
+        if (!fullInput.includes('<RSAKeyValue>') || !fullInput.includes('</RSAKeyValue>')) {
+            warn.innerText = "⚠️ 未检测到完整的 <RSAKeyValue> 标签，请粘贴完整存档（从 <RSAKeyValue> 开始）";
+            logMessage("❌ 未找到 <RSAKeyValue> 标签", "error");
+            return;
+        }
+
+        const sep = fullInput.indexOf('</RSAKeyValue>');
+        const keyXml = fullInput.substring(0, sep + 14);
+        let cipher = fullInput.substring(sep + 14).trim();
+        if (cipher.startsWith('<SecKey>')) cipher = cipher.substring(8).trim();
+
+        const base64Match = cipher.match(/^[A-Za-z0-9+/=]+/);
+        if (base64Match) {
+            cipher = base64Match[0];
+        }
+
+        cipher = cipher.replace(/\s/g, '');
+        cipher = cipher.replace(/-/g, '+').replace(/_/g, '/');
+        cipher = cipher.replace(/[^A-Za-z0-9+/=]/g, '');
+        while (cipher.length % 4 !== 0) cipher += '=';
+
+        if (cipher.length < 100) {
+            warn.innerText = "⚠️ 密文过短，可能不完整，请检查粘贴内容";
+            logMessage("❌ 密文长度仅 " + cipher.length + " 字符", "error");
+            return;
+        }
+
+        const btn = document.getElementById('decryptBtn');
+        btn.disabled = true;
+        btn.innerText = "⏳ 解码中...";
+        try {
+            const privKey = parseCSharpXmlToForgeKey(keyXml);
+            const blockSize = privKey.n.bitLength() / 8;
+            const allBytes = forge.util.decode64(cipher);
+            const totalBytes = allBytes.length;
+            const fullBlocks = Math.floor(totalBytes / blockSize);
+            const remainder = totalBytes % blockSize;
+
+            const buf = forge.util.createBuffer();
+
+            for (let i = 0; i < fullBlocks; i++) {
+                const chunk = allBytes.substring(i * blockSize, (i + 1) * blockSize);
+                let p;
+                try { p = privKey.decrypt(chunk, 'RSA-OAEP'); } catch (e) { p = privKey.decrypt(chunk,
+                    'RSAES-PKCS1-V1_5'); }
+                if (p) buf.putBytes(p);
+            }
+
+            if (remainder > 0) {
+                const chunk = allBytes.substring(fullBlocks * blockSize);
+                let p;
+                try { p = privKey.decrypt(chunk, 'RSA-OAEP'); } catch (e) { p = privKey.decrypt(chunk,
+                    'RSAES-PKCS1-V1_5'); }
+                if (p) buf.putBytes(p);
+            }
+
+            const rawBytes = buf.getBytes();
+            let str;
+            try {
+                const decoder = new TextDecoder('utf-8', { fatal: false });
+                str = decoder.decode(new Uint8Array(rawBytes.split('').map(c => c.charCodeAt(0))));
+            } catch (e) {
+                str = forge.util.decodeUtf8(rawBytes);
+            }
+            str = str.replace(/\x00/g, '');
+            str = str.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+
+            if (!str) throw new Error("明文为空");
+            if (!str.trim().startsWith('{')) str = '{' + str + '}';
+
+            let json = null;
+            try {
+                json = JSON.parse(str);
+            } catch (e) {
+                let fixed = str;
+                if (fixed.trim().startsWith('{') && !fixed.trim().endsWith('}')) {
+                    fixed = fixed + '}';
+                }
+                try {
+                    json = JSON.parse(fixed);
+                } catch (e2) {
+                    try { json = eval('(' + fixed + ')'); } catch (e3) { throw new Error("JSON 解析失败: " + e.message); }
+                }
+            }
+
+            lastDecryptedJSON = json;
+            document.getElementById('statsSection').style.display = 'block';
+            logMessage("✅ 解码成功！", "success");
+            warn.innerText = '';
+        } catch (e) {
+            warn.innerText = "❌ " + e.message;
+            logMessage("❌ 解码失败: " + e.message, "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "① 解码";
+        }
+    }
+
+    // ============================================================
+    //  2. 文件监听
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const excelInput = document.getElementById('excelFileInput');
+        if (excelInput) {
+            excelInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                    logMessage("❌ 请选择 .xlsx 文件", "error");
+                    excelInput.value = '';
+                    return;
+                }
+                if (typeof XLSX === 'undefined') {
+                    logMessage("❌ XLSX 库未加载", "error");
+                    excelInput.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    if (parseExcelArrayBuffer(event.target.result)) {
+                        logMessage(`✅ 定数表读取成功: ${file.name}`, "success");
+                    } else {
+                        excelInput.value = '';
+                    }
+                };
+                reader.onerror = function() {
+                    logMessage("❌ 读取文件失败: " + reader.error.message, "error");
+                    excelInput.value = '';
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        const zipInput = document.getElementById('zipFileInput');
+        if (zipInput) {
+            zipInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!file.name.toLowerCase().endsWith('.zip')) {
+                    logMessage("❌ 请选择 .zip 文件", "error");
+                    zipInput.value = '';
+                    return;
+                }
+                logMessage(`📁 已选择图片包: ${file.name}`, "success");
+            });
+        }
+
+        const bgInput = document.getElementById('bgFileInput');
+        if (bgInput) {
+            bgInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const url = URL.createObjectURL(file);
+                    applyBackground(url, '自定义: ' + file.name);
+                    logMessage("✅ 自定义背景已应用", "success");
+                } catch (err) {
+                    logMessage("❌ 应用背景失败: " + err.message, "error");
+                }
+                bgInput.value = '';
+            });
+        }
+
+        const yInput = document.getElementById('guessY');
+        if (yInput) {
+            yInput.addEventListener('input', function() {
+                this.dataset.userChanged = 'true';
+            });
+        }
+        updateGuessY();
+    });
+
+    // ============================================================
+    //  3. 解析 Excel 定数表
+    // ============================================================
+    function parseExcelArrayBuffer(arrayBuffer) {
+        try {
+            if (typeof XLSX === 'undefined') {
+                logMessage("❌ XLSX 库未加载", "error");
+                return false;
+            }
+            const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+            if (!rows || rows.length < 2) { logMessage("❌ 定数表为空", "error"); return false; }
+
+            titleIdx = -1;
+            rlIdx = -1;
+            ilIdx = -1;
+            ttIdx = -1;
+            extraTypeIdx = -1;
+            extraCharterIdx = -1;
+            extraConstIdx = -1;
+
+            for (let i = 0; i < rows[0].length; i++) {
+                let col = String(rows[0][i] || "").trim();
+                if (col.includes("曲名")) titleIdx = i;
+                else if (col.includes("REALITY谱面难度")) rlIdx = i;
+                else if (col.includes("ILLUSION谱面难度")) ilIdx = i;
+                else if (col.includes("TWIST谱面难度")) ttIdx = i;
+                else if (col === "追加谱面") {
+                    extraTypeIdx = i;
+                } else if (col.includes("追加谱面谱师")) {
+                    extraCharterIdx = i;
+                } else if (col.includes("追加谱面难度")) {
+                    extraConstIdx = i;
+                }
+            }
+
+            if (extraTypeIdx === -1 || extraCharterIdx === -1 || extraConstIdx === -1) {
+                logMessage("❌ 未找到追加谱面三列（类型、谱师、难度），请检查表头", "error");
+                return false;
+            }
+            if (titleIdx === -1) { logMessage("❌ 找不到【曲名】表头", "error"); return false; }
+
+            songConstantsMap = {};
+            for (let r = 1; r < rows.length; r++) {
+                const row = rows[r];
+                const name = String(row[titleIdx] || "").trim();
+                if (!name) continue;
+
+                const entry = {
+                    RL: rlIdx !== -1 ? parseFloat(row[rlIdx]) || null : null,
+                    IL: ilIdx !== -1 ? parseFloat(row[ilIdx]) || null : null,
+                    TT: ttIdx !== -1 ? parseFloat(row[ttIdx]) || null : null,
+                    RU: null,
+                    DM: null,
+                    FL: null,
+                    charter: {},
+                    artist: String(row[1] || "").trim(),
+                    illustrator: String(row[2] || "").trim(),
+                    chapter: String(row[3] || "").trim(),
+                    bpm: String(row[4] || "").trim()
+                };
+
+                const fIdx = 5,
+                    hIdx = 7,
+                    jIdx = 9;
+                if (rows[0][fIdx] && rows[0][fIdx].includes("REALITY谱面谱师")) {
+                    entry.charter.RL = String(row[fIdx] || "").trim();
+                }
+                if (rows[0][hIdx] && rows[0][hIdx].includes("ILLUSION谱面谱师")) {
+                    entry.charter.IL = String(row[hIdx] || "").trim();
+                }
+                if (rows[0][jIdx] && rows[0][jIdx].includes("TWIST谱面谱师")) {
+                    entry.charter.TT = String(row[jIdx] || "").trim();
+                }
+
+                const type = String(row[extraTypeIdx] || "").trim().toUpperCase();
+                const charter = String(row[extraCharterIdx] || "").trim();
+                let constVal = parseFloat(row[extraConstIdx]);
+                if (isNaN(constVal)) {
+                    const match = String(row[extraConstIdx] || "").match(/\(([\d.]+)\)/);
+                    if (match) constVal = parseFloat(match[1]);
+                }
+                if (!isNaN(constVal) && constVal !== null) {
+                    if (type === "DREAMY") {
+                        entry.DM = constVal;
+                        entry.charter.DM = charter;
+                    } else if (type === "FOOL") {
+                        entry.FL = constVal;
+                        entry.charter.FL = charter;
+                    } else if (type === "RUIN" || type === "VOID") {
+                        entry.RU = constVal;
+                        entry.charter.RU = charter;
+                    }
+                }
+
+                songConstantsMap[name] = entry;
+            }
+            logMessage(`📊 定数表加载完成，共 ${Object.keys(songConstantsMap).length} 首曲目 (追加谱面已正确解析)`, "success");
+            return true;
+        } catch (e) {
+            logMessage(`❌ 解析定数表错误: ${e.message}`, "error");
+            return false;
+        }
+    }
+
+    // ============================================================
+    //  4. 输出文本诊断
+    // ============================================================
+    function outputTextDiagnostic() {
+        if (!lastDecryptedJSON) { logMessage("⚠️ 请先完成① 解码！", "error"); return; }
+        if (!songConstantsMap) { logMessage("⚠️ 请先导入定数表！", "error"); return; }
+
+        const n = parseInt(document.getElementById('topNInput').value) || 30;
+        const playerName = lastDecryptedJSON["AccountName"] || "未知玩家";
+        const scores = [];
+        const printScores = [];
+        const missingSongs = [];
+
+        const gradeCount = {
+            RL: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            IL: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            TT: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            RU: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            DM: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            FL: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 }
+        };
+        const b30Diffs = ["RL", "IL", "TT", "RU"];
+        const countDiffs = ["TT", "RU"];
+        const allDiffs = ["RL", "IL", "TT", "RU", "DM", "FL"];
+
+        const keys = Object.keys(lastDecryptedJSON);
+        for (const key of keys) {
+            if (key.startsWith("BestScore_")) {
+                const parts = key.split('_');
+                if (parts.length < 3) continue;
+                const diff = parts[parts.length - 1];
+                const name = parts.slice(1, parts.length - 1).join('_');
+                const score = parseInt(lastDecryptedJSON[key]);
+                if (isNaN(score)) continue;
+
+                let g = score === 1000000 ? "S" : score >= 980000 ? "AAA+" : score >= 950000 ? "AAA" : score >=
+                    900000 ? "AA" : score >= 800000 ? "A" : score >= 600000 ? "B" : "F";
+                if (allDiffs.includes(diff) && gradeCount[diff] && gradeCount[diff][g] !== undefined) {
+                    gradeCount[diff][g]++;
+                }
+                if (!allDiffs.includes(diff) || !songConstantsMap[name]) {
+                    if (!allDiffs.includes(diff)) continue;
+                    missingSongs.push(`${name} (${diff})`);
+                    continue;
+                }
+                let constant = songConstantsMap[name][diff];
+                if (constant !== null && !isNaN(constant) && constant > 0) {
+                    const rating = (score / 1000000) * constant;
+                    if (rating > 0) {
+                        printScores.push({ name, diff, constant, score, rating });
+                        if (b30Diffs.includes(diff)) {
+                            scores.push({ name, diff, constant, score, rating });
+                        }
+                    }
+                }
+            }
+        }
+
+        scores.sort((a, b) => b.rating - a.rating);
+        const topN = scores.slice(0, n);
+        const top30Scores = scores.slice(0, 30);
+        const sumRating = top30Scores.reduce((sum, item) => sum + item.rating, 0);
+        const avgRating = sumRating / 30;
+
+        let sCount = 0,
+            aaaPlusCount = 0;
+        for (let d of countDiffs) {
+            sCount += gradeCount[d]["S"] || 0;
+            aaaPlusCount += gradeCount[d]["AAA+"] || 0;
+        }
+        const bonus = (sCount * 0.01) + (aaaPlusCount * 0.005);
+        const calcPotential = avgRating + bonus;
+        const archivePotential = lastDecryptedJSON["Potential"] || "未找到";
+
+        let text = `【解码后的明文与玩家信息】\n`;
+        text += `📁 玩家名称: ${playerName}\n`;
+        text += `📜 完整明文 JSON:\n${JSON.stringify(lastDecryptedJSON, null, 2)}\n\n`;
+        text += `------------------------------------------------------------\n\n`;
+        text += `【定数与成绩明细 (共 ${printScores.length} 首)】\n`;
+        text += `曲名 | 难度(定数) | 分数 | 等级 | 单曲Rating\n`;
+        text += `------------------------------------------------------------\n`;
+        for (const item of printScores) {
+            let grade = item.score === 1000000 ? "S" : item.score >= 980000 ? "AAA+" : item.score >= 950000 ?
+                "AAA" : item.score >= 900000 ? "AA" : item.score >= 800000 ? "A" : item.score >= 600000 ? "B" :
+                "F";
+            const name = item.name.length > 10 ? item.name.substring(0, 9) + ".." : item.name.padEnd(12);
+            const diffConst = `${item.diff} (${item.constant.toFixed(1)})`;
+            text +=
+                `${name.padEnd(12)} | ${diffConst.padEnd(10)} | ${String(item.score).padStart(7)} | ${grade.padStart(4)} | ${item.rating.toFixed(4)}\n`;
+        }
+
+        text += `\n===================【Rating 计算】===================\n`;
+        text += `S级 (1,000,000) 数量: ${sCount} (TT+RU，含VOID)\n`;
+        text += `AAA+ (980,000~999,999) 数量: ${aaaPlusCount} (TT+RU，含VOID)\n\n`;
+        text += `1. Best 30 单曲总分 = ${sumRating.toFixed(5)}\n`;
+        text += `2. Best 30 平均分 = ${avgRating.toFixed(5)}\n`;
+        text += `3. 加分项 = ${bonus.toFixed(5)}\n`;
+        text += `4. 计算潜力 = ${calcPotential.toFixed(5)}\n`;
+        text += `📁 存档内置 Rating: ${archivePotential}\n\n`;
+
+        text += `【各难度等级统计】\n`;
+        const colDiffs = ["RL", "IL", "TT", "RU", "DM", "FL"];
+        const rowGrades = ["S", "AAA+", "AAA", "AA", "A", "B", "F"];
+        text += `等级    `;
+        for (let d of colDiffs) text += `${d.padEnd(4)} `;
+        text += `\n`;
+        for (let g of rowGrades) {
+            text += `${g.padEnd(5)} `;
+            for (let d of colDiffs) {
+                text += `${String(gradeCount[d][g] || 0).padEnd(4)} `;
+            }
+            text += `\n`;
+        }
+
+        if (missingSongs.length > 0) {
+            text += `\n⚠️ 共 ${missingSongs.length} 首曲目未找到定数：\n`;
+            let displayMissing = missingSongs.slice(0, 20).join('\n');
+            if (missingSongs.length > 20) displayMissing += `\n... 还有 ${missingSongs.length - 20} 首缺失`;
+            text += displayMissing;
+        } else {
+            text += `\n✅ 所有曲目匹配成功。`;
+        }
+
+        const diagBox = document.getElementById('diagnosticOutput');
+        diagBox.style.display = 'block';
+        diagBox.innerText = text;
+        logMessage("✅ 文本诊断报告输出完成！", "success");
+    }
+
+    // ============================================================
+    //  5. ZIP 解包
+    // ============================================================
+    function parseZipWithJSZip(file, callback) {
+        if (typeof JSZip === 'undefined') {
+            logMessage("❌ JSZip 库未加载", "error");
+            callback({});
+            return;
+        }
+        logMessage("💻 正在解压 ZIP...", "info");
+        const finalMap = {};
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const arrayBuffer = ev.target.result;
+                JSZip.loadAsync(arrayBuffer).then(function(zip) {
+                    const promises = [];
+                    zip.forEach(function(relativePath, zipEntry) {
+                        if (!zipEntry.dir) {
+                            const name = zipEntry.name.split('/').pop();
+                            const fileNameNoExt = name.replace(/\.[^.]+$/, '');
+                            const ext = name.substring(name.lastIndexOf('.') + 1);
+                            if (['png', 'jpg', 'jpeg'].includes(ext.toLowerCase())) {
+                                promises.push(
+                                    zipEntry.async('blob').then(function(blob) {
+                                        try {
+                                            const blobType = blob.type || 'image/png';
+                                            const fixedBlob = new Blob([blob], { type: blobType });
+                                            const url = URL.createObjectURL(fixedBlob);
+                                            finalMap[fileNameNoExt] = url;
+                                        } catch (e) {
+                                            logMessage(`⚠️ 创建 URL 失败: ${fileNameNoExt} - ${e.message}`,
+                                                "warning");
+                                        }
+                                    }).catch(function(err) {
+                                        logMessage(`⚠️ 解压条目失败: ${zipEntry.name} - ${err.message}`,
+                                            "warning");
+                                    })
+                                );
+                            }
+                        }
+                    });
+                    Promise.all(promises).then(function() {
+                        logMessage(`📊 解压完成，共 ${Object.keys(finalMap).length} 张曲绘`, "success");
+                        callback(finalMap);
+                    }).catch(function(err) {
+                        logMessage("❌ 解压过程出错: " + err.message, "error");
+                        callback({});
+                    });
+                }).catch(function(err) {
+                    logMessage("❌ JSZip 加载失败: " + err.message, "error");
+                    callback({});
+                });
+            } catch (e) {
+                logMessage("❌ 文件读取失败: " + e.message, "error");
+                callback({});
+            }
+        };
+        reader.onerror = function() {
+            logMessage("❌ FileReader 读取失败: " + reader.error.message, "error");
+            callback({});
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function parseZipWithPlus(fileEntry, callback) {
+        logMessage("📱 手机端解压 ZIP...", "info");
+        const tempDir = "_doc/temp_img_zip";
+        const finalMap = {};
+        plus.io.resolveLocalFileSystemURL(tempDir, function(dir) {
+            dir.removeRecursively(function() { startUnzip(); }, function() { startUnzip(); });
+        }, function() { startUnzip(); });
+
+        function startUnzip() {
+            fileEntry.copyTo(plus.io.getDirectory(), "tmp_img.zip", function(entry) {
+                plus.zip.decompress(entry.toLocalURL(), tempDir, {}, function() {
+                    scanPhoneImages(tempDir, callback);
+                }, function(e) {
+                    logMessage("❌ ZIP 解压失败: " + e.message, "error");
+                    callback({});
+                });
+            }, function(e) {
+                logMessage("❌ ZIP 复制失败: " + e.message, "error");
+                callback({});
+            });
+        }
+    }
+
+    function scanPhoneImages(dirPath, callback) {
+        const finalMap = {};
+        plus.io.resolveLocalFileSystemURL(dirPath, function(rootDir) {
+            const reader = rootDir.createReader();
+            reader.readEntries(function(entries) {
+                for (const entry of entries) {
+                    if (entry.isFile) {
+                        const name = entry.name.replace(/\.[^.]+$/, '');
+                        const ext = entry.name.substring(entry.name.lastIndexOf('.') + 1);
+                        if (['png', 'jpg', 'jpeg'].includes(ext.toLowerCase())) {
+                            try {
+                                finalMap[name] = entry.toLocalURL();
+                            } catch (e) {
+                                logMessage(`⚠️ 获取图片 URL 失败: ${name}`, "warning");
+                            }
+                        }
+                    }
+                }
+                logMessage(`📊 手机端扫描到 ${Object.keys(finalMap).length} 张曲绘`, "success");
+                callback(finalMap);
+            }, function(e) {
+                logMessage("❌ 读取目录失败: " + e.message, "error");
+                callback({});
+            });
+        }, function(e) {
+            logMessage("❌ 访问目录失败: " + e.message, "error");
+            callback({});
+        });
+    }
+
+    // ============================================================
+    //  6. 可视化生成
+    // ============================================================
+    function generateVisualization() {
+        const zipInput = document.getElementById('zipFileInput');
+        if (!lastDecryptedJSON) { logMessage("⚠️ 请先完成① 解码", "error"); return; }
+        if (!songConstantsMap) { logMessage("⚠️ 请先导入定数表", "error"); return; }
+        if (!zipInput || !zipInput.files || zipInput.files.length === 0) {
+            logMessage("⚠️ 请先导入 ZIP 图包", "error");
+            return;
+        }
+
+        document.getElementById('visualContainer').style.display = 'block';
+        document.getElementById('saveVisBtn').style.display = 'none';
+
+        const n = parseInt(document.getElementById('topNInput').value) || 30;
+        const scores = [];
+        const b30Diffs = ["RL", "IL", "TT", "RU"];
+        const countDiffs = ["TT", "RU"];
+
+        const keys = Object.keys(lastDecryptedJSON);
+        for (const key of keys) {
+            if (key.startsWith("BestScore_")) {
+                const parts = key.split('_');
+                if (parts.length < 3) continue;
+                const diff = parts[parts.length - 1];
+                const name = parts.slice(1, parts.length - 1).join('_');
+                const score = parseInt(lastDecryptedJSON[key]);
+                if (isNaN(score)) continue;
+                if (!b30Diffs.includes(diff) || !songConstantsMap[name]) continue;
+                let constant = songConstantsMap[name][diff];
+                if (constant !== null && !isNaN(constant) && constant > 0) {
+                    const rating = (score / 1000000) * constant;
+                    if (rating > 0) scores.push({ name, diff, constant, score, rating });
+                }
+            }
+        }
+
+        scores.sort((a, b) => b.rating - a.rating);
+        const topN = scores.slice(0, n);
+        const top30Scores = scores.slice(0, 30);
+        const sumRating = top30Scores.reduce((sum, item) => sum + item.rating, 0);
+        const avgRating = sumRating / 30;
+
+        const gradeCount = {
+            RL: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            IL: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            TT: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            RU: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            DM: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 },
+            FL: { F: 0, B: 0, A: 0, AA: 0, AAA: 0, "AAA+": 0, S: 0 }
+        };
+
+        for (const key of keys) {
+            if (key.startsWith("BestScore_")) {
+                const parts = key.split('_');
+                if (parts.length < 3) continue;
+                const diff = parts[parts.length - 1];
+                const name = parts.slice(1, parts.length - 1).join('_');
+                const score = parseInt(lastDecryptedJSON[key]);
+                if (isNaN(score) || !songConstantsMap[name]) continue;
+                let g = score === 1000000 ? "S" : score >= 980000 ? "AAA+" : score >= 950000 ? "AAA" : score >=
+                    900000 ? "AA" : score >= 800000 ? "A" : score >= 600000 ? "B" : "F";
+                if ((diff === "TT" || diff === "RU") && gradeCount[diff] && gradeCount[diff][g] !== undefined) {
+                    gradeCount[diff][g]++;
+                }
+            }
+        }
+
+        let sCount = 0,
+            aaaPlusCount = 0;
+        for (let d of countDiffs) {
+            sCount += gradeCount[d]["S"] || 0;
+            aaaPlusCount += gradeCount[d]["AAA+"] || 0;
+        }
+        const bonus = (sCount * 0.01) + (aaaPlusCount * 0.005);
+        const calcPotential = avgRating + bonus;
+        const archivePotential = lastDecryptedJSON["Potential"] || "0";
+        const version = lastDecryptedJSON["VersionCode"] || "未知";
+        const playerName = lastDecryptedJSON["AccountName"] || "未知玩家";
+        const charSelect = lastDecryptedJSON["CharSelect"] || "Default";
+        const glass = lastDecryptedJSON["Glass"] || "0";
+        const quantum = lastDecryptedJSON["Quantum"] || "0";
+
+        const failImgBase64 =
+            `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='16' fill='%23999'%3E🎵%3C/text%3E%3C/svg%3E`;
+
+        const colDiffs = ["RL", "IL", "TT", "RU", "DM", "FL"];
+        const rowGrades = ["S", "AAA+", "AAA", "AA", "A", "B", "F"];
+        let matrixHtml = `<table class="matrix-table"><tr><th>等级</th>`;
+        for (let d of colDiffs) matrixHtml += `<th>${d}</th>`;
+        matrixHtml += `</tr>`;
+        for (let g of rowGrades) {
+            matrixHtml += `<tr><td><b>${g}</b></td>`;
+            for (let d of colDiffs) {
+                matrixHtml += `<td>${gradeCount[d][g]||0}</td>`;
+            }
+            matrixHtml += `</tr>`;
+        }
+        matrixHtml += `</table>`;
+
+        const headerHtml = `
+                <div class="b30-header">
+                    <div class="top-row">
+                        <div class="player-block">
+                            <img id="charAvatar" src="${failImgBase64}" crossorigin="anonymous" />
+                            <div>
+                                <div class="name">${playerName}</div>
+                                <div class="sub">Version ${version}</div>
+                            </div>
+                        </div>
+                        <div class="resource-block">
+                            <div>光锥琥珀: ${glass}</div>
+                            <div>珂灵币: ${quantum}</div>
+                        </div>
+                    </div>
+                    <div class="calc-block">
+                        <strong>${archivePotential}</strong> = B30平均(${avgRating.toFixed(5)}) + 0.01×${sCount}(S) + 0.005×${aaaPlusCount}(AAA+)
+                    </div>
+                    ${matrixHtml}
+                </div>
+            `;
+        document.getElementById('visHeaderBlock').innerHTML = headerHtml;
+
+        let html = '';
+        for (let i = 0; i < topN.length; i++) {
+            const item = topN[i];
+            let grade = item.score === 1000000 ? "S" : item.score >= 980000 ? "AAA+" : item.score >= 950000 ?
+                "AAA" : item.score >= 900000 ? "AA" : item.score >= 800000 ? "A" : item.score >= 600000 ? "B" :
+                "F";
+            let gradeColor = grade === 'S' ? '#f1c40f' : grade === 'AAA+' ? '#e67e22' : grade === 'AAA' ?
+                '#2ecc71' : grade === 'AA' ? '#3498db' : grade === 'A' ? '#9b59b6' : '#95a5a6';
+            html += `<div class="b-card">
+                    <div class="rank">b${i+1}</div>
+                    <div class="img-wrapper"><img id="img_${i}" src="${failImgBase64}" crossorigin="anonymous" /></div>
+                    <div class="cname">${item.name}</div>
+                    <div class="cinfo"><span>${item.diff}</span><span>${item.constant.toFixed(1)}</span></div>
+                    <div class="cinfo" style="margin-top:2px;"><span>${item.score}</span></div>
+                    <div class="grade" style="color:${gradeColor}">${grade}</div>
+                    <div class="cinfo"><span>${item.rating.toFixed(4)}</span></div>
+                </div>`;
+        }
+        document.getElementById('visGridContainer').innerHTML = html;
+        logMessage("✅ 卡片骨架已生成，开始加载曲绘...", "success");
+
+        const zipFile = zipInput.files[0];
+        const endLoadCallback = () => {
+            let charKey = charSelect;
+            if (charKey === "Helios") charKey = "Helios1";
+            if (imageLocalUrlMap[charKey]) {
+                const avatar = document.getElementById('charAvatar');
+                if (avatar) avatar.src = imageLocalUrlMap[charKey];
+            }
+            document.getElementById('saveVisBtn').style.display = 'flex';
+            logMessage("✅ 图片加载完成！", "success");
+        };
+
+        if (typeof plus !== 'undefined' && plus.io) {
+            plus.io.resolveLocalFileSystemURL(zipFile.path, function(fileEntry) {
+                parseZipWithPlus(fileEntry, function(imgMap) {
+                    imageLocalUrlMap = imgMap;
+                    lazyLoadImages(topN, endLoadCallback);
+                });
+            }, function() {
+                parseZipWithJSZip(zipFile, function(imgMap) {
+                    imageLocalUrlMap = imgMap;
+                    lazyLoadImages(topN, endLoadCallback);
+                });
+            });
+        } else {
+            parseZipWithJSZip(zipFile, function(imgMap) {
+                imageLocalUrlMap = imgMap;
+                lazyLoadImages(topN, endLoadCallback);
+            });
+        }
+    }
+
+    function lazyLoadImages(topN, callback) {
+        let loadIndex = 0;
+        const totalImages = topN.length;
+        const failImgBase64 =
+            `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='16' fill='%23999'%3E🎵%3C/text%3E%3C/svg%3E`;
+
+        function loadNextBatch() {
+            let loadedInBatch = 0;
+            while (loadIndex < totalImages && loadedInBatch < 2) {
+                const item = topN[loadIndex];
+                const imgElement = document.getElementById(`img_${loadIndex}`);
+                if (!imgElement) { loadIndex++; continue; }
+
+                let imgSrc = failImgBase64;
+                const normalKey = item.name;
+                const ttKey = item.name + "_TT";
+                const ruKey = item.name + "_RU";
+                const dmKey = item.name + "_DM";
+
+                try {
+                    if (item.diff === "TT" && imageLocalUrlMap[ttKey]) {
+                        imgSrc = imageLocalUrlMap[ttKey];
+                    } else if (item.diff === "RU" && imageLocalUrlMap[ruKey]) {
+                        imgSrc = imageLocalUrlMap[ruKey];
+                    } else if (item.diff === "DM" && imageLocalUrlMap[dmKey]) {
+                        imgSrc = imageLocalUrlMap[dmKey];
+                    } else if (imageLocalUrlMap[normalKey]) {
+                        imgSrc = imageLocalUrlMap[normalKey];
+                    }
+
+                    if (imgSrc && imgSrc !== failImgBase64) {
+                        imgElement.crossOrigin = 'anonymous';
+                        imgElement.src = imgSrc;
+                    } else {
+                        imgElement.src = failImgBase64;
+                    }
+                } catch (e) {
+                    logMessage(`⚠️ 加载图片失败: ${item.name} - ${e.message}`, "warning");
+                    imgElement.src = failImgBase64;
+                }
+                loadIndex++;
+                loadedInBatch++;
+            }
+
+            if (loadIndex < totalImages) {
+                setTimeout(loadNextBatch, 200);
+            } else {
+                if (callback) callback();
+            }
+        }
+        setTimeout(loadNextBatch, 500);
+    }
+
+    // ============================================================
+    //  7. 背景控制
+    // ============================================================
+    function applyBackground(url, label) {
+        const container = document.getElementById('visualContainer');
+        container.style.backgroundImage = `url(${url})`;
+        container.style.backgroundSize = 'cover';
+        container.style.backgroundPosition = 'center';
+        document.getElementById('bgStatus').innerText = `当前背景：${label}`;
+    }
+
+    function applyRandomBackground() {
+        const bgKeys = [];
+        for (let i = 1; i <= 10; i++) {
+            if (imageLocalUrlMap['background' + i]) bgKeys.push('background' + i);
+        }
+        if (bgKeys.length === 0) {
+            logMessage("⚠️ ZIP中未找到 background1-10.png", "error");
+            document.getElementById('bgStatus').innerText = "当前背景：未找到";
+            return;
+        }
+        const randomKey = bgKeys[Math.floor(Math.random() * bgKeys.length)];
+        const url = imageLocalUrlMap[randomKey];
+        applyBackground(url, '随机: ' + randomKey + '.png');
+        logMessage(`🎲 已应用随机背景: ${randomKey}.png`, "success");
+    }
+
+    function clearBackground() {
+        const container = document.getElementById('visualContainer');
+        container.style.backgroundImage = 'none';
+        container.style.backgroundColor = '#f8f9fa';
+        document.getElementById('bgStatus').innerText = "当前背景：无";
+        logMessage("🔄 背景已重置", "info");
+    }
+
+    // ============================================================
+    //  8. 截图 (B30)
+    // ============================================================
+    function downloadVisualization(scale) {
+        const btnContainer = document.getElementById('saveVisBtn');
+        const btns = btnContainer.querySelectorAll('button');
+        btns.forEach(b => b.disabled = true);
+        const originalDisplay = btnContainer.style.display;
+        btnContainer.style.display = 'none';
+
+        logMessage(`📸 正在渲染 B30 截图 (${scale}x)...`, "info");
+
+        const container = document.getElementById('visualContainer');
+        const allImgs = container.querySelectorAll('img');
+        let loadedCount = 0;
+        const totalImgs = allImgs.length;
+        if (totalImgs === 0) {
+            doCapture();
+            return;
+        }
+        allImgs.forEach(img => {
+            if (img.complete) { loadedCount++; } else {
+                img.addEventListener('load', function() { loadedCount++;
+                    if (loadedCount >= totalImgs) doCapture(); });
+                img.addEventListener('error', function() { loadedCount++;
+                    if (loadedCount >= totalImgs) doCapture(); });
+            }
+        });
+        if (loadedCount >= totalImgs) doCapture();
+
+        function doCapture() {
+            html2canvas(container, {
+                scale: scale,
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false,
+                width: container.scrollWidth,
+                height: container.scrollHeight
+            }).then(canvas => {
+                try {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = `B30_展示图_${scale}x.png`;
+                    link.href = dataUrl;
+                    link.click();
+                    logMessage(`✅ B30 ${scale}x 截图保存成功！`, "success");
+                } catch (e) {
+                    logMessage("⚠️ toDataURL 失败，尝试 toBlob", "warning");
+                    canvas.toBlob(function(blob) {
+                        if (!blob) { logMessage("❌ toBlob 失败", "error"); return; }
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = `B30_展示图_${scale}x.png`;
+                        link.href = url;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        logMessage(`✅ B30 ${scale}x 截图保存成功 (toBlob)`, "success");
+                    });
+                }
+            }).catch(err => {
+                logMessage(`❌ B30 ${scale}x 截图失败: ${err.message}`, "error");
+            }).finally(() => {
+                btnContainer.style.display = originalDisplay || 'flex';
+                btns.forEach(b => b.disabled = false);
+            });
+        }
+    }
+
+    // ============================================================
+    //  9. 查询模块
+    // ============================================================
+    let currentQueryCardElement = null;
+
+    function querySong(forceExact) {
+        if (!lastDecryptedJSON) { logMessage("⚠️ 请先完成① 解码", "error"); return; }
+        if (!songConstantsMap) { logMessage("⚠️ 请先导入定数表", "error"); return; }
+
+        const nameInput = document.getElementById('qName').value.trim();
+        const artistInput = document.getElementById('qArtist').value.trim().toLowerCase();
+        const chapterInput = document.getElementById('qChapter').value.trim().toLowerCase();
+        const bpmMin = parseFloat(document.getElementById('qBpmMin').value);
+        const bpmMax = parseFloat(document.getElementById('qBpmMax').value);
+        const constMin = parseFloat(document.getElementById('qConstMin').value);
+        const constMax = parseFloat(document.getElementById('qConstMax').value);
+        const charterInput = document.getElementById('qCharter').value.trim().toLowerCase();
+        const diffInput = document.getElementById('qDiff').value;
+
+        let candidates = [];
+        const songNames = Object.keys(songConstantsMap);
+        for (const name of songNames) {
+            const entry = songConstantsMap[name];
+            if (artistInput && !entry.artist.toLowerCase().includes(artistInput)) continue;
+            if (chapterInput && !entry.chapter.toLowerCase().includes(chapterInput)) continue;
+            if (entry.bpm) {
+                const bpmStr = entry.bpm.replace(/[^0-9\-]/g, '');
+                let bpmVal = parseFloat(bpmStr);
+                if (isNaN(bpmVal)) {
+                    const parts = entry.bpm.split('-');
+                    if (parts.length === 2) {
+                        const a = parseFloat(parts[0]);
+                        const b = parseFloat(parts[1]);
+                        if (!isNaN(a) && !isNaN(b)) bpmVal = (a + b) / 2;
+                    }
+                }
+                if (!isNaN(bpmVal)) {
+                    if (!isNaN(bpmMin) && bpmVal < bpmMin) continue;
+                    if (!isNaN(bpmMax) && bpmVal > bpmMax) continue;
+                }
+            }
+            let hasConst = false;
+            const diffs = ["RL", "IL", "TT", "RU", "DM", "FL"];
+            for (const d of diffs) {
+                const c = entry[d];
+                if (c !== null && !isNaN(c) && c > 0) {
+                    if (!isNaN(constMin) && c < constMin) continue;
+                    if (!isNaN(constMax) && c > constMax) continue;
+                    hasConst = true;
+                }
+            }
+            if (!hasConst) continue;
+            if (charterInput) {
+                let found = false;
+                for (const d of ["RL", "IL", "TT", "RU", "DM", "FL"]) {
+                    if (entry.charter && entry.charter[d] && entry.charter[d].toLowerCase().includes(charterInput)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) continue;
+            }
+            if (diffInput) {
+                const c = entry[diffInput];
+                if (c === null || isNaN(c) || c <= 0) continue;
+            }
+            candidates.push(name);
+        }
+
+        if (candidates.length === 0) {
+            logMessage("❌ 未找到符合条件的歌曲", "error");
+            document.getElementById('queryResultContainer').innerHTML = '';
+            document.getElementById('querySaveBtns').style.display = 'none';
+            return;
+        }
+
+        let selectedName = null;
+
+        if (nameInput) {
+            let matched = candidates.filter(name => name.toLowerCase().includes(nameInput.toLowerCase()));
+            if (matched.length > 0) {
+                if (forceExact || matched.length > 1) {
+                    matched.sort((a, b) => similarity(b, nameInput) - similarity(a, nameInput));
+                }
+                selectedName = matched[0];
+            } else {
+                let bestScore = -1;
+                let bestName = null;
+                for (const name of candidates) {
+                    const sim = similarity(name, nameInput);
+                    if (sim > bestScore) {
+                        bestScore = sim;
+                        bestName = name;
+                    }
+                }
+                if (bestName && bestScore > 0.1) {
+                    selectedName = bestName;
+                    logMessage(`ℹ️ 未找到精确匹配，已选择最相似的: ${bestName} (相似度 ${(bestScore*100).toFixed(1)}%)`, "info");
+                } else {
+                    selectedName = candidates[Math.floor(Math.random() * candidates.length)];
+                    logMessage(`⚠️ 未找到近似匹配，随机选取: ${selectedName}`, "warning");
+                }
+            }
+        } else {
+            selectedName = candidates[Math.floor(Math.random() * candidates.length)];
+        }
+
+        const entry = songConstantsMap[selectedName];
+
+        let availableDiffs = [];
+        if (diffInput) {
+            if (entry[diffInput] !== null && !isNaN(entry[diffInput]) && entry[diffInput] > 0) {
+                availableDiffs = [diffInput];
+            } else {
+                logMessage("❌ 该歌曲无指定难度数据", "error");
+                return;
+            }
+        } else {
+            const allDiffs = ["RL", "IL", "TT", "RU", "DM", "FL"];
+            for (const d of allDiffs) {
+                if (entry[d] !== null && !isNaN(entry[d]) && entry[d] > 0) {
+                    availableDiffs.push(d);
+                }
+            }
+        }
+        if (availableDiffs.length === 0) {
+            logMessage("❌ 该歌曲无有效定数", "error");
+            return;
+        }
+
+        const failImgBase64 =
+            `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='16' fill='%23999'%3E🎵%3C/text%3E%3C/svg%3E`;
+
+        let tableRows = '';
+        for (const d of availableDiffs) {
+            const constant = entry[d];
+            const charter = (entry.charter && entry.charter[d]) || "未知";
+            const scoreKey = `BestScore_${selectedName}_${d}`;
+            const comboKey = `BestCombo_${selectedName}_${d}`;
+            let score = lastDecryptedJSON[scoreKey] ? parseInt(lastDecryptedJSON[scoreKey]) : 0;
+            let combo = lastDecryptedJSON[comboKey] ? parseInt(lastDecryptedJSON[comboKey]) : 0;
+            if (isNaN(score)) score = 0;
+            if (isNaN(combo)) combo = 0;
+            let rating = 0;
+            if (score > 0 && constant > 0) rating = (score / 1000000) * constant;
+            let grade = "F";
+            if (score === 1000000) grade = "S";
+            else if (score >= 980000) grade = "AAA+";
+            else if (score >= 950000) grade = "AAA";
+            else if (score >= 900000) grade = "AA";
+            else if (score >= 800000) grade = "A";
+            else if (score >= 600000) grade = "B";
+            else grade = "F";
+            const gradeColor = grade === 'S' ? '#f1c40f' : grade === 'AAA+' ? '#e67e22' : grade === 'AAA' ?
+                '#2ecc71' : grade === 'AA' ? '#3498db' : grade === 'A' ? '#9b59b6' : '#95a5a6';
+            tableRows += `<tr>
+                    <td><strong>${d}</strong></td>
+                    <td>${constant.toFixed(2)}</td>
+                    <td>${charter}</td>
+                    <td>${score > 0 ? score : '未游玩'}</td>
+                    <td>${combo > 0 ? combo : '未游玩'}</td>
+                    <td><span class="grade-badge" style="background:${gradeColor};">${grade}</span></td>
+                    <td>${rating.toFixed(4)}</td>
+                </tr>`;
+        }
+
+        const cardHtml = `
+                <div class="query-card" id="queryCard">
+                    <div class="q-top">
+                        <div class="q-img">
+                            <img id="queryImg" src="${failImgBase64}" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;"/>
+                        </div>
+                        <div class="q-info">
+                            <div class="q-title">${selectedName}</div>
+                            <div class="q-meta">
+                                <span><span class="label">曲师</span><span class="value">${entry.artist}</span></span>
+                                <span><span class="label">画师</span><span class="value">${entry.illustrator}</span></span>
+                                <span><span class="label">BPM</span><span class="value">${entry.bpm}</span></span>
+                                <span><span class="label">章节</span><span class="value">${entry.chapter}</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="q-diff-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>难度</th>
+                                    <th>定数</th>
+                                    <th>谱师</th>
+                                    <th>分数</th>
+                                    <th>最大连击</th>
+                                    <th>等级</th>
+                                    <th>Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+        const container = document.getElementById('queryResultContainer');
+        container.innerHTML = cardHtml;
+        document.getElementById('querySaveBtns').style.display = 'flex';
+        currentQueryCardElement = document.getElementById('queryCard');
+
+        const img = document.getElementById('queryImg');
+        let imgSrc = failImgBase64;
+        if (imageLocalUrlMap[selectedName]) imgSrc = imageLocalUrlMap[selectedName];
+        else {
+            const firstDiff = availableDiffs[0];
+            const suffixed = selectedName + '_' + firstDiff;
+            if (imageLocalUrlMap[suffixed]) imgSrc = imageLocalUrlMap[suffixed];
+        }
+        if (imgSrc && imgSrc !== failImgBase64) {
+            img.crossOrigin = 'anonymous';
+            img.src = imgSrc;
+        } else {
+            img.src = failImgBase64;
+        }
+
+        logMessage(`✅ 查询结果: ${selectedName} (${availableDiffs.join(', ')})`, "success");
+    }
+
+    function saveQueryCard(scale) {
+        const card = currentQueryCardElement;
+        if (!card) { logMessage("⚠️ 请先查询一首歌曲", "error"); return; }
+        if (typeof html2canvas === 'undefined') { logMessage("❌ html2canvas 库未加载", "error"); return; }
+
+        const saveBtns = document.getElementById('querySaveBtns');
+        const originalDisplay = saveBtns.style.display;
+        saveBtns.style.display = 'none';
+        const btns = saveBtns.querySelectorAll('button');
+        btns.forEach(b => b.disabled = true);
+
+        logMessage(`📸 正在渲染查询卡片 (${scale}x)...`, "info");
+
+        html2canvas(card, {
+            scale: scale,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            width: card.scrollWidth,
+            height: card.scrollHeight
+        }).then(canvas => {
+            try {
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `查询卡片_${scale}x.png`;
+                link.href = dataUrl;
+                link.click();
+                logMessage(`✅ 查询卡片 (${scale}x) 保存成功！`, "success");
+            } catch (e) {
+                logMessage("⚠️ toDataURL 失败，尝试 toBlob", "warning");
+                canvas.toBlob(function(blob) {
+                    if (!blob) { logMessage("❌ toBlob 失败", "error"); return; }
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `查询卡片_${scale}x.png`;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    logMessage(`✅ 查询卡片 (${scale}x) 保存成功 (toBlob)`, "success");
+                });
+            }
+        }).catch(err => {
+            logMessage(`❌ 查询卡片 (${scale}x) 截图失败: ${err.message}`, "error");
+        }).finally(() => {
+            saveBtns.style.display = originalDisplay || 'flex';
+            btns.forEach(b => b.disabled = false);
+        });
+    }
+
+    // ============================================================
+    //  10. 猜歌游戏（最终版）
+    // ============================================================
+    let gamePuzzle = [];
+    let gameRevealedChars = new Set();
+    let remainOpen = 0;
+    let remainGuess = 0;
+    let totalSongs = 0;
+    let gameStarted = false;
+
+    function updateGuessY() {
+        const n = parseInt(document.getElementById('guessN').value) || 5;
+        const yInput = document.getElementById('guessY');
+        if (!yInput.dataset.userChanged) {
+            yInput.value = n + 5;
+        }
+    }
+
+    function generatePuzzle() {
+        if (!songConstantsMap) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">⚠️ 请先导入定数表！</span>';
+            return;
+        }
+        const n = parseInt(document.getElementById('guessN').value) || 5;
+        const x = parseInt(document.getElementById('guessX').value) || 10;
+        let y = parseInt(document.getElementById('guessY').value) || (n + 5);
+        if (y < 1) y = 1;
+        document.getElementById('guessY').value = y;
+
+        const hideArtist = document.getElementById('hideArtist').checked;
+
+        const names = Object.keys(songConstantsMap);
+        if (names.length < n) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">⚠️ 定数表中歌曲不足 ' + n + ' 首</span>';
+            return;
+        }
+        const shuffled = [...names].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, n);
+
+        gamePuzzle = selected.map(name => {
+            const entry = songConstantsMap[name];
+            return {
+                name: name,
+                artist: entry.artist || '未知曲师',
+                guessed: false,
+                displayName: name.replace(/./g, '*'),
+                displayArtist: hideArtist ? entry.artist.replace(/./g, '*') : ''
+            };
+        });
+
+        gameRevealedChars = new Set();
+        remainOpen = x;
+        remainGuess = y;
+        totalSongs = n;
+        gameStarted = true;
+
+        updateUI();
+        document.getElementById('guessResult').innerHTML = '<span class="info">✅ 题目已生成，开始猜歌吧！</span>';
+        renderPuzzle();
+    }
+
+    function renderPuzzle() {
+        const container = document.getElementById('guessPuzzle');
+        let html = '';
+        const hideArtist = document.getElementById('hideArtist').checked;
+        gamePuzzle.forEach((song, idx) => {
+            const num = (idx + 1).toString().padStart(2, ' ');
+            if (song.guessed) {
+                html += `${num}. <span class="revealed">${song.name}</span> - <span class="revealed">${song.artist}</span> ✅\n`;
+            } else {
+                let nameHtml = '';
+                for (let ch of song.name) {
+                    if (ch === ' ') {
+                        nameHtml += ' ';
+                    } else if (gameRevealedChars.has(ch)) {
+                        nameHtml += `<span class="revealed">${ch}</span>`;
+                    } else {
+                        nameHtml += `<span class="hidden">*</span>`;
+                    }
+                }
+                let artistDisplay;
+                if (hideArtist) {
+                    let artistHtml = '';
+                    for (let ch of song.artist) {
+                        if (ch === ' ') {
+                            artistHtml += ' ';
+                        } else if (gameRevealedChars.has(ch)) {
+                            artistHtml += `<span class="revealed">${ch}</span>`;
+                        } else {
+                            artistHtml += `<span class="hidden">*</span>`;
+                        }
+                    }
+                    artistDisplay = artistHtml;
+                } else {
+                    artistDisplay = '';   // 不显示曲师
+                }
+                if (artistDisplay) {
+                    html += `${num}. ${nameHtml} - ${artistDisplay}\n`;
+                } else {
+                    html += `${num}. ${nameHtml}\n`;
+                }
+            }
+        });
+        container.innerHTML = html;
+        updateStatus();
+    }
+
+    function updateStatus() {
+        document.getElementById('remainX').textContent = remainOpen;
+        document.getElementById('remainY').textContent = remainGuess;
+        const guessed = gamePuzzle.filter(s => s.guessed).length;
+        document.getElementById('guessedCount').textContent = guessed;
+        document.getElementById('totalCount').textContent = totalSongs;
+    }
+
+    function updateUI() {
+        updateStatus();
+        renderPuzzle();
+    }
+
+    function refreshPuzzleDisplay() {
+        if (gameStarted) {
+            renderPuzzle();
+        }
+    }
+
+    function openLetter() {
+        if (!gameStarted) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">⚠️ 请先生成题目！</span>';
+            return;
+        }
+        if (remainOpen <= 0) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">❌ 开字母次数已用完！</span>';
+            return;
+        }
+        const input = document.getElementById('letterInput');
+        let char = input.value.trim();
+        if (char.length !== 1) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">⚠️ 请输入单个字符！</span>';
+            return;
+        }
+        const lowerChar = char.toLowerCase();
+        if (gameRevealedChars.has(lowerChar)) {
+            document.getElementById('guessResult').innerHTML = '<span class="warning">⚠️ 字符 “' + char + '” 已揭示过</span>';
+            return;
+        }
+        const hideArtist = document.getElementById('hideArtist').checked;
+        let found = false;
+        for (let song of gamePuzzle) {
+            if (!song.guessed) {
+                const nameLower = song.name.toLowerCase();
+                if (nameLower.includes(lowerChar)) {
+                    found = true;
+                    break;
+                }
+                if (hideArtist) {
+                    const artistLower = song.artist.toLowerCase();
+                    if (artistLower.includes(lowerChar)) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+        gameRevealedChars.add(lowerChar);
+        remainOpen--;
+        if (!found) {
+            updateUI();
+            document.getElementById('guessResult').innerHTML = '<span class="warning">⚠️ 字符 “' + char + '” 未出现，已消耗一次开字母</span>';
+        } else {
+            updateUI();
+            document.getElementById('guessResult').innerHTML = '<span class="info">✅ 已揭示字符 “' + char + '”，剩余开字母 ' + remainOpen + ' 次</span>';
+        }
+        input.value = '';
+        checkGameEnd();
+    }
+
+    function guessSong() {
+        if (!gameStarted) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">⚠️ 请先生成题目！</span>';
+            return;
+        }
+        if (remainGuess <= 0) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">❌ 猜测次数已用完！</span>';
+            return;
+        }
+        const idxInput = document.getElementById('guessIdx');
+        const nameInput = document.getElementById('guessName');
+        const idx = parseInt(idxInput.value);
+        const guessedName = nameInput.value.trim();
+        if (isNaN(idx) || idx < 1 || idx > totalSongs) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">⚠️ 请输入有效序号 (1~' + totalSongs + ')</span>';
+            return;
+        }
+        if (!guessedName) {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">⚠️ 请输入曲名</span>';
+            return;
+        }
+        const song = gamePuzzle[idx - 1];
+        if (song.guessed) {
+            document.getElementById('guessResult').innerHTML = '<span class="warning">⚠️ 这首歌已经猜对了！</span>';
+            return;
+        }
+        remainGuess--;
+        if (song.name.toLowerCase() === guessedName.toLowerCase()) {
+            song.guessed = true;
+            // 不将字符加入 gameRevealedChars，仅标记为已猜中
+            document.getElementById('guessResult').innerHTML = '<span class="win">🎉 猜对了！ ‘' + song.name + '’ 已揭晓！</span>';
+        } else {
+            document.getElementById('guessResult').innerHTML = '<span class="lose">❌ 猜错了</span>';
+            // 不公布正确答案
+        }
+        updateUI();
+        idxInput.value = '';
+        nameInput.value = '';
+        checkGameEnd();
+    }
+
+    function checkGameEnd() {
+        const guessed = gamePuzzle.filter(s => s.guessed).length;
+        if (guessed === totalSongs) {
+            const usedOpen = parseInt(document.getElementById('guessX').value) - remainOpen;
+            const usedGuess = parseInt(document.getElementById('guessY').value) - remainGuess;
+            document.getElementById('guessResult').innerHTML = '<span class="win">🎉🎉 恭喜你猜对了全部 ' + totalSongs + ' 首歌曲！ 用了 ' + usedOpen + ' 次开字母和 ' + usedGuess + ' 次猜测！ 🎉🎉</span>';
+            gameStarted = false;
+            return;
+        }
+        // 只有猜测次数用完才结束，开字母次数用完不影响继续猜
+        if (remainGuess <= 0) {
+            let msg = '😢 游戏结束！猜测次数用尽。正确答案：\n';
+            gamePuzzle.forEach((s, i) => {
+                msg += (i+1) + '. ' + s.name + ' - ' + s.artist + '\n';
+            });
+            document.getElementById('guessResult').innerHTML = '<span class="lose">' + msg.replace(/\n/g, '<br>') + '</span>';
+            gameStarted = false;
+            let full = '';
+            gamePuzzle.forEach((s, i) => {
+                full += (i+1) + '. ' + s.name + ' - ' + s.artist + '\n';
+            });
+            document.getElementById('guessPuzzle').innerHTML = full;
+        }
+    }
+
+    // 文件加载
+    function loadArchiveFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('fullInput').value = ev.target.result;
+            logMessage(`✅ 已加载文件: ${file.name} (${ev.target.result.length} 字符)`, "success");
+            e.target.value = '';
+        };
+        reader.onerror = function() {
+            logMessage("❌ 读取文件失败: " + reader.error.message, "error");
+        };
+        reader.readAsText(file);
+    }
+
+    // ============================================================
+    //  暴露全局函数
+    // ============================================================
+    window.performDecryption = performDecryption;
+    window.outputTextDiagnostic = outputTextDiagnostic;
+    window.generateVisualization = generateVisualization;
+    window.downloadVisualization = downloadVisualization;
+    window.applyRandomBackground = applyRandomBackground;
+    window.clearBackground = clearBackground;
+    window.querySong = querySong;
+    window.saveQueryCard = saveQueryCard;
+    window.logMessage = logMessage;
+    window.loadArchiveFile = loadArchiveFile;
+    window.generatePuzzle = generatePuzzle;
+    window.openLetter = openLetter;
+    window.guessSong = guessSong;
+    window.updateGuessY = updateGuessY;
+    window.refreshPuzzleDisplay = refreshPuzzleDisplay;
+</script>
+</body>
+</html>
