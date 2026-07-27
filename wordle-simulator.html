@@ -819,7 +819,7 @@
         for (let i = 0; i < 10; i++) {
             FULL_TO_HALF[String.fromCharCode(0xFF10 + i)] = String.fromCharCode(0x0030 + i);
         }
-        // 字母全角→半角 (A-Z, a-z)
+        // 字母全角→半角 (A-Z, a-z 的全角形式)
         for (let i = 0; i < 26; i++) {
             FULL_TO_HALF[String.fromCharCode(0xFF21 + i)] = String.fromCharCode(0x0041 + i);
             FULL_TO_HALF[String.fromCharCode(0xFF41 + i)] = String.fromCharCode(0x0061 + i);
@@ -863,9 +863,9 @@
             return result;
         }
 
-        /** 字母转大写（仅对拉丁字母 a-z / A-Z 有效，其他字符不变） */
+        /** 字母转大写（支持所有 Unicode 字母：英文、法文、德文、俄文、希腊文等） */
         function toUpperCaseLetters(str) {
-            return str.replace(/[a-zA-Z]/g, ch => ch.toUpperCase());
+            return str.toUpperCase();
         }
 
         /** 综合规范化：全角转半角 + 字母大写 */
@@ -876,9 +876,9 @@
             return s;
         }
 
-        /** 判断字符是否为 "字母符号"（有大小写之分的字母）—— 仅拉丁字母 */
+        /** 判断字符是否为 "字母符号"（支持所有 Unicode 字母） */
         function isLetterChar(ch) {
-            return /[A-Za-z]/.test(ch);
+            return /\p{L}/u.test(ch);
         }
 
         function displayChar(ch) {
