@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>体重记录与追踪</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --primary: #5CBBB4;
+            --primary-dark: #4A9E97;
+            --primary-light: #D4F0EE;
+            --accent: #7AB8D4;
+            --accent-light: #E4F2F8;
+            --danger: #E88B7D;
+            --danger-hover: #D97668;
+            --danger-light: #FDE8E4;
+            --success: #7ED6A5;
+            --success-light: #E6F9F0;
+            --warning: #F0C978;
+            --warning-light: #FDF6E4;
+            --bg: #F4F8F7;
+            --card-bg: #FFFFFF;
+            --text-primary: #2D3436;
+            --text-secondary: #636E72;
+            --text-light: #989FA3;
+            --border: #E4EAE8;
+            --border-light: #F0F3F2;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.10), 0 3px 10px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+            --radius-sm: 10px;
+            --radius: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 24px;
+            --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-stack: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
+                -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-stack);
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-image:
+                radial-gradient(ellipse at 20% 10%, rgba(92, 187, 180, 0.06) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 85%, rgba(122, 184, 212, 0.05) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, rgba(126, 214, 165, 0.03) 0%, transparent 60%);
+        }
+
+        /* ==================== 主容器 ==================== */
+        .app-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px 18px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        /* ==================== 头部 ==================== */
+        .app-header {
+            text-align: center;
+            padding: 10px 0 4px;
+        }
+        .app-header .logo-icon {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), #6ECCC4);
+            border-radius: 16px;
+            font-size: 26px;
+            line-height: 48px;
+            margin-bottom: 6px;
+            box-shadow: 0 6px 20px rgba(92, 187, 180, 0.3);
+            user-select: none;
+        }
+        .app-header h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+        .app-header .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: -2px;
+            letter-spacing: 0.2px;
+        }
+
+        /* ==================== 卡片通用 ==================== */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 22px 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            transition: box-shadow var(--transition), transform var(--transition-fast), border-color var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--border);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            font-weight: 650;
+            font-size: 1.05rem;
+            color: var(--text-primary);
+            letter-spacing: -0.2px;
+        }
+        .card-header .card-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+        }
+        .card-icon.icon-form {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .card-icon.icon-stats {
+            background: var(--accent-light);
+            color: #5A9AB8;
+        }
+        .card-icon.icon-chart {
+            background: var(--success-light);
+            color: #4DA876;
+        }
+        .card-icon.icon-history {
+            background: #F5F0FC;
+            color: #7B6CB5;
+        }
+
+        /* ==================== 表单区域 ==================== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 18px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.1px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .form-group label .unit {
+            font-weight: 400;
+            color: var(--text-light);
+            font-size: 0.78rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 11px 15px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-family: var(--font-stack);
+            color: var(--text-primary);
+            background: #FAFBFA;
+            transition: all var(--transition-fast);
+            outline: none;
+            letter-spacing: 0.1px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        .form-input:hover {
+            border-color: #CBD5D2;
+            background: #FDFEFD;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(92, 187, 180, 0.10);
+            outline: none;
+        }
+        .form-input[readonly] {
+            background: #F5F7F6;
+            color: var(--text-secondary);
+            cursor: default;
+            border-style: dashed;
+            border-color: #DDE4E1;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .form-input[readonly]:hover {
+            border-color: #DDE4E1;
+            background: #F5F7F6;
+        }
+        .form-input[readonly]:focus {
+            box-shadow: none;
+            border-color: #DDE4E1;
+        }
+        .form-input::placeholder {
+            color: #C4CAC8;
+            opacity: 1;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 12px 26px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 650;
+            font-family: var(--font-stack);
+            cursor: pointer;
+            letter-spacing: 0.2px;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: transparent;
+            transition: background var(--transition-fast);
+            border-radius: inherit;
+        }
+        .btn:active::after {
+            background: rgba(0, 0, 0, 0.06);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #4DB5AD);
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(92, 187, 180, 0.35);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 22px rgba(92, 187, 180, 0.45);
+            transform: translateY(-1.5px);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(92, 187, 180, 0.3);
+        }
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1.5px solid transparent;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            font-weight: 600;
+            letter-spacing: 0.1px;
+        }
+        .btn-danger:hover {
+            background: var(--danger-light);
+            border-color: #F5D0CA;
+            color: #D15B4E;
+            transform: translateY(-0.5px);
+        }
+        .btn-danger:active {
+            background: #FCD5CF;
+            transform: translateY(0);
+        }
+        .btn-submit {
+            grid-column: 1 / -1;
+            justify-self: start;
+            padding: 13px 34px;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        /* ==================== 统计面板 ==================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 18px 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            transition: all var(--transition);
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            border-color: #D8E2DE;
+        }
+        .stat-card .stat-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 6px;
+        }
+        .stat-card .stat-value {
+            font-size: 1.65rem;
+            font-weight: 750;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+        .stat-card .stat-sub {
+            font-size: 0.78rem;
+            color: var(--text-light);
+            margin-top: 3px;
+            letter-spacing: 0.1px;
+        }
+        .stat-card .stat-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 650;
+            letter-spacing: 0.2px;
+            margin-top: 5px;
+        }
+        .badge-normal {
+            background: var(--success-light);
+            color: #3D8A5F;
+        }
+        .badge-underweight {
+            background: var(--warning-light);
+            color: #B8862D;
+        }
+        .badge-overweight {
+            background: #FFF0EC;
+            color: #C06A3E;
+        }
+        .badge-obese {
+            background: var(--danger-light);
+            color: #B84A3E;
+        }
+        .stat-card.accent-green {
+            border-left: 4px solid var(--success);
+        }
+        .stat-card.accent-blue {
+            border-left: 4px solid var(--accent);
+        }
+        .stat-card.accent-teal {
+            border-left: 4px solid var(--primary);
+        }
+        .stat-card.accent-coral {
+            border-left: 4px solid var(--danger);
+        }
+        .change-negative {
+            color: #3D8A5F !important;
+        }
+        .change-positive {
+            color: #D97668 !important;
+        }
+        .change-zero {
+            color: var(--text-light) !important;
+        }
+
+        /* ==================== 图表区域 ==================== */
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            min-height: 320px;
+            height: auto;
+        }
+        .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+        .chart-empty {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            letter-spacing: 0.2px;
+        }
+
+        /* ==================== 历史记录列表 ==================== */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: #D5DDD9 transparent;
+        }
+        .history-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        .history-list::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: #D5DDD9;
+            border-radius: 10px;
+        }
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #FAFBFA;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            transition: all var(--transition-fast);
+            flex-wrap: wrap;
+        }
+        .history-item:hover {
+            background: #FFFFFF;
+            border-color: #E4EAE8;
+            box-shadow: var(--shadow-sm);
+            transform: translateX(2px);
+        }
+        .history-item .hi-date {
+            font-weight: 650;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            min-width: 90px;
+            letter-spacing: -0.1px;
+        }
+        .history-item .hi-weight {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+            min-width: 60px;
+            letter-spacing: -0.3px;
+        }
+        .history-item .hi-bmi {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            min-width: 70px;
+        }
+        .history-item .hi-note {
+            font-size: 0.82rem;
+            color: var(--text-light);
+            flex: 1;
+            min-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-style: italic;
+        }
+        .history-item .hi-note:empty::after {
+            content: '—';
+            color: #D5DDD9;
+            font-style: normal;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 36px 20px;
+            color: var(--text-light);
+            letter-spacing: 0.2px;
+        }
+        .empty-state .empty-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        /* ==================== Toast 提示 ==================== */
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            background: #2D3436;
+            color: #FFFFFF;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: all var(--transition-slow);
+            box-shadow: var(--shadow-lg);
+            white-space: nowrap;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.success {
+            background: #3D8A5F;
+        }
+        .toast.info {
+            background: #4A90B8;
+        }
+
+        /* ==================== 响应式 ==================== */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 12px 10px 30px;
+                gap: 16px;
+            }
+            .app-header h1 {
+                font-size: 1.4rem;
+            }
+            .app-header .logo-icon {
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                font-size: 22px;
+                border-radius: 13px;
+            }
+            .card {
+                padding: 16px 14px;
+                border-radius: var(--radius);
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .btn-submit {
+                width: 100%;
+                justify-self: stretch;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px 10px;
+            }
+            .stat-card .stat-value {
+                font-size: 1.35rem;
+            }
+            .stat-card .stat-label {
+                font-size: 0.7rem;
+            }
+            .chart-wrapper {
+                min-height: 250px;
+            }
+            .history-item {
+                padding: 10px 14px;
+                gap: 8px;
+            }
+            .history-item .hi-date {
+                font-size: 0.8rem;
+                min-width: 75px;
+            }
+            .history-item .hi-weight {
+                font-size: 1rem;
+                min-width: 50px;
+            }
+            .history-item .hi-bmi {
+                font-size: 0.75rem;
+                min-width: 55px;
+            }
+            .history-item .hi-note {
+                font-size: 0.75rem;
+                min-width: 60px;
+                max-width: 120px;
+            }
+            .btn-danger {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+        }
+        @media (max-width: 420px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .stat-card {
+                padding: 12px 8px;
+                border-radius: var(--radius-sm);
+            }
+            .stat-card .stat-value {
+                font-size: 1.2rem;
+            }
+            .stat-card .stat-label {
+                font-size: 0.68rem;
+                letter-spacing: 0.3px;
+            }
+            .history-item {
+                flex-wrap: wrap;
+                padding: 10px 12px;
+            }
+            .history-item .hi-note {
+                flex: 1 1 100%;
+                min-width: 100%;
+                max-width: 100%;
+                margin-top: 2px;
+                font-size: 0.73rem;
+            }
+            .chart-wrapper {
+                min-height: 210px;
+            }
+            .card {
+                padding: 14px 10px;
+            }
+            .form-input {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            .btn-submit {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ==================== 头部 ==================== -->
+        <header class="app-header">
+            <div class="logo-icon">⚖️</div>
+            <h1>体重记录与追踪</h1>
+            <p class="subtitle">记录每一天，见证更好的自己</p>
+        </header>
+
+        <!-- ==================== 数据录入卡片 ==================== -->
+        <section class="card" id="form-card">
+            <div class="card-header">
+                <span class="card-icon icon-form">📝</span>
+                <span>今日记录</span>
+            </div>
+            <form id="record-form" novalidate>
+                <div class="form-grid">
+                    <!-- 日期（只读） -->
+                    <div class="form-group">
+                        <label for="record-date">📅 日期</label>
+                        <input type="date" id="record-date" class="form-input" readonly required>
+                    </div>
+                    <!-- 体重 -->
+                    <div class="form-group">
+                        <label for="record-weight">⚡ 体重 <span class="unit">(kg)</span></label>
+                        <input type="number" id="record-weight" class="form-input" placeholder="例如：70.5"
+                        step="0.1" min="20" max="300" required autofocus>
+                    </div>
+                    <!-- 身高 -->
+                    <div class="form-group">
+                        <label for="record-height">📏 身高 <span class="unit">(cm)</span></label>
+                        <input type="number" id="record-height" class="form-input" placeholder="例如：175"
+                        step="0.1" min="50" max="260" required>
+                    </div>
+                    <!-- 备注 -->
+                    <div class="form-group full-width">
+                        <label for="record-note">💬 备注 <span class="unit">(选填)</span></label>
+                        <input type="text" id="record-note" class="form-input" placeholder="如：早餐后测量、运动后..."
+                        maxlength="60">
+                    </div>
+                    <!-- 提交按钮 -->
+                    <button type="submit" class="btn btn-primary btn-submit" id="submit-btn">
+                        ✅ 保存记录
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ==================== 统计面板 ==================== -->
+        <section class="stats-grid" id="stats-panel">
+            <div class="stat-card accent-teal">
+                <div class="stat-label">📌 最新体重</div>
+                <div class="stat-value" id="stat-latest">--</div>
+                <div class="stat-sub">kg</div>
+            </div>
+            <div class="stat-card accent-blue">
+                <div class="stat-label">🏁 初始体重</div>
+                <div class="stat-value" id="stat-initial">--</div>
+                <div class="stat-sub">kg · 首次记录</div>
+            </div>
+            <div class="stat-card accent-coral">
+                <div class="stat-label">📊 累计变化</div>
+                <div class="stat-value" id="stat-change">--</div>
+                <div class="stat-sub" id="stat-change-sub">kg</div>
+            </div>
+            <div class="stat-card accent-green">
+                <div class="stat-label">🧮 最新 BMI</div>
+                <div class="stat-value" id="stat-bmi">--</div>
+                <div class="stat-sub" id="stat-bmi-status"></div>
+            </div>
+        </section>
+
+        <!-- ==================== 图表卡片 ==================== -->
+        <section class="card" id="chart-card">
+            <div class="card-header">
+                <span class="card-icon icon-chart">📈</span>
+                <span>体重变化趋势</span>
+            </div>
+            <div class="chart-wrapper" id="chart-wrapper">
+                <canvas id="weight-chart" aria-label="体重变化趋势折线图" role="img"></canvas>
+                <div class="chart-empty" id="chart-empty">暂无数据，请先记录体重吧 ✨</div>
+            </div>
+        </section>
+
+        <!-- ==================== 历史记录卡片 ==================== -->
+        <section class="card" id="history-card">
+            <div class="card-header">
+                <span class="card-icon icon-history">📋</span>
+                <span>历史记录</span>
+                <span style="font-weight:400;font-size:0.8rem;color:var(--text-light);margin-left:auto;" id="history-count">共 0 条</span>
+            </div>
+            <div class="history-list" id="history-list">
+                <div class="empty-state">
+                    <span class="empty-icon">📭</span>
+                    <span>还没有记录，开始记录你的第一组数据吧</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            // ==================== DOM 元素 ====================
+            const form = document.getElementById('record-form');
+            const dateInput = document.getElementById('record-date');
+            const weightInput = document.getElementById('record-weight');
+            const heightInput = document.getElementById('record-height');
+            const noteInput = document.getElementById('record-note');
+            const submitBtn = document.getElementById('submit-btn');
+            const historyList = document.getElementById('history-list');
+            const historyCount = document.getElementById('history-count');
+            const chartWrapper = document.getElementById('chart-wrapper');
+            const chartEmpty = document.getElementById('chart-empty');
+            const canvas = document.getElementById('weight-chart');
+            const toast = document.getElementById('toast');
+
+            // 统计面板元素
+            const statLatest = document.getElementById('stat-latest');
+            const statInitial = document.getElementById('stat-initial');
+            const statChange = document.getElementById('stat-change');
+            const statChangeSub = document.getElementById('stat-change-sub');
+            const statBmi = document.getElementById('stat-bmi');
+            const statBmiStatus = document.getElementById('stat-bmi-status');
+
+            // ==================== 常量 ====================
+            const STORAGE_KEY_RECORDS = 'weight_tracker_records';
+            const STORAGE_KEY_LAST_HEIGHT = 'weight_tracker_last_height';
+
+            // ==================== Chart.js 实例 ====================
+            let chartInstance = null;
+            const CHART_COLORS = {
+                line: '#5CBBB4',
+                lineGlow: 'rgba(92, 187, 180, 0.25)',
+                point: '#4A9E97',
+                pointHover: '#3A827C',
+                grid: 'rgba(180, 195, 190, 0.25)',
+                tick: '#889995',
+            };
+
+            // ==================== Toast 提示 ====================
+            let toastTimer = null;
+
+            function showToast(message, type = 'info') {
+                if (toastTimer) clearTimeout(toastTimer);
+                toast.textContent = message;
+                toast.className = 'toast ' + type;
+                // 强制回流后显示
+                void toast.offsetWidth;
+                toast.classList.add('show');
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 2000);
+            }
+
+            // ==================== 数据操作 ====================
+            function loadRecords() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY_RECORDS);
+                    if (!raw) return [];
+                    const data = JSON.parse(raw);
+                    if (!Array.isArray(data)) return [];
+                    // 过滤无效记录
+                    return data.filter(r => r && typeof r.id === 'number' && typeof r.weight === 'number' && r
+                        .weight > 0 && r.date);
+                } catch (e) {
+                    console.warn('读取本地数据失败，已重置。', e);
+                    return [];
+                }
+            }
+
+            function saveRecords(records) {
+                try {
+                    localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
+                } catch (e) {
+                    console.error('保存数据失败，存储空间可能已满。', e);
+                    showToast('保存失败，请检查存储空间', 'info');
+                }
+            }
+
+            function getLastHeight() {
+                try {
+                    const val = localStorage.getItem(STORAGE_KEY_LAST_HEIGHT);
+                    if (val === null) return '';
+                    const num = parseFloat(val);
+                    return (num > 0 && num <= 260) ? num.toString() : '';
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            function setLastHeight(height) {
+                try {
+                    localStorage.setItem(STORAGE_KEY_LAST_HEIGHT, height.toString());
+                } catch (e) {
+                    // 静默失败
+                }
+            }
+
+            function addRecord(record) {
+                const records = loadRecords();
+                records.push(record);
+                // 按日期升序、id升序排列（用于图表和统计）
+                records.sort((a, b) => {
+                    if (a.date !== b.date) return a.date.localeCompare(b.date);
+                    return a.id - b.id;
+                });
+                saveRecords(records);
+                return records;
+            }
+
+            function deleteRecordById(id) {
+                let records = loadRecords();
+                const before = records.length;
+                records = records.filter(r => r.id !== id);
+                if (records.length < before) {
+                    records.sort((a, b) => {
+                        if (a.date !== b.date) return a.date.localeCompare(b.date);
+                        return a.id - b.id;
+                    });
+                    saveRecords(records);
+                }
+                return records;
+            }
+
+            // ==================== BMI 计算与状态 ====================
+            function calcBMI(weightKg, heightCm) {
+                if (!weightKg || !heightCm || heightCm <= 0 || weightKg <= 0) return null;
+                const hM = heightCm / 100;
+                return parseFloat((weightKg / (hM * hM)).toFixed(1));
+            }
+
+            function getBMIStatus(bmi) {
+                if (bmi === null || bmi === undefined) return { label: '—', cssClass: '' };
+                if (bmi < 18.5) return { label: '偏瘦', cssClass: 'badge-underweight' };
+                if (bmi < 24) return { label: '正常', cssClass: 'badge-normal' };
+                if (bmi < 28) return { label: '偏胖', cssClass: 'badge-overweight' };
+                return { label: '肥胖', cssClass: 'badge-obese' };
+            }
+
+            // ==================== 更新统计面板 ====================
+            function updateStatsPanel(records) {
+                if (!records || records.length === 0) {
+                    statLatest.textContent = '--';
+                    statInitial.textContent = '--';
+                    statChange.textContent = '--';
+                    statChange.className = 'stat-value change-zero';
+                    statChangeSub.textContent = 'kg';
+                    statBmi.textContent = '--';
+                    statBmiStatus.textContent = '';
+                    statBmiStatus.innerHTML = '';
+                    return;
+                }
+
+                // 最新记录（数组已按日期+id排序，最后一条为最新）
+                const latest = records[records.length - 1];
+                // 初始记录（第一条）
+                const initial = records[0];
+
+                const latestWeight = latest.weight;
+                const initialWeight = initial.weight;
+                const changeVal = parseFloat((latestWeight - initialWeight).toFixed(1));
+
+                // 最新BMI
+                const bmi = calcBMI(latest.weight, latest.height);
+                const bmiStatus = getBMIStatus(bmi);
+
+                // 更新DOM
+                statLatest.textContent = latestWeight.toFixed(1);
+                statInitial.textContent = initialWeight.toFixed(1);
+
+                if (changeVal < 0) {
+                    statChange.textContent = changeVal.toFixed(1);
+                    statChange.className = 'stat-value change-negative';
+                    statChangeSub.textContent = 'kg ↓ 减重';
+                } else if (changeVal > 0) {
+                    statChange.textContent = '+' + changeVal.toFixed(1);
+                    statChange.className = 'stat-value change-positive';
+                    statChangeSub.textContent = 'kg ↑ 增重';
+                } else {
+                    statChange.textContent = '0.0';
+                    statChange.className = 'stat-value change-zero';
+                    statChangeSub.textContent = 'kg → 不变';
+                }
+
+                if (bmi !== null) {
+                    statBmi.textContent = bmi.toFixed(1);
+                    statBmiStatus.innerHTML =
+                        `<span class="stat-badge ${bmiStatus.cssClass}">${bmiStatus.label}</span>`;
+                } else {
+                    statBmi.textContent = '--';
+                    statBmiStatus.innerHTML = '';
+                }
+            }
+
+            // ==================== 更新图表 ====================
+            function updateChart(records) {
+                const hasData = records && records.length > 0;
+
+                // 显示/隐藏空状态
+                if (!hasData) {
+                    chartEmpty.style.display = 'flex';
+                    canvas.style.visibility = 'hidden';
+                    if (chartInstance) {
+                        chartInstance.data.labels = [];
+                        chartInstance.data.datasets[0].data = [];
+                        chartInstance.update('none');
+                    }
+                    return;
+                }
+                chartEmpty.style.display = 'none';
+                canvas.style.visibility = 'visible';
+
+                const labels = records.map(r => r.date);
+                const dataPoints = records.map(r => r.weight);
+
+                if (!chartInstance) {
+                    const ctx = canvas.getContext('2d');
+                    chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '体重 (kg)',
+                                data: dataPoints,
+                                borderColor: CHART_COLORS.line,
+                                backgroundColor: CHART_COLORS.lineGlow,
+                                borderWidth: 2.8,
+                                pointBackgroundColor: CHART_COLORS.point,
+                                pointBorderColor: '#FFFFFF',
+                                pointBorderWidth: 2.5,
+                                pointRadius: 5,
+                                pointHoverRadius: 9,
+                                pointHoverBackgroundColor: CHART_COLORS.pointHover,
+                                pointHoverBorderColor: '#FFFFFF',
+                                pointHoverBorderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                order: 1,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        pointStyleWidth: 10,
+                                        padding: 20,
+                                        font: {
+                                            size: 13,
+                                            family: getComputedStyle(document.body)
+                                                .fontFamily,
+                                        },
+                                        color: '#636E72',
+                                    },
+                                },
+                                tooltip: {
+                                    backgroundColor: '#2D3436',
+                                    titleFont: { size: 13, weight: '600' },
+                                    bodyFont: { size: 13 },
+                                    padding: 14,
+                                    cornerRadius: 10,
+                                    displayColors: false,
+                                    callbacks: {
+                                        label: function(ctx) {
+                                            return '体重: ' + ctx.parsed.y.toFixed(1) +
+                                                ' kg';
+                                        },
+                                        title: function(ctx) {
+                                            return '📅 ' + ctx[0].label;
+                                        },
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: '日期',
+                                        color: CHART_COLORS.tick,
+                                        font: { size: 12, weight: '600' },
+                                    },
+                                    ticks: {
+                                        color: CHART_COLORS.tick,
+                                        maxTicksLimit: 12,
+                                        font: { size: 11 },
+                                    },
+                                    grid: {
+                                        color: CHART_COLORS.grid,
+                                        drawBorder: false,
+                                    },
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: '体重 (kg)',
+                                        color: CHART_COLORS.tick,
+                                        font: { size: 12, weight: '600' },
+                                    },
+                                    ticks: {
+                                        color: CHART_COLORS.tick,
+                                        font: { size: 11 },
+                                        callback: function(val) {
+                                            return val.toFixed(1);
+                                        },
+                                    },
+                                    grid: {
+                                        color: CHART_COLORS.grid,
+                                        drawBorder: false,
+                                    },
+                                    beginAtZero: false,
+                                    // 智能设置Y轴范围，留出一些余量
+                                    suggestedMin: undefined,
+                                    suggestedMax: undefined,
+                                },
+                            },
+                        },
+                    });
+                } else {
+                    chartInstance.data.labels = labels;
+                    chartInstance.data.datasets[0].data = dataPoints;
+                }
+
+                // 智能调整Y轴范围
+                if (dataPoints.length > 0) {
+                    const minVal = Math.min(...dataPoints);
+                    const maxVal = Math.max(...dataPoints);
+                    const range = maxVal - minVal || 10;
+                    const padding = range * 0.3;
+                    const yAxis = chartInstance.options.scales.y;
+                    yAxis.suggestedMin = Math.max(0, minVal - padding);
+                    yAxis.suggestedMax = maxVal + padding;
+                }
+
+                chartInstance.update('default');
+            }
+
+            // ==================== 渲染历史列表 ====================
+            function renderHistoryList(records) {
+                historyList.innerHTML = '';
+                historyCount.textContent = '共 ' + (records ? records.length : 0) + ' 条';
+
+                if (!records || records.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-state">
+                            <span class="empty-icon">📭</span>
+                            <span>还没有记录，开始记录你的第一组数据吧</span>
+                        </div>`;
+                    return;
+                }
+
+                // 按时间倒序展示（最新的在前）
+                const reversed = [...records].reverse();
+
+                reversed.forEach(record => {
+                    const bmi = calcBMI(record.weight, record.height);
+                    const bmiStr = bmi !== null ? 'BMI: ' + bmi.toFixed(1) : 'BMI: —';
+                    const noteStr = record.note || '';
+
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.setAttribute('data-id', record.id);
+                    item.innerHTML = `
+                        <span class="hi-date">📅 ${record.date}</span>
+                        <span class="hi-weight">${record.weight.toFixed(1)} kg</span>
+                        <span class="hi-bmi">${bmiStr}</span>
+                        <span class="hi-note">${escapeHTML(noteStr)}</span>
+                        <button class="btn btn-danger btn-delete" data-id="${record.id}" title="删除此记录">
+                            🗑 删除
+                        </button>
+                    `;
+                    historyList.appendChild(item);
+                });
+
+                // 绑定删除事件
+                historyList.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = parseInt(this.getAttribute('data-id'));
+                        handleDeleteRecord(id);
+                    });
+                });
+            }
+
+            function escapeHTML(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // ==================== 删除处理 ====================
+            function handleDeleteRecord(id) {
+                const records = loadRecords();
+                const target = records.find(r => r.id === id);
+                if (!target) {
+                    showToast('记录不存在，可能已被删除', 'info');
+                    refreshAll();
+                    return;
+                }
+
+                const confirmMsg = `确定要删除以下记录吗？\n\n📅 日期：${target.date}\n⚡ 体重：${target.weight.toFixed(1)} kg\n\n此操作不可撤销。`;
+                if (confirm(confirmMsg)) {
+                    const updatedRecords = deleteRecordById(id);
+                    refreshAll(updatedRecords);
+                    showToast('记录已删除', 'success');
+                }
+            }
+
+            // ==================== 表单提交 ====================
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // 读取并验证
+                const dateVal = dateInput.value.trim();
+                const weightStr = weightInput.value.trim();
+                const heightStr = heightInput.value.trim();
+                const noteVal = noteInput.value.trim();
+
+                // 验证日期
+                if (!dateVal) {
+                    showToast('日期无效', 'info');
+                    dateInput.focus();
+                    return;
+                }
+
+                // 验证体重
+                const weight = parseFloat(weightStr);
+                if (isNaN(weight) || weight <= 0 || weight > 300) {
+                    showToast('请输入有效的体重（20-300 kg）', 'info');
+                    weightInput.focus();
+                    weightInput.select();
+                    return;
+                }
+
+                // 验证身高
+                const height = parseFloat(heightStr);
+                if (isNaN(height) || height <= 0 || height > 260) {
+                    showToast('请输入有效的身高（50-260 cm）', 'info');
+                    heightInput.focus();
+                    heightInput.select();
+                    return;
+                }
+
+                // 创建记录
+                const record = {
+                    id: Date.now(),
+                    date: dateVal,
+                    weight: parseFloat(weight.toFixed(1)),
+                    height: parseFloat(height.toFixed(1)),
+                    note: noteVal,
+                };
+
+                // 保存
+                const updatedRecords = addRecord(record);
+                setLastHeight(height);
+
+                // 清空表单（体重和备注），保留身高
+                weightInput.value = '';
+                noteInput.value = '';
+                heightInput.value = height.toFixed(1);
+                // 日期保持当天（readonly）
+                setTodayDate();
+
+                // 刷新UI
+                refreshAll(updatedRecords);
+                showToast('✅ 记录保存成功！', 'success');
+
+                // 聚焦体重输入框
+                weightInput.focus();
+            });
+
+            // ==================== 设置当天日期 ====================
+            function setTodayDate() {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+
+            // ==================== 全局刷新 ====================
+            function refreshAll(recordsOverride) {
+                const records = recordsOverride !== undefined ? recordsOverride : loadRecords();
+                updateStatsPanel(records);
+                updateChart(records);
+                renderHistoryList(records);
+            }
+
+            // ==================== 初始化 ====================
+            function initApp() {
+                // 设置当天日期
+                setTodayDate();
+
+                // 预填身高
+                const lastH = getLastHeight();
+                if (lastH) {
+                    heightInput.value = lastH;
+                }
+
+                // 加载数据并渲染
+                const records = loadRecords();
+                refreshAll(records);
+
+                // 如果没有记录，确保图表空状态显示
+                if (!records || records.length === 0) {
+                    chartEmpty.style.display = 'flex';
+                    canvas.style.visibility = 'hidden';
+                }
+            }
+
+            // ==================== 窗口大小变化时更新图表 ====================
+            let resizeDebounce = null;
+            window.addEventListener('resize', () => {
+                if (resizeDebounce) clearTimeout(resizeDebounce);
+                resizeDebounce = setTimeout(() => {
+                    if (chartInstance) {
+                        chartInstance.resize();
+                    }
+                }, 180);
+            });
+
+            // ==================== 键盘快捷键 ====================
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+Enter 或 Cmd+Enter 快速提交
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    if (document.activeElement && document.activeElement.closest('#record-form')) {
+                        e.preventDefault();
+                        form.dispatchEvent(new Event('submit', { cancelable: true }));
+                    }
+                }
+            });
+
+            // ==================== 启动应用 ====================
+            initApp();
+
+            console.log('🏋️ 体重记录与追踪应用已就绪');
+            console.log('   💾 数据存储在 localStorage: ' + STORAGE_KEY_RECORDS);
+            console.log('   📊 图表引擎: Chart.js v4');
+            console.log('   ⌨️  快捷键: Ctrl+Enter 快速提交表单');
+        })();
+    </script>
+</body>
+</html>
