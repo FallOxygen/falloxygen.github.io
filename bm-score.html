@@ -429,6 +429,14 @@ button:disabled { background:#ccc; cursor:not-allowed; }
 <div class="container">
 <h2>📝 手动录入成绩 (iOS/其他)</h2>
 <p class="hint" style="margin-bottom:15px;">针对无法获取存档文件的用户，可手动录入成绩。录入的成绩将自动覆盖存档中的同名同难度成绩，并参与 B30/N10 计算。所有数据均保存在本地 IndexedDB 中。</p>
+<div class="file-load-bar" style="margin-bottom:15px;">
+    <input type="file" id="manualExcelFileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="file-input" onchange="importManualConstants(this)">
+    <button type="button" style="width:auto; padding:8px 18px; background:#17a2b8; margin:0;" onclick="document.getElementById('manualExcelFileInput').click()">
+        📂 导入定数表 (.xlsx)
+    </button>
+    <span class="hint">导入后自动填充歌曲列表，并缓存到本地</span>
+    <span id="manualConstStatus" class="status-badge loading">未导入定数表</span>
+</div>
 <div class="input-row">
 <select id="manualSong" style="flex:2;">
 <option value="">请先导入定数表</option>
@@ -799,12 +807,9 @@ function calculateTargetScore(currentScore, currentPotential, detailedLevel, cur
 // ============================================================
 const N10_SONG_LIST = [
   'Spiritworks', 'xu', 'Chara', 'Rocky Buinne', 'Seculo Seculorum',
-  'EmbellishOUR', 'caelumize', 'Link to Collapse', 'StellapphireM',
-  'FaXeanos', 'Altered Zenith', 'The_Fungus_Dandy', 'The Place Is Mine',
-  'Storm Dance', 'NVXRN', 'Leviathan', 'find me', 'Ether Vortex Final',
-  'Ether Vortex', 'Crimson Masquerade', 'BLACK DIAMOND', 'Fallen Angel',
-  'Rainy Waltz', 'Nini', 'Moonlight', 'Beep', 'SurrE4L1stic', 'Raven Coil',
-  'Melusia', 'Lost N Blackout', 'Infinity', 'GIFT', 'Double Life'
+  'EmbellishOUR', 'caelumize', 'Link to Collapse',
+  'FaXeanos', 'Leviathan', 'find me', 'Ether Vortex Final',
+  'Ether Vortex', 'BLACK DIAMOND', 'Fallen Angel', 'Beep', 'SurrE4L1stic', 'Infinity', 'GIFT', 'Double Life'
 ];
 
 function normalizeN10Name(name) {
@@ -817,14 +822,11 @@ function normalizeN10Name(name) {
 }
 
 const N10_SONG_WHITELIST = new Set(N10_SONG_LIST.map(normalizeN10Name));
-const N10_EXCLUDE_RU_SONGS = new Set(['Rainy Waltz', 'Nini', 'Melusia'].map(normalizeN10Name));
 
 function isN10EligibleChart(chart) {
-  const name = normalizeN10Name(chart.name);
-  const diff = String(chart.diff || '').toUpperCase();
-  if (!N10_SONG_WHITELIST.has(name)) return false;
-  if (diff === 'RU' && N10_EXCLUDE_RU_SONGS.has(name)) return false;
-  return true;
+    const name = normalizeN10Name(chart.name);
+    if (!N10_SONG_WHITELIST.has(name)) return false;
+    return true;
 }
 
 function getN10Charts(allCharts) {
@@ -2215,23 +2217,92 @@ function loadArchiveFile(e) {
 // ============================================================
 // 11. 手动录入模块
 // ============================================================
+function setManualConstStatus(state, text) {
+    const el = document.getElementById('manualConstStatus');
+    if (!el) return;
+
+    if (state === true) {
+        el.className = 'status-badge ok';
+        el.textContent = '✅ 已导入定数表' + (text ? `：${text}` : '');
+    } else if (state === false) {
+        el.className = 'status-badge fail';
+        el.textContent = '❌ ' + (text || '定数表导入失败');
+    } else {
+        el.className = 'status-badge loading';
+        el.textContent = text || '未导入定数表';
+    }
+}
+
+async function importManualConstants(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        logMessage('❌ 请选择 .xlsx 定数表文件', 'error');
+        setManualConstStatus(false, '请选择 .xlsx 文件');
+        input.value = '';
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        logMessage('❌ XLSX 库未加载', 'error');
+        setManualConstStatus(false, 'XLSX 库未加载');
+        input.value = '';
+        return;
+    }
+
+    setManualConstStatus('loading', '正在解析定数表...');
+
+    const reader = new FileReader();
+
+    reader.onload = async function (event) {
+        try {
+            const ok = await parseExcelArrayBuffer(event.target.result);
+            if (ok) {
+                logMessage(`✅ 手动录入页定数表读取成功: ${file.name}`, 'success');
+                setManualConstStatus(true, file.name);
+            } else {
+                setManualConstStatus(false, '解析失败');
+            }
+        } catch (e) {
+            logMessage(`❌ 手动录入页解析定数表失败: ${e.message}`, 'error');
+            setManualConstStatus(false, '解析失败');
+        }
+    };
+
+    reader.onerror = function () {
+        logMessage('❌ 读取定数表文件失败: ' + reader.error.message, 'error');
+        setManualConstStatus(false, '读取文件失败');
+    };
+
+    reader.readAsArrayBuffer(file);
+    input.value = '';
+}
+
 function populateManualSongSelect() {
-  const select = document.getElementById('manualSong');
-  select.innerHTML = '';
-  if (!AppState.songConstantsMap) {
-    const opt = document.createElement('option');
-    opt.value = "";
-    opt.textContent = "请先导入定数表";
-    select.appendChild(opt);
-    return;
-  }
-  const names = Object.keys(AppState.songConstantsMap).sort();
-  names.forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
-  });
+    const select = document.getElementById('manualSong');
+    select.innerHTML = '';
+
+    if (!AppState.songConstantsMap) {
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "请先导入定数表";
+        select.appendChild(opt);
+
+        setManualConstStatus('loading', '未导入定数表');
+        return;
+    }
+
+    const count = Object.keys(AppState.songConstantsMap).length;
+    setManualConstStatus(true, `共 ${count} 首曲目`);
+
+    const names = Object.keys(AppState.songConstantsMap).sort();
+    names.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+    });
 }
 
 async function addManualScore() {
@@ -2300,4 +2371,4 @@ async function clearManualScores() {
 Router.init();
 </script>
 </body>
-    </html>
+  </html>
