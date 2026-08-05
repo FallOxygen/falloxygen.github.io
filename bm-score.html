@@ -198,14 +198,14 @@ button:disabled { background:#ccc; cursor:not-allowed; }
 <div class="file-import-wrap">
 <input type="file" id="excelFileInput" accept="*/*" class="file-input">
 <label for="excelFileInput">② 导入特制定数表 (.xlsx)</label>
-<div class="hint-text">获取：加 Berry Melody 官方 QQ 群 <span class="highlight">760171942</span>，群文件「查分器」文件夹</div>
+<div class="hint-text">获取定数表与曲绘包：<a href="https://1841966608.share.123pan.cn/123pan/t8u8Td-kogid?pwd=iSfK#" target="_blank" class="highlight">点击前往网盘下载</a></div>
 </div>
 <button class="btn-stats" onclick="outputTextDiagnostic()" style="margin-top:-5px; margin-bottom:10px; background-color:#17a2b8;">②-1 输出文本诊断</button>
 <div id="diagnosticOutput"></div>
 <div class="file-import-wrap" style="margin-top:5px;">
 <input type="file" id="zipFileInput" accept="*/*" class="file-input">
 <label for="zipFileInput">③ 导入曲绘图片包 (.zip)</label>
-<div class="hint-text">获取：加 Berry Melody 官方 QQ 群 <span class="highlight">760171942</span>，群文件「查分器」文件夹 (导入后自动解压并缓存)</div>
+<div class="hint-text">获取定数表与曲绘包：<a href="https://1841966608.share.123pan.cn/123pan/t8u8Td-kogid?pwd=iSfK#" target="_blank" class="highlight">点击前往网盘下载</a> (导入后自动解压并缓存)</div>
 </div>
 <div class="bg-settings">
 <div style="font-size:14px; font-weight:bold; margin-bottom:8px;">🖼️ 背景设置</div>
@@ -227,6 +227,7 @@ button:disabled { background:#ccc; cursor:not-allowed; }
 </label>
 </div>
 <button class="btn-stats-orange" onclick="generateVisualization()">④ 生成可视化 Bn 图</button>
+<button class="btn-stats-orange" style="background:#6f42c1;" onclick="generateN10Visualization()">⑤ 生成可视化 N10 图</button>
 <div class="hint-text" style="text-align:center; margin-bottom:10px;">推分阈值：计算每首歌至少需要增加多少 Rating，例如 0.005 表示至少 +0.005</div>
 <div id="visualContainer"></div>
 </div>
@@ -416,9 +417,9 @@ button:disabled { background:#ccc; cursor:not-allowed; }
 <h3>👨‍💻 开发者联系方式</h3>
 <p><strong>原作者：</strong>漫书（QQ：366768808）</p>
 <p><strong>代投至 Github：</strong>落氧_FallOxygen（QQ：3962976891）</p>
-<p><strong>官方交流群：</strong>Berry Melody 官方 QQ 群（群号：<strong>760171942</strong>）</p>
 <p style="margin-top:15px; font-size:13px; opacity:0.9;">
-欢迎加入官方群交流，获取最新的定数表和曲绘包资源！
+获取最新的定数表和曲绘包资源，请前往网盘下载：<br>
+<a href="https://1841966608.share.123pan.cn/123pan/t8u8Td-kogid?pwd=iSfK#" target="_blank" style="color:#fff; text-decoration:underline;">https://1841966608.share.123pan.cn/123pan/t8u8Td-kogid?pwd=iSfK#</a>
 </p>
 </div>
 </div>
@@ -1649,6 +1650,207 @@ function downloadB30Image() {
   link.download = `B30_展示图_2x.png`;
   link.href = AppState.currentB30ImageUrl;
   link.click();
+}
+
+// ============================================================
+// 生成可视化 N10 图
+// ============================================================
+async function generateN10Visualization() {
+    const mergedScores = getMergedScores();
+    if (!mergedScores || Object.keys(mergedScores).length === 0) {
+        logMessage("⚠️ 请先完成① 解码或手动录入成绩", "error");
+        return;
+    }
+    if (!AppState.songConstantsMap) {
+        logMessage("⚠️ 请先导入定数表", "error");
+        return;
+    }
+    if (Object.keys(AppState.imageLocalUrlMap).length === 0) {
+        logMessage("⚠️ 请先导入 ZIP 图包或等待解压完成", "error");
+        return;
+    }
+
+    const ratingIncreaseEl = document.getElementById('ratingIncreaseInput');
+    const ratingIncreaseValue = ratingIncreaseEl ? parseFloat(ratingIncreaseEl.value) : NaN;
+    const targetRatingIncrease = (!isNaN(ratingIncreaseValue) && ratingIncreaseValue > 0) ? ratingIncreaseValue : 0.001;
+    const showTargetScore = document.getElementById('showTargetScore').checked;
+    
+    logMessage(`🎯 当前推分阈值: +${targetRatingIncrease.toFixed(4)} Rating (N10)`, "info");
+
+    const allCharts = [];
+    const keys = Object.keys(mergedScores);
+    for (const key of keys) {
+        if (key.startsWith("BestScore_")) {
+            const parts = key.split('_');
+            if (parts.length < 3) continue;
+            const diff = parts[parts.length - 1];
+            const name = parts.slice(1, parts.length - 1).join('_');
+            const score = parseInt(mergedScores[key]);
+            if (isNaN(score)) continue;
+            if (!AppState.songConstantsMap[name]) continue;
+            
+            let constant = AppState.songConstantsMap[name][diff];
+            if (constant !== null && !isNaN(constant) && constant > 0) {
+                const potential = calculateChartPotential(score, constant);
+                allCharts.push({ name, diff, constant, score, potential });
+            }
+        }
+    }
+    
+    allCharts.sort((a, b) => b.potential - a.potential);
+    const n10Charts = getN10Charts(allCharts);
+    
+    let n10Sum = 0;
+    for (let i = 0; i < 5; i++) {
+        if (n10Charts[i]) n10Sum += n10Charts[i].potential * 0.6;
+    }
+    for (let i = 5; i < 10; i++) {
+        if (n10Charts[i]) n10Sum += n10Charts[i].potential * 0.4;
+    }
+    const n10Avg = n10Sum / 5;
+
+    const archivePotential = mergedScores["Potential"] || "0";
+    const version = mergedScores["VersionCode"] || "未知";
+    const playerName = mergedScores["AccountName"] || "未知玩家";
+    const charSelect = mergedScores["CharSelect"] || "Default";
+    
+    const failImgBase64 = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='16' fill='%23999'%3E🎵%3C/text%3E%3C/svg%3E`;
+
+    const headerHtml = `
+        <div class="b30-header">
+            <div class="top-row">
+                <div class="player-block">
+                    <img id="charAvatar" src="${failImgBase64}" crossorigin="anonymous" />
+                    <div>
+                        <div class="name">${playerName}</div>
+                        <div class="sub">Version ${version} | N10 专属图</div>
+                    </div>
+                </div>
+                <div class="resource-block">
+                    <div>光锥琥珀: ${mergedScores["Glass"] || "0"}</div>
+                    <div>珂灵币: ${mergedScores["Quantum"] || "0"}</div>
+                </div>
+            </div>
+            <div class="calc-block">
+                存档Rating: <strong>${archivePotential}</strong> | N10平均分: <strong>${n10Avg.toFixed(3)}</strong>
+            </div>
+        </div>
+    `;
+
+    let gridHtml = '<div class="vis-grid" style="grid-template-columns:repeat(5,1fr);">';
+    for (let i = 0; i < n10Charts.length; i++) {
+        const item = n10Charts[i];
+        let grade = item.score === 1000000 ? "S" :
+                    item.score >= 980000 ? "AAA+" :
+                    item.score >= 950000 ? "AAA" :
+                    item.score >= 900000 ? "AA" :
+                    item.score >= 800000 ? "A" : 
+                    item.score >= 600000 ? "B" : "F";
+                    
+        let gradeColor = grade === 'S' ? '#f1c40f' : 
+                         grade === 'AAA+' ? '#e67e22' : 
+                         grade === 'AAA' ? '#2ecc71' : 
+                         grade === 'AA' ? '#3498db' : 
+                         grade === 'A' ? '#9b59b6' : '#95a5a6';
+                         
+        const targetResult = calculateTargetScore(item.score, item.potential, item.constant, n10Avg, targetRatingIncrease);
+        let targetText = '';
+        if (showTargetScore) {
+            if (targetResult.score === -1) {
+                targetText = `无法推分`;
+            } else if (targetResult.score > item.score) {
+                targetText = `目标: ${targetResult.score}`;
+            }
+        }
+
+        let imgSrc = failImgBase64;
+        const normalKey = item.name;
+        const ttKey = item.name + "_TT";
+        const ruKey = item.name + "_RU";
+        const dmKey = item.name + "_DM";
+        
+        if (item.diff === "TT" && AppState.imageLocalUrlMap[ttKey]) imgSrc = AppState.imageLocalUrlMap[ttKey];
+        else if (item.diff === "RU" && AppState.imageLocalUrlMap[ruKey]) imgSrc = AppState.imageLocalUrlMap[ruKey];
+        else if (item.diff === "DM" && AppState.imageLocalUrlMap[dmKey]) imgSrc = AppState.imageLocalUrlMap[dmKey];
+        else if (AppState.imageLocalUrlMap[normalKey]) imgSrc = AppState.imageLocalUrlMap[normalKey];
+
+        gridHtml += `<div class="b-card">
+            <div class="rank">n${i + 1}</div>
+            <div class="img-wrapper"><img id="n10_img_${i}" src="${imgSrc}" crossorigin="anonymous" /></div>
+            <div class="cname">${item.name}</div>
+            <div class="cinfo"><span>${item.diff}</span><span>${item.constant.toFixed(1)}</span></div>
+            <div class="cinfo" style="margin-top:2px;"><span>${item.score}</span></div>
+            <div class="grade" style="color:${gradeColor}">${grade}</div>
+            <div class="cinfo"><span>${item.potential.toFixed(4)}</span></div>
+            ${targetText ? `<div class="target-score">${targetText}</div>` : ''}
+        </div>`;
+    }
+    gridHtml += '</div>';
+
+    const offscreen = document.getElementById('offscreenRender');
+    offscreen.innerHTML = headerHtml + gridHtml;
+
+    let charKey = charSelect;
+    if (charKey === "Helios") charKey = "Helios1";
+    if (AppState.imageLocalUrlMap[charKey]) {
+        const avatar = document.getElementById('charAvatar');
+        if (avatar) avatar.src = AppState.imageLocalUrlMap[charKey];
+    }
+
+    const bgStatus = document.getElementById('bgStatus').innerText;
+    if (bgStatus && !bgStatus.includes("无") && !bgStatus.includes("未找到")) {
+        const currentBg = document.getElementById('visualContainer').style.backgroundImage;
+        if (currentBg && currentBg !== 'none') {
+            offscreen.style.backgroundImage = currentBg;
+            offscreen.style.backgroundSize = 'cover';
+            offscreen.style.backgroundPosition = 'center';
+        }
+    }
+
+    logMessage("⏳ 正在渲染 N10 图片，请稍候...", "info");
+    const imgs = offscreen.querySelectorAll('img');
+    await Promise.all(Array.from(imgs).map(img => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+        });
+    }));
+
+    try {
+        const canvas = await html2canvas(offscreen, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#f0f2f5',
+            width: offscreen.scrollWidth,
+            height: offscreen.scrollHeight
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        AppState.currentB30ImageUrl = dataUrl; 
+        const visContainer = document.getElementById('visualContainer');
+        visContainer.style.display = 'block';
+        visContainer.innerHTML = `
+            <img src="${dataUrl}" style="width:100%; border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+            <div id="saveVisBtn" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:15px;">
+                <button class="btn-sm" style="background:#28a745;" onclick="downloadN10Image()">💾 保存 N10 图片 (长按亦可)</button>
+            </div>
+        `;
+        logMessage("✅ N10 查分图生成完毕！", "success");
+    } catch (err) {
+        logMessage(`❌ N10 渲染失败: ${err.message}`, "error");
+    }
+}
+
+function downloadN10Image() {
+    if (!AppState.currentB30ImageUrl) {
+        logMessage("⚠️ 没有可下载的图片", "error");
+        return;
+    }
+    const link = document.createElement('a');
+    link.download = `N10_展示图_2x.png`;
+    link.href = AppState.currentB30ImageUrl;
+    link.click();
 }
 
 // ============================================================
