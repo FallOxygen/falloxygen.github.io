@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
     <style>
-        /* 夸克浏览器兼容：透明覆盖层方案，替代 display:none */
+        /* 夸克浏览器兼容：透明覆盖层方案 */
         .file-upload-fix {
             position: relative;
             display: inline-block;
@@ -59,12 +59,14 @@
             font-weight: bold;
             padding: 12px 0;
             margin-right: 24px;
+            flex-shrink: 0;
         }
         .nav-links {
             display: flex;
             gap: 5px;
             flex: 1;
             overflow-x: auto;
+            flex-wrap: nowrap;
         }
         .nav-link {
             color: rgba(255, 255, 255, 0.85);
@@ -1212,23 +1214,36 @@
 
         @media (max-width: 600px) {
             .nav-container {
-                flex-direction: column;
-                align-items: stretch;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                padding: 0 10px;
+                align-items: center;
+                overflow-x: auto;
             }
             .nav-title {
-                text-align: center;
-                margin-right: 0;
+                font-size: 15px;
+                padding: 10px 0;
+                margin-right: 10px;
+                flex-shrink: 0;
+                text-align: left;
             }
             .nav-links {
-                flex-direction: column;
+                flex-direction: row;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                gap: 2px;
             }
             .nav-link {
+                padding: 10px 12px;
+                font-size: 13px;
+                border-bottom: 3px solid transparent;
+                border-left: none;
                 text-align: center;
-                border-bottom: none;
-                border-left: 3px solid transparent;
+                white-space: nowrap;
             }
             .nav-link.active {
-                border-left-color: white;
+                border-bottom-color: white;
+                border-left-color: transparent;
             }
             .query-inputs {
                 grid-template-columns: 1fr;
@@ -1540,7 +1555,27 @@
                 💡 录入完成后，请到「<strong>查分功能</strong>」页点击「<strong>📝 解码手动录入成绩</strong>」按钮，即可使用查分功能。
             </div>
 
-            <p class="hint" style="margin-bottom:15px;">针对无法获取存档文件的用户，可手动录入成绩。录入的成绩将自动覆盖存档中的同名同难度成绩，并参与 B30/N10 计算。所有数据均保存在本地 IndexedDB 中。</p>
+            <!-- 玩家档案 (新增) -->
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #e9ecef;">
+                <h3 style="margin-bottom:10px;">🧑‍🤝‍🧑 玩家档案 (可选)</h3>
+                <div class="input-row">
+                    <input type="text" id="manualPlayerName" placeholder="玩家名称 (不填则默认为'手动玩家')" style="flex:1;">
+                </div>
+                <div class="input-row">
+                    <input type="number" id="manualGlass" placeholder="光锥琥珀 (数量)" style="flex:1;">
+                    <input type="number" id="manualQuantum" placeholder="珂灵币 (数量)" style="flex:1;">
+                </div>
+                <div class="input-row">
+                    <select id="manualRatingMode" onchange="toggleManualRatingInput()" style="flex:1;">
+                        <option value="calc">Rating：由程序自动计算</option>
+                        <option value="manual">Rating：手动输入</option>
+                    </select>
+                    <input type="text" id="manualRatingValue" placeholder="例如 10.50" disabled style="flex:1;">
+                </div>
+                <button class="btn-sm" style="background:#17a2b8; width:auto;" onclick="saveManualProfile()">💾 保存档案</button>
+                <span id="manualProfileStatus" style="margin-left:10px; font-size:13px; color:#888;"></span>
+            </div>
+
             <div class="file-load-bar" style="margin-bottom:15px;">
                 <div class="file-upload-fix">
                     <input type="file" id="manualExcelFileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="importManualConstants(this)">
@@ -1630,7 +1665,7 @@
         // ================================================================
         const DBManager = {
             dbName: 'BerryMelodyDB',
-            version: 2,
+            version: 3,
             db: null,
 
             open() {
@@ -1649,6 +1684,7 @@
                         if (!db.objectStoreNames.contains('constants')) db.createObjectStore('constants');
                         if (!db.objectStoreNames.contains('images')) db.createObjectStore('images');
                         if (!db.objectStoreNames.contains('zipFile')) db.createObjectStore('zipFile');
+                        if (!db.objectStoreNames.contains('manualProfile')) db.createObjectStore('manualProfile');
                     };
                     req.onsuccess = (e) => { this.db = e.target.result;
                         resolve(); };
@@ -1774,6 +1810,8 @@
             songConstantsMap: null,
             imageLocalUrlMap: {},
             manualScores: {},
+            manualProfile: null, // 新增：存储手动录入的玩家档案
+            calculatedRating: 0,
             currentB30ImageUrl: null,
             currentN10ImageUrl: null,
             titleIdx: -1,
@@ -1992,6 +2030,23 @@
         }
 
         // ================================================================
+        // 计算最终 Rating
+        // ================================================================
+        function calculateFinalRating(mergedScores) {
+            if (!AppState.songConstantsMap) return 0;
+            const { allCharts } = buildAllCharts(mergedScores);
+            if (allCharts.length === 0) return 0;
+            const b30Charts = allCharts.slice(0, 30);
+            const b30Avg = b30Charts.reduce((s, i) => s + i.potential, 0) / 30;
+            const n10Charts = getN10Charts(allCharts);
+            let n10Sum = 0;
+            for (let i = 0; i < 5; i++) if (n10Charts[i]) n10Sum += n10Charts[i].potential * 0.6;
+            for (let i = 5; i < 10; i++) if (n10Charts[i]) n10Sum += n10Charts[i].potential * 0.4;
+            const n10Avg = n10Sum / 5;
+            return 0.8 * b30Avg + 0.2 * n10Avg;
+        }
+
+        // ================================================================
         // 1. 解密存档
         // ================================================================
         function parseCSharpXmlToForgeKey(xmlStr) {
@@ -2118,35 +2173,34 @@
         // ================================================================
         // 1b. 解码手动录入成绩（新增功能）
         // ================================================================
-        function decodeManualScores() {
+        async function decodeManualScores() {
             const warn = document.getElementById('warningMsg');
             warn.innerText = '';
 
-            // 检查是否有手动成绩
             if (!AppState.manualScores || Object.keys(AppState.manualScores).length === 0) {
                 warn.innerText = "⚠️ 没有手动录入的成绩，请先到「手动录入」页录入成绩";
                 logMessage("⚠️ 没有手动录入的成绩", "error");
                 return;
             }
 
-            // 检查定数表
             if (!AppState.songConstantsMap || Object.keys(AppState.songConstantsMap).length === 0) {
                 warn.innerText = "⚠️ 请先导入定数表 (.xlsx)";
                 logMessage("⚠️ 定数表未导入", "error");
                 return;
             }
 
-            // 构建模拟存档：保留已有存档的非成绩字段，用手动成绩覆盖
             const existing = AppState.lastDecryptedJSON || {};
+            const profile = AppState.manualProfile || {};
+
+            // 使用手动录入页中保存的档案信息
             const mockArchive = {
-                "AccountName": existing.AccountName || "手动玩家",
-                "Potential": existing.Potential || "0.00",
-                "Glass": existing.Glass || "0",
-                "Quantum": existing.Quantum || "0",
+                "AccountName": profile.AccountName || existing.AccountName || "手动玩家",
+                "Potential": profile.Potential || existing.Potential || "0.00",
+                "Glass": profile.Glass || existing.Glass || "0",
+                "Quantum": profile.Quantum || existing.Quantum || "0",
                 "CharSelect": existing.CharSelect || "Default"
             };
 
-            // 合并手动成绩（覆盖同名成绩）
             let validCount = 0;
             for (const [key, value] of Object.entries(AppState.manualScores)) {
                 if (key.startsWith("BestScore_")) {
@@ -2243,6 +2297,9 @@
                 if (manual) { AppState.manualScores = manual;
                     logMessage("✅ 从本地存储恢复了手动成绩", "success");
                     renderManualList(); }
+                const profile = await DBManager.get('manualProfile', 'data');
+                if (profile) { AppState.manualProfile = profile;
+                    logMessage("✅ 从本地存储恢复了手动档案", "success"); }
                 const images = await DBManager.getAll('images');
                 if (images && Object.keys(images).length > 0) {
                     for (const [name, blob] of Object.entries(images)) AppState.imageLocalUrlMap[name] = URL
@@ -2392,7 +2449,13 @@
             for (let i = 5; i < 10; i++) if (n10Charts[i]) n10Sum += n10Charts[i].potential * 0.4;
             const n10Avg = n10Sum / 5;
             const finalRating = 0.8 * b30Avg + 0.2 * n10Avg;
-            const archivePotential = mergedScores["Potential"] || "未找到";
+            let archivePotential = mergedScores["Potential"] || "未找到";
+            let displayRating = archivePotential;
+
+            // 如果手动档案中开启了自动计算，则覆盖诊断中的显示
+            if (AppState.manualProfile && AppState.manualProfile.useCalculatedRating) {
+                displayRating = finalRating.toFixed(5) + " (计算)";
+            }
 
             let text = `【解码后的明文与玩家信息】\n`;
             text += `📁 玩家名称: ${playerName}\n`;
@@ -2414,6 +2477,7 @@
             text += `4. N10 平均分 = ${n10Avg.toFixed(5)}\n`;
             text += `5. 最终Rating = 0.8×B30 + 0.2×N10 = ${finalRating.toFixed(5)}\n`;
             text += `📁 存档内置 Rating: ${archivePotential}\n`;
+            text += `📊 展示 Rating: ${displayRating}\n`;
             text += `\n【各难度等级统计】\n`;
             const colDiffs = ["RL", "IL", "TT", "RU", "DM", "FL"];
             const rowGrades = ["S", "AAA+", "AAA", "AA", "A", "B", "F"];
@@ -2537,6 +2601,12 @@
         function buildHeaderHtml(mode, info) {
             const title = mode === 'B30' ? 'Berry Melody B30 Result' : 'Berry Melody N10 Result';
             const icon = imgUrl('icon') || FAIL_IMG;
+
+            let ratingText = `Rating ${info.archiveRating}`;
+            if (AppState.manualProfile && AppState.manualProfile.useCalculatedRating) {
+                ratingText = `Rating ${info.calculatedRating} (计算)`;
+            }
+
             return `
             <div class="bm-title-row">
                 <img class="bm-icon" src="${icon}" crossorigin="anonymous">
@@ -2556,7 +2626,7 @@
                             <div class="bm-plate"><span class="plate-txt">光锥琥珀：${info.glass}</span></div>
                             <div class="bm-plate"><span class="plate-txt">珂灵币：${info.quantum}</span></div>
                         </div>
-                        <div class="bm-rating"><span class="rating-txt">Rating ${info.archiveRating}</span></div>
+                        <div class="bm-rating"><span class="rating-txt">${ratingText}</span></div>
                     </div>
                 </div>
                 <div class="bm-table">${buildGradeTableHtml(info.gradeCount)}</div>
@@ -2597,10 +2667,12 @@
             const overflowCharts = overflowCount > 0 ? pool.slice(baseN, baseN + overflowCount) : [];
             const prefix = isB ? 'B' : 'N';
 
+            const finalRating = calculateFinalRating(mergedScores);
             const info = {
                 playerName: mergedScores["AccountName"] || "未知玩家",
                 avatarUrl: getAvatarUrl(),
                 archiveRating: (parseFloat(mergedScores["Potential"]) || 0).toFixed(2),
+                calculatedRating: finalRating.toFixed(2),
                 glass: mergedScores["Glass"] || "0",
                 quantum: mergedScores["Quantum"] || "0",
                 gradeCount
@@ -3217,6 +3289,41 @@
                 setManualConstStatus(false, '读取文件失败'); };
             reader.readAsArrayBuffer(file);
             input.value = '';
+        }
+
+        // 切换 Rating 输入状态
+        function toggleManualRatingInput() {
+            const mode = document.getElementById('manualRatingMode').value;
+            const ratingInput = document.getElementById('manualRatingValue');
+            ratingInput.disabled = (mode !== 'manual');
+            if (mode === 'calc') ratingInput.value = '';
+        }
+
+        // 保存手动录入的玩家档案
+        async function saveManualProfile() {
+            const name = document.getElementById('manualPlayerName').value.trim() || '手动玩家';
+            const glass = document.getElementById('manualGlass').value.trim() || '0';
+            const quantum = document.getElementById('manualQuantum').value.trim() || '0';
+            const mode = document.getElementById('manualRatingMode').value;
+            let rating = document.getElementById('manualRatingValue').value.trim();
+            if (mode === 'calc') rating = '0.00';
+
+            const profile = {
+                AccountName: name,
+                Glass: glass,
+                Quantum: quantum,
+                Potential: rating,
+                useCalculatedRating: mode === 'calc'
+            };
+            AppState.manualProfile = profile;
+            try {
+                await DBManager.put('manualProfile', 'data', profile);
+                document.getElementById('manualProfileStatus').innerText = '✅ 档案已保存';
+                logMessage('✅ 玩家档案已保存', 'success');
+            } catch (e) {
+                document.getElementById('manualProfileStatus').innerText = '❌ 保存失败';
+                logMessage('❌ 保存档案失败: ' + e.message, 'error');
+            }
         }
 
         function populateManualSongSelect() {
