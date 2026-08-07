@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Wordle + AI 智能查词器 · 多词库</title>
+  <title>Wordle + AI 智能查词器 · 多词库（大容量）</title>
   <style>
     /* ===== 全局重置 & 变量 ===== */
     :root {
@@ -1848,7 +1848,7 @@
     const STORAGE_KEY = 'wordle_ai_state_v3';
     const SETTINGS_KEY = 'wordle_settings_v3';
     const CONFIG_KEY = 'deepseek_dict_config';
-    const LIBRARY_KEY = 'wordle_libraries_v4';
+    const LIBRARY_KEY = 'wordle_libraries_v4';  // 仅用作降级
     const BOX_SIZE = 50;
     const BOX_GAP = 8;
     const PADDING = 18;
@@ -1970,17 +1970,156 @@
       mode: 'simulator'
     };
 
-    // ---------- 多词库数据结构 ----------
+    // ---------- 多词库数据 ----------
     let wordLibraries = [];
     let currentLibraryId = null;
     let filteredWords = [];
-    // 词库列表筛选状态
     let libraryFilterLang = '全部';
     let libraryFilterName = '';
     let activePage = 'simulator';
     let isNavigatingHistory = false;
 
-    // ---------- 页面独立状态 ----------
+    // ============================================================
+    //  IndexedDB 存储封装（支持大容量）
+    // ============================================================
+    const DB_NAME = 'WordleLibrariesDB';
+    const STORE_NAME = 'libraries';
+    const DB_VERSION = 1;
+
+    const wordleDB = {
+      _db: null,
+
+      open() {
+        return new Promise((resolve, reject) => {
+          if (this._db) { resolve(this._db); return; }
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+          request.onupgradeneeded = (ev) => {
+            const db = ev.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            }
+          };
+          request.onsuccess = (ev) => {
+            this._db = ev.target.result;
+            resolve(this._db);
+          };
+          request.onerror = (ev) => {
+            console.warn('IndexedDB 打开失败，将使用 localStorage 降级', ev.target.error);
+            reject(ev.target.error);
+          };
+        });
+      },
+
+      async saveData(data) {
+        try {
+          const db = await this.open();
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          store.put({ id: 'main', ...data });
+          await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = reject;
+          });
+          return true;
+        } catch (e) {
+          console.warn('IndexedDB 保存失败，降级到 localStorage', e);
+          return false;
+        }
+      },
+
+      async loadData() {
+        try {
+          const db = await this.open();
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const request = store.get('main');
+          const result = await new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+          return result || null;
+        } catch (e) {
+          console.warn('IndexedDB 加载失败', e);
+          return null;
+        }
+      }
+    };
+
+    // ---------- 同步 localStorage 降级 ----------
+    function loadFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem(LIBRARY_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) { return null; }
+    }
+
+    function saveToLocalStorage(data) {
+      try {
+        localStorage.setItem(LIBRARY_KEY, JSON.stringify(data));
+        return true;
+      } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+          showToast('⚠️ localStorage 空间不足，请清理不用的词库', 'error');
+        } else {
+          showToast('保存词库失败: ' + e.message, 'error');
+        }
+        return false;
+      }
+    }
+
+    // ---------- 统一加载（优先 IndexedDB） ----------
+    async function loadLibraries() {
+      let data = null;
+      try {
+        const idbData = await wordleDB.loadData();
+        if (idbData && idbData.libraries && Array.isArray(idbData.libraries)) {
+          data = idbData;
+          console.log('✅ 从 IndexedDB 加载词库');
+        }
+      } catch (e) {}
+
+      if (!data) {
+        const lsData = loadFromLocalStorage();
+        if (lsData && lsData.libraries && Array.isArray(lsData.libraries)) {
+          data = lsData;
+          console.log('🔄 从 localStorage 加载词库，将迁移到 IndexedDB');
+          wordleDB.saveData(data).then(success => {
+            if (success) console.log('✅ 词库已迁移到 IndexedDB');
+          }).catch(() => {});
+        }
+      }
+
+      if (data) {
+        wordLibraries = data.libraries || [];
+        currentLibraryId = data.currentId || null;
+        if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) {
+          currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id : null;
+        }
+        filteredWords = [];
+        return true;
+      }
+      return false;
+    }
+
+    // ---------- 统一保存 ----------
+    async function saveLibraries() {
+      const data = { libraries: wordLibraries, currentId: currentLibraryId };
+      const ok = await wordleDB.saveData(data);
+      if (!ok) {
+        saveToLocalStorage(data);
+      }
+      try {
+        const raw = JSON.stringify(data);
+        if (raw.length < 4 * 1024 * 1024) {
+          localStorage.setItem(LIBRARY_KEY, raw);
+        }
+      } catch (e) {}
+    }
+
+    // ============================================================
+    //  页面状态（独立）
+    // ============================================================
     function createState() {
       return {
         targetWord: '',
@@ -2080,7 +2219,6 @@
         $('tab-' + p).classList.toggle('active', p === page);
         $('page-' + p).classList.toggle('hidden', p !== page);
       });
-      // 动态挂载词库管理模块
       if (page === 'simulator' || page === 'play') {
         const slot = $('library-slot-' + page);
         const libSection = $('library-section');
@@ -2095,7 +2233,7 @@
     }
 
     // ============================================================
-    //  多词库管理核心函数
+    //  词库管理核心函数
     // ============================================================
 
     function getCurrentLibrary() {
@@ -2123,34 +2261,6 @@
       });
     }
 
-    function saveLibraries() {
-      try {
-        localStorage.setItem(LIBRARY_KEY, JSON.stringify({
-          libraries: wordLibraries,
-          currentId: currentLibraryId
-        }));
-      } catch (e) { console.error('保存词库失败:', e); }
-    }
-
-    function loadLibrariesFromStorage() {
-      try {
-        const raw = localStorage.getItem(LIBRARY_KEY);
-        if (!raw) return false;
-        const data = JSON.parse(raw);
-        if (data.libraries && Array.isArray(data.libraries)) {
-          wordLibraries = data.libraries;
-          currentLibraryId = data.currentId || null;
-          if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) {
-            currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id : null;
-          }
-          filteredWords = [];
-          return true;
-        }
-        return false;
-      } catch (e) { console.error('加载词库失败:', e); return false; }
-    }
-
-    // ---- 获取所有已使用的语言 ----
     function getAllLanguages() {
       const langs = new Set();
       wordLibraries.forEach(lib => {
@@ -2159,13 +2269,54 @@
       return Array.from(langs).sort();
     }
 
-    // ---- 渲染词库列表（支持筛选） ----
+    function updateLanguageFilterOptions() {
+      const select = $('lib-filter-lang');
+      if (!select) return;
+      const currentVal = select.value;
+      const langs = getAllLanguages();
+      select.innerHTML = `<option value="全部">🌐 全部语言</option>`;
+      langs.forEach(lang => {
+        const opt = document.createElement('option');
+        opt.value = lang;
+        opt.textContent = lang;
+        select.appendChild(opt);
+      });
+      if (langs.includes(currentVal)) {
+        select.value = currentVal;
+      } else if (currentVal === '全部' || !currentVal) {
+        select.value = '全部';
+      } else {
+        select.value = '全部';
+      }
+      libraryFilterLang = select.value;
+    }
+
+    function onFilterLangChange() {
+      const select = $('lib-filter-lang');
+      libraryFilterLang = select.value;
+      renderLibraryListUI();
+    }
+
+    function onFilterNameInput() {
+      const input = $('lib-filter-name');
+      libraryFilterName = input.value;
+      renderLibraryListUI();
+    }
+
+    function clearLibraryFilters() {
+      $('lib-filter-lang').value = '全部';
+      $('lib-filter-name').value = '';
+      libraryFilterLang = '全部';
+      libraryFilterName = '';
+      renderLibraryListUI();
+      showToast('筛选已清除', 'info');
+    }
+
     function renderLibraryListUI() {
       const container = $('lib-list-items');
       const empty = $('lib-list-empty');
       const current = getCurrentLibrary();
 
-      // 应用筛选
       let filtered = wordLibraries;
       if (libraryFilterLang !== '全部') {
         filtered = filtered.filter(lib => lib.language === libraryFilterLang);
@@ -2175,8 +2326,6 @@
         filtered = filtered.filter(lib => lib.name.toLowerCase().includes(keyword));
       }
 
-      // 更新筛选统计
-      const totalLangs = getAllLanguages();
       const filterStats = $('lib-filter-stats');
       if (filterStats) {
         filterStats.textContent = `显示 ${filtered.length} / ${wordLibraries.length} 个词库`;
@@ -2190,7 +2339,6 @@
         $('lib-export-btn').disabled = true;
         $('lib-delete-btn').disabled = true;
         updateLibraryStats();
-        // 更新语言下拉选项
         updateLanguageFilterOptions();
         return;
       }
@@ -2258,54 +2406,6 @@
       }
     }
 
-    // ---- 更新语言筛选下拉选项 ----
-    function updateLanguageFilterOptions() {
-      const select = $('lib-filter-lang');
-      if (!select) return;
-      const currentVal = select.value;
-      const langs = getAllLanguages();
-      select.innerHTML = `<option value="全部">🌐 全部语言</option>`;
-      langs.forEach(lang => {
-        const opt = document.createElement('option');
-        opt.value = lang;
-        opt.textContent = lang;
-        select.appendChild(opt);
-      });
-      // 恢复当前选中值
-      if (langs.includes(currentVal)) {
-        select.value = currentVal;
-      } else if (currentVal === '全部' || !currentVal) {
-        select.value = '全部';
-      } else {
-        select.value = '全部';
-      }
-      libraryFilterLang = select.value;
-    }
-
-    // ---- 语言筛选变化 ----
-    function onFilterLangChange() {
-      const select = $('lib-filter-lang');
-      libraryFilterLang = select.value;
-      renderLibraryListUI();
-    }
-
-    // ---- 名称搜索变化 ----
-    function onFilterNameInput() {
-      const input = $('lib-filter-name');
-      libraryFilterName = input.value;
-      renderLibraryListUI();
-    }
-
-    // ---- 清除筛选 ----
-    function clearLibraryFilters() {
-      $('lib-filter-lang').value = '全部';
-      $('lib-filter-name').value = '';
-      libraryFilterLang = '全部';
-      libraryFilterName = '';
-      renderLibraryListUI();
-      showToast('筛选已清除', 'info');
-    }
-
     function updateLibraryStats() {
       const words = getCurrentWords();
       const filtered = getFilteredWords();
@@ -2328,8 +2428,7 @@
       if (activePage === 'play') updatePlayButtonState();
     }
 
-    // ---- 支持多文件导入 ----
-    function addLibrary() {
+    async function addLibrary() {
       const nameInput = $('lib-add-name');
       const langSelect = $('lib-add-lang');
       const fileInput = $('lib-add-file');
@@ -2346,10 +2445,8 @@
       let importedCount = 0;
       let failedFiles = [];
 
-      // 如果用户输入了名称，则所有文件使用该名称+序号；否则使用文件名
       const useCustomName = nameInput.value.trim() !== '';
 
-      // 收集所有文件内容
       const filePromises = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -2376,61 +2473,59 @@
         filePromises.push(promise);
       }
 
-      Promise.allSettled(filePromises).then(results => {
-        let successCount = 0;
-        results.forEach((result, idx) => {
-          if (result.status === 'fulfilled') {
-            const { file, lines } = result.value;
-            let libName;
-            if (useCustomName) {
-              const baseName = nameInput.value.trim();
-              const suffix = files.length > 1 ? `_${idx + 1}` : '';
-              libName = baseName + suffix;
-            } else {
-              libName = file.name.replace(/\.txt$/i, '').trim() || `未命名词库_${idx + 1}`;
-            }
-            // 如果重名，自动添加序号
-            let finalName = libName;
-            let counter = 1;
-            while (wordLibraries.some(l => l.name === finalName)) {
-              finalName = libName + `_${counter}`;
-              counter++;
-            }
-            const newLib = {
-              id: 'lib_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '_' + idx,
-              name: finalName,
-              language: lang === '其他' ? '其他' : lang,
-              words: lines,
-              createdAt: Date.now() + idx
-            };
-            wordLibraries.push(newLib);
-            successCount++;
+      const results = await Promise.allSettled(filePromises);
+      let successCount = 0;
+      results.forEach((result, idx) => {
+        if (result.status === 'fulfilled') {
+          const { file, lines } = result.value;
+          let libName;
+          if (useCustomName) {
+            const baseName = nameInput.value.trim();
+            const suffix = files.length > 1 ? `_${idx + 1}` : '';
+            libName = baseName + suffix;
           } else {
-            failedFiles.push(result.reason);
+            libName = file.name.replace(/\.txt$/i, '').trim() || `未命名词库_${idx + 1}`;
           }
-        });
-
-        if (successCount > 0) {
-          if (!currentLibraryId) {
-            currentLibraryId = wordLibraries[wordLibraries.length - 1].id;
+          let finalName = libName;
+          let counter = 1;
+          while (wordLibraries.some(l => l.name === finalName)) {
+            finalName = libName + `_${counter}`;
+            counter++;
           }
-          filteredWords = [];
-          saveLibraries();
-          renderLibraryListUI();
-          nameInput.value = '';
-          fileInput.value = '';
-          showToast(`✅ 成功导入 ${successCount} 个词库${failedFiles.length > 0 ? `，${failedFiles.length} 个失败` : ''}`, 'success');
-          if (failedFiles.length > 0) {
-            errEl.textContent = '⚠️ 部分文件导入失败: ' + failedFiles.join('; ');
-          }
-          if (activePage === 'play') updatePlayButtonState();
+          const newLib = {
+            id: 'lib_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '_' + idx,
+            name: finalName,
+            language: lang === '其他' ? '其他' : lang,
+            words: lines,
+            createdAt: Date.now() + idx
+          };
+          wordLibraries.push(newLib);
+          successCount++;
         } else {
-          errEl.textContent = '❌ 所有文件导入失败，请检查文件格式。';
+          failedFiles.push(result.reason);
         }
       });
+
+      if (successCount > 0) {
+        if (!currentLibraryId) {
+          currentLibraryId = wordLibraries[wordLibraries.length - 1].id;
+        }
+        filteredWords = [];
+        await saveLibraries();
+        renderLibraryListUI();
+        nameInput.value = '';
+        fileInput.value = '';
+        showToast(`✅ 成功导入 ${successCount} 个词库${failedFiles.length > 0 ? `，${failedFiles.length} 个失败` : ''}`, 'success');
+        if (failedFiles.length > 0) {
+          errEl.textContent = '⚠️ 部分文件导入失败: ' + failedFiles.join('; ');
+        }
+        if (activePage === 'play') updatePlayButtonState();
+      } else {
+        errEl.textContent = '❌ 所有文件导入失败，请检查文件格式。';
+      }
     }
 
-    function deleteLibrary(id) {
+    async function deleteLibrary(id) {
       if (wordLibraries.length <= 1) {
         if (!confirm('删除最后一个词库后将没有可用词库，确定删除吗？')) return;
       } else {
@@ -2442,7 +2537,7 @@
         currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id : null;
         filteredWords = [];
       }
-      saveLibraries();
+      await saveLibraries();
       renderLibraryListUI();
       showToast(`已删除词库: ${lib ? lib.name : ''}`, 'info');
       if (activePage === 'play') updatePlayButtonState();
@@ -2454,7 +2549,7 @@
       deleteLibrary(lib.id);
     }
 
-    function renameLibrary(id) {
+    async function renameLibrary(id) {
       const lib = wordLibraries.find(l => l.id === id);
       if (!lib) { showToast('词库不存在', 'error'); return; }
       const newName = prompt('请输入新的词库名称：', lib.name);
@@ -2466,7 +2561,7 @@
         return;
       }
       lib.name = trimmed;
-      saveLibraries();
+      await saveLibraries();
       renderLibraryListUI();
       showToast(`已重命名为: ${trimmed}`, 'success');
     }
@@ -2624,7 +2719,7 @@
       $('start-btn-play').disabled = !hasWords;
     }
 
-    // ---------- 状态快照 / 历史 ----------
+    // ---------- 游戏状态管理 ----------
     function getStateSnapshot(st) {
       return {
         targetWord: st.targetWord,
@@ -3389,7 +3484,7 @@
     }
 
     // ============================================================
-    //  动态创建词库管理 UI（包含筛选栏）
+    //  动态构建词库管理 UI
     // ============================================================
     function buildLibrarySection() {
       const section = document.createElement('div');
@@ -3398,7 +3493,6 @@
       section.innerHTML = `
         <div class="section-title">📚 词库管理 <span class="badge" id="lib-current-badge">未选择</span></div>
 
-        <!-- 当前词库状态栏 -->
         <div class="lib-current-bar" id="lib-current-bar">
           <span class="label">📁 当前词库</span>
           <span class="info" id="lib-current-info">未选择任何词库</span>
@@ -3408,7 +3502,6 @@
           </div>
         </div>
 
-        <!-- 筛选栏 -->
         <div class="lib-filter-bar" id="lib-filter-bar">
           <span class="filter-label">🔍</span>
           <select id="lib-filter-lang" onchange="onFilterLangChange()">
@@ -3419,7 +3512,6 @@
           <span class="lib-filter-stats" id="lib-filter-stats">显示 0 / 0 个词库</span>
         </div>
 
-        <!-- 词库列表 -->
         <div class="lib-list-container" id="lib-list-container">
           <div id="lib-list-empty" style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">
             暂无词库，请导入一个词库文件开始。
@@ -3427,7 +3519,6 @@
           <div id="lib-list-items"></div>
         </div>
 
-        <!-- 添加词库 -->
         <div class="lib-add-area">
           <input type="text" id="lib-add-name" placeholder="词库名称（可选）" style="flex:1;min-width:100px;">
           <select id="lib-add-lang">
@@ -3448,7 +3539,6 @@
         </div>
         <div id="lib-add-error" class="error-msg"></div>
 
-        <!-- 统计与过滤 -->
         <div class="library-stats" style="margin-top:10px;">
           <span>📦 总词数: <strong id="lib-total">0</strong></span>
           <span>🔍 过滤后: <strong id="lib-filtered">0</strong></span>
@@ -3475,77 +3565,76 @@
       return section;
     }
 
-    // ============================================================
-    //  初始化
-    // ============================================================
-
-    // 替换原有的 #library-section 为动态构建的版本
     function initLibrarySection() {
       const oldSection = $('library-section');
       if (oldSection) oldSection.remove();
       const newSection = buildLibrarySection();
-      // 挂载到 simulator 的 slot 中（后续 switchPage 会移动）
       const slot = $('library-slot-simulator');
       slot.appendChild(newSection);
-      // 初始化语言下拉
       updateLanguageFilterOptions();
       renderLibraryListUI();
     }
 
-    // 加载设置
-    loadSettings();
-    loadConfig();
+    // ============================================================
+    //  初始化应用（异步）
+    // ============================================================
+    async function initApp() {
+      loadSettings();
+      loadConfig();
 
-    // 加载词库
-    const libLoaded = loadLibrariesFromStorage();
-    if (!libLoaded || wordLibraries.length === 0) {
-      wordLibraries = [{
-        id: 'lib_example_en',
-        name: '英语示例词库',
-        language: '英语',
-        words: ['HELLO', 'WORLD', 'APPLE', 'BANANA', 'CHERRY', 'DANCE', 'EAGLE', 'FLOWER', 'GRACE', 'HAPPY'],
-        createdAt: Date.now()
-      }, {
-        id: 'lib_example_zh',
-        name: '中文示例词库',
-        language: '中文',
-        words: ['你好', '世界', '苹果', '香蕉', '樱桃', '舞蹈', '老鹰', '花朵', '优雅', '快乐'],
-        createdAt: Date.now() + 1
-      }];
-      currentLibraryId = wordLibraries[0].id;
-      filteredWords = [];
-      saveLibraries();
+      const loaded = await loadLibraries();
+      if (!loaded || wordLibraries.length === 0) {
+        wordLibraries = [{
+          id: 'lib_example_en',
+          name: '英语示例词库',
+          language: '英语',
+          words: ['HELLO', 'WORLD', 'APPLE', 'BANANA', 'CHERRY', 'DANCE', 'EAGLE', 'FLOWER', 'GRACE', 'HAPPY'],
+          createdAt: Date.now()
+        }, {
+          id: 'lib_example_zh',
+          name: '中文示例词库',
+          language: '中文',
+          words: ['你好', '世界', '苹果', '香蕉', '樱桃', '舞蹈', '老鹰', '花朵', '优雅', '快乐'],
+          createdAt: Date.now() + 1
+        }];
+        currentLibraryId = wordLibraries[0].id;
+        filteredWords = [];
+        await saveLibraries();
+      }
+      if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) {
+        currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id : null;
+      }
+
+      initLibrarySection();
+      renderLibraryListUI();
+
+      if ($('langSelect').value === 'other') $('customLangGroup').style.display = 'block';
+
+      const initialPage = pages[settings.mode] ? settings.mode : 'simulator';
+      switchPage(initialPage);
+
+      const simRestored = loadFromLocalStorage('simulator');
+      if (!simRestored) {
+        $('target-word').value = 'HELLO';
+        $('max-attempts').value = '6';
+        setTimeout(() => { initGame(); }, 20);
+      } else if (activePage === 'simulator' && !pages.simulator.state.isGameOver) {
+        saveToLocalStorage('simulator');
+        $('simulator-guess-input').focus();
+      }
+
+      const playRestored = loadFromLocalStorage('play');
+      if (playRestored && activePage === 'play' && !pages.play.state.isGameOver) {
+        saveToLocalStorage('play');
+        $('play-guess-input').focus();
+      }
+
+      console.log('🧩 Wordle + AI 智能查词 SPA 已加载（大容量 IndexedDB 存储）');
+      console.log(`📌 页面: ${activePage} | 词库数: ${wordLibraries.length} | 当前词库: ${getCurrentLibrary()?.name || '无'}`);
     }
-    if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) {
-      currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id : null;
-    }
 
-    // 构建词库管理 UI
-    initLibrarySection();
-
-    // 渲染
-    renderLibraryListUI();
-
-    if ($('langSelect').value === 'other') $('customLangGroup').style.display = 'block';
-
-    const initialPage = pages[settings.mode] ? settings.mode : 'simulator';
-    switchPage(initialPage);
-
-    const simRestored = loadFromLocalStorage('simulator');
-    if (!simRestored) {
-      $('target-word').value = 'HELLO';
-      $('max-attempts').value = '6';
-      setTimeout(() => { initGame(); }, 20);
-    } else if (activePage === 'simulator' && !pages.simulator.state.isGameOver) {
-      saveToLocalStorage('simulator');
-      $('simulator-guess-input').focus();
-    }
-
-    const playRestored = loadFromLocalStorage('play');
-    if (playRestored && activePage === 'play' && !pages.play.state.isGameOver) {
-      saveToLocalStorage('play');
-      $('play-guess-input').focus();
-    }
+    // 启动
+    initApp();
 
     // 暴露全局函数
     window.switchPage = switchPage;
@@ -3581,9 +3670,6 @@
     window.onFilterLangChange = onFilterLangChange;
     window.onFilterNameInput = onFilterNameInput;
     window.clearLibraryFilters = clearLibraryFilters;
-
-    console.log('🧩 Wordle + AI 智能查词 SPA 已加载（多词库版 + 筛选）');
-    console.log(`📌 页面: ${activePage} | 词库数: ${wordLibraries.length} | 当前词库: ${getCurrentLibrary()?.name || '无'}`);
   </script>
 </body>
   </html>
