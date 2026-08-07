@@ -81,7 +81,6 @@
       transition: background 0.3s, color 0.3s;
     }
 
-    /* ===== 头部 ===== */
     .app-header {
       text-align: center;
       padding: 10px 0 16px;
@@ -114,7 +113,6 @@
       margin-top: 2px;
     }
 
-    /* ===== 标签页切换 ===== */
     .mode-tabs {
       display: flex;
       gap: 8px;
@@ -147,7 +145,6 @@
       border-color: var(--accent);
     }
 
-    /* ===== 容器 & 卡片 ===== */
     .container {
       background: var(--bg-card);
       padding: 20px 22px 28px;
@@ -203,7 +200,6 @@
       color: var(--text-secondary);
     }
 
-    /* ===== 表单控件 ===== */
     input[type="text"],
     input[type="number"],
     input[type="password"],
@@ -248,7 +244,6 @@
       cursor: pointer;
     }
 
-    /* ===== 按钮 ===== */
     button {
       padding: 9px 18px;
       background: var(--primary);
@@ -333,7 +328,6 @@
       background: var(--accent-light);
     }
 
-    /* ===== 消息 & 辅助 ===== */
     .error-msg {
       font-size: 14px;
       min-height: 22px;
@@ -352,7 +346,6 @@
       margin-top: 4px;
     }
 
-    /* ===== 折叠面板 ===== */
     .config-toggle {
       width: 100%;
       padding: 10px 14px;
@@ -424,7 +417,6 @@
       min-width: 100px;
     }
 
-    /* ===== 设置项 ===== */
     .setting-item {
       display: flex;
       align-items: center;
@@ -497,7 +489,6 @@
       transform: translateX(20px);
     }
 
-    /* ===== 词库管理 ===== */
     .library-stats {
       display: flex;
       gap: 16px;
@@ -584,13 +575,72 @@
       color: var(--accent);
     }
 
+    /* ===== 词库筛选栏 ===== */
+    .lib-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      align-items: center;
+    }
+
+    .lib-filter-bar .filter-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-right: 2px;
+    }
+
+    .lib-filter-bar select,
+    .lib-filter-bar input[type="text"] {
+      flex: 0 1 auto;
+      min-width: 120px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .lib-filter-bar input[type="text"] {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .lib-filter-bar .filter-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      min-height: auto;
+    }
+
+    .lib-filter-bar .filter-clear:hover {
+      color: var(--danger);
+    }
+
+    .lib-filter-stats {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
     .lib-list-container {
-      max-height: 220px;
+      max-height: 260px;
       overflow-y: auto;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 6px;
       background: var(--bg-input);
+      margin-bottom: 10px;
     }
 
     .lib-item {
@@ -678,7 +728,7 @@
 
     .lib-add-area input[type="file"] {
       flex: 1;
-      min-width: 120px;
+      min-width: 140px;
     }
 
     .lib-add-area button {
@@ -697,7 +747,6 @@
       min-width: 70px;
     }
 
-    /* ===== 画板 & 提示 ===== */
     .canvas-container {
       display: flex;
       flex-direction: column;
@@ -789,7 +838,6 @@
       }
     }
 
-    /* ===== AI 结果卡片 ===== */
     .ai-result-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -992,7 +1040,6 @@
       }
     }
 
-    /* ===== 指南 ===== */
     .guide-inner {
       font-size: 14px;
       line-height: 1.7;
@@ -1142,7 +1189,6 @@
       text-decoration: none;
     }
 
-    /* ===== Toast & 加载 ===== */
     .toast-container {
       position: fixed;
       top: 20px;
@@ -1236,7 +1282,6 @@
       font-weight: 500;
     }
 
-    /* ===== 响应式 ===== */
     @media (max-width: 480px) {
       .container {
         padding: 14px 14px 20px;
@@ -1312,6 +1357,22 @@
         width: 100%;
         justify-content: flex-end;
       }
+      .lib-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .lib-filter-bar .filter-label {
+        margin-right: 0;
+      }
+      .lib-filter-bar select,
+      .lib-filter-bar input[type="text"] {
+        min-width: unset;
+        width: 100%;
+      }
+      .lib-filter-stats {
+        margin-left: 0;
+        text-align: center;
+      }
     }
 
     @media (max-width: 380px) {
@@ -1340,6 +1401,16 @@
         opacity: 1;
         transform: translateY(0);
       }
+    }
+
+    /* 多文件导入提示 */
+    .multi-import-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      background: var(--bg-input);
+      border-radius: 4px;
+      display: inline-block;
     }
   </style>
 </head>
@@ -1372,72 +1443,7 @@
       </div>
 
       <div id="library-slot-simulator">
-        <!-- 词库管理 -->
-        <div class="section" id="library-section">
-          <div class="section-title">📚 词库管理 <span class="badge" id="lib-current-badge">未选择</span></div>
-
-          <!-- 当前词库状态栏 -->
-          <div class="lib-current-bar" id="lib-current-bar">
-            <span class="label">📁 当前词库</span>
-            <span class="info" id="lib-current-info">未选择任何词库</span>
-            <div>
-              <button class="btn-sm btn-outline" onclick="exportCurrentLibrary()" id="lib-export-btn" disabled>📤 导出</button>
-              <button class="btn-sm btn-danger" onclick="deleteCurrentLibrary()" id="lib-delete-btn" disabled>🗑️ 删除</button>
-            </div>
-          </div>
-
-          <!-- 词库列表 -->
-          <div class="lib-list-container" id="lib-list-container">
-            <div id="lib-list-empty" style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">
-              暂无词库，请导入一个词库文件开始。
-            </div>
-            <div id="lib-list-items"></div>
-          </div>
-
-          <!-- 添加词库 -->
-          <div class="lib-add-area">
-            <input type="text" id="lib-add-name" placeholder="词库名称（如 英语常用词）" style="flex:1;min-width:100px;">
-            <select id="lib-add-lang">
-              <option value="英语">英语</option>
-              <option value="中文">中文</option>
-              <option value="日语">日语</option>
-              <option value="韩语">韩语</option>
-              <option value="法语">法语</option>
-              <option value="德语">德语</option>
-              <option value="西班牙语">西班牙语</option>
-              <option value="俄语">俄语</option>
-              <option value="阿拉伯语">阿拉伯语</option>
-              <option value="其他">其他</option>
-            </select>
-            <input type="file" id="lib-add-file" accept=".txt" style="flex:1;min-width:120px;">
-            <button onclick="addLibrary()" class="btn-success">➕ 导入词库</button>
-          </div>
-          <div id="lib-add-error" class="error-msg"></div>
-
-          <!-- 统计与过滤 -->
-          <div class="library-stats" style="margin-top:10px;">
-            <span>📦 总词数: <strong id="lib-total">0</strong></span>
-            <span>🔍 过滤后: <strong id="lib-filtered">0</strong></span>
-            <span>📝 当前模式可用: <strong id="lib-valid">0</strong></span>
-          </div>
-          <div class="row" style="margin-top:6px;">
-            <span class="row-label">字符数过滤</span>
-            <input type="number" id="lib-filter-len" placeholder="全部" min="1" max="50" style="flex:0 1 80px;">
-            <span class="row-label" style="min-width:50px;">正则</span>
-            <input type="text" id="lib-filter-regex" placeholder="例如 ^[A-Z]+$" style="flex:1;min-width:100px;">
-            <button class="btn-sm btn-outline" onclick="applyLibraryFilter()">🔍 应用</button>
-            <button class="btn-sm btn-outline" onclick="resetLibraryFilter()">↺ 重置</button>
-          </div>
-          <div class="row" style="margin-top:6px;">
-            <button class="btn-sm" onclick="pickRandomFromLibrary()">🎲 从当前词库随机抽取</button>
-            <button class="btn-sm btn-outline" onclick="toggleLibraryList()">📂 打开词库选择器</button>
-          </div>
-          <div class="library-search row" id="lib-search-row" style="display:none;margin-top:6px;">
-            <input type="text" id="lib-search-input" placeholder="在当前词库中搜索..." oninput="searchLibrary()">
-          </div>
-          <div class="library-list" id="library-list"></div>
-          <div id="library-error" class="error-msg"></div>
-        </div>
+        <!-- 词库管理（动态挂载） -->
       </div>
 
       <div class="section" id="game-section-simulator">
@@ -1718,12 +1724,14 @@
           <h4>📚 多词库管理（新功能）</h4>
           <p>现在你可以导入多个词库，并为每个词库命名和设置语言分类。</p>
           <ul>
-            <li><strong>导入词库</strong>：在「词库管理」区域，输入词库名称、选择语言，然后上传 .txt 文件（一行一个单词）。</li>
+            <li><strong>导入词库</strong>：在「词库管理」区域，输入词库名称、选择语言，然后上传 .txt 文件（一行一个单词）。<strong>支持多文件批量导入</strong>（按住 Ctrl 或 Shift 多选）。</li>
             <li><strong>切换词库</strong>：在词库列表中点击「使用」按钮切换当前词库。</li>
             <li><strong>重命名</strong>：点击词库旁的 ✏️ 按钮修改名称。</li>
             <li><strong>删除</strong>：点击 🗑️ 按钮删除词库。</li>
             <li><strong>导出</strong>：点击「导出」按钮将当前词库保存为 .txt 文件。</li>
             <li><strong>过滤与搜索</strong>：按字符数或正则表达式过滤当前词库，也可在词库选择器中搜索单词。</li>
+            <li><strong>语言筛选</strong>：使用「语言分类」下拉框筛选特定语言的词库。</li>
+            <li><strong>名称搜索</strong>：在「搜索词库」框中输入关键词快速定位词库。</li>
           </ul>
           <h4>🤖 AI 智能查词</h4>
           <p>在设置中开启 AI 查词后，游戏中每次猜测会自动调用 <strong>DeepSeek API</strong> 查询单词的详细释义、发音、常用短语，并智能分析是否为虚构词汇。</p>
@@ -1966,6 +1974,9 @@
     let wordLibraries = [];
     let currentLibraryId = null;
     let filteredWords = [];
+    // 词库列表筛选状态
+    let libraryFilterLang = '全部';
+    let libraryFilterName = '';
     let activePage = 'simulator';
     let isNavigatingHistory = false;
 
@@ -2069,12 +2080,16 @@
         $('tab-' + p).classList.toggle('active', p === page);
         $('page-' + p).classList.toggle('hidden', p !== page);
       });
+      // 动态挂载词库管理模块
       if (page === 'simulator' || page === 'play') {
         const slot = $('library-slot-' + page);
-        if (!slot.contains($('library-section'))) {
-          slot.appendChild($('library-section'));
+        const libSection = $('library-section');
+        if (!slot.contains(libSection)) {
+          slot.innerHTML = '';
+          slot.appendChild(libSection);
         }
         updateLibraryStats();
+        renderLibraryListUI();
       }
       if (page === 'play') updatePlayButtonState();
     }
@@ -2135,10 +2150,37 @@
       } catch (e) { console.error('加载词库失败:', e); return false; }
     }
 
+    // ---- 获取所有已使用的语言 ----
+    function getAllLanguages() {
+      const langs = new Set();
+      wordLibraries.forEach(lib => {
+        if (lib.language) langs.add(lib.language);
+      });
+      return Array.from(langs).sort();
+    }
+
+    // ---- 渲染词库列表（支持筛选） ----
     function renderLibraryListUI() {
       const container = $('lib-list-items');
       const empty = $('lib-list-empty');
       const current = getCurrentLibrary();
+
+      // 应用筛选
+      let filtered = wordLibraries;
+      if (libraryFilterLang !== '全部') {
+        filtered = filtered.filter(lib => lib.language === libraryFilterLang);
+      }
+      if (libraryFilterName.trim() !== '') {
+        const keyword = libraryFilterName.trim().toLowerCase();
+        filtered = filtered.filter(lib => lib.name.toLowerCase().includes(keyword));
+      }
+
+      // 更新筛选统计
+      const totalLangs = getAllLanguages();
+      const filterStats = $('lib-filter-stats');
+      if (filterStats) {
+        filterStats.textContent = `显示 ${filtered.length} / ${wordLibraries.length} 个词库`;
+      }
 
       if (wordLibraries.length === 0) {
         container.innerHTML = '';
@@ -2148,12 +2190,29 @@
         $('lib-export-btn').disabled = true;
         $('lib-delete-btn').disabled = true;
         updateLibraryStats();
+        // 更新语言下拉选项
+        updateLanguageFilterOptions();
         return;
       }
       empty.style.display = 'none';
 
+      if (filtered.length === 0) {
+        container.innerHTML =
+          `<div style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">没有匹配的词库，请调整筛选条件。</div>`;
+        if (current) {
+          $('lib-current-info').innerHTML =
+            `<strong>${escapeHtml(current.name)}</strong> · ${escapeHtml(current.language || '未分类')} · ${current.words ? current.words.length : 0} 词`;
+          $('lib-current-badge').textContent = current.name;
+          $('lib-export-btn').disabled = false;
+          $('lib-delete-btn').disabled = false;
+        }
+        updateLibraryStats();
+        updateLanguageFilterOptions();
+        return;
+      }
+
       let html = '';
-      wordLibraries.forEach(lib => {
+      filtered.forEach(lib => {
         const isActive = lib.id === currentLibraryId;
         const wordCount = lib.words ? lib.words.length : 0;
         const lang = lib.language || '未分类';
@@ -2192,10 +2251,59 @@
       }
 
       updateLibraryStats();
+      updateLanguageFilterOptions();
       updatePlayButtonState();
       if ($('library-list').classList.contains('active')) {
         renderLibraryWordList();
       }
+    }
+
+    // ---- 更新语言筛选下拉选项 ----
+    function updateLanguageFilterOptions() {
+      const select = $('lib-filter-lang');
+      if (!select) return;
+      const currentVal = select.value;
+      const langs = getAllLanguages();
+      select.innerHTML = `<option value="全部">🌐 全部语言</option>`;
+      langs.forEach(lang => {
+        const opt = document.createElement('option');
+        opt.value = lang;
+        opt.textContent = lang;
+        select.appendChild(opt);
+      });
+      // 恢复当前选中值
+      if (langs.includes(currentVal)) {
+        select.value = currentVal;
+      } else if (currentVal === '全部' || !currentVal) {
+        select.value = '全部';
+      } else {
+        select.value = '全部';
+      }
+      libraryFilterLang = select.value;
+    }
+
+    // ---- 语言筛选变化 ----
+    function onFilterLangChange() {
+      const select = $('lib-filter-lang');
+      libraryFilterLang = select.value;
+      renderLibraryListUI();
+    }
+
+    // ---- 名称搜索变化 ----
+    function onFilterNameInput() {
+      const input = $('lib-filter-name');
+      libraryFilterName = input.value;
+      renderLibraryListUI();
+    }
+
+    // ---- 清除筛选 ----
+    function clearLibraryFilters() {
+      $('lib-filter-lang').value = '全部';
+      $('lib-filter-name').value = '';
+      libraryFilterLang = '全部';
+      libraryFilterName = '';
+      renderLibraryListUI();
+      showToast('筛选已清除', 'info');
     }
 
     function updateLibraryStats() {
@@ -2220,49 +2328,106 @@
       if (activePage === 'play') updatePlayButtonState();
     }
 
+    // ---- 支持多文件导入 ----
     function addLibrary() {
       const nameInput = $('lib-add-name');
       const langSelect = $('lib-add-lang');
       const fileInput = $('lib-add-file');
       const errEl = $('lib-add-error');
 
-      const name = nameInput.value.trim();
-      if (!name) { errEl.textContent = '❌ 请填写词库名称。'; return; }
       const lang = langSelect.value;
-      const file = fileInput.files[0];
-      if (!file) { errEl.textContent = '❌ 请选择一个 .txt 文件。'; return; }
+      const files = fileInput.files;
+      if (!files || files.length === 0) {
+        errEl.textContent = '❌ 请至少选择一个 .txt 文件。';
+        return;
+      }
 
       errEl.textContent = '';
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-        if (lines.length === 0) {
-          errEl.textContent = '❌ 文件为空或没有有效单词。';
-          return;
+      let importedCount = 0;
+      let failedFiles = [];
+
+      // 如果用户输入了名称，则所有文件使用该名称+序号；否则使用文件名
+      const useCustomName = nameInput.value.trim() !== '';
+
+      // 收集所有文件内容
+      const filePromises = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.name.toLowerCase().endsWith('.txt')) {
+          failedFiles.push(file.name + ' (不是 .txt 文件)');
+          continue;
         }
-        if (wordLibraries.some(l => l.name === name)) {
-          errEl.textContent = '❌ 已存在同名词库，请使用不同名称。';
-          return;
+        const promise = new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const text = e.target.result;
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) {
+              reject(file.name + ' (文件为空)');
+              return;
+            }
+            resolve({ file: file, lines: lines });
+          };
+          reader.onerror = function() {
+            reject(file.name + ' (读取失败)');
+          };
+          reader.readAsText(file);
+        });
+        filePromises.push(promise);
+      }
+
+      Promise.allSettled(filePromises).then(results => {
+        let successCount = 0;
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled') {
+            const { file, lines } = result.value;
+            let libName;
+            if (useCustomName) {
+              const baseName = nameInput.value.trim();
+              const suffix = files.length > 1 ? `_${idx + 1}` : '';
+              libName = baseName + suffix;
+            } else {
+              libName = file.name.replace(/\.txt$/i, '').trim() || `未命名词库_${idx + 1}`;
+            }
+            // 如果重名，自动添加序号
+            let finalName = libName;
+            let counter = 1;
+            while (wordLibraries.some(l => l.name === finalName)) {
+              finalName = libName + `_${counter}`;
+              counter++;
+            }
+            const newLib = {
+              id: 'lib_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '_' + idx,
+              name: finalName,
+              language: lang === '其他' ? '其他' : lang,
+              words: lines,
+              createdAt: Date.now() + idx
+            };
+            wordLibraries.push(newLib);
+            successCount++;
+          } else {
+            failedFiles.push(result.reason);
+          }
+        });
+
+        if (successCount > 0) {
+          if (!currentLibraryId) {
+            currentLibraryId = wordLibraries[wordLibraries.length - 1].id;
+          }
+          filteredWords = [];
+          saveLibraries();
+          renderLibraryListUI();
+          nameInput.value = '';
+          fileInput.value = '';
+          showToast(`✅ 成功导入 ${successCount} 个词库${failedFiles.length > 0 ? `，${failedFiles.length} 个失败` : ''}`, 'success');
+          if (failedFiles.length > 0) {
+            errEl.textContent = '⚠️ 部分文件导入失败: ' + failedFiles.join('; ');
+          }
+          if (activePage === 'play') updatePlayButtonState();
+        } else {
+          errEl.textContent = '❌ 所有文件导入失败，请检查文件格式。';
         }
-        const newLib = {
-          id: 'lib_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-          name: name,
-          language: lang === '其他' ? '其他' : lang,
-          words: lines,
-          createdAt: Date.now()
-        };
-        wordLibraries.push(newLib);
-        if (!currentLibraryId) { currentLibraryId = newLib.id; }
-        filteredWords = [];
-        saveLibraries();
-        renderLibraryListUI();
-        nameInput.value = '';
-        fileInput.value = '';
-        showToast(`✅ 词库「${name}」导入成功，共 ${lines.length} 个单词`, 'success');
-        if (activePage === 'play') updatePlayButtonState();
-      };
-      reader.readAsText(file);
+      });
     }
 
     function deleteLibrary(id) {
@@ -3223,26 +3388,115 @@
       triggerAILookup(word, 'dict');
     }
 
-    // ---------- 事件绑定 ----------
-    $('simulator-guess-input').addEventListener('keyup', function(e) { if (e.key === 'Enter') { e.preventDefault();
-        makeGuess('simulator'); } });
-    $('play-guess-input').addEventListener('keyup', function(e) { if (e.key === 'Enter') { e.preventDefault();
-        makeGuess('play'); } });
-    $('target-word').addEventListener('keyup', function(e) { if (e.key === 'Enter') { e.preventDefault();
-        initGame(); } });
-    $('dict-word-input').addEventListener('keyup', function(e) { if (e.key === 'Enter') { e.preventDefault();
-        dictSearch(); } });
-    $('langSelect').addEventListener('change', function() {
-      $('customLangGroup').style.display = this.value === 'other' ? 'block' : 'none';
-    });
-    $('dict-lang-select').addEventListener('change', function() {
-      $('dict-custom-lang-group').style.display = this.value === 'other' ? 'block' : 'none';
-    });
+    // ============================================================
+    //  动态创建词库管理 UI（包含筛选栏）
+    // ============================================================
+    function buildLibrarySection() {
+      const section = document.createElement('div');
+      section.id = 'library-section';
+      section.className = 'section';
+      section.innerHTML = `
+        <div class="section-title">📚 词库管理 <span class="badge" id="lib-current-badge">未选择</span></div>
 
-    // ---------- 初始化 ----------
+        <!-- 当前词库状态栏 -->
+        <div class="lib-current-bar" id="lib-current-bar">
+          <span class="label">📁 当前词库</span>
+          <span class="info" id="lib-current-info">未选择任何词库</span>
+          <div>
+            <button class="btn-sm btn-outline" onclick="exportCurrentLibrary()" id="lib-export-btn" disabled>📤 导出</button>
+            <button class="btn-sm btn-danger" onclick="deleteCurrentLibrary()" id="lib-delete-btn" disabled>🗑️ 删除</button>
+          </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="lib-filter-bar" id="lib-filter-bar">
+          <span class="filter-label">🔍</span>
+          <select id="lib-filter-lang" onchange="onFilterLangChange()">
+            <option value="全部">🌐 全部语言</option>
+          </select>
+          <input type="text" id="lib-filter-name" placeholder="搜索词库名称..." oninput="onFilterNameInput()">
+          <button class="filter-clear" onclick="clearLibraryFilters()" title="清除筛选">✕</button>
+          <span class="lib-filter-stats" id="lib-filter-stats">显示 0 / 0 个词库</span>
+        </div>
+
+        <!-- 词库列表 -->
+        <div class="lib-list-container" id="lib-list-container">
+          <div id="lib-list-empty" style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">
+            暂无词库，请导入一个词库文件开始。
+          </div>
+          <div id="lib-list-items"></div>
+        </div>
+
+        <!-- 添加词库 -->
+        <div class="lib-add-area">
+          <input type="text" id="lib-add-name" placeholder="词库名称（可选）" style="flex:1;min-width:100px;">
+          <select id="lib-add-lang">
+            <option value="英语">英语</option>
+            <option value="中文">中文</option>
+            <option value="日语">日语</option>
+            <option value="韩语">韩语</option>
+            <option value="法语">法语</option>
+            <option value="德语">德语</option>
+            <option value="西班牙语">西班牙语</option>
+            <option value="俄语">俄语</option>
+            <option value="阿拉伯语">阿拉伯语</option>
+            <option value="其他">其他</option>
+          </select>
+          <input type="file" id="lib-add-file" accept=".txt" multiple style="flex:1;min-width:140px;">
+          <button onclick="addLibrary()" class="btn-success">➕ 导入词库</button>
+          <span class="multi-import-hint">支持多选 .txt 文件</span>
+        </div>
+        <div id="lib-add-error" class="error-msg"></div>
+
+        <!-- 统计与过滤 -->
+        <div class="library-stats" style="margin-top:10px;">
+          <span>📦 总词数: <strong id="lib-total">0</strong></span>
+          <span>🔍 过滤后: <strong id="lib-filtered">0</strong></span>
+          <span>📝 当前模式可用: <strong id="lib-valid">0</strong></span>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <span class="row-label">字符数过滤</span>
+          <input type="number" id="lib-filter-len" placeholder="全部" min="1" max="50" style="flex:0 1 80px;">
+          <span class="row-label" style="min-width:50px;">正则</span>
+          <input type="text" id="lib-filter-regex" placeholder="例如 ^[A-Z]+$" style="flex:1;min-width:100px;">
+          <button class="btn-sm btn-outline" onclick="applyLibraryFilter()">🔍 应用</button>
+          <button class="btn-sm btn-outline" onclick="resetLibraryFilter()">↺ 重置</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <button class="btn-sm" onclick="pickRandomFromLibrary()">🎲 从当前词库随机抽取</button>
+          <button class="btn-sm btn-outline" onclick="toggleLibraryList()">📂 打开词库选择器</button>
+        </div>
+        <div class="library-search row" id="lib-search-row" style="display:none;margin-top:6px;">
+          <input type="text" id="lib-search-input" placeholder="在当前词库中搜索..." oninput="searchLibrary()">
+        </div>
+        <div class="library-list" id="library-list"></div>
+        <div id="library-error" class="error-msg"></div>
+      `;
+      return section;
+    }
+
+    // ============================================================
+    //  初始化
+    // ============================================================
+
+    // 替换原有的 #library-section 为动态构建的版本
+    function initLibrarySection() {
+      const oldSection = $('library-section');
+      if (oldSection) oldSection.remove();
+      const newSection = buildLibrarySection();
+      // 挂载到 simulator 的 slot 中（后续 switchPage 会移动）
+      const slot = $('library-slot-simulator');
+      slot.appendChild(newSection);
+      // 初始化语言下拉
+      updateLanguageFilterOptions();
+      renderLibraryListUI();
+    }
+
+    // 加载设置
     loadSettings();
     loadConfig();
 
+    // 加载词库
     const libLoaded = loadLibrariesFromStorage();
     if (!libLoaded || wordLibraries.length === 0) {
       wordLibraries = [{
@@ -3265,6 +3519,11 @@
     if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) {
       currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id : null;
     }
+
+    // 构建词库管理 UI
+    initLibrarySection();
+
+    // 渲染
     renderLibraryListUI();
 
     if ($('langSelect').value === 'other') $('customLangGroup').style.display = 'block';
@@ -3319,9 +3578,12 @@
     window.toggleLibraryList = toggleLibraryList;
     window.searchLibrary = searchLibrary;
     window.dictSearch = dictSearch;
+    window.onFilterLangChange = onFilterLangChange;
+    window.onFilterNameInput = onFilterNameInput;
+    window.clearLibraryFilters = clearLibraryFilters;
 
-    console.log('🧩 Wordle + AI 智能查词 SPA 已加载（多词库版）');
+    console.log('🧩 Wordle + AI 智能查词 SPA 已加载（多词库版 + 筛选）');
     console.log(`📌 页面: ${activePage} | 词库数: ${wordLibraries.length} | 当前词库: ${getCurrentLibrary()?.name || '无'}`);
   </script>
 </body>
-    </html>
+  </html>
