@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="隐形编码实验室：将任意 Unicode 文本编码为零宽字符序列，并可无损还原。纯前端，数据不出浏览器。">
+<title>隐形编码实验室 · 隐形文本编码 / 解码</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f1f2ee; --card:#ffffff; --ink:#191d24; --ink2:#4c5361;
+  --red:#cf3f2a; --red-d:#a92f1e; --teal:#0b6f65; --teal-d:#08564e;
+  --amber:#b97a16; --blue:#2b5fb8; --green:#1d7c4d;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace;
+  --disp:'Unbounded','PingFang SC','Microsoft YaHei',sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+::selection{background:rgba(207,63,42,.22)}
+
+/* ---------- 背景层：工程网格 + 漂浮的码位令牌 ---------- */
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    linear-gradient(rgba(25,29,36,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(25,29,36,.05) 1px,transparent 1px);
+  background-size:28px 28px;
+  mask-image:linear-gradient(#000 62%,rgba(0,0,0,.3));
+  -webkit-mask-image:linear-gradient(#000 62%,rgba(0,0,0,.3));}
+.drift{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.drift span{position:fixed;left:var(--x);top:var(--y);font:600 13px var(--mono);
+  color:rgba(25,29,36,.09);animation:drift var(--d) ease-in-out infinite alternate;white-space:nowrap}
+@keyframes drift{from{transform:translateY(-16px) rotate(-4deg)}to{transform:translateY(16px) rotate(3deg)}}
+header,main,footer{position:relative;z-index:1}
+
+/* ---------- 顶部：字符样张条 ---------- */
+.masthead{background:var(--ink);color:#ecebe4;padding:26px 0 66px}
+.masthead-inner{max-width:1080px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.brand{display:flex;gap:14px;align-items:center}
+.brand-mark{width:48px;height:48px;border-radius:10px;background:var(--red);color:#fff;display:grid;place-items:center;
+  font-size:26px;box-shadow:4px 4px 0 rgba(0,0,0,.35);flex:none}
+.brand-en{font:600 10.5px var(--mono);letter-spacing:.34em;color:rgba(236,235,228,.55)}
+.masthead h1{margin:3px 0 0;font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:.02em}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 12px;min-width:92px;
+  border:1px solid rgba(236,235,228,.22);border-radius:10px;background:rgba(255,255,255,.04);
+  transition:transform .15s ease,border-color .15s ease}
+.chip:hover{transform:translateY(-3px);border-color:rgba(236,235,228,.5)}
+.chip .glyph{width:46px;height:28px;border:1px dashed rgba(236,235,228,.4);border-radius:6px;display:grid;place-items:center;font-size:16px}
+.chip .cp{font:700 11px var(--mono);color:#f0b429}
+.chip .cn{font-size:10px;color:rgba(236,235,228,.6)}
+.chip .role{font-size:10px;font-weight:700;padding:2px 9px;border-radius:999px}
+.r-f{background:rgba(240,180,41,.16);color:#f0b429}
+.r-0{background:rgba(79,209,192,.14);color:#4fd1c0}
+.r-1{background:rgba(242,139,118,.16);color:#f28b76}
+.chip.off{opacity:.45}
+.chip.off .cp{color:rgba(236,235,228,.7)}
+.chip.off .role{background:rgba(236,235,228,.1);color:rgba(236,235,228,.6);text-decoration:line-through}
+
+.container{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* ---------- 样张 No.000：一条“看起来是空的”消息 ---------- */
+.demo{position:relative;margin-top:-42px;background:var(--card);border:1.5px solid var(--ink);border-radius:13px;
+  padding:16px 18px;box-shadow:7px 7px 0 rgba(25,29,36,.12)}
+.demo-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.demo-tag{font:700 10.5px var(--mono);letter-spacing:.18em;background:var(--ink);color:#f0b429;padding:4px 9px;border-radius:6px}
+.demo-cap{font-size:13px;color:var(--ink2)}
+.demo-cap b{color:var(--red);font-family:var(--mono)}
+.demo-actions{margin-left:auto;display:flex;gap:8px}
+.demo-line{margin-top:12px;border:1.5px dashed rgba(25,29,36,.32);border-radius:10px;min-height:52px;
+  display:flex;align-items:center;padding:10px 14px;word-break:break-all;line-height:2}
+.demo-line:empty::after{content:'⌈ 这里看起来什么都没有 —— 其实不然 ⌉';color:rgba(25,29,36,.32);font-size:13px}
+.demo-line .hint{color:rgba(25,29,36,.35);font-size:13px}
+
+/* ---------- 通用按钮 ---------- */
+.btn{appearance:none;border:1.5px solid rgba(25,29,36,.75);background:#fff;color:var(--ink);
+  font:600 14px/1 var(--body);padding:10px 16px;border-radius:9px;cursor:pointer;
+  box-shadow:3px 3px 0 rgba(25,29,36,.12);transition:transform .12s ease,box-shadow .12s ease,background .12s,border-color .12s}
+.btn:hover{transform:translate(-1px,-2px);box-shadow:5px 6px 0 rgba(25,29,36,.15)}
+.btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 rgba(25,29,36,.18)}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.primary:hover{background:var(--accd);border-color:var(--accd)}
+.btn.ghost{background:transparent;border-style:dashed;box-shadow:none}
+.btn.tiny{padding:6px 11px;font-size:12px;border-radius:7px;box-shadow:2px 2px 0 rgba(25,29,36,.1)}
+.btn.ok{background:var(--green)!important;border-color:var(--green)!important;color:#fff!important}
+
+/* ---------- 工作台：编码 / 解码双面板 ---------- */
+.workbench{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:30px}
+.panel{--acc:var(--ink);--accd:var(--ink);background:var(--card);border:1px solid rgba(25,29,36,.16);
+  border-top:5px solid var(--acc);border-radius:13px;padding:22px 22px 20px;
+  box-shadow:7px 7px 0 rgba(25,29,36,.07);display:flex;flex-direction:column;gap:10px;
+  transition:box-shadow .2s ease,transform .2s ease}
+.panel:hover{box-shadow:9px 10px 0 rgba(25,29,36,.09);transform:translateY(-2px)}
+.accent-red{--acc:var(--red);--accd:var(--red-d);--accsoft:rgba(207,63,42,.13)}
+.accent-teal{--acc:var(--teal);--accd:var(--teal-d);--accsoft:rgba(11,111,101,.13)}
+.panel-head{display:flex;gap:12px;align-items:baseline;border-bottom:1px dashed rgba(25,29,36,.22);padding-bottom:12px}
+.panel-no{font:800 34px/1 var(--disp);color:rgba(25,29,36,.14)}
+.panel-head h2{margin:0;font-size:18px;font-weight:800}
+.panel-sub{margin:2px 0 0;font:500 10px var(--mono);letter-spacing:.22em;color:var(--ink2)}
+.f-label{font:700 11px var(--mono);letter-spacing:.14em;color:var(--ink2);margin-top:6px}
+textarea{width:100%;min-height:126px;resize:vertical;border:1.5px solid rgba(25,29,36,.24);border-radius:10px;
+  padding:12px 14px;font:15px/1.65 var(--body);background:#fff;color:var(--ink);
+  transition:border-color .15s,box-shadow .15s}
+textarea.mono{font:13px/1.7 var(--mono)}
+textarea:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--accsoft)}
+textarea.flash{animation:flash .7s ease}
+@keyframes flash{0%{background:#fff}30%{background:var(--accsoft)}100%{background:#fff}}
+.stats{display:flex;flex-wrap:wrap;gap:6px 14px;font:500 11.5px var(--mono);color:var(--ink2);min-height:18px}
+.stats b{color:var(--ink)}
+.s-dim{opacity:.55;font-style:italic}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}
+.flow-arrow{text-align:center;font:500 10.5px var(--mono);color:var(--ink2);
+  border-top:1px dashed rgba(25,29,36,.25);padding-top:9px;letter-spacing:.04em}
+.out-hint{font-size:11.5px;color:var(--ink2)}
+.tagchip{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(25,29,36,.28);border-radius:999px;
+  padding:3px 10px;font:600 11px var(--mono);background:#fff}
+.c-f{border-color:var(--amber);color:var(--amber)}
+.c-0{border-color:var(--teal);color:var(--teal)}
+.c-1{border-color:var(--red);color:var(--red)}
+.c-x{border-style:dashed;color:var(--ink2)}
+.peek{margin-top:2px;border:1px dashed rgba(25,29,36,.32);border-radius:10px;padding:12px 14px;background:#fbfbf7;
+  word-break:break-all;overflow-wrap:anywhere;line-height:2;font-size:14px}
+.v{font-style:normal;margin:0 1px}
+.v-0{color:var(--teal);font-weight:700}
+.v-1{color:var(--red);font-weight:700}
+.v-f{color:var(--amber);font-weight:700}
+.v-x{color:var(--ink)}
+.v-more{font-size:11px;color:var(--ink2)}
+.status{display:none;margin-top:4px;padding:9px 12px;border-radius:8px;font-size:13px;line-height:1.55;
+  align-items:flex-start;gap:8px;border:1px solid transparent}
+.status.show{display:flex;animation:pop .25s ease}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.status .dot{flex:none;width:8px;height:8px;border-radius:50%;background:currentColor;margin-top:5px}
+.status.ok{background:#e5f3ea;border-color:rgba(29,124,77,.3);color:#14603a}
+.status.error{background:#fbeae7;border-color:rgba(207,63,42,.35);color:#a72c14}
+.status.info{background:#e9effc;border-color:rgba(43,95,184,.28);color:#244f9e}
+.status.warn{background:#fdf3e3;border-color:rgba(185,122,22,.32);color:#8a5a12}
+
+/* ---------- 文档区 ---------- */
+.docs-card{background:var(--card);border:1px solid rgba(25,29,36,.15);border-radius:14px;
+  padding:26px 28px;margin-top:26px;box-shadow:7px 7px 0 rgba(25,29,36,.06)}
+.kicker{font:700 10.5px var(--mono);letter-spacing:.3em;margin:0}
+.k-red{color:var(--red)} .k-teal{color:var(--teal)} .k-amber{color:var(--amber)} .k-blue{color:var(--blue)}
+.docs-card h2{margin:6px 0 16px;font-size:22px;font-weight:800}
+.docs-card h3{font-size:14.5px;margin:22px 0 10px;padding-left:10px;border-left:4px solid var(--red)}
+.flow{display:flex;gap:8px;flex-wrap:wrap}
+.fstep{flex:1;min-width:132px;border:1.5px solid rgba(25,29,36,.65);border-radius:10px;padding:12px;
+  background:#fbfbf7;box-shadow:3px 3px 0 rgba(25,29,36,.08)}
+.fstep b{display:block;font-size:13.5px;margin-bottom:3px}
+.fstep span{font:500 10.5px var(--mono);color:var(--ink2)}
+.farr{align-self:center;font-weight:800;color:var(--red)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font:700 10.5px var(--mono);letter-spacing:.12em;color:var(--ink2);
+  border-bottom:2px solid var(--ink);padding:8px 10px}
+.tbl td{padding:9px 10px;border-bottom:1px dashed rgba(25,29,36,.2);vertical-align:top;line-height:1.6}
+.tbl .mono{font-family:var(--mono);font-size:12px}
+.mk{font-weight:800}
+.mk.ok{color:var(--green)} .mk.mid{color:var(--amber)} .mk.bad{color:var(--red)}
+.tiles{display:flex;flex-wrap:wrap;margin:6px 0}
+.tile{display:inline-flex;flex-direction:column;align-items:center;gap:1px;border:1.5px solid;border-radius:7px;
+  padding:5px 5px;min-width:36px;margin:3px;transition:transform .12s ease}
+.tile:hover{transform:translateY(-3px)}
+.tile b{font:700 13px var(--mono)}
+.tile i{font:500 8px var(--mono);font-style:normal;opacity:.7}
+.tile-0{border-color:var(--teal);color:var(--teal);background:#eef7f5}
+.tile-1{border-color:var(--red);color:var(--red);background:#fdf0ed}
+.tile-f{border-color:var(--amber);color:var(--amber);background:#fdf6ea}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:500 11px var(--mono);color:var(--ink2);margin-top:4px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+ol.rules,ul.notes{margin:6px 0;padding-left:22px;font-size:13.5px;line-height:1.9}
+ul.notes li::marker{color:var(--red)}
+ol.rules li::marker{font-weight:800;color:var(--teal)}
+code{font:600 12px var(--mono);background:rgba(25,29,36,.07);padding:1px 6px;border-radius:5px}
+.foot-note{font-size:11.5px;color:var(--ink2);margin-top:12px;line-height:1.7}
+
+/* 安全说明：反白卡片 */
+.sec-dark{background:var(--ink);color:#e6e4dc;border-color:var(--ink)}
+.sec-dark h2{color:#fff}
+.sec-dark ul.notes li::marker{color:#f0b429}
+.sec-dark code{background:rgba(255,255,255,.12);color:#ffd97a}
+.sec-dark pre{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:9px;
+  padding:14px 16px;font:12px/1.7 var(--mono);overflow:auto;color:#cfe6d8;margin:10px 0 0}
+.warn-chip{display:inline-block;background:rgba(207,63,42,.2);color:#f28b76;border:1px solid rgba(242,139,118,.4);
+  font:700 11px var(--mono);padding:3px 10px;border-radius:999px;margin-bottom:10px}
+
+/* ---------- 自检区 ---------- */
+.t-badge{display:inline-block;padding:3px 11px;border-radius:999px;font:700 11px var(--mono)}
+.t-badge.pending{background:#eceeea;color:#6a6f7a}
+.t-badge.pass{background:#e5f3ea;color:#14603a}
+.t-badge.fail{background:#fbeae7;color:#a72c14}
+.t-in{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink2)}
+.t-note{font-size:11px;color:var(--ink2)}
+
+/* ---------- Toast / 页脚 / 动效 ---------- */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);opacity:0;z-index:50;
+  background:var(--ink);color:#f2f1ea;padding:11px 18px;border-radius:9px;font-size:13.5px;max-width:86vw;
+  border-left:4px solid var(--blue);box-shadow:0 8px 24px rgba(25,29,36,.3);
+  transition:transform .25s ease,opacity .25s ease;pointer-events:none}
+.toast.show{transform:translate(-50%,0);opacity:1}
+.toast.ok{border-left-color:var(--green)} .toast.error{border-left-color:var(--red)} .toast.warn{border-left-color:var(--amber)}
+footer{padding:44px 20px 34px;text-align:center;font:500 11.5px var(--mono);color:var(--ink2);line-height:2}
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s ease}
+.reveal.in{opacity:1;transform:none}
+noscript .status{display:flex}
+
+@media (max-width:920px){
+  .workbench{grid-template-columns:1fr}
+  .farr{display:none}
+  .demo-actions{margin-left:0;width:100%}
+  .docs-card{padding:20px 16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="drift" aria-hidden="true">
+  <span style="--x:5%;--y:16%;--d:13s">U+200C · 0</span>
+  <span style="--x:84%;--y:11%;--d:17s">U+200D · 1</span>
+  <span style="--x:70%;--y:72%;--d:15s">U+2060</span>
+  <span style="--x:12%;--y:80%;--d:19s">01000001</span>
+  <span style="--x:44%;--y:9%;--d:14s">CRC-16</span>
+  <span style="--x:91%;--y:52%;--d:16s">UTF-8</span>
+</div>
+
+<!-- ======= 顶部：字符样张条 ======= -->
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">◌</span>
+      <div>
+        <div class="brand-en">INVISIBLE INK LAB · STEGANOGRAPHY</div>
+        <h1>隐形编码实验室</h1>
+      </div>
+    </div>
+    <div class="chips" id="chips">
+      <div class="chip" data-cp="2060"><span class="glyph"></span><span class="cp">U+2060</span><span class="cn">WORD JOINER</span><span class="role r-f">帧头 / 帧尾</span></div>
+      <div class="chip" data-cp="200C"><span class="glyph"></span><span class="cp">U+200C</span><span class="cn">ZERO WIDTH NON-JOINER</span><span class="role r-0">比特 0</span></div>
+      <div class="chip" data-cp="200D"><span class="glyph"></span><span class="cp">U+200D</span><span class="cn">ZERO WIDTH JOINER</span><span class="role r-1">比特 1</span></div>
+      <div class="chip off" data-cp="200B"><span class="glyph"></span><span class="cp">U+200B</span><span class="cn">ZERO WIDTH SPACE</span><span class="role">不使用 · 易被清除</span></div>
+      <div class="chip off" data-cp="FEFF"><span class="glyph"></span><span class="cp">U+FEFF</span><span class="cn">ZWNBSP / BOM</span><span class="role">不使用 · 被当 BOM 剥掉</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ======= 样张 No.000 ======= -->
+  <div class="demo reveal">
+    <div class="demo-head">
+      <span class="demo-tag">SPECIMEN · No.000</span>
+      <span class="demo-cap">下面的虚线框看起来是空的，其实藏着 <b id="demoCount">0</b> 个隐形字符</span>
+      <div class="demo-actions">
+        <button class="btn tiny" id="demoViz">👁 可视化</button>
+        <button class="btn tiny" id="demoSend">→ 送去解码区试试</button>
+      </div>
+    </div>
+    <div class="demo-line" id="demoGhost" aria-label="藏有隐形字符的演示区"></div>
+  </div>
+
+  <noscript><div class="status error show" style="margin-top:20px"><span class="dot"></span><span>本工具为纯前端实现，需要启用 JavaScript。</span></div></noscript>
+
+  <!-- ======= 工作台 ======= -->
+  <section class="workbench">
+
+    <!-- 编码面板 -->
+    <article class="panel accent-red reveal" id="panelEnc">
+      <header class="panel-head">
+        <span class="panel-no" aria-hidden="true">01</span>
+        <div><h2>编码 · 明文 → 隐形</h2><p class="panel-sub">ENCODE — PLAINTEXT → INVISIBLE</p></div>
+      </header>
+      <label class="f-label" for="encIn">明文（任意 Unicode）</label>
+      <textarea id="encIn" spellcheck="false" placeholder="输入任意 Unicode 文本：中文、Emoji、换行、组合字符……（Ctrl + Enter 快速编码）"></textarea>
+      <div class="stats" id="encInStats"><span class="s-dim">等待输入…</span></div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnEncode">⇢ 加密 / 编码</button>
+        <button class="btn" id="btnSample">✦ 示例文本</button>
+        <button class="btn ghost" id="btnEncClear">清空</button>
+      </div>
+      <div class="flow-arrow">▼ UTF-8 字节 → 比特流 → U+200C / U+200D 映射 → CRC 校验 → 组帧</div>
+      <label class="f-label" for="encOut">编码结果（肉眼不可见）</label>
+      <textarea id="encOut" class="mono" readonly spellcheck="false" placeholder="编码结果会出现在这里 —— 它看起来是一片空白"></textarea>
+      <div class="stats" id="encOutStats"><span class="s-dim">等待编码…</span></div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnEncCopy">⧉ 复制加密结果</button>
+        <button class="btn" id="btnPeek" disabled>👁 可视化</button>
+      </div>
+      <p class="out-hint">⚠ 结果看起来是空白，这是预期效果；手动框选复制时肉眼无法确认内容，建议使用复制按钮。</p>
+      <div class="peek mono" id="encPeek" hidden></div>
+      <div class="status" id="encStatus" role="status" aria-live="polite"></div>
+    </article>
+
+    <!-- 解码面板 -->
+    <article class="panel accent-teal reveal" id="panelDec">
+      <header class="panel-head">
+        <span class="panel-no" aria-hidden="true">02</span>
+        <div><h2>解码 · 隐形 → 明文</h2><p class="panel-sub">DECODE — INVISIBLE → PLAINTEXT</p></div>
+      </header>
+      <label class="f-label" for="decIn">隐形文本（直接粘贴即可，零宽字符会被完整保留）</label>
+      <textarea id="decIn" class="mono" spellcheck="false" placeholder="粘贴隐形编码文本（Ctrl + V）。即使混在普通文字里，也能识别帧头并提取。（Ctrl + Enter 快速解码）"></textarea>
+      <div class="stats" id="decInComp"><span class="s-dim">字符组成检查：粘贴后实时显示隐形字符是否完好</span></div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnDecode">⇠ 解密 / 解码</button>
+        <button class="btn" id="btnDecSample">✦ 示例隐形文本</button>
+        <button class="btn" id="btnDecPaste">⎘ 从剪贴板读取</button>
+        <button class="btn ghost" id="btnDecClear">清空</button>
+      </div>
+      <div class="flow-arrow">▼ 定位帧头 → 读取比特 → 按 8 bit 分组 → 校验 CRC-16 → UTF-8 严格还原</div>
+      <label class="f-label" for="decOut">解码结果</label>
+      <textarea id="decOut" readonly spellcheck="false" placeholder="还原出的原始文本会出现在这里"></textarea>
+      <div class="stats" id="decOutStats"><span class="s-dim">等待解码…</span></div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnDecCopy">⧉ 复制解码结果</button>
+      </div>
+      <div class="status" id="decStatus" role="status" aria-live="polite"></div>
+    </article>
+  </section>
+
+  <!-- ======= 03 算法规格 ======= -->
+  <section class="docs-card reveal" id="algo">
+    <p class="kicker k-red">03 · ALGORITHM SPEC</p>
+    <h2>算法规格</h2>
+
+    <h3>编码流程</h3>
+    <div class="flow">
+      <div class="fstep"><b>明文 Unicode</b><span>任意合法字符</span></div>
+      <div class="farr">→</div>
+      <div class="fstep"><b>UTF-8 字节</b><span>TextEncoder</span></div>
+      <div class="farr">→</div>
+      <div class="fstep"><b>比特流</b><span>8 bit/字节 · 高位在前</span></div>
+      <div class="farr">→</div>
+      <div class="fstep"><b>字符映射</b><span>0→U+200C · 1→U+200D</span></div>
+      <div class="farr">→</div>
+      <div class="fstep"><b>组帧</b><span>2060×2 + 载荷+CRC16 + 2060</span></div>
+    </div>
+
+    <h3>字符表</h3>
+    <table class="tbl">
+      <tr><th>字符</th><th>码位</th><th>角色</th><th>说明与风险</th></tr>
+      <tr><td>WORD JOINER</td><td class="mono">U+2060</td><td>帧头 ×2 / 帧尾</td><td>保留率高、不受 BOM 清理影响；同时把载荷与两侧文字隔离，防止 ZWJ 被相邻 Emoji 吸收</td></tr>
+      <tr><td>ZWNJ</td><td class="mono">U+200C</td><td>比特 0</td><td>波斯语 / 阿拉伯语 / 印地语等有合法用途，各平台普遍保留</td></tr>
+      <tr><td>ZWJ</td><td class="mono">U+200D</td><td>比特 1</td><td>Emoji 组合序列依赖该字符，保留率高</td></tr>
+      <tr><td>ZWSP</td><td class="mono">U+200B</td><td>不使用（备选比特 0）</td><td>被“空白清理”规则移除的概率最高，故弃用</td></tr>
+      <tr><td>ZWNBSP</td><td class="mono">U+FEFF</td><td>不使用</td><td>位于文件开头会被当作 BOM 剥掉</td></tr>
+      <tr><td>SOFT HYPHEN</td><td class="mono">U+00AD</td><td>不使用</td><td>可能被渲染为连字符，行为不稳定</td></tr>
+    </table>
+
+    <h3>比特映射实例（明文 <code>A</code>，由下方实时生成）</h3>
+    <p style="font-size:13px;color:var(--ink2);margin:4px 0">
+      <code>A</code> → UTF-8 <code>0x41</code> → 比特 <code>01000001</code> → 再加 CRC-16（2 字节）→ 组帧：
+    </p>
+    <div class="tiles" id="specimen"></div>
+    <div class="legend">
+      <span><i style="background:var(--amber)"></i>U+2060 帧字符</span>
+      <span><i style="background:var(--teal)"></i>U+200C = 比特 0</span>
+      <span><i style="background:var(--red)"></i>U+200D = 比特 1</span>
+    </div>
+
+    <h3>解码规则</h3>
+    <ol class="rules">
+      <li>搜索帧头 <code>U+2060 U+2060</code>；逐个候选位置尝试，因此混在普通文字中的隐形文本也能被提取。</li>
+      <li>帧头之后连续读取 <code>U+200C</code>(=0) / <code>U+200D</code>(=1)，直到帧尾 <code>U+2060</code> 或任何其他字符。</li>
+      <li>比特数必须 ≥ 16 且为 8 的整数倍，否则判定为被截断。</li>
+      <li>末 2 字节为 CRC-16（CCITT-FALSE，poly 0x1021，init 0xFFFF）校验和，不符即判定内容被改动。</li>
+      <li>其余字节以严格模式（<code>TextDecoder fatal</code>）还原为 UTF-8 文本，失败即判定载荷损坏。</li>
+      <li>任何一步失败，统一报告「不是有效的隐形编码文本」并附具体原因。</li>
+    </ol>
+
+    <h3>边界情况</h3>
+    <ul class="notes">
+      <li><b>空字符串</b>：友好提示「结果为空」，不报错。</li>
+      <li><b>孤立代理项</b>（U+D800–U+DFFF 未配对）：UTF-8 会将其替换为 U+FFFD，不可逆 → 编码时拒绝并说明。</li>
+      <li><b>被平台截断</b>：比特数不再是整字节 → 解码立即报错。</li>
+      <li><b>字符被替换 / 删除</b>：CRC-16 + UTF-8 严格校验双重检出；校验仅为完整性设计，不提供密码学强度。</li>
+      <li><b>Unicode 规范化</b>：部分平台会自动合成/分解组合字符（如 é = e + ́），解码结果可能为视觉等价的另一种形式。</li>
+      <li><b>紧邻 Emoji</b>：ZWJ（比特 1）若贴近 Emoji 可能被渲染引擎并入 Emoji 序列；帧头尾 U+2060 已在载荷两侧隔离，建议隐形文本独立成段。</li>
+    </ul>
+  </section>
+
+  <!-- ======= 04 兼容性 ======= -->
+  <section class="docs-card reveal" id="compat">
+    <p class="kicker k-teal">04 · COMPATIBILITY</p>
+    <h2>兼容性与风险</h2>
+    <table class="tbl">
+      <tr><th>平台 / 环境</th><th>评估</th><th>说明</th></tr>
+      <tr><td>TXT / JSON / HTML 源码等文件存储</td><td><span class="mk ok">●</span> 稳定</td><td>文件不改动字符串内容；JSON 字符串可直接内嵌（均为合法字符）</td></tr>
+      <tr><td>浏览器输入框 / textarea 粘贴</td><td><span class="mk ok">●</span> 稳定</td><td>本页及绝大多数 Web 表单原样保留</td></tr>
+      <tr><td>代码编辑器（VS Code / Notepad++ 等）</td><td><span class="mk ok">●</span> 稳定</td><td>部分编辑器会以角标提示零宽字符位置，不影响内容</td></tr>
+      <tr><td>纯文本邮件 / 终端</td><td><span class="mk ok">●</span> 稳定</td><td>纯文本通道一般不做处理</td></tr>
+      <tr><td>Telegram / Signal / WhatsApp</td><td><span class="mk ok">●</span> 基本稳定</td><td>ZWJ / ZWNJ 在 Emoji 与中东语言中有合法用途，保留率高</td></tr>
+      <tr><td>微信 / QQ / 钉钉</td><td><span class="mk mid">◐</span> 多数保留</td><td>聊天通道一般可保留；个别版本或富文本 / 引用卡片通道可能清洗</td></tr>
+      <tr><td>Twitter(X) / 部分论坛</td><td><span class="mk mid">◐</span> 视情况</td><td>部分发布管线会剥离零宽字符，发布前请先自测</td></tr>
+      <tr><td>富文本编辑器 / CMS / 社区清洗器</td><td><span class="mk bad">○</span> 高风险</td><td>sanitizer 常把“不可见字符”整体移除</td></tr>
+      <tr><td>短信 SMS</td><td><span class="mk bad">○</span> 不推荐</td><td>按 UCS-2 计费长度，容量爆炸且网关可能改写</td></tr>
+    </table>
+    <p class="foot-note">
+      图例：<span class="mk ok">●</span> 稳定 · <span class="mk mid">◐</span> 有条件 · <span class="mk bad">○</span> 高风险。行为随平台版本变化，正式使用前请实测。<br>
+      <b>防格式化建议</b>：① 隐形文本尽量独立传输，避免进入富文本管道；② 必须混排时放在引号或括号等可见锚点之间；
+      ③ 粘贴到解码区后先看「字符组成检查」—— 若 U+200C / U+200D 计数为 0，说明已被平台剥离。<br>
+      <b>哪些输入会解码失败</b>：被平台剥离或截断的文本、手工编辑过的隐形字符、编码时含孤立代理项的原文（会被直接拒绝）、经过 NFC/NFD 规范化后字节已改变的文本（可能解出规范化变体）。
+    </p>
+  </section>
+
+  <!-- ======= 05 安全说明 ======= -->
+  <section class="docs-card sec-dark reveal" id="security">
+    <p class="kicker" style="color:#f0b429">05 · SECURITY NOTICE</p>
+    <h2>安全说明（请务必阅读）</h2>
+    <span class="warn-chip">隐写 / 编码 ≠ 加密</span>
+    <ul class="notes">
+      <li>本方案更准确的定位是<b>隐写（steganography）/ 编码</b>，而不是高强度加密：它隐藏的是内容的<em>存在</em>，而不是内容的<em>可读性</em>。</li>
+      <li>方案<b>没有密钥参与</b>。任何知道算法规则的人拿到隐形文本都可以完整还原 —— 请勿用它保护真正敏感的信息。</li>
+      <li>若需要真正的保密性，推荐叠加标准加密：<b>明文 → AES-GCM（由密码经 PBKDF2 派生密钥）→ 密文字节 → 本算法隐形化</b>。此时攻击者即使提取出隐形字符，得到的也只是密文。</li>
+      <li>若实现密码模式：密码只在浏览器本地参与密钥派生与解密，<b>绝不上传任何服务器</b>。本页同样为纯前端实现，所有处理均在本地完成。</li>
+    </ul>
+    <pre>// 密码模式扩展草图（Web Crypto，全部本地执行）：
+const salt = crypto.getRandomValues(new Uint8Array(16));
+const iv   = crypto.getRandomValues(new Uint8Array(12));
+const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2');
+const key  = await crypto.subtle.deriveKey(
+  { name:'PBKDF2', salt, iterations:310000, hash:'SHA-256' },
+  base, { name:'AES-GCM', length:256 }, false, ['encrypt']);
+const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, plainBytes);
+// 将 salt | iv | ct 拼接后用本算法编码为隐形字符；解码端输入密码逆向还原</pre>
+  </section>
+
+  <!-- ======= 06 自检 ======= -->
+  <section class="docs-card reveal" id="tests">
+    <p class="kicker k-blue">06 · SELF-TEST</p>
+    <h2>自检用例</h2>
+    <div class="btn-row" style="margin-bottom:12px">
+      <button class="btn primary" style="--acc:var(--blue);--accd:#20487f" id="runAll">▶ 一键跑完全部用例</button>
+      <span class="stats" id="testSummary" style="align-self:center"></span>
+    </div>
+    <table class="tbl">
+      <tr><th>用例</th><th>输入</th><th>结果</th><th>耗时</th></tr>
+      <tbody id="testBody"></tbody>
+    </table>
+    <p class="foot-note">每条用例执行 <code>decrypt(encrypt(x)) === x</code> 全等校验；「空字符串」验证优雅提示；「非法输入」与「孤立代理项」验证正确拒绝。</p>
+  </section>
+
+</main>
+
+<footer>
+  INVISIBLE INK LAB · 纯前端实现，输入内容不会离开你的浏览器<br>
+  隐形字符在多数环境稳定，但无密码学强度 —— 请勿用于保护敏感信息
+</footer>
+
+<div class="toast" id="toast" role="alert"></div>
+
+<script>
+'use strict';
+/* =========================================================
+ * 安全说明（与页面「05 · SECURITY NOTICE」一致）：
+ * 1. 本方案是「隐写 / 编码」而非加密：无密钥，任何知道算法的人都能解码。
+ * 2. 若需真正保密：先 AES-GCM(PBKDF2(密码)) 加密，再对密文字节做隐形编码；
+ *    密码仅在浏览器本地使用，绝不上传服务器（草图见页内代码块）。
+ * ========================================================= */
+
+/* ---------- 常量与核心算法 ---------- */
+const CH = { FRAME:'\u2060', ZERO:'\u200C', ONE:'\u200D' };
+const MAGIC = CH.FRAME + CH.FRAME;              // 帧头：连续两个 WORD JOINER
+const ENCODER = new TextEncoder();
+const DECODER_FATAL = new TextDecoder('utf-8', { fatal:true });
+
+function crc16(bytes){                          // CRC-16/CCITT-FALSE
+  let crc = 0xFFFF;
+  for (let i=0;i<bytes.length;i++){
+    crc ^= bytes[i] << 8;
+    for (let k=0;k<8;k++) crc = (crc & 0x8000) ? ((crc<<1) ^ 0x1021) : (crc<<1);
+    crc &= 0xFFFF;
+  }
+  return crc;
+}
+function hasUnpairedSurrogates(s){
+  for (let i=0;i<s.length;i++){
+    const c = s.charCodeAt(i);
+    if (c>=0xD800 && c<=0xDBFF){
+      const n = s.charCodeAt(i+1);
+      if (!(n>=0xDC00 && n<=0xDFFF)) return true;      // 孤立高位代理
+    } else if (c>=0xDC00 && c<=0xDFFF){
+      const p = s.charCodeAt(i-1);
+      if (!(p>=0xD800 && p<=0xDBFF)) return true;      // 孤立低位代理
+    }
+  }
+  return false;
+}
+function encodeInvisible(text){
+  if (text === '') return { ok:true, empty:true, out:'' };
+  if (hasUnpairedSurrogates(text))
+    return { ok:false, error:'文本包含孤立代理项（U+D800–U+DFFF 未配对）。转 UTF-8 时会被替换为 U+FFFD 且不可逆，因此拒绝编码' };
+  const data = ENCODER.encode(text);
+  const crc  = crc16(data);
+  const bytes = new Uint8Array(data.length + 2);        // 载荷 + 2 字节校验
+  bytes.set(data, 0);
+  bytes[data.length] = crc >>> 8;
+  bytes[data.length+1] = crc & 0xFF;
+  const table = [CH.ZERO, CH.ONE];
+  const parts = [MAGIC];
+  let buf = '';
+  for (let i=0;i<bytes.length;i++){
+    const b = bytes[i];
+    buf += table[b>>7] + table[(b>>6)&1] + table[(b>>5)&1] + table[(b>>4)&1]
+         + table[(b>>3)&1] + table[(b>>2)&1] + table[(b>>1)&1] + table[b&1];
+    if (buf.length > 8192){ parts.push(buf); buf = ''; }
+  }
+  parts.push(buf, CH.FRAME);
+  return { ok:true, out:parts.join(''), bytes:data.length, bits:data.length*8 };
+}
+function tryDecodeAt(input, idx){
+  let i = idx + MAGIC.length;
+  const bits = [];
+  while (i < input.length){
+    const c = input.charCodeAt(i);
+    if (c === 0x200C) bits.push(0);
+    else if (c === 0x200D) bits.push(1);
+    else break;                                         // 帧尾或其他内容
+    i++;
+  }
+  if (bits.length === 0)      return { ok:false, error:'不是有效的隐形编码文本（帧头后未找到数据）' };
+  if (bits.length % 8 !== 0)  return { ok:false, error:`不是有效的隐形编码文本（载荷被截断：${bits.length} 个比特不足整字节）` };
+  if (bits.length < 16)       return { ok:false, error:'不是有效的隐形编码文本（长度不足以包含校验和）' };
+  const bytes = new Uint8Array(bits.length/8);
+  for (let j=0;j<bytes.length;j++){
+    let b = 0; const o = j*8;
+    for (let k=0;k<8;k++) b = (b<<1) | bits[o+k];
+    bytes[j] = b;
+  }
+  const payload = bytes.subarray(0, bytes.length-2);
+  const stored  = (bytes[bytes.length-2]<<8) | bytes[bytes.length-1];
+  if (crc16(payload) !== stored)
+    return { ok:false, error:'不是有效的隐形编码文本（CRC-16 校验失败，隐形字符被改动过）' };
+  try {
+    const text = DECODER_FATAL.decode(payload);
+    return { ok:true, text, bytes:payload.length, skipped:input.length - i };
+  } catch(e){
+    return { ok:false, error:'不是有效的隐形编码文本（UTF-8 校验失败，载荷已损坏）' };
+  }
+}
+function decodeInvisible(input){
+  let from = 0, lastErr = null;
+  for (;;){                                             // 逐个帧头候选位置尝试
+    const idx = input.indexOf(MAGIC, from);
+    if (idx === -1)
+      return { ok:false, error: lastErr || '不是有效的隐形编码文本（未找到帧头 U+2060 U+2060）' };
+    const r = tryDecodeAt(input, idx);
+    if (r.ok) return r;
+    lastErr = r.error; from = idx + 1;
+  }
+}
+
+/* ---------- 工具 ---------- */
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString('zh-CN');
+function escapeHtml(s){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function countCodePoints(s){
+  let n = 0;
+  for (let i=0;i<s.length;i++){
+    const c = s.charCodeAt(i);
+    if (c>=0xD800 && c<=0xDBFF && i+1<s.length){
+      const d = s.charCodeAt(i+1);
+      if (d>=0xDC00 && d<=0xDFFF) i++;
+    }
+    n++;
+  }
+  return n;
+}
+const utf8Len = s => ENCODER.encode(s).length;
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+function setStatus(el, kind, msg){
+  el.className = 'status show ' + kind;
+  el.innerHTML = '<span class="dot"></span><span>' + escapeHtml(msg) + '</span>';
+}
+let toastTimer;
+function toast(msg, kind='info'){
+  const t = $('#toast');
+  t.textContent = msg; t.className = 'toast show ' + kind;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function flash(el){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+function flashOk(btn, label){
+  const old = btn.textContent;
+  btn.textContent = label || '✓ 已复制'; btn.classList.add('ok');
+  setTimeout(()=>{ btn.textContent = old; btn.classList.remove('ok'); }, 1400);
+}
+function legacyCopy(t){
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  const ok = document.execCommand('copy'); ta.remove();
+  if (!ok) throw new Error('execCommand failed');
+}
+async function copyText(text, btn, noun){
+  if (!text){ toast('内容为空，无法复制', 'warn'); return; }
+  try {
+    if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+    else legacyCopy(text);
+  } catch(e){
+    try { legacyCopy(text); }
+    catch(e2){ toast('复制失败，请手动全选复制', 'error'); return; }
+  }
+  flashOk(btn);
+  toast(`已复制${noun} · 共 ${fmt(text.length)} 个字符`, 'ok');
+}
+function viz(str, limit=1200){
+  const trunc = str.length > limit, s = trunc ? str.slice(0, limit) : str;
+  let html = '';
+  for (const ch of s){
+    if (ch === CH.FRAME)     html += '<i class="v v-f" title="U+2060 帧">▪</i>';
+    else if (ch === CH.ZERO) html += '<i class="v v-0" title="U+200C 比特0">·</i>';
+    else if (ch === CH.ONE)  html += '<i class="v v-1" title="U+200D 比特1">•</i>';
+    else html += '<i class="v v-x">' + escapeHtml(ch) + '</i>';
+  }
+  return html + (trunc ? '<span class="v-more"> …（仅显示前 ' + fmt(limit) + ' 个字符）</span>' : '');
+}
+function analyzeInvisible(v){
+  const c = { f:0, b0:0, b1:0, zws:0, feff:0, other:0, visible:0 };
+  for (const ch of v){
+    const cp = ch.codePointAt(0);
+    if (cp===0x2060) c.f++;
+    else if (cp===0x200C) c.b0++;
+    else if (cp===0x200D) c.b1++;
+    else if (cp===0x200B) c.zws++;
+    else if (cp===0xFEFF) c.feff++;
+    else if ((cp>=0x200E&&cp<=0x200F)||(cp>=0x202A&&cp<=0x202E)||(cp>=0x2061&&cp<=0x2069)) c.other++;
+    else c.visible++;
+  }
+  return c;
+}
+
+/* ---------- 编码面板 ---------- */
+const encIn=$('#encIn'), encOut=$('#encOut'), encStatus=$('#encStatus'),
+      encInStats=$('#encInStats'), encOutStats=$('#encOutStats'),
+      encPeek=$('#encPeek'), btnPeek=$('#btnPeek');
+let peekOn = false;
+
+function hidePeek(){ peekOn=false; encPeek.hidden=true; encPeek.innerHTML=''; btnPeek.textContent='👁 可视化'; }
+
+function renderEncInStats(){
+  const v = encIn.value;
+  encInStats.innerHTML = v
+    ? `<span>UTF-16 字符 <b>${fmt(v.length)}</b></span><span>码点 <b>${fmt(countCodePoints(v))}</b></span><span>UTF-8 字节 <b>${fmt(utf8Len(v))}</b></span>`
+    : '<span class="s-dim">等待输入…</span>';
+}
+encIn.addEventListener('input', debounce(()=>{
+  renderEncInStats();
+  hidePeek();
+  if (encOut.value) setStatus(encStatus,'warn','输入已变化，之前的编码结果可能已过期，请重新编码');
+}, 80));
+
+function handleEncode(){
+  hidePeek();
+  const text = encIn.value;
+  const r = encodeInvisible(text);
+  if (r.empty){
+    encOut.value=''; encOutStats.innerHTML='<span class="s-dim">结果为空</span>';
+    setStatus(encStatus,'info','输入为空 —— 结果为空，未进行编码');
+    return;
+  }
+  if (!r.ok){
+    encOut.value=''; encOutStats.innerHTML='<span class="s-dim">等待编码…</span>';
+    setStatus(encStatus,'error', r.error); toast('编码失败','error'); return;
+  }
+  encOut.value = r.out;
+  flash(encOut);
+  btnPeek.disabled = false;
+  const ratio = (r.out.length / r.bytes).toFixed(1);
+  encOutStats.innerHTML =
+    `<span>隐形字符 <b>${fmt(r.out.length)}</b></span>` +
+    `<span>≈ UTF-8 体积 <b>${fmt(r.out.length*3)}</b> 字节</span>` +
+    `<span>载荷 <b>${r.bytes}</b> B → <b>${r.bits}</b> bit</span>` +
+    `<span>膨胀 <b>×${ratio}</b></span>`;
+  setStatus(encStatus,'ok',`编码成功：${r.bytes} 字节 → ${r.bits} 比特（含 CRC 16 比特）→ 共 ${fmt(r.out.length)} 个字符（帧字符 3 个）。结果看起来是空白，这是正常的。`);
+}
+$('#btnEncode').addEventListener('click', handleEncode);
+encIn.addEventListener('keydown', e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter') handleEncode(); });
+
+const SAMPLES = ['你好，世界！','Hello, World! 1234567890','😀🚀✨ 隐形远征队出发！','第一行\n第二行 · café © 2024 · π≈3.14159'];
+let si = 0;
+$('#btnSample').addEventListener('click', ()=>{
+  encIn.value = SAMPLES[si++ % SAMPLES.length];
+  renderEncInStats(); toast('已填入示例文本，点击「加密 / 编码」试试','info');
+});
+$('#btnEncClear').addEventListener('click', ()=>{
+  encIn.value=''; encOut.value=''; hidePeek(); btnPeek.disabled=true;
+  encStatus.className='status'; encInStats.innerHTML='<span class="s-dim">等待输入…</span>';
+  encOutStats.innerHTML='<span class="s-dim">等待编码…</span>';
+});
+$('#btnEncCopy').addEventListener('click', e=>copyText(encOut.value, e.currentTarget,'加密结果'));
+btnPeek.addEventListener('click', ()=>{
+  if (!encOut.value) return;
+  peekOn = !peekOn;
+  encPeek.hidden = !peekOn;
+  if (peekOn){ encPeek.innerHTML = viz(encOut.value); btnPeek.textContent='🙈 收起可视化'; }
+  else btnPeek.textContent='👁 可视化';
+});
+
+/* ---------- 解码面板 ---------- */
+const decIn=$('#decIn'), decOut=$('#decOut'), decStatus=$('#decStatus'),
+      decInComp=$('#decInComp'), decOutStats=$('#decOutStats');
+
+function renderDecComp(){
+  const v = decIn.value;
+  if (!v){ decInComp.innerHTML='<span class="s-dim">字符组成检查：粘贴后实时显示隐形字符是否完好</span>'; return; }
+  const c = analyzeInvisible(v);
+  const chips = [
+    `<span class="tagchip">总字符 ${fmt(v.length)}</span>`,
+    `<span class="tagchip c-f">帧 U+2060 ×${fmt(c.f)}</span>`,
+    `<span class="tagchip c-0">比特0 U+200C ×${fmt(c.b0)}</span>`,
+    `<span class="tagchip c-1">比特1 U+200D ×${fmt(c.b1)}</span>`
+  ];
+  if (c.zws)   chips.push(`<span class="tagchip c-x">U+200B ×${fmt(c.zws)}（非本方案）</span>`);
+  if (c.feff)  chips.push(`<span class="tagchip c-x">U+FEFF ×${fmt(c.feff)}（非本方案）</span>`);
+  if (c.other) chips.push(`<span class="tagchip c-x">其他控制符 ×${fmt(c.other)}</span>`);
+  if (c.visible) chips.push(`<span class="tagchip c-x">可见字符 ×${fmt(c.visible)}</span>`);
+  decInComp.innerHTML = chips.join('');
+}
+decIn.addEventListener('input', debounce(()=>{
+  renderDecComp();
+  if (decOut.value) setStatus(decStatus,'warn','输入已变化，之前的解码结果可能已过期，请重新解码');
+}, 80));
+
+function handleDecode(){
+  const input = decIn.value;
+  if (input === ''){
+    decOut.value=''; decOutStats.innerHTML='<span class="s-dim">结果为空</span>';
+    setStatus(decStatus,'info','输入为空 —— 结果为空'); return;
+  }
+  const r = decodeInvisible(input);
+  if (!r.ok){
+    decOut.value='';
+    let msg = r.error;
+    const c = analyzeInvisible(input);
+    if (msg.includes('帧头') && (c.b0 + c.b1) > 0)
+      msg += `。检测到 ${fmt(c.b0+c.b1)} 个比特字符但缺少帧字符，帧头很可能被平台剥离`;
+    setStatus(decStatus,'error','解码失败 —— ' + msg);
+    toast('解码失败：不是有效的隐形编码文本','error');
+    return;
+  }
+  decOut.value = r.text; flash(decOut);
+  decOutStats.innerHTML =
+    `<span>UTF-16 字符 <b>${fmt(r.text.length)}</b></span>` +
+    `<span>码点 <b>${fmt(countCodePoints(r.text))}</b></span>` +
+    `<span>UTF-8 字节 <b>${fmt(r.bytes)}</b></span>`;
+  let extra = r.skipped > 1 ? `（已忽略载荷后的 ${fmt(r.skipped-1)} 个多余字符）` : '';
+  setStatus(decStatus,'ok',`解码成功：还原 ${fmt(countCodePoints(r.text))} 个字符，载荷 ${fmt(r.bytes)} 字节，CRC 校验通过${extra}`);
+}
+$('#btnDecode').addEventListener('click', handleDecode);
+decIn.addEventListener('keydown', e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter') handleDecode(); });
+$('#btnDecSample').addEventListener('click', ()=>{
+  decIn.value = encodeInvisible('这是一段隐形示例文本 ✨（由隐形编码实验室生成）').out;
+  renderDecComp(); toast('已生成示例隐形文本，点击「解密 / 解码」还原','info');
+});
+$('#btnDecPaste').addEventListener('click', async ()=>{
+  try {
+    const t = await navigator.clipboard.readText();
+    if (!t){ toast('剪贴板为空','warn'); return; }
+    decIn.value = t; renderDecComp(); toast('已从剪贴板粘贴','ok');
+  } catch(e){ toast('浏览器拒绝了剪贴板读取，请手动 Ctrl+V 粘贴','warn'); }
+});
+$('#btnDecClear').addEventListener('click', ()=>{
+  decIn.value=''; decOut.value=''; decStatus.className='status';
+  decInComp.innerHTML='<span class="s-dim">字符组成检查：粘贴后实时显示隐形字符是否完好</span>';
+  decOutStats.innerHTML='<span class="s-dim">等待解码…</span>';
+});
+$('#btnDecCopy').addEventListener('click', e=>copyText(decOut.value, e.currentTarget,'解码结果'));
+
+/* ---------- 顶部样张 No.000 ---------- */
+const DEMO = encodeInvisible('于无声处听惊雷。—— 这句诗被藏进了看不见的字符里。');
+$('#demoCount').textContent = fmt(DEMO.out.length);
+const demoGhost = $('#demoGhost');
+demoGhost.textContent = DEMO.out;
+let demoVizOn = false;
+$('#demoViz').addEventListener('click', e=>{
+  demoVizOn = !demoVizOn;
+  if (demoVizOn){ demoGhost.innerHTML = viz(DEMO.out, 600); e.target.textContent='🙈 收起来'; }
+  else { demoGhost.textContent = DEMO.out; e.target.textContent='👁 可视化'; }
+});
+$('#demoSend').addEventListener('click', ()=>{
+  decIn.value = DEMO.out; renderDecComp();
+  document.getElementById('panelDec').scrollIntoView({behavior:'smooth', block:'center'});
+  toast('已把样张送进解码区，点「解密 / 解码」看看藏着什么','ok');
+});
+
+/* ---------- 比特映射实例（'A'） ---------- */
+(function buildSpecimen(){
+  const s = encodeInvisible('A').out;
+  let html = '';
+  for (let i=0;i<s.length;i++){
+    const c = s[i];
+    let cls, label;
+    if (c===CH.FRAME){ cls='tile-f'; label = i<2 ? '帧' : '尾'; }
+    else if (c===CH.ZERO){ cls='tile-0'; label='0'; }
+    else { cls='tile-1'; label='1'; }
+    const cp = 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4,'0');
+    html += `<span class="tile ${cls}" title="${cp}"><b>${label}</b><i>${cp}</i></span>`;
+  }
+  $('#specimen').innerHTML = html;
+})();
+
+/* ---------- 顶部字符卡片填入真实字符 ---------- */
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.querySelector('.glyph').textContent = String.fromCodePoint(parseInt(chip.dataset.cp, 16));
+});
+
+/* ---------- 自检用例 ---------- */
+const TESTS = [
+  { name:'普通中文',            input:'你好，世界！', type:'roundtrip' },
+  { name:'英文和数字',          input:'Hello, World! 0123456789', type:'roundtrip' },
+  { name:'Emoji',              input:'😀🚀✨', type:'roundtrip' },
+  { name:'特殊符号与组合字符',   input:'café ©®™ ∑π⌘ e\u0301 → é', type:'roundtrip' },
+  { name:'多文种混排',          input:'こんにちは안녕하세요 Ω Ж ٣ ॐ 🇨🇳', type:'roundtrip' },
+  { name:'换行与控制字符',       input:'第一行\n第二行\r\n第三行\t制表符结束', type:'roundtrip' },
+  { name:'长文本（约 1700 字）', input:'大道无形，大音希声。隐形于字里行间。'.repeat(100), type:'roundtrip' },
+  { name:'空字符串',            input:'', type:'empty' },
+  { name:'非法输入（普通文本）', input:'这段文字里没有隐形编码。Hello!', type:'invalid' },
+  { name:'边界：孤立代理项',     input:'\uD83D', type:'reject' }
+];
+function previewTest(s){
+  if (s.length === 0) return '（空字符串）';
+  let p = s.length > 28 ? s.slice(0,28) + '…' : s;
+  return p.replace(/\n/g,'⏎').replace(/\r/g,'').replace(/\t/g,'⇥');
+}
+$('#testBody').innerHTML = TESTS.map((t,i)=>`
+  <tr>
+    <td><b>${escapeHtml(t.name)}</b><br><span class="t-note">${t.type==='roundtrip'?'往返一致性':t.type==='empty'?'优雅处理':'正确拒绝'}</span></td>
+    <td class="t-in mono" title="${escapeHtml(t.input.slice(0,300))}">${escapeHtml(previewTest(t.input))}</td>
+    <td id="tres-${i}"><span class="t-badge pending">待运行</span></td>
+    <td class="mono" id="tms-${i}">—</td>
+  </tr>`).join('');
+
+function runOne(i){
+  const t = TESTS[i], t0 = performance.now();
+  let pass = false, note = '';
+  if (t.type === 'roundtrip'){
+    const e = encodeInvisible(t.input);
+    if (!e.ok) note = '编码被拒绝：' + e.error;
+    else {
+      const d = decodeInvisible(e.out);
+      if (!d.ok) note = '解码失败：' + d.error;
+      else if (d.text !== t.input) note = '往返内容不一致';
+      else { pass = true; note = `${fmt(e.bytes)} B → ${fmt(e.out.length)} 字符 → 完全还原`; }
+    }
+  } else if (t.type === 'empty'){
+    const e = encodeInvisible('');
+    if (e && e.empty){ pass = true; note = '未报错，正确提示为空'; }
+    else note = '行为不符合预期';
+  } else if (t.type === 'invalid'){
+    const d = decodeInvisible(t.input);
+    if (!d.ok){ pass = true; note = '正确拒绝：' + d.error; }
+    else note = '本应拒绝却被解码';
+  } else if (t.type === 'reject'){
+    const e = encodeInvisible(t.input);
+    if (!e.ok){ pass = true; note = '编码端正确拒绝：' + e.error; }
+    else note = '本应拒绝却编码成功';
+  }
+  const ms = performance.now() - t0;
+  $('#tres-'+i).innerHTML = `<span class="t-badge ${pass?'pass':'fail'}">${pass?'✓ 通过':'✗ 失败'}</span><br><span class="t-note">${escapeHtml(note)}</span>`;
+  $('#tms-'+i).textContent = ms.toFixed(1) + ' ms';
+  return pass;
+}
+$('#runAll').addEventListener('click', ()=>{
+  const btn = $('#runAll'); btn.disabled = true;
+  let i = 0, ok = 0;
+  $('#testSummary').innerHTML = '<span class="s-dim">运行中…</span>';
+  (function step(){
+    if (i < TESTS.length){
+      if (runOne(i)) ok++;
+      i++; setTimeout(step, 110);
+    } else {
+      btn.disabled = false;
+      const all = ok === TESTS.length;
+      $('#testSummary').innerHTML = `<span style="color:${all?'var(--green)':'var(--red)'};font-weight:700">${ok} / ${TESTS.length} ${all?'全部通过 ✓':'存在失败 ✗'}</span>`;
+      toast(all ? '全部自检用例通过 ✓' : '存在未通过的用例，请检查', all ? 'ok' : 'error');
+    }
+  })();
+});
+
+/* ---------- 滚动显现 ---------- */
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+},{ threshold:.08 });
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
