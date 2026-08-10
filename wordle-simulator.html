@@ -2990,14 +2990,15 @@
       const isWin = guess === st.targetWord;
       const isLose = st.guesses.length >= st.maxAttempts;
 
+      // AI 查词（修复：正确处理异步调用，不阻塞游戏流程）
       if (settings.enableAI) {
         if (isLose) {
-          // 失败时：先查询最后一个输入的单词，再查询正确答案的单词
-          triggerAILookup(normalized, page).then(() => {
-            return triggerAILookup(st.targetWord, page, true);
-          }).catch(() => {});
+          // 失败时：先查猜测词，再查正确答案（appendMode = true）
+          triggerAILookup(normalized, page)
+            .then(() => triggerAILookup(st.targetWord, page, true))
+            .catch(() => {});
         } else {
-          triggerAILookup(normalized, page);
+          triggerAILookup(normalized, page).catch(() => {});
         }
       }
 
@@ -3364,9 +3365,9 @@
       btn.classList.toggle('open');
     }
 
-    // ---------- AI 查词 ----------
+    // ---------- AI 查词（重构：修复语法和逻辑错误） ----------
     function buildSystemPrompt() {
-    return `你是一位精通多语言词源学与词汇学的顶级词典专家。
+      return `你是一位精通多语言词源学与词汇学的顶级词典专家。
 【核心规则】
 1. 真实词汇：提供准确发音、词性、释义和常用短语，is_fictional 设为 false，etymology_analysis 设为 null。
 2. 虚构词汇：根据词根、词缀、词源学规律合理推测含义，is_fictional 设为 true，etymology_analysis 中详细说明推测依据。
@@ -3385,11 +3386,15 @@
   "is_fictional": false,
   "etymology_analysis": "虚构词填词源分析，真实词填 null"
 }`;
-}
+    }
 
     async function triggerAILookup(word, page, appendMode = false) {
+      // 仅查词模式不受 enableAI 开关影响，但游戏模式受控
       if (page !== 'dict' && !settings.enableAI) return;
-      const lowerWord = word.toLowerCase();
+
+      const lowerWord = word.trim();
+      if (!lowerWord) return;
+
       const apiKey = $('apiKey').value.trim();
       if (!apiKey) {
         showToast('⚠️ 请先配置 DeepSeek API Key 以使用查词功能', 'error');
@@ -3399,7 +3404,9 @@
         return;
       }
 
-      el(page, 'ai-result-card').classList.add('active');
+      // 显示结果卡片和加载状态
+      const card = el(page, 'ai-result-card');
+      card.classList.add('active');
       el(page, 'ai-word').textContent = lowerWord;
       el(page, 'ai-pron').textContent = '⏳ 查询中...';
       el(page, 'ai-lang').textContent = '';
@@ -3418,8 +3425,11 @@
         let langName = lang;
         if (lang === 'other') {
           langName = customInput.value.trim();
-          if (!langName) { showToast('请先输入自定义语言名称', 'error');
-            $('loadingOverlay').classList.remove('active'); return; }
+          if (!langName) {
+            showToast('请先输入自定义语言名称', 'error');
+            $('loadingOverlay').classList.remove('active');
+            return;
+          }
         }
 
         let userMessage = `请解析以下单词：${lowerWord}。`;
@@ -3427,52 +3437,70 @@
         else if (lang === 'other' && langName) userMessage += `该单词属于"${langName}"语言。`;
         else userMessage += `请自动识别该单词所属语言。`;
 
-        // 添加超时控制，防止多语言判断过慢导致卡死
+        // 超时控制
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
+        let response;
         try {
-            const response = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({
-                    model: model,
-                    messages: [{ role: 'system', content: buildSystemPrompt() }, { role: 'user', content: userMessage }],
-                    temperature: 0.3,
-                    max_tokens: 3072, // 增加token上限防止多语言输出截断
-                    response_format: { type: 'json_object' }
-                }),
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+          response = await fetch(API_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: 'system', content: buildSystemPrompt() }, { role: 'user', content: userMessage }],
+              temperature: 0.3,
+              max_tokens: 3072,
+              response_format: { type: 'json_object' }
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+        } catch (fetchErr) {
+          clearTimeout(timeoutId);
+          if (fetchErr.name === 'AbortError') {
+            throw new Error('请求超时（30秒），请稍后再试或检查网络连接。');
+          }
+          throw new Error('网络请求失败：' + fetchErr.message);
+        }
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`API 请求失败: ${errorData.error?.message || `HTTP ${response.status}`}`);
-            }
+        if (!response.ok) {
+          let errMsg = `HTTP ${response.status}`;
+          try {
+            const errData = await response.json();
+            if (errData.error && errData.error.message) errMsg = errData.error.message;
+          } catch (_) {}
+          throw new Error(`API 请求失败: ${errMsg}`);
+        }
 
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content;
         if (!content) throw new Error('API 返回内容为空');
 
         let result;
-        try { result = JSON.parse(content); } catch (e) {
+        try {
+          result = JSON.parse(content);
+        } catch (parseErr) {
+          // 尝试清理 Markdown 代码块
           const cleaned = content.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
           result = JSON.parse(cleaned);
         }
 
+        // 处理 appendMode
         if (appendMode) {
           if (!Array.isArray(pages[page].currentAIResult)) {
-            if (pages[page].currentAIResult) {
-              pages[page].currentAIResult = [pages[page].currentAIResult];
-            } else {
-              pages[page].currentAIResult = [];
-            }
+            const existing = pages[page].currentAIResult;
+            pages[page].currentAIResult = existing ? [existing] : [];
           }
-          pages[page].currentAIResult.push(result);
+          // 避免重复添加相同单词
+          const exists = pages[page].currentAIResult.some(item => item && item.word === result.word);
+          if (!exists) {
+            pages[page].currentAIResult.push(result);
+          }
         } else {
           pages[page].currentAIResult = result;
         }
+
         renderAIResult(result, page);
       } catch (error) {
         console.error('AI查词失败:', error);
@@ -3487,7 +3515,7 @@
         else if (friendlyMsg.includes('JSON')) friendlyMsg = 'AI 返回的数据格式异常，请重试。';
 
         el(page, 'ai-meanings-list').innerHTML =
-          `<div class="ai-meaning-group" style="border-left-color:var(--danger);"><div class="ai-meaning-defs" style="color:var(--danger);">❌ ${friendlyMsg}</div></div>`;
+          `<div class="ai-meaning-group" style="border-left-color:var(--danger);"><div class="ai-meaning-defs" style="color:var(--danger);">❌ ${escapeHtml(friendlyMsg)}</div></div>`;
         el(page, 'ai-pron').textContent = '查询失败';
         showToast(friendlyMsg, 'error');
       } finally {
@@ -3517,7 +3545,7 @@
         data.meanings.forEach(m => {
           const pos = (m.pos || '未知').trim();
           if (!groups[pos]) groups[pos] = [];
-          groups[pos].push(m.definition || '');
+          if (m.definition) groups[pos].push(m.definition);
         });
         Object.keys(groups).forEach(pos => {
           const defs = groups[pos].filter(d => d);
@@ -3561,7 +3589,9 @@
       if (data.is_fictional === true && data.etymology_analysis) {
         el(page, 'ai-fictional').style.display = 'flex';
         el(page, 'ai-etymology-text').textContent = data.etymology_analysis;
-      } else { el(page, 'ai-fictional').style.display = 'none'; }
+      } else {
+        el(page, 'ai-fictional').style.display = 'none';
+      }
 
       el(page, 'ai-result-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -3842,4 +3872,4 @@
   </script>
 
 </body>
-  </html>
+</html>
