@@ -3366,13 +3366,13 @@
 
     // ---------- AI 查词 ----------
     function buildSystemPrompt() {
-      return `你是一位精通多语言词源学与词汇学的顶级词典专家。
+    return `你是一位精通多语言词源学与词汇学的顶级词典专家。
 【核心规则】
 1. 真实词汇：提供准确发音、词性、释义和常用短语，is_fictional 设为 false，etymology_analysis 设为 null。
 2. 虚构词汇：根据词根、词缀、词源学规律合理推测含义，is_fictional 设为 true，etymology_analysis 中详细说明推测依据。
 3. 未指定语言时自动识别；指定语言时按该语言解析。
 4. 非拉丁字母语言的发音字段提供拼音/罗马音/音标等通用标注。
-5. 自动识别语言时，若该单词在多个语言中拼写完全相同（如 libro 在西班牙语和意大利语中均存在），必须在 languages 数组中列出所有匹配的语言，并为每个语言分别提供对应的音标/发音标注。若用户指定了语言，则 languages 数组中仅包含该指定语言。
+5. 【多语言同形优化】仅在自动识别模式下，若该单词在2个及以上常见语言中均为高频常用词且拼写完全一致（如 libro, piano, hotel），才在 languages 数组中列出所有匹配项及对应音标。若仅为生僻巧合或单一语言主导，请直接返回最主要的一种语言，切勿过度搜索或强行凑数，以确保响应速度。
 【输出格式】
 严格返回纯 JSON（不含 Markdown 代码块标记），可被 JSON.parse() 直接解析：
 {
@@ -3385,7 +3385,7 @@
   "is_fictional": false,
   "etymology_analysis": "虚构词填词源分析，真实词填 null"
 }`;
-    }
+}
 
     async function triggerAILookup(word, page, appendMode = false) {
       if (page !== 'dict' && !settings.enableAI) return;
@@ -3427,22 +3427,29 @@
         else if (lang === 'other' && langName) userMessage += `该单词属于"${langName}"语言。`;
         else userMessage += `请自动识别该单词所属语言。`;
 
-        const response = await fetch(API_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-          body: JSON.stringify({
-            model: model,
-            messages: [{ role: 'system', content: buildSystemPrompt() }, { role: 'user', content: userMessage }],
-            temperature: 0.3,
-            max_tokens: 2048,
-            response_format: { type: 'json_object' }
-          })
-        });
+        // 添加超时控制，防止多语言判断过慢导致卡死
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(`API 请求失败: ${errorData.error?.message || `HTTP ${response.status}`}`);
-        }
+        try {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: 'system', content: buildSystemPrompt() }, { role: 'user', content: userMessage }],
+                    temperature: 0.3,
+                    max_tokens: 3072, // 增加token上限防止多语言输出截断
+                    response_format: { type: 'json_object' }
+                }),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`API 请求失败: ${errorData.error?.message || `HTTP ${response.status}`}`);
+            }
 
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content;
