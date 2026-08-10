@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Wordle + AI 智能查词器 · 多词库（大容量）</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Wordle + AI 智能查词器</title>
   <style>
     /* ===== 全局重置 & 变量 ===== */
     :root {
@@ -575,7 +575,6 @@
       color: var(--accent);
     }
 
-    /* ===== 词库筛选栏 ===== */
     .lib-filter-bar {
       display: flex;
       flex-wrap: wrap;
@@ -1403,7 +1402,6 @@
       }
     }
 
-    /* 多文件导入提示 */
     .multi-import-hint {
       font-size: 12px;
       color: var(--text-muted);
@@ -1434,9 +1432,9 @@
         <div class="section-title">⚙️ 模拟器设置</div>
         <div class="row">
           <span class="row-label">目标单词</span>
-          <input type="text" id="target-word" placeholder="例如 HELLO 或 你好" value="HELLO" autocomplete="off" spellcheck="false">
+          <input type="text" id="target-word" placeholder="例如 HELLO 或 你好" value="HELLO" autocomplete="off" spellcheck="false" />
           <span class="row-label" style="min-width:50px;">轮数</span>
-          <input type="number" id="max-attempts" value="6" min="1" max="999">
+          <input type="number" id="max-attempts" value="6" min="1" max="999" />
           <button id="start-btn-simulator" onclick="initGame()">开始 / 重置</button>
         </div>
         <div id="setup-error" class="error-msg"></div>
@@ -1449,7 +1447,7 @@
       <div class="section" id="game-section-simulator">
         <div class="section-title">🎯 提交猜测 <span class="badge" id="simulator-attempt-counter">0 / 6</span></div>
         <div class="row">
-          <input type="text" id="simulator-guess-input" placeholder="输入猜测..." autocomplete="off" spellcheck="false">
+          <input type="text" id="simulator-guess-input" placeholder="输入猜测..." autocomplete="off" spellcheck="false" />
           <button id="simulator-guess-btn" onclick="makeGuess('simulator')">猜测</button>
         </div>
         <div id="simulator-game-error" class="error-msg"></div>
@@ -1515,9 +1513,9 @@
         <div class="section-title">🎯 开始游戏 <span class="badge" id="play-badge">需导入词库</span></div>
         <div class="row">
           <span class="row-label">字符数</span>
-          <input type="number" id="play-word-length" value="5" min="1" max="50">
+          <input type="number" id="play-word-length" value="5" min="1" max="50" />
           <span class="row-label" style="min-width:50px;">轮数</span>
-          <input type="number" id="play-max-attempts" value="6" min="6" max="10">
+          <input type="number" id="play-max-attempts" value="6" min="6" max="10" />
           <button id="start-btn-play" onclick="initPlayGame()" disabled>🎲 随机抽取并开始</button>
         </div>
         <div id="play-error" class="error-msg"></div>
@@ -1529,7 +1527,7 @@
       <div class="section" id="game-section-play">
         <div class="section-title">🎯 提交猜测 <span class="badge" id="play-attempt-counter">0 / 6</span></div>
         <div class="row">
-          <input type="text" id="play-guess-input" placeholder="输入猜测..." autocomplete="off" spellcheck="false">
+          <input type="text" id="play-guess-input" placeholder="输入猜测..." autocomplete="off" spellcheck="false" />
           <button id="play-guess-btn" onclick="makeGuess('play')">猜测</button>
         </div>
         <div id="play-game-error" class="error-msg"></div>
@@ -1594,7 +1592,7 @@
         <div class="section-title">📖 仅查词模式 <span class="badge">只查词 · 不游戏</span></div>
         <div class="row">
           <span class="row-label">单词</span>
-          <input type="text" id="dict-word-input" placeholder="输入要查询的单词（任意语言）..." autocomplete="off" spellcheck="false">
+          <input type="text" id="dict-word-input" placeholder="输入要查询的单词（任意语言）..." autocomplete="off" spellcheck="false" />
         </div>
         <div class="row" style="margin-top:10px;">
           <span class="row-label">语言（选填）</span>
@@ -1614,7 +1612,7 @@
         </div>
         <div class="form-group" id="dict-custom-lang-group" style="display:none;margin-top:10px;">
           <label for="dict-custom-lang">自定义语言名称</label>
-          <input type="text" id="dict-custom-lang" placeholder="请输入语言名称（如 意大利语、葡萄牙语 等）">
+          <input type="text" id="dict-custom-lang" placeholder="请输入语言名称（如 意大利语、葡萄牙语 等）" />
           <div class="hint-text">输入你想指定的语言名称。</div>
         </div>
         <div class="row" style="margin-top:12px;">
@@ -1664,7 +1662,7 @@
             <div class="setting-desc">开启后目标单词和猜测可包含空格字符</div>
           </div>
           <label class="switch">
-            <input type="checkbox" id="setting-allow-spaces" onchange="updateSetting('allowSpaces', this.checked)">
+            <input type="checkbox" id="setting-allow-spaces" onchange="updateSetting('allowSpaces', this.checked)" />
             <span class="slider"></span>
           </label>
         </div>
@@ -1674,7 +1672,7 @@
             <div class="setting-desc">开启后允许提交少于目标字符数的猜测（自动补空格）</div>
           </div>
           <label class="switch">
-            <input type="checkbox" id="setting-allow-short" onchange="updateSetting('allowShortGuess', this.checked)">
+            <input type="checkbox" id="setting-allow-short" onchange="updateSetting('allowShortGuess', this.checked)" />
             <span class="slider"></span>
           </label>
         </div>
@@ -1684,7 +1682,7 @@
             <div class="setting-desc">开启后支持中文、日文等所有 Unicode 字符；关闭则仅限纯英文字母</div>
           </div>
           <label class="switch">
-            <input type="checkbox" id="setting-unicode" checked onchange="updateSetting('unicodeSupport', this.checked)">
+            <input type="checkbox" id="setting-unicode" checked onchange="updateSetting('unicodeSupport', this.checked)" />
             <span class="slider"></span>
           </label>
         </div>
@@ -1694,7 +1692,7 @@
             <div class="setting-desc">开启后可在游戏中使用提示功能</div>
           </div>
           <label class="switch">
-            <input type="checkbox" id="setting-enable-hint" checked onchange="updateSetting('enableHint', this.checked)">
+            <input type="checkbox" id="setting-enable-hint" checked onchange="updateSetting('enableHint', this.checked)" />
             <span class="slider"></span>
           </label>
         </div>
@@ -1704,11 +1702,13 @@
             <div class="setting-desc">开启后游戏中每次猜测自动调用 DeepSeek API 查词（仅查词模式为手动触发，不受此开关影响）</div>
           </div>
           <label class="switch">
-            <input type="checkbox" id="setting-enable-ai" checked onchange="updateSetting('enableAI', this.checked)">
+            <input type="checkbox" id="setting-enable-ai" checked onchange="updateSetting('enableAI', this.checked)" />
             <span class="slider"></span>
           </label>
         </div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;" />
+
         <div class="guide-inner">
           <h3>📚 使用指南</h3>
           <h4>🎮 游戏规则</h4>
@@ -1721,6 +1721,7 @@
           <div class="note-box">
             <strong>✨ 全字符支持</strong>：在设置中开启 Unicode 字符支持后，可使用中文、英文、日文、韩文、数字、符号等所有 Unicode 字符。关闭后仅限纯英文字母（A-Z）。
           </div>
+
           <h4>📚 多词库管理（新功能）</h4>
           <p>现在你可以导入多个词库，并为每个词库命名和设置语言分类。</p>
           <ul>
@@ -1733,6 +1734,7 @@
             <li><strong>语言筛选</strong>：使用「语言分类」下拉框筛选特定语言的词库。</li>
             <li><strong>名称搜索</strong>：在「搜索词库」框中输入关键词快速定位词库。</li>
           </ul>
+
           <h4>🤖 AI 智能查词</h4>
           <p>在设置中开启 AI 查词后，游戏中每次猜测会自动调用 <strong>DeepSeek API</strong> 查询单词的详细释义、发音、常用短语，并智能分析是否为虚构词汇。</p>
           <ul>
@@ -1741,6 +1743,7 @@
             <li><strong>手动查词</strong>：在「仅查词模式」页面可随时手动查询任意单词。</li>
             <li><strong>一键复制</strong>：点击查词结果区的「复制」按钮，或下载看板时自动复制查词结果。</li>
           </ul>
+
           <h4>🎯 三种模式（独立页面）</h4>
           <ul>
             <li><strong>模拟器模式</strong>：手动输入目标单词，适合自定义练习或出题。</li>
@@ -1748,6 +1751,7 @@
             <li><strong>仅查词模式</strong>：只进行单词查询，不开始游戏，语言可选。</li>
           </ul>
           <p>三个模式位于相互独立的页面，各自的游戏进度与查词结果互不干扰。</p>
+
           <h4>🛠️ 功能一览</h4>
           <ul>
             <li><strong>💡 提示开字母</strong>：根据已有猜测智能揭开 1～2 个字母（需在设置中开启）。</li>
@@ -1755,9 +1759,11 @@
             <li><strong>↩️ 回退 / ↪️ 恢复</strong>：撤销或重做上一步操作。</li>
             <li><strong>⬇️ 下载看板 + 复制查词</strong>：保存游戏进度截图（仅以时间戳命名），并自动复制 AI 查词结果到剪贴板。</li>
           </ul>
-          <hr class="divider">
+
+          <hr class="divider" />
           <p style="text-align:center;color:var(--text-muted);font-size:13px;">🧩 玩得愉快，学得轻松！</p>
         </div>
+
         <div class="author-info">
           👤 作者: <strong>FallOxygen</strong> · QQ: <a href="http://wpa.qq.com/msgrd?v=3&uin=3962976891&site=qq&menu=yes" target="_blank">3962976891</a>
         </div>
@@ -1773,7 +1779,7 @@
       <div class="config-body" id="configBody">
         <div class="form-group">
           <label for="apiKey">API Key</label>
-          <input type="password" id="apiKey" placeholder="请输入 DeepSeek API Key (sk-xxx...)" autocomplete="off">
+          <input type="password" id="apiKey" placeholder="请输入 DeepSeek API Key (sk-xxx...)" autocomplete="off" />
           <div class="hint-text">Key 保存在浏览器本地，不上传任何服务器。</div>
         </div>
         <div class="form-group">
@@ -1804,9 +1810,10 @@
         </div>
         <div class="form-group" id="customLangGroup" style="display:none;">
           <label for="customLang">自定义语言名称</label>
-          <input type="text" id="customLang" placeholder="请输入语言名称（如 意大利语、葡萄牙语 等）">
+          <input type="text" id="customLang" placeholder="请输入语言名称（如 意大利语、葡萄牙语 等）" />
           <div class="hint-text">输入你想指定的语言名称。</div>
         </div>
+
         <div style="background:var(--guide-bg);border:1px solid var(--guide-border);border-radius:var(--radius-sm);padding:14px;margin-top:10px;">
           <div style="font-weight:700;font-size:14px;color:var(--text-primary);margin-bottom:8px;">📖 如何获取 DeepSeek API Key</div>
           <ol style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin:0;padding-left:18px;">
@@ -1822,6 +1829,7 @@
             <strong>💡 提示</strong>：API Key 是访问 DeepSeek 服务的凭证，请勿泄露给他人。本平台仅在本地浏览器存储，不会上传至任何第三方服务器。
           </div>
         </div>
+
         <div class="config-actions">
           <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置</button>
           <button class="btn btn-outline" onclick="clearConfig()">🗑️ 清除</button>
@@ -1830,15 +1838,17 @@
     </div>
 
     <div class="footer">
-      Powered by DeepSeek API · 纯前端 · 数据仅与 DeepSeek 服务器交互<br>
+      Powered by DeepSeek API · 纯前端 · 数据仅与 DeepSeek 服务器交互<br />
       <span style="font-size:12px;">👤 FallOxygen · QQ: 3962976891</span>
     </div>
-  </div>
+
+  </div> <!-- /.container -->
 
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <div class="loading-text">正在调用 DeepSeek 分析中...</div>
   </div>
+
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
@@ -1848,7 +1858,7 @@
     const STORAGE_KEY = 'wordle_ai_state_v3';
     const SETTINGS_KEY = 'wordle_settings_v3';
     const CONFIG_KEY = 'deepseek_dict_config';
-    const LIBRARY_KEY = 'wordle_libraries_v4';  // 仅用作降级
+    const LIBRARY_KEY = 'wordle_libraries_v4'; // 仅用作降级
     const BOX_SIZE = 50;
     const BOX_GAP = 8;
     const PADDING = 18;
@@ -1863,6 +1873,7 @@
       hintBg: '#e8f0fe',
       hintBorder: '#a0b8d4',
     };
+
     const FULL_TO_HALF = {
       '，': ',',
       '。': '.',
@@ -2132,6 +2143,7 @@
         historyIndex: -1,
       };
     }
+
     const pages = {
       simulator: { state: createState(), currentAIResult: null },
       play: { state: createState(), currentAIResult: null },
@@ -2235,7 +2247,6 @@
     // ============================================================
     //  词库管理核心函数
     // ============================================================
-
     function getCurrentLibrary() {
       if (!currentLibraryId) return null;
       return wordLibraries.find(l => l.id === currentLibraryId) || null;
@@ -2342,6 +2353,7 @@
         updateLanguageFilterOptions();
         return;
       }
+
       empty.style.display = 'none';
 
       if (filtered.length === 0) {
@@ -2365,22 +2377,22 @@
         const wordCount = lib.words ? lib.words.length : 0;
         const lang = lib.language || '未分类';
         html += `
-            <div class="lib-item ${isActive ? 'active' : ''}">
-              <div class="lib-info">
-                <div class="lib-name">${escapeHtml(lib.name)}</div>
-                <div class="lib-meta">
-                  <span class="lang">${escapeHtml(lang)}</span>
-                  <span class="lib-count">${wordCount} 词</span>
-                  ${isActive ? ' ✅ 当前使用' : ''}
-                </div>
-              </div>
-              <div class="lib-actions">
-                ${!isActive ? `<button class="btn-sm btn-success" onclick="setCurrentLibrary('${lib.id}')">使用</button>` : ''}
-                <button class="btn-sm btn-outline" onclick="renameLibrary('${lib.id}')" title="重命名">✏️</button>
-                <button class="btn-sm btn-danger" onclick="deleteLibrary('${lib.id}')" title="删除">🗑️</button>
+          <div class="lib-item ${isActive ? 'active' : ''}">
+            <div class="lib-info">
+              <div class="lib-name">${escapeHtml(lib.name)}</div>
+              <div class="lib-meta">
+                <span class="lang">${escapeHtml(lang)}</span>
+                <span class="lib-count">${wordCount} 词</span>
+                ${isActive ? ' ✅ 当前使用' : ''}
               </div>
             </div>
-          `;
+            <div class="lib-actions">
+              ${!isActive ? `<button class="btn-sm btn-success" onclick="setCurrentLibrary('${lib.id}')">使用</button>` : ''}
+              <button class="btn-sm btn-outline" onclick="renameLibrary('${lib.id}')" title="重命名">✏️</button>
+              <button class="btn-sm btn-danger" onclick="deleteLibrary('${lib.id}')" title="删除">🗑️</button>
+            </div>
+          </div>
+        `;
       });
       container.innerHTML = html;
 
@@ -2419,9 +2431,14 @@
       const lib = wordLibraries.find(l => l.id === id);
       if (!lib) { showToast('词库不存在', 'error'); return; }
       currentLibraryId = id;
-      filteredWords = [];
-      $('lib-filter-len').value = '';
-      $('lib-filter-regex').value = '';
+      // 恢复该词库保存的过滤设置
+      $('lib-filter-len').value = lib.filterLen || '';
+      $('lib-filter-regex').value = lib.filterRegex || '';
+      if (lib.filterLen || lib.filterRegex) {
+        applyLibraryFilter(false, true);
+      } else {
+        filteredWords = [];
+      }
       saveLibraries();
       renderLibraryListUI();
       showToast(`已切换到词库: ${lib.name}`, 'success');
@@ -2436,15 +2453,15 @@
 
       const lang = langSelect.value;
       const files = fileInput.files;
+
       if (!files || files.length === 0) {
         errEl.textContent = '❌ 请至少选择一个 .txt 文件。';
         return;
       }
-
       errEl.textContent = '';
+
       let importedCount = 0;
       let failedFiles = [];
-
       const useCustomName = nameInput.value.trim() !== '';
 
       const filePromises = [];
@@ -2497,7 +2514,9 @@
             name: finalName,
             language: lang === '其他' ? '其他' : lang,
             words: lines,
-            createdAt: Date.now() + idx
+            createdAt: Date.now() + idx,
+            filterLen: '',
+            filterRegex: ''
           };
           wordLibraries.push(newLib);
           successCount++;
@@ -2583,16 +2602,18 @@
       showToast(`✅ 词库「${lib.name}」已导出`, 'success');
     }
 
-    function applyLibraryFilter() {
+    function applyLibraryFilter(save = true, silent = false) {
       const lenVal = $('lib-filter-len').value.trim();
       const regexVal = $('lib-filter-regex').value.trim();
       const words = getCurrentWords();
+
       if (words.length === 0) {
         $('library-error').textContent = '当前词库为空，无法过滤。';
         filteredWords = [];
         updateLibraryStats();
         return;
       }
+
       let result = [...words];
       if (lenVal) {
         const n = parseInt(lenVal);
@@ -2611,8 +2632,17 @@
       }
       filteredWords = result;
       $('library-error').textContent = '';
+
+      if (save) {
+        const lib = getCurrentLibrary();
+        if (lib) {
+          lib.filterLen = lenVal;
+          lib.filterRegex = regexVal;
+          saveLibraries();
+        }
+      }
       updateLibraryStats();
-      showToast(`过滤完成，剩余 ${filteredWords.length} 个单词`, 'success');
+      if (!silent) showToast(`过滤完成，剩余 ${filteredWords.length} 个单词`, 'success');
       if ($('library-list').classList.contains('active')) {
         renderLibraryWordList();
       }
@@ -2623,6 +2653,12 @@
       $('lib-filter-regex').value = '';
       filteredWords = [];
       $('library-error').textContent = '';
+      const lib = getCurrentLibrary();
+      if (lib) {
+        lib.filterLen = '';
+        lib.filterRegex = '';
+        saveLibraries();
+      }
       updateLibraryStats();
       if ($('library-list').classList.contains('active')) {
         renderLibraryWordList();
@@ -2652,10 +2688,12 @@
       list.innerHTML = '';
       const words = getFilteredWords();
       const toShow = words.filter(w => w.toLowerCase().includes(search));
+
       if (toShow.length === 0) {
         list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:10px;">无匹配单词</div>';
         return;
       }
+
       toShow.slice(0, 200).forEach(word => {
         const item = document.createElement('div');
         item.className = 'library-item';
@@ -2664,6 +2702,7 @@
         item.onclick = () => selectLibraryWord(word);
         list.appendChild(item);
       });
+
       if (toShow.length > 200) {
         const more = document.createElement('div');
         more.style.cssText = 'text-align:center;color:var(--text-muted);padding:6px;font-size:12px;';
@@ -2802,18 +2841,22 @@
       st.history = [];
       st.historyIndex = -1;
       pushHistory(page);
+
       const input = el(page, 'guess-input');
       input.value = '';
       input.maxLength = st.wordLength;
       input.placeholder = `输入 ${st.wordLength} 个字符...`;
       input.disabled = false;
       el(page, 'guess-btn').disabled = false;
+
       const errEl = el(page, 'game-error');
       errEl.textContent = '';
       errEl.className = 'error-msg';
+
       const banner = el(page, 'status-banner');
       banner.className = 'status-banner hidden';
       banner.textContent = '';
+
       clearHintArea(page);
       updateUndoRedoButtons(page);
       updateAttemptCounter(page);
@@ -2829,14 +2872,19 @@
       const rawWord = $('target-word').value;
       const normalized = normalizeInput(rawWord);
       const attempts = parseInt($('max-attempts').value);
+
       if (normalized.length === 0) { $('setup-error').textContent = '❌ 目标单词不能为空！'; return; }
       if (isNaN(attempts) || attempts < 1) { $('setup-error').textContent = '❌ 请输入合理的猜测轮数（至少1轮）！'; return; }
       if (/[\x00-\x1F\x7F]/.test(normalized)) { $('setup-error').textContent = '❌ 目标单词包含不可见控制字符，请重新输入。'; return; }
-      if (!settings.unicodeSupport && !/^[A-Z]+$/.test(normalized)) { $('setup-error').textContent =
-          '❌ 当前设置为纯英文字母模式，目标单词只能包含英文字母。'; return; }
+      if (!settings.unicodeSupport && !/^[A-Z]+$/.test(normalized)) {
+        $('setup-error').textContent = '❌ 当前设置为纯英文字母模式，目标单词只能包含英文字母。';
+        return;
+      }
       if (!settings.allowSpaces && /\s/.test(normalized)) { $('setup-error').textContent = '❌ 当前设置不允许空格。'; return; }
+
       $('setup-error').textContent = '';
       $('target-word').value = normalized;
+
       const st = pages.simulator.state;
       st.targetWord = normalized;
       st.maxAttempts = attempts;
@@ -2847,9 +2895,11 @@
     function initPlayGame() {
       const lib = getCurrentLibrary();
       if (!lib) { $('play-error').textContent = '❌ 请先导入并选择一个词库。'; return; }
+
       const len = parseInt($('play-word-length').value) || 5;
       const attempts = parseInt($('play-max-attempts').value) || 6;
       if (attempts < 6 || attempts > 10) { $('play-error').textContent = '❌ 轮数必须在 6~10 之间。'; return; }
+
       let candidates = getValidLibrary().filter(w => normalizeInput(w).length === len);
       if (candidates.length === 0) {
         const allWords = getCurrentWords();
@@ -2860,17 +2910,21 @@
           return n.length === len;
         });
       }
+
       if (candidates.length === 0) {
         $('play-error').textContent =
           `❌ 当前词库中没有符合 ${len} 字符的单词（请检查过滤条件和设置）。`;
         return;
       }
+
       const word = candidates[Math.floor(Math.random() * candidates.length)];
       const normalized = normalizeInput(word);
+
       const st = pages.play.state;
       st.targetWord = normalized;
       st.wordLength = len;
       st.maxAttempts = attempts;
+
       $('play-error').textContent = '';
       resetGameState('play');
       showToast('🎮 游戏开始！猜猜看是什么单词？', 'success');
@@ -2885,6 +2939,7 @@
       const result = new Array(len).fill('absent');
       const targetCounts = {};
       for (let ch of targetArr) { targetCounts[ch] = (targetCounts[ch] || 0) + 1; }
+
       for (let i = 0; i < len; i++) {
         if (guessArr[i] === targetArr[i]) {
           result[i] = 'correct';
@@ -2905,9 +2960,12 @@
     function makeGuess(page) {
       const st = pages[page].state;
       const errEl = el(page, 'game-error');
+
       if (st.isGameOver) { errEl.textContent = '⛔ 游戏已结束，请重新开始。'; return; }
+
       const raw = el(page, 'guess-input').value;
       let normalized = normalizeInput(raw);
+
       if (normalized.length === 0) { errEl.textContent = '❌ 请输入至少一个字符。'; return; }
       if (!settings.allowShortGuess && normalized.length !== st.wordLength) {
         errEl.textContent = `❌ 猜测长度必须为 ${st.wordLength} 个字符。`;
@@ -2918,15 +2976,31 @@
         return;
       }
       if (/[\x00-\x1F\x7F]/.test(normalized)) { errEl.textContent = '❌ 猜测包含不可见控制字符，请重新输入。'; return; }
-      if (!settings.unicodeSupport && !/^[A-Z]+$/.test(normalized)) { errEl.textContent =
-          '❌ 当前设置为纯英文字母模式，猜测只能包含英文字母。'; return; }
+      if (!settings.unicodeSupport && !/^[A-Z]+$/.test(normalized)) {
+        errEl.textContent = '❌ 当前设置为纯英文字母模式，猜测只能包含英文字母。';
+        return;
+      }
+
       errEl.textContent = '';
+
       const guess = settings.allowShortGuess ? normalized.padEnd(st.wordLength, ' ') : normalized;
       const result = computeResult(page, guess);
       st.guesses.push({ word: guess, result: result });
+
       const isWin = guess === st.targetWord;
       const isLose = st.guesses.length >= st.maxAttempts;
-      if (settings.enableAI) triggerAILookup(normalized, page);
+
+      if (settings.enableAI) {
+        if (isLose) {
+          // 失败时：先查询最后一个输入的单词，再查询正确答案的单词
+          triggerAILookup(normalized, page).then(() => {
+            return triggerAILookup(st.targetWord, page, true);
+          }).catch(() => {});
+        } else {
+          triggerAILookup(normalized, page);
+        }
+      }
+
       if (isWin) {
         st.isGameOver = true;
         st.isGameWon = true;
@@ -2938,6 +3012,7 @@
         errEl.className = 'error-msg';
         errEl.textContent = `😞 游戏结束，正确答案是：${st.targetWord}`;
       }
+
       pushHistory(page);
       const input = el(page, 'guess-input');
       input.value = normalized;
@@ -2945,6 +3020,7 @@
       drawBoard(page);
       updateStatusBanner(page);
       clearHintArea(page);
+
       if (st.isGameOver) {
         input.disabled = true;
         el(page, 'guess-btn').disabled = true;
@@ -2970,6 +3046,7 @@
       if (!settings.enableHint) { showToast('提示功能已在设置中关闭', 'error'); return; }
       if (st.guesses.length === 0) { el(page, 'game-error').textContent = '💡 请先进行至少一次猜测再使用提示。'; return; }
       if (st.isGameOver) { el(page, 'game-error').textContent = '⛔ 游戏已结束。'; return; }
+
       const greenPositions = new Array(st.wordLength).fill(false);
       let totalGreen = 0;
       for (let g of st.guesses) {
@@ -2978,10 +3055,13 @@
             totalGreen++; }
         }
       }
+
       const totalSlots = st.guesses.length * st.wordLength;
       const greenRatio = totalSlots > 0 ? totalGreen / totalSlots : 0;
+
       const hintRow = new Array(st.wordLength).fill(null);
       for (let i = 0; i < st.wordLength; i++) { if (greenPositions[i]) hintRow[i] = st.targetWord[i]; }
+
       if (greenRatio < HINT_THRESHOLD) {
         const emptyIndices = [];
         for (let i = 0; i < st.wordLength; i++) { if (hintRow[i] === null) emptyIndices.push(i); }
@@ -2990,9 +3070,11 @@
         for (let i = 0; i < count && i < emptyIndices.length; i++) { hintRow[emptyIndices[i]] = st.targetWord[emptyIndices[
             i]]; }
       }
+
       drawHintImage(page, hintRow);
       el(page, 'hint-area').classList.remove('hidden');
       el(page, 'download-hint-btn').classList.remove('hidden');
+
       const errEl = el(page, 'game-error');
       errEl.textContent = '💡 提示图片已生成，可长按保存或点击下载。';
       errEl.className = 'error-msg success';
@@ -3011,13 +3093,16 @@
       const width = PADDING * 2 + len * BOX_SIZE + (len - 1) * BOX_GAP;
       const height = PADDING * 2 + BOX_SIZE;
       const dpr = window.devicePixelRatio || 1;
+
       const cvs = el(page, 'hint-canvas');
       cvs.width = width * dpr;
       cvs.height = height * dpr;
       const ctx = cvs.getContext('2d');
       ctx.scale(dpr, dpr);
+
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
+
       for (let i = 0; i < len; i++) {
         const x = PADDING + i * (BOX_SIZE + BOX_GAP);
         const y = PADDING;
@@ -3036,6 +3121,7 @@
           ctx.strokeRect(x + 1, y + 1, BOX_SIZE - 2, BOX_SIZE - 2);
         }
       }
+
       cvs.toBlob(function(blob) {
         const img = el(page, 'hint-preview');
         if (img._blobUrl) URL.revokeObjectURL(img._blobUrl);
@@ -3060,23 +3146,28 @@
       const st = pages[page].state;
       const len = st.wordLength;
       if (!len) return;
+
       const maxAttempts = st.maxAttempts;
       const width = PADDING * 2 + len * BOX_SIZE + (len - 1) * BOX_GAP;
       const height = PADDING * 2 + maxAttempts * BOX_SIZE + (maxAttempts - 1) * BOX_GAP;
       const dpr = window.devicePixelRatio || 1;
+
       const cvs = el(page, 'wordle-canvas');
       cvs.width = width * dpr;
       cvs.height = height * dpr;
       const ctx = cvs.getContext('2d');
       ctx.scale(dpr, dpr);
+
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
+
       for (let row = 0; row < maxAttempts; row++) {
         const hasGuess = row < st.guesses.length;
         const currentGuess = hasGuess ? st.guesses[row] : null;
         for (let col = 0; col < len; col++) {
           const x = PADDING + col * (BOX_SIZE + BOX_GAP);
           const y = PADDING + row * (BOX_SIZE + BOX_GAP);
+
           if (hasGuess) {
             const status = currentGuess.result[col];
             const letter = currentGuess.word[col];
@@ -3100,6 +3191,7 @@
           }
         }
       }
+
       cvs.toBlob(function(blob) {
         const img = el(page, 'wordle-preview');
         if (img._blobUrl) URL.revokeObjectURL(img._blobUrl);
@@ -3150,6 +3242,7 @@
         link.click();
         document.body.removeChild(link);
       } else { showToast('暂无看板图片可下载', 'error'); return; }
+
       const result = pages[page].currentAIResult;
       if (result) {
         const text = generateAICopyText(result);
@@ -3189,7 +3282,7 @@
       const st = pages[page].state;
       try {
         const data = { state: getStateSnapshot(st), history: st.history, historyIndex: st.historyIndex,
-        timestamp: Date.now() };
+          timestamp: Date.now() };
         localStorage.setItem(stateStorageKey(page), JSON.stringify(data));
       } catch (_) {}
     }
@@ -3204,6 +3297,7 @@
         restoreFromSnapshot(st, data.state);
         st.history = data.history;
         st.historyIndex = data.historyIndex;
+
         if (page === 'simulator') {
           $('target-word').value = st.targetWord;
           $('max-attempts').value = st.maxAttempts;
@@ -3215,6 +3309,7 @@
           el(page, 'guess-btn').disabled = true;
           localStorage.removeItem(stateStorageKey(page)); } else { input.disabled = false;
           el(page, 'guess-btn').disabled = false; }
+
         updateAttemptCounter(page);
         updateStatusBanner(page);
         updateUndoRedoButtons(page);
@@ -3272,25 +3367,27 @@
     // ---------- AI 查词 ----------
     function buildSystemPrompt() {
       return `你是一位精通多语言词源学与词汇学的顶级词典专家。
-    【核心规则】
-    1. 真实词汇：提供准确发音、词性、释义和常用短语，is_fictional 设为 false，etymology_analysis 设为 null。
-    2. 虚构词汇：根据词根、词缀、词源学规律合理推测含义，is_fictional 设为 true，etymology_analysis 中详细说明推测依据。
-    3. 未指定语言时自动识别；指定语言时按该语言解析。
-    4. 非拉丁字母语言的发音字段提供拼音/罗马音/音标等通用标注。
-    【输出格式】
-    严格返回纯 JSON（不含 Markdown 代码块标记），可被 JSON.parse() 直接解析：
-    {
-      "word": "单词原文",
-      "language": "语言名称",
-      "pronunciation": "音标/拼音/罗马音等",
-      "meanings": [{"pos": "词性缩写(如 n./v./adj.)", "definition": "中文释义"}],
-      "phrases": [{"phrase": "用法短语原文", "meaning": "短语中文释义"}],
-      "is_fictional": false,
-      "etymology_analysis": "虚构词填词源分析，真实词填 null"
-    }`;
+【核心规则】
+1. 真实词汇：提供准确发音、词性、释义和常用短语，is_fictional 设为 false，etymology_analysis 设为 null。
+2. 虚构词汇：根据词根、词缀、词源学规律合理推测含义，is_fictional 设为 true，etymology_analysis 中详细说明推测依据。
+3. 未指定语言时自动识别；指定语言时按该语言解析。
+4. 非拉丁字母语言的发音字段提供拼音/罗马音/音标等通用标注。
+5. 自动识别语言时，若该单词在多个语言中拼写完全相同（如 libro 在西班牙语和意大利语中均存在），必须在 languages 数组中列出所有匹配的语言，并为每个语言分别提供对应的音标/发音标注。若用户指定了语言，则 languages 数组中仅包含该指定语言。
+【输出格式】
+严格返回纯 JSON（不含 Markdown 代码块标记），可被 JSON.parse() 直接解析：
+{
+  "word": "单词原文",
+  "languages": [
+    {"language": "语言名称", "pronunciation": "音标/拼音/罗马音等"}
+  ],
+  "meanings": [{"pos": "词性缩写(如 n./v./adj.)", "definition": "中文释义"}],
+  "phrases": [{"phrase": "用法短语原文", "meaning": "短语中文释义"}],
+  "is_fictional": false,
+  "etymology_analysis": "虚构词填词源分析，真实词填 null"
+}`;
     }
 
-    async function triggerAILookup(word, page) {
+    async function triggerAILookup(word, page, appendMode = false) {
       if (page !== 'dict' && !settings.enableAI) return;
       const lowerWord = word.toLowerCase();
       const apiKey = $('apiKey').value.trim();
@@ -3301,6 +3398,7 @@
           $('configToggle').classList.add('open'); }
         return;
       }
+
       el(page, 'ai-result-card').classList.add('active');
       el(page, 'ai-word').textContent = lowerWord;
       el(page, 'ai-pron').textContent = '⏳ 查询中...';
@@ -3310,6 +3408,7 @@
       el(page, 'ai-phrases-list').innerHTML = '';
       el(page, 'ai-fictional').style.display = 'none';
       $('loadingOverlay').classList.add('active');
+
       try {
         const model = $('modelSelect').value;
         const isDict = page === 'dict';
@@ -3322,10 +3421,12 @@
           if (!langName) { showToast('请先输入自定义语言名称', 'error');
             $('loadingOverlay').classList.remove('active'); return; }
         }
+
         let userMessage = `请解析以下单词：${lowerWord}。`;
         if (lang !== 'auto' && lang !== 'other') userMessage += `该单词属于"${lang}"语言。`;
         else if (lang === 'other' && langName) userMessage += `该单词属于"${langName}"语言。`;
         else userMessage += `请自动识别该单词所属语言。`;
+
         const response = await fetch(API_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -3337,19 +3438,34 @@
             response_format: { type: 'json_object' }
           })
         });
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(`API 请求失败: ${errorData.error?.message || `HTTP ${response.status}`}`);
         }
+
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content;
         if (!content) throw new Error('API 返回内容为空');
+
         let result;
         try { result = JSON.parse(content); } catch (e) {
           const cleaned = content.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
           result = JSON.parse(cleaned);
         }
-        pages[page].currentAIResult = result;
+
+        if (appendMode) {
+          if (!Array.isArray(pages[page].currentAIResult)) {
+            if (pages[page].currentAIResult) {
+              pages[page].currentAIResult = [pages[page].currentAIResult];
+            } else {
+              pages[page].currentAIResult = [];
+            }
+          }
+          pages[page].currentAIResult.push(result);
+        } else {
+          pages[page].currentAIResult = result;
+        }
         renderAIResult(result, page);
       } catch (error) {
         console.error('AI查词失败:', error);
@@ -3362,6 +3478,7 @@
         else if (friendlyMsg.includes('timeout') || friendlyMsg.includes('network') || friendlyMsg.includes('fetch'))
           friendlyMsg = '网络连接超时，请检查网络后重试。';
         else if (friendlyMsg.includes('JSON')) friendlyMsg = 'AI 返回的数据格式异常，请重试。';
+
         el(page, 'ai-meanings-list').innerHTML =
           `<div class="ai-meaning-group" style="border-left-color:var(--danger);"><div class="ai-meaning-defs" style="color:var(--danger);">❌ ${friendlyMsg}</div></div>`;
         el(page, 'ai-pron').textContent = '查询失败';
@@ -3373,8 +3490,20 @@
 
     function renderAIResult(data, page) {
       el(page, 'ai-word').textContent = (data.word || '').toLowerCase() || '-';
-      el(page, 'ai-pron').textContent = data.pronunciation || '-';
-      el(page, 'ai-lang').textContent = data.language || '未知语言';
+
+      const langs = Array.isArray(data.languages) ? data.languages : [];
+      let langText = '';
+      let pronText = '';
+      if (langs.length > 0) {
+        langText = langs.map(l => l.language || '').filter(Boolean).join(' / ');
+        pronText = langs.map(l => l.pronunciation || '').filter(Boolean).join(' / ');
+      } else {
+        langText = data.language || '';
+        pronText = data.pronunciation || '';
+      }
+      el(page, 'ai-pron').textContent = pronText || '-';
+      el(page, 'ai-lang').textContent = langText || '未知语言';
+
       el(page, 'ai-meanings-list').innerHTML = '';
       if (Array.isArray(data.meanings) && data.meanings.length > 0) {
         const groups = {};
@@ -3407,6 +3536,7 @@
         el(page, 'ai-meanings-list').innerHTML =
           '<div class="ai-meaning-group"><div class="ai-meaning-defs"><div class="def-item">暂无释义</div></div></div>';
       }
+
       el(page, 'ai-phrases-list').innerHTML = '';
       if (Array.isArray(data.phrases) && data.phrases.length > 0) {
         data.phrases.forEach(p => {
@@ -3420,18 +3550,38 @@
         el(page, 'ai-phrases-list').innerHTML =
           '<div class="ai-phrase-item"><div class="ai-phrase-meaning">暂无常用短语</div></div>';
       }
+
       if (data.is_fictional === true && data.etymology_analysis) {
         el(page, 'ai-fictional').style.display = 'flex';
         el(page, 'ai-etymology-text').textContent = data.etymology_analysis;
       } else { el(page, 'ai-fictional').style.display = 'none'; }
+
       el(page, 'ai-result-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function generateAICopyText(data) {
       if (!data) return '';
-      let text = (data.word || '') + '\n';
-      if (data.pronunciation) text += data.pronunciation + '\n';
+      if (Array.isArray(data)) {
+        return data.map(item => generateAICopyText(item)).filter(Boolean).join('\n\n');
+      }
+
+      const langs = Array.isArray(data.languages) ? data.languages : [];
+      let langText = '';
+      let pronText = '';
+      if (langs.length > 0) {
+        langText = langs.map(l => l.language || '').filter(Boolean).join(' / ');
+        pronText = langs.map(l => l.pronunciation || '').filter(Boolean).join(' / ');
+      } else {
+        langText = data.language || '';
+        pronText = data.pronunciation || '';
+      }
+
+      let text = (data.word || '');
+      if (langText) text += ' (' + langText + ')';
       text += '\n';
+      if (pronText) text += pronText + '\n';
+      text += '\n';
+
       if (Array.isArray(data.meanings) && data.meanings.length > 0) {
         const groups = {};
         data.meanings.forEach(m => { const pos = (m.pos || '未知').trim(); if (!groups[pos]) groups[pos] = []; if (m
@@ -3440,12 +3590,15 @@
             '；') + '\n'; });
         text += '\n';
       }
+
       if (Array.isArray(data.phrases) && data.phrases.length > 0) {
-        data.phrases.forEach(p => { if (p.phrase) text += p.phrase + '\n'; if (p.meaning) text += p.meaning + '\n';
-          text += '\n'; });
+        data.phrases.forEach(p => { if (p.phrase) text += p.phrase + '\n'; if (p.meaning) text += p.meaning + '\n'; });
+        text += '\n';
       }
+
       if (data.is_fictional === true && data.etymology_analysis) text += '【推测结果】\n' + data.etymology_analysis +
         '\n';
+
       return text.trim();
     }
 
@@ -3476,6 +3629,7 @@
       const errEl = $('dict-error');
       errEl.textContent = '';
       errEl.className = 'error-msg';
+
       const raw = $('dict-word-input').value;
       const word = fullWidthToHalfWidth(raw).trim();
       if (word.length === 0) { errEl.textContent = '❌ 请输入要查询的单词。'; return; }
@@ -3492,7 +3646,6 @@
       section.className = 'section';
       section.innerHTML = `
         <div class="section-title">📚 词库管理 <span class="badge" id="lib-current-badge">未选择</span></div>
-
         <div class="lib-current-bar" id="lib-current-bar">
           <span class="label">📁 当前词库</span>
           <span class="info" id="lib-current-info">未选择任何词库</span>
@@ -3501,26 +3654,23 @@
             <button class="btn-sm btn-danger" onclick="deleteCurrentLibrary()" id="lib-delete-btn" disabled>🗑️ 删除</button>
           </div>
         </div>
-
         <div class="lib-filter-bar" id="lib-filter-bar">
           <span class="filter-label">🔍</span>
           <select id="lib-filter-lang" onchange="onFilterLangChange()">
             <option value="全部">🌐 全部语言</option>
           </select>
-          <input type="text" id="lib-filter-name" placeholder="搜索词库名称..." oninput="onFilterNameInput()">
+          <input type="text" id="lib-filter-name" placeholder="搜索词库名称..." oninput="onFilterNameInput()" />
           <button class="filter-clear" onclick="clearLibraryFilters()" title="清除筛选">✕</button>
           <span class="lib-filter-stats" id="lib-filter-stats">显示 0 / 0 个词库</span>
         </div>
-
         <div class="lib-list-container" id="lib-list-container">
           <div id="lib-list-empty" style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">
             暂无词库，请导入一个词库文件开始。
           </div>
           <div id="lib-list-items"></div>
         </div>
-
         <div class="lib-add-area">
-          <input type="text" id="lib-add-name" placeholder="词库名称（可选）" style="flex:1;min-width:100px;">
+          <input type="text" id="lib-add-name" placeholder="词库名称（可选）" style="flex:1;min-width:100px;" />
           <select id="lib-add-lang">
             <option value="英语">英语</option>
             <option value="中文">中文</option>
@@ -3533,12 +3683,11 @@
             <option value="阿拉伯语">阿拉伯语</option>
             <option value="其他">其他</option>
           </select>
-          <input type="file" id="lib-add-file" accept=".txt" multiple style="flex:1;min-width:140px;">
+          <input type="file" id="lib-add-file" accept=".txt" multiple style="flex:1;min-width:140px;" />
           <button onclick="addLibrary()" class="btn-success">➕ 导入词库</button>
           <span class="multi-import-hint">支持多选 .txt 文件</span>
         </div>
         <div id="lib-add-error" class="error-msg"></div>
-
         <div class="library-stats" style="margin-top:10px;">
           <span>📦 总词数: <strong id="lib-total">0</strong></span>
           <span>🔍 过滤后: <strong id="lib-filtered">0</strong></span>
@@ -3546,9 +3695,9 @@
         </div>
         <div class="row" style="margin-top:6px;">
           <span class="row-label">字符数过滤</span>
-          <input type="number" id="lib-filter-len" placeholder="全部" min="1" max="50" style="flex:0 1 80px;">
+          <input type="number" id="lib-filter-len" placeholder="全部" min="1" max="50" style="flex:0 1 80px;" />
           <span class="row-label" style="min-width:50px;">正则</span>
-          <input type="text" id="lib-filter-regex" placeholder="例如 ^[A-Z]+$" style="flex:1;min-width:100px;">
+          <input type="text" id="lib-filter-regex" placeholder="例如 ^[A-Z]+$" style="flex:1;min-width:100px;" />
           <button class="btn-sm btn-outline" onclick="applyLibraryFilter()">🔍 应用</button>
           <button class="btn-sm btn-outline" onclick="resetLibraryFilter()">↺ 重置</button>
         </div>
@@ -3557,7 +3706,7 @@
           <button class="btn-sm btn-outline" onclick="toggleLibraryList()">📂 打开词库选择器</button>
         </div>
         <div class="library-search row" id="lib-search-row" style="display:none;margin-top:6px;">
-          <input type="text" id="lib-search-input" placeholder="在当前词库中搜索..." oninput="searchLibrary()">
+          <input type="text" id="lib-search-input" placeholder="在当前词库中搜索..." oninput="searchLibrary()" />
         </div>
         <div class="library-list" id="library-list"></div>
         <div id="library-error" class="error-msg"></div>
@@ -3589,24 +3738,37 @@
           name: '英语示例词库',
           language: '英语',
           words: ['HELLO', 'WORLD', 'APPLE', 'BANANA', 'CHERRY', 'DANCE', 'EAGLE', 'FLOWER', 'GRACE', 'HAPPY'],
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          filterLen: '',
+          filterRegex: ''
         }, {
           id: 'lib_example_zh',
           name: '中文示例词库',
           language: '中文',
           words: ['你好', '世界', '苹果', '香蕉', '樱桃', '舞蹈', '老鹰', '花朵', '优雅', '快乐'],
-          createdAt: Date.now() + 1
+          createdAt: Date.now() + 1,
+          filterLen: '',
+          filterRegex: ''
         }];
         currentLibraryId = wordLibraries[0].id;
         filteredWords = [];
         await saveLibraries();
       }
+
       if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) {
         currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id : null;
       }
 
       initLibrarySection();
       renderLibraryListUI();
+
+      // 恢复当前词库保存的过滤设置
+      const curLib = getCurrentLibrary();
+      if (curLib && (curLib.filterLen || curLib.filterRegex)) {
+        $('lib-filter-len').value = curLib.filterLen || '';
+        $('lib-filter-regex').value = curLib.filterRegex || '';
+        applyLibraryFilter(false, true);
+      }
 
       if ($('langSelect').value === 'other') $('customLangGroup').style.display = 'block';
 
@@ -3671,5 +3833,6 @@
     window.onFilterNameInput = onFilterNameInput;
     window.clearLibraryFilters = clearLibraryFilters;
   </script>
+
 </body>
   </html>
