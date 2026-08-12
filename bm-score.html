@@ -2906,8 +2906,8 @@
             threshold, factor, cutoffPotential
           );
           const goalText = t.score === -1 ?
-            'GOAL：无法挤入' :
-            `GOAL：${t.score}（挤入${isB ? 'B' : 'N'}${baseN}）`;
+            'GOAL：无法推分' :
+            `GOAL：${t.score}`;
           gridHtml += buildCardHtml(prefix + (baseN + i + 1), item, goalText);
         }
         gridHtml += '</div>';
@@ -4199,4 +4199,4 @@
     Router.init();
   </script>
 </body>
-    </html>
+              </html>
