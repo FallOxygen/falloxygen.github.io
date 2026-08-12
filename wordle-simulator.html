@@ -384,7 +384,7 @@
     }
 
     .config-body.open {
-      max-height: 1400px;
+      max-height: 1600px;
       padding: 12px 4px 4px;
     }
 
@@ -1410,6 +1410,41 @@
       border-radius: 4px;
       display: inline-block;
     }
+
+    /* 猜测按钮组 */
+    .guess-btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .guess-btn-group button {
+      flex: 0 1 auto;
+      min-width: 80px;
+    }
+    .guess-btn-group .btn-no-ai {
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      border: 2px solid var(--border);
+      font-size: 13px;
+      padding: 7px 12px;
+      min-height: 38px;
+    }
+    .guess-btn-group .btn-no-ai:hover:not(:disabled) {
+      background: var(--bg-card);
+      border-color: var(--text-muted);
+    }
+    .guess-btn-group .btn-no-ai:disabled {
+      opacity: 0.4;
+    }
+    @media (max-width: 480px) {
+      .guess-btn-group button {
+        font-size: 13px;
+        padding: 6px 10px;
+        min-height: 34px;
+        min-width: 60px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1448,7 +1483,10 @@
         <div class="section-title">🎯 提交猜测 <span class="badge" id="simulator-attempt-counter">0 / 6</span></div>
         <div class="row">
           <input type="text" id="simulator-guess-input" placeholder="输入猜测..." autocomplete="off" spellcheck="false" />
-          <button id="simulator-guess-btn" onclick="makeGuess('simulator')">猜测</button>
+          <div class="guess-btn-group">
+            <button id="simulator-guess-btn" onclick="makeGuess('simulator')">猜测</button>
+            <button id="simulator-guess-no-ai-btn" onclick="makeGuess('simulator', true)" class="btn-no-ai" style="display:none;">猜测（不查词）</button>
+          </div>
         </div>
         <div id="simulator-game-error" class="error-msg"></div>
         <div id="simulator-status-banner" class="status-banner hidden"></div>
@@ -1528,7 +1566,10 @@
         <div class="section-title">🎯 提交猜测 <span class="badge" id="play-attempt-counter">0 / 6</span></div>
         <div class="row">
           <input type="text" id="play-guess-input" placeholder="输入猜测..." autocomplete="off" spellcheck="false" />
-          <button id="play-guess-btn" onclick="makeGuess('play')">猜测</button>
+          <div class="guess-btn-group">
+            <button id="play-guess-btn" onclick="makeGuess('play')">猜测</button>
+            <button id="play-guess-no-ai-btn" onclick="makeGuess('play', true)" class="btn-no-ai" style="display:none;">猜测（不查词）</button>
+          </div>
         </div>
         <div id="play-game-error" class="error-msg"></div>
         <div id="play-status-banner" class="status-banner hidden"></div>
@@ -1742,6 +1783,7 @@
             <li><strong>自动触发</strong>：游戏中每次猜测后自动查词并显示结果。</li>
             <li><strong>手动查词</strong>：在「仅查词模式」页面可随时手动查询任意单词。</li>
             <li><strong>一键复制</strong>：点击查词结果区的「复制」按钮，或下载看板时自动复制查词结果。</li>
+            <li><strong>猜测不查词</strong>：当 AI 查词开启时，可使用「猜测（不查词）」按钮提交猜测而不消耗 Token，适合尝试明显非单词的猜测。</li>
           </ul>
 
           <h4>🎯 三种模式（独立页面）</h4>
@@ -1812,6 +1854,29 @@
           <label for="customLang">自定义语言名称</label>
           <input type="text" id="customLang" placeholder="请输入语言名称（如 意大利语、葡萄牙语 等）" />
           <div class="hint-text">输入你想指定的语言名称。</div>
+        </div>
+
+        <!-- ===== 新增：释义输出语言 ===== -->
+        <div class="form-group">
+          <label for="outputLangSelect">释义输出语言</label>
+          <select id="outputLangSelect">
+            <option value="中文">中文</option>
+            <option value="英语">英语</option>
+            <option value="日语">日语</option>
+            <option value="韩语">韩语</option>
+            <option value="法语">法语</option>
+            <option value="德语">德语</option>
+            <option value="西班牙语">西班牙语</option>
+            <option value="俄语">俄语</option>
+            <option value="阿拉伯语">阿拉伯语</option>
+            <option value="other">其他（自定义）</option>
+          </select>
+          <div class="hint-text">选择 AI 输出释义（definition 字段）和短语含义（meaning 字段）时使用的语言。</div>
+        </div>
+        <div class="form-group" id="outputCustomLangGroup" style="display:none;">
+          <label for="outputCustomLang">自定义释义语言名称</label>
+          <input type="text" id="outputCustomLang" placeholder="请输入语言名称（如 意大利语、葡萄牙语 等）" />
+          <div class="hint-text">输入你想指定的释义语言名称。</div>
         </div>
 
         <div style="background:var(--guide-bg);border:1px solid var(--guide-border);border-radius:var(--radius-sm);padding:14px;margin-top:10px;">
@@ -2211,6 +2276,8 @@
       settings[key] = value;
       saveSettings();
       updateLibraryStats();
+      // 控制"猜测（不查词）"按钮的显示
+      updateNoAiButtonsVisibility();
       showToast('设置已保存', 'success');
     }
 
@@ -2240,6 +2307,8 @@
         }
         updateLibraryStats();
         renderLibraryListUI();
+        // 更新不查词按钮可见性
+        updateNoAiButtonsVisibility();
       }
       if (page === 'play') updatePlayButtonState();
     }
@@ -2848,6 +2917,9 @@
       input.placeholder = `输入 ${st.wordLength} 个字符...`;
       input.disabled = false;
       el(page, 'guess-btn').disabled = false;
+      // 不查词按钮跟随游戏状态
+      const noAiBtn = el(page, 'guess-no-ai-btn');
+      if (noAiBtn) noAiBtn.disabled = false;
 
       const errEl = el(page, 'game-error');
       errEl.textContent = '';
@@ -2957,7 +3029,10 @@
       return result;
     }
 
-    function makeGuess(page) {
+    // ============================================================
+    //  makeGuess 增加 skipAI 参数（修改1）
+    // ============================================================
+    function makeGuess(page, skipAI = false) {
       const st = pages[page].state;
       const errEl = el(page, 'game-error');
 
@@ -2990,16 +3065,19 @@
       const isWin = guess === st.targetWord;
       const isLose = st.guesses.length >= st.maxAttempts;
 
-      // AI 查词（修复：正确处理异步调用，不阻塞游戏流程）
-      if (settings.enableAI) {
+      // ---- AI 查词触发逻辑（受 skipAI 控制） ----
+      if (settings.enableAI && !skipAI) {
         if (isLose) {
-          // 失败时：先查猜测词，再查正确答案（appendMode = true）
-          triggerAILookup(normalized, page)
-            .then(() => triggerAILookup(st.targetWord, page, true))
-            .catch(() => {});
+          // 失败时：先查询最后一个输入的单词，再查询正确答案的单词
+          triggerAILookup(normalized, page).then(() => {
+            return triggerAILookup(st.targetWord, page, true);
+          }).catch(() => {});
         } else {
-          triggerAILookup(normalized, page).catch(() => {});
+          triggerAILookup(normalized, page);
         }
+      } else if (skipAI) {
+        // 用户主动跳过查词，不触发任何 AI 调用
+        // 如果游戏结束，也不触发查词
       }
 
       if (isWin) {
@@ -3025,6 +3103,8 @@
       if (st.isGameOver) {
         input.disabled = true;
         el(page, 'guess-btn').disabled = true;
+        const noAiBtn = el(page, 'guess-no-ai-btn');
+        if (noAiBtn) noAiBtn.disabled = true;
         localStorage.removeItem(stateStorageKey(page));
       } else {
         input.value = '';
@@ -3225,6 +3305,9 @@
       const isOver = st.isGameOver;
       input.disabled = isOver;
       el(page, 'guess-btn').disabled = isOver;
+      // 不查词按钮跟随游戏状态
+      const noAiBtn = el(page, 'guess-no-ai-btn');
+      if (noAiBtn) noAiBtn.disabled = isOver;
       if (isOver) { input.placeholder = '游戏已结束'; } else { input.placeholder = `输入 ${st.wordLength} 个字符...`;
         input.maxLength = st.wordLength; }
       updateAttemptCounter(page);
@@ -3306,10 +3389,18 @@
         const input = el(page, 'guess-input');
         input.maxLength = st.wordLength;
         input.placeholder = `输入 ${st.wordLength} 个字符...`;
-        if (st.isGameOver) { input.disabled = true;
+        if (st.isGameOver) {
+          input.disabled = true;
           el(page, 'guess-btn').disabled = true;
-          localStorage.removeItem(stateStorageKey(page)); } else { input.disabled = false;
-          el(page, 'guess-btn').disabled = false; }
+          const noAiBtn = el(page, 'guess-no-ai-btn');
+          if (noAiBtn) noAiBtn.disabled = true;
+          localStorage.removeItem(stateStorageKey(page));
+        } else {
+          input.disabled = false;
+          el(page, 'guess-btn').disabled = false;
+          const noAiBtn = el(page, 'guess-no-ai-btn');
+          if (noAiBtn) noAiBtn.disabled = false;
+        }
 
         updateAttemptCounter(page);
         updateStatusBanner(page);
@@ -3337,6 +3428,10 @@
           if (config.language) $('langSelect').value = config.language;
           if (config.customLanguage) $('customLang').value = config.customLanguage;
           if (config.language === 'other') $('customLangGroup').style.display = 'block';
+          // 释义语言
+          if (config.outputLanguage) $('outputLangSelect').value = config.outputLanguage;
+          if (config.outputCustomLanguage) $('outputCustomLang').value = config.outputCustomLanguage;
+          if (config.outputLanguage === 'other') $('outputCustomLangGroup').style.display = 'block';
         }
       } catch (e) { console.error('加载配置失败:', e); }
     }
@@ -3346,8 +3441,17 @@
       const model = $('modelSelect').value;
       const language = $('langSelect').value;
       const customLanguage = $('customLang').value.trim();
+      const outputLanguage = $('outputLangSelect').value;
+      const outputCustomLanguage = $('outputCustomLang').value.trim();
       if (!apiKey) { showToast('请输入 API Key 后再保存', 'error'); return; }
-      localStorage.setItem(CONFIG_KEY, JSON.stringify({ apiKey, model, language, customLanguage }));
+      localStorage.setItem(CONFIG_KEY, JSON.stringify({
+        apiKey,
+        model,
+        language,
+        customLanguage,
+        outputLanguage,
+        outputCustomLanguage
+      }));
       showToast('配置已保存到浏览器本地', 'success');
     }
 
@@ -3355,6 +3459,12 @@
       localStorage.removeItem(CONFIG_KEY);
       $('apiKey').value = '';
       $('modelSelect').selectedIndex = 0;
+      $('langSelect').value = 'auto';
+      $('customLangGroup').style.display = 'none';
+      $('customLang').value = '';
+      $('outputLangSelect').value = '中文';
+      $('outputCustomLangGroup').style.display = 'none';
+      $('outputCustomLang').value = '';
       showToast('配置已清除', 'success');
     }
 
@@ -3365,8 +3475,15 @@
       btn.classList.toggle('open');
     }
 
-    // ---------- AI 查词（重构：修复语法和逻辑错误） ----------
-    function buildSystemPrompt() {
+    // ============================================================
+    //  AI 查词 - 修改3：支持释义输出语言
+    // ============================================================
+    function buildSystemPrompt(outputLang) {
+      // 确定释义输出语言
+      let langInstruction = '所有释义（definition字段）和短语含义（meaning字段）请使用中文输出。';
+      if (outputLang && outputLang !== 'auto' && outputLang.trim() !== '') {
+        langInstruction = `所有释义（definition字段）和短语含义（meaning字段）请使用${outputLang}输出。`;
+      }
       return `你是一位精通多语言词源学与词汇学的顶级词典专家。
 【核心规则】
 1. 真实词汇：提供准确发音、词性、释义和常用短语，is_fictional 设为 false，etymology_analysis 设为 null。
@@ -3374,6 +3491,7 @@
 3. 未指定语言时自动识别；指定语言时按该语言解析。
 4. 非拉丁字母语言的发音字段提供拼音/罗马音/音标等通用标注。
 5. 【多语言同形优化】仅在自动识别模式下，若该单词在2个及以上常见语言中均为高频常用词且拼写完全一致（如 libro, piano, hotel），才在 languages 数组中列出所有匹配项及对应音标。若仅为生僻巧合或单一语言主导，请直接返回最主要的一种语言，切勿过度搜索或强行凑数，以确保响应速度。
+6. ${langInstruction}
 【输出格式】
 严格返回纯 JSON（不含 Markdown 代码块标记），可被 JSON.parse() 直接解析：
 {
@@ -3381,20 +3499,16 @@
   "languages": [
     {"language": "语言名称", "pronunciation": "音标/拼音/罗马音等"}
   ],
-  "meanings": [{"pos": "词性缩写(如 n./v./adj.)", "definition": "中文释义"}],
-  "phrases": [{"phrase": "用法短语原文", "meaning": "短语中文释义"}],
+  "meanings": [{"pos": "词性缩写(如 n./v./adj.)", "definition": "释义"}],
+  "phrases": [{"phrase": "用法短语原文", "meaning": "短语含义"}],
   "is_fictional": false,
   "etymology_analysis": "虚构词填词源分析，真实词填 null"
 }`;
     }
 
     async function triggerAILookup(word, page, appendMode = false) {
-      // 仅查词模式不受 enableAI 开关影响，但游戏模式受控
       if (page !== 'dict' && !settings.enableAI) return;
-
-      const lowerWord = word.trim();
-      if (!lowerWord) return;
-
+      const lowerWord = word.toLowerCase();
       const apiKey = $('apiKey').value.trim();
       if (!apiKey) {
         showToast('⚠️ 请先配置 DeepSeek API Key 以使用查词功能', 'error');
@@ -3404,9 +3518,7 @@
         return;
       }
 
-      // 显示结果卡片和加载状态
-      const card = el(page, 'ai-result-card');
-      card.classList.add('active');
+      el(page, 'ai-result-card').classList.add('active');
       el(page, 'ai-word').textContent = lowerWord;
       el(page, 'ai-pron').textContent = '⏳ 查询中...';
       el(page, 'ai-lang').textContent = '';
@@ -3425,11 +3537,20 @@
         let langName = lang;
         if (lang === 'other') {
           langName = customInput.value.trim();
-          if (!langName) {
-            showToast('请先输入自定义语言名称', 'error');
-            $('loadingOverlay').classList.remove('active');
-            return;
-          }
+          if (!langName) { showToast('请先输入自定义语言名称', 'error');
+            $('loadingOverlay').classList.remove('active'); return; }
+        }
+
+        // 获取释义输出语言
+        const outputLangSelect = $('outputLangSelect');
+        const outputCustomInput = $('outputCustomLang');
+        let outputLang = outputLangSelect.value;
+        if (outputLang === 'other') {
+          outputLang = outputCustomInput.value.trim();
+          if (!outputLang) { showToast('请先输入自定义释义语言名称', 'error');
+            $('loadingOverlay').classList.remove('active'); return; }
+        } else if (outputLang === 'auto') {
+          outputLang = '中文'; // 默认
         }
 
         let userMessage = `请解析以下单词：${lowerWord}。`;
@@ -3441,14 +3562,14 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        let response;
         try {
-          response = await fetch(API_ENDPOINT, {
+          const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
               model: model,
-              messages: [{ role: 'system', content: buildSystemPrompt() }, { role: 'user', content: userMessage }],
+              messages: [{ role: 'system', content: buildSystemPrompt(outputLang) }, { role: 'user',
+                content: userMessage }],
               temperature: 0.3,
               max_tokens: 3072,
               response_format: { type: 'json_object' }
@@ -3456,70 +3577,58 @@
             signal: controller.signal
           });
           clearTimeout(timeoutId);
-        } catch (fetchErr) {
-          clearTimeout(timeoutId);
-          if (fetchErr.name === 'AbortError') {
-            throw new Error('请求超时（30秒），请稍后再试或检查网络连接。');
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`API 请求失败: ${errorData.error?.message || `HTTP ${response.status}`}`);
           }
-          throw new Error('网络请求失败：' + fetchErr.message);
-        }
 
-        if (!response.ok) {
-          let errMsg = `HTTP ${response.status}`;
-          try {
-            const errData = await response.json();
-            if (errData.error && errData.error.message) errMsg = errData.error.message;
-          } catch (_) {}
-          throw new Error(`API 请求失败: ${errMsg}`);
-        }
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content;
+          if (!content) throw new Error('API 返回内容为空');
 
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content;
-        if (!content) throw new Error('API 返回内容为空');
-
-        let result;
-        try {
-          result = JSON.parse(content);
-        } catch (parseErr) {
-          // 尝试清理 Markdown 代码块
-          const cleaned = content.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-          result = JSON.parse(cleaned);
-        }
-
-        // 处理 appendMode
-        if (appendMode) {
-          if (!Array.isArray(pages[page].currentAIResult)) {
-            const existing = pages[page].currentAIResult;
-            pages[page].currentAIResult = existing ? [existing] : [];
+          let result;
+          try { result = JSON.parse(content); } catch (e) {
+            const cleaned = content.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+            result = JSON.parse(cleaned);
           }
-          // 避免重复添加相同单词
-          const exists = pages[page].currentAIResult.some(item => item && item.word === result.word);
-          if (!exists) {
+
+          if (appendMode) {
+            if (!Array.isArray(pages[page].currentAIResult)) {
+              if (pages[page].currentAIResult) {
+                pages[page].currentAIResult = [pages[page].currentAIResult];
+              } else {
+                pages[page].currentAIResult = [];
+              }
+            }
             pages[page].currentAIResult.push(result);
+          } else {
+            pages[page].currentAIResult = result;
           }
-        } else {
-          pages[page].currentAIResult = result;
+          renderAIResult(result, page);
+        } catch (error) {
+          console.error('AI查词失败:', error);
+          let friendlyMsg = error.message;
+          if (friendlyMsg.includes('401') || friendlyMsg.includes('Unauthorized') || friendlyMsg.includes('invalid'))
+            friendlyMsg = 'API Key 无效或已过期，请检查配置。';
+          else if (friendlyMsg.includes('429')) friendlyMsg = '请求过于频繁，请稍后再试。';
+          else if (friendlyMsg.includes('insufficient_quota') || friendlyMsg.includes('balance')) friendlyMsg =
+            '账户余额不足，请前往 DeepSeek 官网充值。';
+          else if (friendlyMsg.includes('timeout') || friendlyMsg.includes('network') || friendlyMsg.includes('fetch'))
+            friendlyMsg = '网络连接超时，请检查网络后重试。';
+          else if (friendlyMsg.includes('JSON')) friendlyMsg = 'AI 返回的数据格式异常，请重试。';
+
+          el(page, 'ai-meanings-list').innerHTML =
+            `<div class="ai-meaning-group" style="border-left-color:var(--danger);"><div class="ai-meaning-defs" style="color:var(--danger);">❌ ${friendlyMsg}</div></div>`;
+          el(page, 'ai-pron').textContent = '查询失败';
+          showToast(friendlyMsg, 'error');
+        } finally {
+          $('loadingOverlay').classList.remove('active');
         }
-
-        renderAIResult(result, page);
-      } catch (error) {
-        console.error('AI查词失败:', error);
-        let friendlyMsg = error.message;
-        if (friendlyMsg.includes('401') || friendlyMsg.includes('Unauthorized') || friendlyMsg.includes('invalid'))
-          friendlyMsg = 'API Key 无效或已过期，请检查配置。';
-        else if (friendlyMsg.includes('429')) friendlyMsg = '请求过于频繁，请稍后再试。';
-        else if (friendlyMsg.includes('insufficient_quota') || friendlyMsg.includes('balance')) friendlyMsg =
-          '账户余额不足，请前往 DeepSeek 官网充值。';
-        else if (friendlyMsg.includes('timeout') || friendlyMsg.includes('network') || friendlyMsg.includes('fetch'))
-          friendlyMsg = '网络连接超时，请检查网络后重试。';
-        else if (friendlyMsg.includes('JSON')) friendlyMsg = 'AI 返回的数据格式异常，请重试。';
-
-        el(page, 'ai-meanings-list').innerHTML =
-          `<div class="ai-meaning-group" style="border-left-color:var(--danger);"><div class="ai-meaning-defs" style="color:var(--danger);">❌ ${escapeHtml(friendlyMsg)}</div></div>`;
-        el(page, 'ai-pron').textContent = '查询失败';
-        showToast(friendlyMsg, 'error');
-      } finally {
+      } catch (outerError) {
+        console.error('triggerAILookup 外层错误:', outerError);
         $('loadingOverlay').classList.remove('active');
+        showToast('查词过程发生异常，请重试', 'error');
       }
     }
 
@@ -3545,7 +3654,7 @@
         data.meanings.forEach(m => {
           const pos = (m.pos || '未知').trim();
           if (!groups[pos]) groups[pos] = [];
-          if (m.definition) groups[pos].push(m.definition);
+          groups[pos].push(m.definition || '');
         });
         Object.keys(groups).forEach(pos => {
           const defs = groups[pos].filter(d => d);
@@ -3589,9 +3698,7 @@
       if (data.is_fictional === true && data.etymology_analysis) {
         el(page, 'ai-fictional').style.display = 'flex';
         el(page, 'ai-etymology-text').textContent = data.etymology_analysis;
-      } else {
-        el(page, 'ai-fictional').style.display = 'none';
-      }
+      } else { el(page, 'ai-fictional').style.display = 'none'; }
 
       el(page, 'ai-result-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -3762,6 +3869,26 @@
     }
 
     // ============================================================
+    //  控制"猜测（不查词）"按钮的可见性（修改1）
+    // ============================================================
+    function updateNoAiButtonsVisibility() {
+      const show = settings.enableAI === true;
+      ['simulator', 'play'].forEach(page => {
+        const btn = el(page, 'guess-no-ai-btn');
+        if (btn) {
+          btn.style.display = show ? 'inline-flex' : 'none';
+          // 如果游戏已结束，禁用按钮
+          const st = pages[page].state;
+          if (st && st.isGameOver) {
+            btn.disabled = true;
+          } else {
+            btn.disabled = false;
+          }
+        }
+      });
+    }
+
+    // ============================================================
     //  初始化应用（异步）
     // ============================================================
     async function initApp() {
@@ -3807,7 +3934,58 @@
         applyLibraryFilter(false, true);
       }
 
-      if ($('langSelect').value === 'other') $('customLangGroup').style.display = 'block';
+      // ---- 修改2：为 dict-lang-select 添加 change 事件 ----
+      const dictLangSelect = $('dict-lang-select');
+      if (dictLangSelect) {
+        dictLangSelect.addEventListener('change', function() {
+          const group = $('dict-custom-lang-group');
+          if (this.value === 'other') {
+            group.style.display = 'block';
+          } else {
+            group.style.display = 'none';
+          }
+        });
+        // 初始状态检查
+        if (dictLangSelect.value === 'other') {
+          $('dict-custom-lang-group').style.display = 'block';
+        }
+      }
+
+      // ---- 修改3：释义语言的自定义输入框切换 ----
+      const outputLangSelect = $('outputLangSelect');
+      if (outputLangSelect) {
+        outputLangSelect.addEventListener('change', function() {
+          const group = $('outputCustomLangGroup');
+          if (this.value === 'other') {
+            group.style.display = 'block';
+          } else {
+            group.style.display = 'none';
+          }
+        });
+        // 初始状态检查
+        if (outputLangSelect.value === 'other') {
+          $('outputCustomLangGroup').style.display = 'block';
+        }
+      }
+
+      // 查词语言自定义输入框切换（已有逻辑增强）
+      const langSelect = $('langSelect');
+      if (langSelect) {
+        langSelect.addEventListener('change', function() {
+          const group = $('customLangGroup');
+          if (this.value === 'other') {
+            group.style.display = 'block';
+          } else {
+            group.style.display = 'none';
+          }
+        });
+        if (langSelect.value === 'other') {
+          $('customLangGroup').style.display = 'block';
+        }
+      }
+
+      // ---- 控制不查词按钮的可见性 ----
+      updateNoAiButtonsVisibility();
 
       const initialPage = pages[settings.mode] ? settings.mode : 'simulator';
       switchPage(initialPage);
@@ -3869,7 +4047,8 @@
     window.onFilterLangChange = onFilterLangChange;
     window.onFilterNameInput = onFilterNameInput;
     window.clearLibraryFilters = clearLibraryFilters;
+    window.updateNoAiButtonsVisibility = updateNoAiButtonsVisibility;
   </script>
 
 </body>
-</html>
+  </html>
