@@ -88,7 +88,8 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
 .stat{background:#f7f8fc;border:1px solid var(--line);border-radius:11px;padding:9px 6px;text-align:center}
 .stat b{display:block;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
 .stat span{font-size:11px;color:var(--ink2)}
-.est-note{font-size:11px;color:var(--ink2);margin-top:8px;text-align:center}
+.est-note-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.est-note{font-size:11px;color:var(--ink2);text-align:center}
 .warn-box{margin-top:12px;display:flex;flex-direction:column;gap:6px}
 .warn{font-size:12.5px;padding:8px 12px;border-radius:9px;line-height:1.45}
 .warn.amber{background:#fdf6e7;color:#8a6116;border:1px solid #f3e2b8}
@@ -145,6 +146,7 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
 #progFill{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--acc),var(--teal));transition:width .25s}
 #progText{font-size:11.5px;font-weight:600;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .timer{font-size:12px;font-weight:600;background:#f2f4f9;color:var(--ink);padding:7px 10px;border-radius:8px;font-variant-numeric:tabular-nums}
+.eta{background:var(--acc-soft);color:var(--acc)}
 .g-btns{display:flex;gap:7px}
 .g-canvas{flex:1;position:relative;overflow:hidden}
 #board{position:absolute;inset:0;touch-action:none;cursor:default;display:block;user-select:none;-webkit-user-select:none}
@@ -156,6 +158,21 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
 .cell-info .mono{color:var(--ink2)}
 @media(max-width:560px){.cell-info{display:none}.g-title span{display:none}}
 .trophy{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:6;background:var(--amber);color:#fff;border-color:transparent}
+
+.replay-bar{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:10px;
+  flex-wrap:wrap;justify-content:center;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:13px;
+  box-shadow:0 10px 26px rgba(23,28,51,.18);padding:9px 14px;max-width:calc(100% - 20px)}
+.rep-mode{font-size:12px;font-weight:700;color:#fff;background:var(--acc);padding:4px 10px;border-radius:14px;white-space:nowrap}
+.rep-prog{display:flex;align-items:center;gap:8px;min-width:160px}
+.rep-bar{flex:1;height:7px;background:#e8ebf3;border-radius:4px;overflow:hidden;min-width:80px}
+.rep-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--org),var(--amber))}
+#repText{font-size:11px;font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rep-cur{display:flex;align-items:center;gap:7px;font-size:12px;min-width:0}
+.rep-cur b{font-variant-numeric:tabular-nums;white-space:nowrap}
+#repTime{font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.rep-speed{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-weight:600;white-space:nowrap}
+.rep-speed input{width:62px}
+
 .g-pal{background:#fff;border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
 .pal-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap}
 .pal-cur{display:flex;align-items:center;gap:9px;font-size:13px;min-width:0}
@@ -178,7 +195,7 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
 
 .ovl{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(18,20,32,.55);backdrop-filter:blur(3px)}
 #confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.done-card{position:relative;background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:26px;width:min(92vw,410px);text-align:center;animation:popin .4s cubic-bezier(.2,1.5,.4,1)}
+.done-card{position:relative;background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:26px;width:min(92vw,420px);text-align:center;animation:popin .4s cubic-bezier(.2,1.5,.4,1)}
 @keyframes popin{from{transform:scale(.7);opacity:0}}
 .done-tag{font-size:11px;font-weight:700;letter-spacing:2px;color:#fff;background:var(--org);display:inline-block;padding:5px 14px;border-radius:16px}
 .done-card h2{font-size:30px;font-weight:700;margin:12px 0 14px}
@@ -187,7 +204,8 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
 .done-stats div{background:#f7f8fc;border:1px solid var(--line);border-radius:10px;padding:9px 4px}
 .done-stats b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
 .done-stats span{font-size:11px;color:var(--ink2)}
-.done-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.done-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.done-btns:first-of-type{margin-top:0}
 #toastWrap{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
 .toast{background:rgba(27,30,43,.94);color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,.25);animation:tin .25s backwards;max-width:86vw}
 @keyframes tin{from{transform:translateY(12px);opacity:0}}
@@ -224,7 +242,10 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
       <div class="stat"><b id="stColors">--</b><span>颜色数</span></div>
       <div class="stat"><b id="stTime">--</b><span>预计用时</span></div>
     </div>
-    <p class="est-note">预计用时 = 像素数 × 单格耗时 + 选色成本（颜色数）+ 定位成本（各颜色分散度 / 连通簇数）</p>
+    <div class="est-note-row">
+      <p class="est-note" id="estNote">智能预测：初始化学习模型…</p>
+      <button class="btn btn-ghost sm" id="resetModelBtn" title="清空已学习的涂色习惯数据">重置模型</button>
+    </div>
     <div class="warn-box" id="warnBox"></div>
   </section>
 
@@ -242,11 +263,11 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
     </div>
 
     <div class="card">
-      <div class="step"><b>2</b>网格尺寸（自由设置）</div>
+      <div class="step"><b>2</b>网格尺寸（自由设置，无上限）</div>
       <div class="dim-row">
-        <input class="num" id="wInput" type="number" min="4" step="1" value="28" title="网格宽度（列）">
+        <input class="num" id="wInput" type="number" min="1" step="1" value="28" title="网格宽度（列）">
         <span class="x">×</span>
-        <input class="num" id="hInput" type="number" min="4" step="1" value="28" title="网格高度（行）">
+        <input class="num" id="hInput" type="number" min="1" step="1" value="28" title="网格高度（行）">
         <button class="lock-btn on" id="lockBtn" title="按比例联动">🔗 按比例</button>
       </div>
       <div class="presets" id="presetRow">
@@ -256,7 +277,7 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
         <button class="preset" data-w="64">大师 64</button>
         <button class="preset" data-w="96">地狱 96</button>
       </div>
-      <p class="hint-txt">不设上限，数值越大越接近原图；超大画布会自动启用性能优化。</p>
+      <p class="hint-txt">不设任何上限，数值越大越接近原图；超大画布会自动启用渲染优化。</p>
     </div>
 
     <div class="card">
@@ -279,9 +300,9 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
     <button class="btn btn-accent" id="startBtn" disabled>开始涂色 ▸</button>
 
     <ul class="tips">
-      <li>🖌 手指落在<b>与选中颜色一致的未涂格子</b>上：点按涂一格，拖动连续涂；落在其他位置拖动 = 移动画布，双指捏合 = 缩放。</li>
-      <li>🎯 点击色盘颜色会<b>自动放大并直达</b>该颜色的未涂区域；也可输入编号跳转。</li>
-      <li>↩ 撤销可撤回误涂；💡 提示自动填对一格；进度自动存入本机存档。</li>
+      <li>🖌 手指落在<b>与选中颜色一致的未涂格子</b>上：点按涂一格，拖动连续涂；其他位置拖动 = 移动画布，双指捏合 = 缩放。</li>
+      <li>🎬 顶栏 🎬 按钮<b>随时</b>可看自动涂色回放（无需涂完）；涂完后还能看还原你落笔顺序的「我的回放」。</li>
+      <li>🧠 用时预测会持续学习你的落笔速度、选色习惯与镜头操作，涂得越多越准（未完成也会学习）。</li>
     </ul>
   </aside>
 </main>
@@ -292,7 +313,9 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
     <div class="g-title"><b id="gName">未命名</b><span id="gGrid"></span></div>
     <div class="prog"><div class="prog-bar"><div id="progFill"></div></div><span id="progText">0/0 · 0%</span></div>
     <span class="timer" id="timerText">00:00</span>
+    <span class="timer eta" id="etaText" title="基于学习模型的剩余用时预测">预计剩余 --</span>
     <div class="g-btns">
+      <button class="ibtn" id="replayBtn" title="观看涂色回放（随时可用）">🎬</button>
       <button class="ibtn" id="peekBtn" title="按住看原图">👁</button>
       <button class="ibtn" id="undoBtn" title="撤销 (Z)">↩</button>
       <button class="ibtn" id="hintBtn" title="提示：自动填对一个格子">💡</button>
@@ -301,6 +324,16 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
   </div>
   <div class="g-canvas" id="canvasWrap">
     <canvas id="board"></canvas>
+    <div class="replay-bar hidden" id="replayBar">
+      <button class="ibtn" id="repPlayBtn" title="播放 / 暂停">⏸</button>
+      <span class="rep-mode" id="repMode">自动涂色回放</span>
+      <div class="rep-prog"><div class="rep-bar"><i id="repFill"></i></div><span id="repText">0/0 · 0%</span></div>
+      <span class="rep-cur"><span class="cur-sw" id="repSw"></span><b id="repCurTxt">—</b></span>
+      <span id="repTime">00:00</span>
+      <label class="rep-speed">倍速<input class="num sm" id="repSpeed" type="number" min="1" max="100" step="1" value="8">×</label>
+      <button class="btn btn-ghost sm on" id="repFollowBtn" style="border-color:#c7d2fb;background:var(--acc-soft);color:var(--acc)">🎥 自动跟随：开</button>
+      <button class="btn btn-ghost sm" id="repExitBtn">✕ 退出回放</button>
+    </div>
     <div class="zoom-cluster">
       <button class="ibtn" id="zoomIn" title="放大">＋</button>
       <button class="ibtn" id="zoomOut" title="缩小">－</button>
@@ -340,6 +373,10 @@ input[type=range]:disabled{opacity:.35;cursor:not-allowed}
       <button class="btn btn-teal" id="againBtn">再来一张</button>
       <button class="btn btn-ghost" id="closeOvlBtn">欣赏画作</button>
     </div>
+    <div class="done-btns">
+      <button class="btn btn-primary sm" id="repAutoBtn">▶ 自动涂色回放</button>
+      <button class="btn btn-primary sm" id="repSelfBtn">▶ 我的涂色回放</button>
+    </div>
   </div>
 </div>
 
@@ -349,7 +386,6 @@ const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const INK='#1b1e2b';
-const MAX_CELLS=4_000_000;
 const fmtTime=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const fmtNum=n=>n.toLocaleString('zh-CN');
 const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -378,31 +414,98 @@ function relTime(ts){const d=Date.now()-ts;
   if(d<86400e3)return Math.floor(d/3600e3)+' 小时前';if(d<7*86400e3)return Math.floor(d/86400e3)+' 天前';
   return new Date(ts).toLocaleDateString('zh-CN');}
 
-/* ================= IndexedDB 存档 ================= */
+/* ================= IndexedDB（存档 + 学习模型） ================= */
 const idb={db:null,prom:null,
   open(){
     if(this.db)return Promise.resolve(this.db);
     if(this.prom)return this.prom;
     this.prom=new Promise((res,rej)=>{
-      const rq=indexedDB.open('pixel-paint-db',1);
+      const rq=indexedDB.open('pixel-paint-db',2);
       rq.onupgradeneeded=()=>{const db=rq.result;
-        if(!db.objectStoreNames.contains('saves'))db.createObjectStore('saves',{keyPath:'id'});};
+        if(!db.objectStoreNames.contains('saves'))db.createObjectStore('saves',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv',{keyPath:'id'});};
       rq.onsuccess=()=>{this.db=rq.result;res(this.db);};
       rq.onerror=()=>{this.prom=null;rej(rq.error);};
     });
     return this.prom;
   },
-  async tx(mode,fn){const db=await this.open();
+  async tx(store,mode,fn){const db=await this.open();
     return new Promise((res,rej)=>{
-      const t=db.transaction('saves',mode),s=t.objectStore('saves'),r=fn(s);
+      const t=db.transaction(store,mode),s=t.objectStore(store),r=fn(s);
       t.oncomplete=()=>res(r?r.result:undefined);
       t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);
     });},
-  put(rec){return this.tx('readwrite',s=>s.put(rec));},
-  get(id){return this.tx('readonly',s=>s.get(id));},
-  all(){return this.tx('readonly',s=>s.getAll());},
-  del(id){return this.tx('readwrite',s=>s.delete(id));}
+  put(rec){return this.tx('saves','readwrite',s=>s.put(rec));},
+  get(id){return this.tx('saves','readonly',s=>s.get(id));},
+  all(){return this.tx('saves','readonly',s=>s.getAll());},
+  del(id){return this.tx('saves','readwrite',s=>s.delete(id));},
+  putKV(rec){return this.tx('kv','readwrite',s=>s.put(rec));},
+  getKV(id){return this.tx('kv','readonly',s=>s.get(id));},
+  delKV(id){return this.tx('kv','readwrite',s=>s.delete(id));}
 };
+
+/* ================= 自适应用时学习模型 =================
+   在线学习三类习惯参数（指数滑动平均）：
+   rate  相邻两次落笔间隔（>3s 视为休息剔除）→ 每格耗时
+   sel   选色到下一次落笔的间隔 → 选色/定位成本
+   cam   镜头操作（拖动/捏合/滚轮）累计时间 ÷ 落笔数 → 镜头开销
+   通关时对比「预测有效时间 vs 实际有效时间」，自动修正全局校准系数 calib，
+   未完成也会持续学习，模型持久化到 IndexedDB，越用越准。           */
+const model={rate:650,sel:1600,cam:120,calib:1,samples:0,selSamples:0,calSamples:0,updated:0};
+let modelDirty=false;
+function learnEma(key,val,alpha){model[key]=lerp(model[key],val,alpha);modelDirty=true;model.updated=Date.now();}
+function learnRate(d){model.samples++;learnEma('rate',d,model.samples<20?0.3:0.08);}
+function learnSel(d){model.selSamples++;learnEma('sel',d,model.selSamples<15?0.35:0.1);}
+function learnCam(v){learnEma('cam',v,0.1);}
+async function saveModel(){if(!modelDirty)return;modelDirty=false;
+  try{await idb.putKV({id:'model',...model});}catch(e){}}
+async function loadModel(){
+  try{const m=await idb.getKV('model');
+    if(m)for(const k of['rate','sel','cam','calib','samples','selSamples','calSamples','updated'])
+      if(typeof m[k]==='number'&&isFinite(m[k]))model[k]=m[k];
+  }catch(e){}
+  updateEstNote();
+}
+function resetModel(){
+  Object.assign(model,{rate:650,sel:1600,cam:120,calib:1,samples:0,selSamples:0,calSamples:0,updated:0});
+  modelDirty=false;
+  try{idb.delKV('model').catch(()=>{});}catch(e){}
+  updateEstNote();if(pvLevel)updateStats();
+  toast('学习模型已重置');
+}
+function predictSeconds(lv){
+  const s=lv.estimate;
+  let ms=s.n*model.rate+s.K*model.sel+s.locate*model.rate*1.35+s.n*model.cam+s.extra*1000;
+  ms*=model.calib;
+  return ms/1000;
+}
+function fmtDur(sec){
+  if(sec<90)return`${Math.max(1,Math.round(sec))} 秒`;
+  if(sec<5400)return`${Math.round(sec/60)} 分`;
+  return`${(sec/3600).toFixed(1)} 小时`;
+}
+function fmtEstimate(sec){
+  const conf=Math.min(1,Math.log10(1+model.samples)/2);
+  const sp=0.25-0.17*conf; /* 置信区间 ±25% → ±8% */
+  const lo=sec*(1-sp),hi=sec*(1+sp);
+  return`约 ${fmtDur(lo)}–${fmtDur(hi)}`;
+}
+function liveEta(){
+  const lv=G.level;if(!lv||G.finished)return null;
+  const n=lv.cells.length,rem=n-G.doneTotal;
+  if(rem<=0)return null;
+  let remK=0;for(const p of lv.palette)if(p.done<p.total)remK++;
+  let ms=rem*model.rate+remK*model.sel+rem*model.cam;
+  ms*=model.calib;
+  return ms/1000;
+}
+function updateEstNote(){
+  if(model.samples===0)
+    $('estNote').textContent='智能用时预测：尚未学习你的涂色习惯，当前使用通用模型';
+  else
+    $('estNote').textContent=`智能用时预测：已学习 ${fmtNum(model.samples)} 次落笔 · ${fmtNum(model.calSamples)} 次通关校准 · 校准系数 ${model.calib.toFixed(2)}`;
+}
+$('resetModelBtn').onclick=resetModel;
 
 /* ================= 音效 ================= */
 let muted=localStorage.getItem('pp.muted')==='1';
@@ -462,7 +565,7 @@ SAMPLES.forEach((s,i)=>{
   $('sampleRow').appendChild(btn);
 });
 
-/* ================= 关卡构建 + 用时估算 ================= */
+/* ================= 关卡构建 + 结构化用时统计 ================= */
 function greedyCluster(exactArr,t){
   const gs=Math.max(1,t),t2=t*t,centers=[],grid=new Map();
   for(let k=0;k<exactArr.length;k++){
@@ -494,12 +597,14 @@ async function findThreshold(exactArr,target,token){
   }
   return best;
 }
+/* 返回结构化工作量（秒数由学习模型换算）：
+   n 格数 · K 颜色数 · clusters 连通簇数 ·
+   locate = Σ 簇×(0.8+2.2×分散度) · extra 大画布巡视开销(秒)     */
 async function computeEstimate(cols,rows,cells,K,token){
   const n=cols*rows,diag=Math.hypot(cols,rows);
   const count=new Uint32Array(K);
   for(let i=0;i<n;i++)count[cells[i]]++;
-  let clustersTotal=0,selT=0,findT=0;
-  const selPer=1.05+0.5*Math.log2(1+K);
+  let clustersTotal=0,locate=0;
   if(K<=200000){
     const sx=new Float64Array(K),sy=new Float64Array(K),sx2=new Float64Array(K),sy2=new Float64Array(K);
     for(let i=0;i<n;i++){const c=cells[i],x=i%cols,y=(i/cols)|0;
@@ -522,22 +627,13 @@ async function computeEstimate(cols,rows,cells,K,token){
       const vr=Math.max(0,sx2[c]/m-mx*mx+sy2[c]/m-my*my);
       const spread=Math.min(1,Math.sqrt(vr)/(diag*0.33));
       clustersTotal+=comp[c];
-      selT+=selPer;
-      findT+=comp[c]*(0.8+2.2*spread);
+      locate+=comp[c]*(0.8+2.2*spread);
     }
   }else{
-    for(let c=0;c<K;c++){const m=count[c];if(!m)continue;
-      clustersTotal+=m;selT+=selPer;findT+=m*0.8;}
+    for(let c=0;c<K;c++){const m=count[c];if(!m)continue;clustersTotal+=m;locate+=m*0.8;}
   }
-  const T=n*0.42+selT+findT+K*0.35+n*0.02*Math.log2(2+Math.max(cols,rows)/20);
-  return{seconds:T,clusters:clustersTotal};
-}
-function fmtEstimate(sec){
-  const lo=sec*0.8,hi=sec*1.25;
-  if(hi<90){const a=Math.max(5,Math.round(lo/5)*5),b=Math.max(a+5,Math.round(hi/5)*5);return`约 ${a}–${b} 秒`;}
-  const a=Math.max(1,Math.round(lo/60)),b=Math.max(a+1,Math.round(hi/60));
-  if(a>=60)return`约 ${(a/60).toFixed(1)}–${(b/60).toFixed(1)} 小时`;
-  return`约 ${a}–${b} 分`;
+  const extra=n*0.02*Math.log2(2+Math.max(cols,rows)/20);
+  return{n,K,clusters:clustersTotal,locate,extra};
 }
 async function buildLevel(el,cols,rows,opts,token){
   const sw=el.width||el.naturalWidth,sh=el.height||el.naturalHeight;
@@ -605,7 +701,6 @@ async function buildLevel(el,cols,rows,opts,token){
       return{hex:rgbToHex(c.r,c.g,c.b),r:c.r,g:c.g,b:c.b,total:totals[old],done:0,name:colorName(c.r,c.g,c.b)};});
     for(let i=0;i<n;i++)cells[i]=remap[tmp[i]];
   }
-  /* 预览底图 = 量化后的颜色：调整合并程度 / 指定颜色数时，颜色变化立即可见 */
   const thumb=document.createElement('canvas');thumb.width=cols;thumb.height=rows;
   const tg=thumb.getContext('2d');
   const timg=tg.createImageData(cols,rows),td=timg.data;
@@ -621,12 +716,8 @@ async function buildLevel(el,cols,rows,opts,token){
 const pvCv=$('previewCanvas');
 let pvLevel=null,pvTimer=null,buildToken=0,building=false,lockAspect=true;
 function readDims(){
-  let w=Math.max(4,Math.round(+$('wInput').value||4)),h=Math.max(4,Math.round(+$('hInput').value||4));
-  if(w*h>MAX_CELLS){
-    const k=Math.sqrt(MAX_CELLS/(w*h));w=Math.floor(w*k);h=Math.floor(h*k);
-    $('wInput').value=w;$('hInput').value=h;
-    toast(`网格过大，已自动缩至 ${w}×${h}（上限 400 万格）`);
-  }
+  const w=Math.max(1,Math.round(+$('wInput').value||1));
+  const h=Math.max(1,Math.round(+$('hInput').value||1));
   return{cols:w,rows:h};
 }
 function readOpts(){
@@ -658,7 +749,7 @@ function updateStats(){
   $('stGrid').textContent=`${lv.cols}×${lv.rows}`;
   $('stCells').textContent=fmtNum(n);
   $('stColors').textContent=fmtNum(lv.palette.length);
-  $('stTime').textContent=fmtEstimate(lv.estimate.seconds);
+  $('stTime').textContent=fmtEstimate(predictSeconds(lv));
   const wb=$('warnBox');wb.innerHTML='';
   const add=(cls,txt)=>{const d=document.createElement('div');d.className='warn '+cls;d.textContent=txt;wb.appendChild(d);};
   if(n>120000)add('red',`超大画布（${fmtNum(n)} 格）：已启用概览渲染优化，缩小查看时整图合成、放大后逐格绘制。`);
@@ -673,7 +764,7 @@ function drawPreview(){
   pvCv.width=dw;pvCv.height=dh;
   const g=pvCv.getContext('2d');
   g.imageSmoothingEnabled=pc<1;g.imageSmoothingQuality='high';
-  g.drawImage(lv.thumb,0,0,dw,dh); /* thumb 已是量化后的颜色 */
+  g.drawImage(lv.thumb,0,0,dw,dh);
   if(pc>=6){g.strokeStyle='rgba(27,30,43,.16)';g.lineWidth=1;g.beginPath();
     for(let x=0;x<=lv.cols;x++){g.moveTo(x*pc+.5,0);g.lineTo(x*pc+.5,dh);}
     for(let y=0;y<=lv.rows;y++){g.moveTo(0,y*pc+.5);g.lineTo(dw,y*pc+.5);}g.stroke();}
@@ -687,10 +778,10 @@ function drawPreview(){
     }}
 }
 $('wInput').addEventListener('input',()=>{
-  if(lockAspect){const{h,w}=srcSize();$('hInput').value=Math.max(4,Math.round(+$('wInput').value*h/w));}
+  if(lockAspect){const{h,w}=srcSize();$('hInput').value=Math.max(1,Math.round(+$('wInput').value*h/w));}
   refreshPreview();});
 $('hInput').addEventListener('input',()=>{
-  if(lockAspect){const{h,w}=srcSize();$('wInput').value=Math.max(4,Math.round(+$('hInput').value*w/h));}
+  if(lockAspect){const{h,w}=srcSize();$('wInput').value=Math.max(1,Math.round(+$('hInput').value*w/h));}
   refreshPreview();});
 $('lockBtn').onclick=()=>{lockAspect=!lockAspect;$('lockBtn').classList.toggle('on',lockAspect);
   $('lockBtn').textContent=lockAspect?'🔗 按比例':'⛓️‍💥 自由';};
@@ -702,15 +793,13 @@ $('extremeChk').addEventListener('change',()=>{
   const on=$('extremeChk').checked;
   $('mergeSlider').disabled=on;$('targetInput').disabled=on;
   if(on){
-    const{w,h}=srcSize();let W=w,H=h;
-    if(W*H>1_500_000){const k=Math.sqrt(1_500_000/(W*H));W=Math.floor(W*k);H=Math.floor(H*k);
-      toast('已按原图尺寸设置（超大部分等比缩小）');}
-    $('wInput').value=W;$('hInput').value=H;
+    const{w,h}=srcSize();
+    $('wInput').value=w;$('hInput').value=h; /* 完全按原图尺寸，不缩水 */
   }
   refreshPreview();
 });
 function onSourceChanged(){
-  if(lockAspect){const{w,h}=srcSize();$('hInput').value=Math.max(4,Math.round(+$('wInput').value*h/w));}
+  if(lockAspect){const{w,h}=srcSize();$('hInput').value=Math.max(1,Math.round(+$('wInput').value*h/w));}
   refreshPreview();
 }
 $('uploadBtn').onclick=()=>$('fileInput').click();
@@ -730,7 +819,7 @@ const pw=$('previewWrap');
 pw.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f);});
 $('startBtn').onclick=()=>{if(pvLevel&&!building)startGame(pvLevel,source.name,null);};
 
-/* ================= 历史记录 UI ================= */
+/* ================= 历史记录 UI（无条数限制） ================= */
 function drawHistThumb(t,rec){
   const maxDim=52;let tw,th;
   if(rec.cols>=rec.rows){tw=maxDim;th=Math.max(1,Math.round(maxDim*rec.rows/rec.cols));}
@@ -753,7 +842,6 @@ async function loadHistory(){
   let recs=[];
   try{recs=(await idb.all())||[];}catch(e){recs=[];}
   recs.sort((a,b)=>b.ts-a.ts);
-  recs=recs.slice(0,30);
   $('histTag').textContent=recs.length;
   box.innerHTML='';
   if(!recs.length){box.innerHTML='<div class="hist-empty">暂无存档 · 开始涂色后会自动保存进度</div>';return;}
@@ -780,6 +868,18 @@ async function loadHistory(){
   }
 }
 
+/* ================= 涂色记录器（分块 TypedArray，无上限） ================= */
+const CHUNK=1<<18;
+const recorder={chunks:[],len:0,
+  clear(){this.chunks.length=0;this.len=0;},
+  push(i,ms){
+    let c=this.chunks[this.chunks.length-1];
+    if(!c||c.n>=CHUNK){c={idx:new Uint32Array(CHUNK),t:new Float64Array(CHUNK),n:0};this.chunks.push(c);}
+    c.idx[c.n]=i;c.t[c.n]=ms;c.n++;this.len++;
+  },
+  forEach(fn){for(const c of this.chunks)for(let k=0;k<c.n;k++)fn(c.idx[k],c.t[k]);}
+};
+
 /* ================= 游戏状态 ================= */
 const cv=$('board'),ctx=cv.getContext('2d'),wrap=$('canvasWrap');
 let dpr=1,fitted=false,viewAnim=null,countersDirty=false,ov=null,ovCtx=null,ovTarget=null,saveWarned=false;
@@ -787,8 +887,11 @@ const chipMap=new Map();const CHIP_W=104,CHIP_STEP=112;let palWin={s:-1,e:-1};
 const G={level:null,painted:null,scale:1,offX:0,offY:0,fitScale:1,
   sel:-1,history:[],hints:0,moves:0,doneTotal:0,combo:0,
   elapsed:0,highlightUntil:0,fx:[],needsDraw:true,peek:false,finished:false,hover:-1,
-  name:'',jumpCursor:{}};
-let gameActive=false;
+  name:'',jumpCursor:{},
+  /* 学习相关会话状态 */
+  lastPaintTs:0,pendingSelTs:0,activeMs:0,camMs:0,sessionPaints:0,predMs:0,
+  replay:null,replayState:null};
+let gameActive=false,lastNow=performance.now();
 
 function sizeCanvas(){
   const r=wrap.getBoundingClientRect();dpr=window.devicePixelRatio||1;
@@ -837,6 +940,14 @@ function ovSet(i){
   ovCtx.fillStyle=p<0?'#fff':G.level.palette[p].hex;
   ovCtx.fillRect(x,y,1,1);
 }
+function rebuildOverview(){
+  if(!ov)return;const lv=G.level;
+  const img=ovCtx.createImageData(lv.cols,lv.rows),d=img.data;
+  for(let i=0;i<lv.cells.length;i++){const o=i*4,p=G.painted[i];
+    if(p>=0){const c=lv.palette[p];d[o]=c.r;d[o+1]=c.g;d[o+2]=c.b;d[o+3]=255;}
+    else{d[o]=d[o+1]=d[o+2]=255;d[o+3]=255;}}
+  ovCtx.putImageData(img,0,0);
+}
 function ensureOvTarget(){
   if(ovTarget)return ovTarget;
   const lv=G.level;ovTarget=document.createElement('canvas');ovTarget.width=lv.cols;ovTarget.height=lv.rows;
@@ -863,13 +974,15 @@ function draw(now){
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
     ctx.drawImage(G.peek?ensureOvTarget():ov,0,0,cols,rows);
   }else{
+    const rp=G.replay;
     for(let y=y0;y<=y1;y++){const row=y*cols;
       for(let x=x0;x<=x1;x++){const i=row+x;
         if(G.peek){ctx.fillStyle=palette[cells[i]].hex;ctx.fillRect(x,y,1,1);continue;}
+        if(rp){if(G.replayState[i]){ctx.fillStyle=palette[cells[i]].hex;ctx.fillRect(x,y,1,1);}continue;}
         const p=G.painted[i];
         if(p>=0){ctx.fillStyle=palette[p].hex;ctx.fillRect(x,y,1,1);}
       }}
-    if(!G.finished&&!G.peek&&s>=6){
+    if(!G.finished&&!G.peek&&!rp&&s>=6){
       ctx.strokeStyle='rgba(27,30,43,.15)';ctx.lineWidth=Math.min(.08,1.2/s);ctx.beginPath();
       for(let x=x0;x<=x1+1;x++){ctx.moveTo(x,y0);ctx.lineTo(x,y1+1);}
       for(let y=y0;y<=y1+1;y++){ctx.moveTo(x0,y);ctx.lineTo(x1+1,y);}
@@ -878,7 +991,7 @@ function draw(now){
   }
   ctx.restore();
   const px=s;
-  if(!G.peek&&!G.finished&&px>=13&&s>=5){
+  if(!G.peek&&!G.finished&&!G.replay&&px>=13&&s>=5){
     ctx.textAlign='center';ctx.textBaseline='middle';
     const maxD=String(palette.length).length;
     for(let d=1;d<=maxD;d++){
@@ -926,25 +1039,46 @@ function draw(now){
 }
 function loop(now){
   requestAnimationFrame(loop);
+  const dt=Math.min(0.06,(now-lastNow)/1000);lastNow=now;
   if(!gameActive)return;
+  /* 镜头操作耗时采样（用于学习 cam 参数） */
+  if(!G.finished&&!G.replay){
+    if(pinch)G.camMs+=dt*1000;
+    else if(gesture&&gesture.mode==='pan'&&!gesture.pending)G.camMs+=dt*1000;
+  }
   if(viewAnim){
     const t=Math.min(1,(now-viewAnim.t0)/viewAnim.dur),e=1-Math.pow(1-t,3);
     G.scale=lerp(viewAnim.s0,viewAnim.s1,e);G.offX=lerp(viewAnim.x0,viewAnim.x1,e);G.offY=lerp(viewAnim.y0,viewAnim.y1,e);
     if(t>=1)viewAnim=null;G.needsDraw=true;
   }
+  if(G.replay)stepReplay(dt);
   if(countersDirty)syncCounters();
-  const active=G.needsDraw||G.fx.length||now<G.highlightUntil||viewAnim||G.peek;
+  const active=G.needsDraw||G.fx.length||now<G.highlightUntil||viewAnim||G.peek||G.replay;
   if(active){draw(now);G.needsDraw=false;}
 }
 requestAnimationFrame(loop);
 
-/* ================= 涂色（只会涂对，无错色逻辑） ================= */
+/* ================= 涂色（学习 + 记录） ================= */
 function paintCell(i,batch){
   const lv=G.level,t=lv.cells[i],prev=G.painted[i];
   if(prev===t)return;
   if(batch)batch.push({i,p:prev});
   G.painted[i]=t;lv.palette[t].done++;G.doneTotal++;G.moves++;
   G.fx.push({k:'pop',i,t0:performance.now()});sfx.ok(G.combo++);ovSet(i);
+  /* 在线学习 */
+  const now=performance.now();
+  if(G.lastPaintTs>0){
+    const d=now-G.lastPaintTs;
+    if(d<3000){learnRate(d);G.activeMs+=d;}
+  }
+  G.lastPaintTs=now;
+  if(G.pendingSelTs>0){
+    const d=now-G.pendingSelTs;
+    if(d<8000)learnSel(d);
+    G.pendingSelTs=0;
+  }
+  G.sessionPaints++;
+  recorder.push(i,now-G.recStart||now);
   countersDirty=true;G.needsDraw=true;
   if(lv.palette[t].done===lv.palette[t].total&&!G.finished){
     toast(`🎉 颜色 ${t+1}（${lv.palette[t].name}）全部涂完！`);
@@ -958,6 +1092,7 @@ function nextIncomplete(from){
   return -1;
 }
 function undo(){
+  if(G.replay){toast('回放中，请先退出回放');return;}
   const u=G.history.pop();if(!u){toast('没有可撤销的操作');return;}
   const lv=G.level;
   for(const it of u){const i=it.i,cur=G.painted[i];
@@ -968,33 +1103,164 @@ function undo(){
   countersDirty=true;G.needsDraw=true;sfx.tick();
 }
 
+/* ================= 回放系统（随时可用） ================= */
+function startReplay(mode){
+  if(G.replay)return;
+  const lv=G.level,n=lv.cells.length;
+  let seq,tseq=null;
+  if(mode==='self'){
+    if(!recorder.len){toast('还没有涂色记录，先去涂几笔吧');return;}
+    const m=recorder.len;
+    seq=new Uint32Array(m);tseq=new Float64Array(m);
+    let vt=0,prev=0,k=0;
+    recorder.forEach((i,ms)=>{seq[k]=i;vt+=Math.min(Math.max(0,ms-prev),800);tseq[k]=vt;prev=ms;k++;});
+  }else{
+    const K=lv.palette.length,counts=new Uint32Array(K);
+    for(let i=0;i<n;i++)counts[lv.cells[i]]++;
+    const off=new Uint32Array(K+1);
+    for(let c=0;c<K;c++)off[c+1]=off[c]+counts[c];
+    const cur=off.slice();seq=new Uint32Array(n);
+    for(let i=0;i<n;i++){const c=lv.cells[i];seq[cur[c]++]=i;}
+  }
+  const sp=clamp(Math.round(parseInt($('repSpeed').value,10))||8,1,100);
+  $('repSpeed').value=sp;
+  G.replay={mode,seq,tseq,ptr:0,total:seq.length,speed:sp,playing:true,follow:true,
+    curI:-1,paintedCount:0,acc:0,vt:0,elapsedReal:0,infoT:1};
+  G.replayState=new Uint8Array(n);
+  ovCtx.fillStyle='#fff';ovCtx.fillRect(0,0,ov.width,ov.height);
+  $('doneOvl').classList.add('hidden');confOn=false;
+  $('trophyBtn').classList.add('hidden');
+  $('replayBar').classList.remove('hidden');
+  $('repMode').textContent=mode==='self'?'我的涂色回放':'自动涂色回放';
+  syncPlayBtn();syncFollowBtn();
+  viewAnim=null;fitView(false);
+  updateReplayInfo();
+  G.needsDraw=true;
+}
+function exitReplay(){
+  if(!G.replay)return;
+  G.replay=null;G.replayState=null;
+  rebuildOverview();
+  $('replayBar').classList.add('hidden');
+  if(G.finished)$('trophyBtn').classList.remove('hidden');
+  G.needsDraw=true;
+}
+function resetReplay(){
+  const rp=G.replay;
+  rp.ptr=0;rp.paintedCount=0;rp.curI=-1;rp.acc=0;rp.vt=0;rp.elapsedReal=0;rp.infoT=1;
+  G.replayState.fill(0);
+  ovCtx.fillStyle='#fff';ovCtx.fillRect(0,0,ov.width,ov.height);
+  rp.playing=true;syncPlayBtn();
+}
+function repaintNext(){
+  const rp=G.replay,i=rp.seq[rp.ptr++];
+  G.replayState[i]=1;rp.paintedCount++;rp.curI=i;
+  const lv=G.level,p=lv.palette[lv.cells[i]];
+  ovCtx.fillStyle=p.hex;ovCtx.fillRect(i%lv.cols,(i/lv.cols)|0,1,1);
+  if(rp.speed<=3)G.fx.push({k:'pop',i,t0:performance.now()});
+}
+function stepReplay(dt){
+  const rp=G.replay;
+  rp.elapsedReal+=dt;
+  if(rp.playing&&rp.ptr<rp.total){
+    if(rp.mode==='auto'){
+      rp.acc+=dt*clamp(rp.total/240,24,2000)*rp.speed;
+      let k=Math.floor(rp.acc);
+      if(k>0){rp.acc-=k;k=Math.min(k,rp.total-rp.ptr);
+        while(k-->0)repaintNext();}
+    }else{
+      rp.vt+=dt*1000*rp.speed;
+      while(rp.ptr<rp.total&&rp.tseq[rp.ptr]<=rp.vt)repaintNext();
+    }
+    if(rp.ptr>=rp.total){rp.playing=false;syncPlayBtn();toast('回放完毕 🎉');}
+  }
+  if(rp.follow)followCamera(dt);
+  rp.infoT+=dt;
+  if(rp.infoT>0.08){rp.infoT=0;updateReplayInfo();}
+}
+function followCamera(dt){
+  const rp=G.replay;if(rp.curI<0)return;
+  const lv=G.level,cols=lv.cols,x=rp.curI%cols,y=(rp.curI/cols)|0;
+  const w=cv.clientWidth,h=cv.clientHeight;
+  const sT=clampScale(G.fitScale>=28?G.fitScale:40);
+  const tx=clamp(w/2-(x+.5)*sT,40-cols*sT,w-40);
+  const ty=clamp(h/2-(y+.5)*sT,40-lv.rows*sT,h-40);
+  const k=Math.min(1,dt*5);
+  G.scale+=(sT-G.scale)*k;
+  G.offX+=(tx-G.offX)*k;
+  G.offY+=(ty-G.offY)*k;
+  G.needsDraw=true;
+}
+function updateReplayInfo(){
+  const rp=G.replay;if(!rp)return;
+  const pct=rp.total?Math.floor(rp.paintedCount/rp.total*100):0;
+  $('repFill').style.width=pct+'%';
+  $('repText').textContent=`${fmtNum(rp.paintedCount)}/${fmtNum(rp.total)} · ${pct}%`;
+  $('repTime').textContent=fmtTime(Math.floor(rp.elapsedReal));
+  if(rp.curI>=0){
+    const lv=G.level,c=lv.cells[rp.curI],p=lv.palette[c];
+    $('repSw').style.background=p.hex;
+    $('repCurTxt').textContent=`№${c+1} ${p.hex.toUpperCase()} · (${rp.curI%lv.cols}, ${(rp.curI/lv.cols)|0})`;
+  }else{
+    $('repSw').style.background='#eee';$('repCurTxt').textContent='—';
+  }
+}
+function syncPlayBtn(){$('repPlayBtn').textContent=G.replay&&G.replay.playing?'⏸':'▶';}
+function syncFollowBtn(){
+  const on=G.replay&&G.replay.follow;
+  $('repFollowBtn').textContent=`🎥 自动跟随：${on?'开':'关'}`;
+  $('repFollowBtn').style.background=on?'var(--acc-soft)':'#fff';
+  $('repFollowBtn').style.color=on?'var(--acc)':'var(--ink)';
+  $('repFollowBtn').style.borderColor=on?'#c7d2fb':'var(--line)';
+}
+function userCameraInput(){
+  if(G.replay&&G.replay.follow){G.replay.follow=false;syncFollowBtn();}
+}
+$('repPlayBtn').onclick=()=>{
+  const rp=G.replay;if(!rp)return;
+  if(rp.ptr>=rp.total){resetReplay();return;}
+  rp.playing=!rp.playing;syncPlayBtn();
+};
+$('repFollowBtn').onclick=()=>{
+  const rp=G.replay;if(!rp)return;
+  rp.follow=!rp.follow;syncFollowBtn();
+};
+$('repExitBtn').onclick=exitReplay;
+function applyRepSpeed(){
+  let v=Math.round(parseFloat($('repSpeed').value));
+  if(!isFinite(v))v=8;
+  v=clamp(v,1,100);
+  $('repSpeed').value=v;
+  if(G.replay)G.replay.speed=v;
+}
+$('repSpeed').addEventListener('input',applyRepSpeed);
+$('repSpeed').addEventListener('change',applyRepSpeed);
+$('replayBtn').onclick=()=>startReplay('auto'); /* 随时可看自动回放 */
+$('repAutoBtn').onclick=()=>startReplay('auto');
+$('repSelfBtn').onclick=()=>startReplay('self');
+
 /* ================= 画布交互 =================
    手势模式在手指按下的一瞬间按落点锁定：
-   ① 落点是「未涂色 且 与当前选中颜色一致」的格子 → 滑涂手势：
-      移动超过阈值后沿路径连续涂色，原地抬起涂单格；
-   ② 其他落点（颜色不符 / 已涂色 / 画布外 / 未选色）→ 平移手势：
-      拖动移动画布，原地抬起视为点按并给予提示；
-   ③ 第二根手指落下 → 进入捏合缩放，取消未确认的涂色。        */
+   ① 落点是「未涂色 且 与当前选中颜色一致」的格子 → 滑涂手势；
+   ② 其他落点 → 平移手势；回放中一律平移；
+   ③ 第二根手指落下 → 捏合缩放，取消未确认的涂色。           */
 const pointers=new Map();let gesture=null,pinch=null;
 function commitGestureBatch(){
-  if(gesture&&gesture.batch&&gesture.batch.length){
-    G.history.push(gesture.batch);
-    if(G.history.length>400)G.history.shift();
-  }
+  if(gesture&&gesture.batch&&gesture.batch.length)G.history.push(gesture.batch);
 }
 function paintAtCell(j){
   const lv=G.level;
   if(lv.cells[j]===G.sel&&G.painted[j]!==G.sel)paintCell(j,gesture.batch);
 }
 function tapFeedback(i){
-  if(i<0||G.finished||G.peek)return;
+  if(i<0||G.finished||G.peek||G.replay)return;
   const lv=G.level;
-  if(G.painted[i]===lv.cells[i])return; // 已涂好，忽略
+  if(G.painted[i]===lv.cells[i])return;
   if(G.sel<0){toast('请先在下方色盘选择一个颜色 🎨');return;}
   G.fx.push({k:'deny',i,t0:performance.now()});sfx.no();G.combo=0;G.needsDraw=true;
 }
 function isPaintableCell(i){
-  return i>=0&&G.sel>=0&&!G.finished&&!G.peek&&
+  return i>=0&&G.sel>=0&&!G.finished&&!G.peek&&!G.replay&&
     G.level.cells[i]===G.sel&&G.painted[i]!==G.sel;
 }
 cv.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1015,7 +1281,6 @@ cv.addEventListener('pointerdown',e=>{
     cv.classList.add('panning');return;
   }
   const i=toCell(px,py);
-  // 按下瞬间按落点锁定手势模式
   const canPaint=isPaintableCell(i);
   gesture={mode:canPaint?'paint':'pan',pending:true,sx:px,sy:py,lx:px,ly:py,startI:i,lastI:i,batch:[]};
 });
@@ -1027,7 +1292,8 @@ cv.addEventListener('pointermove',e=>{
     const d=Math.hypot(a.x-b.x,a.y-b.y)||1,mx=(a.x+b.x)/2-r.left,my=(a.y+b.y)/2-r.top;
     const ns=clampScale(pinch.s0*d/pinch.d0);
     const wx=(pinch.mx-r.left-pinch.ox)/pinch.s0,wy=(pinch.my-r.top-pinch.oy)/pinch.s0;
-    G.scale=ns;G.offX=mx-wx*ns;G.offY=my-wy*ns;clampView();G.needsDraw=true;return;
+    G.scale=ns;G.offX=mx-wx*ns;G.offY=my-wy*ns;clampView();
+    userCameraInput();G.needsDraw=true;return;
   }
   if(gesture){
     if(gesture.mode==='paint'){
@@ -1056,7 +1322,8 @@ cv.addEventListener('pointermove',e=>{
         return;
       }
       G.offX+=px-gesture.lx;G.offY+=py-gesture.ly;
-      gesture.lx=px;gesture.ly=py;clampView();G.needsDraw=true;
+      gesture.lx=px;gesture.ly=py;clampView();
+      userCameraInput();G.needsDraw=true;
       return;
     }
     return;
@@ -1083,9 +1350,9 @@ function endPointer(e){
   if(gesture){
     if(gesture.pending&&!cancelled){
       if(gesture.mode==='paint'&&gesture.startI>=0){
-        paintCell(gesture.startI,gesture.batch); // 点按涂单格
+        paintCell(gesture.startI,gesture.batch);
       }else if(gesture.mode==='pan'){
-        tapFeedback(gesture.startI);              // 点按提示
+        tapFeedback(gesture.startI);
       }
     }
     commitGestureBatch();
@@ -1099,16 +1366,17 @@ cv.addEventListener('pointerleave',()=>{if(G.hover>=0){G.hover=-1;G.needsDraw=tr
 cv.addEventListener('wheel',e=>{
   e.preventDefault();const r=cv.getBoundingClientRect();
   zoomAt(e.clientX-r.left,e.clientY-r.top,Math.exp(-e.deltaY*.0016));
+  userCameraInput();
 },{passive:false});
-$('zoomIn').onclick=()=>zoomAt(cv.clientWidth/2,cv.clientHeight/2,1.3);
-$('zoomOut').onclick=()=>zoomAt(cv.clientWidth/2,cv.clientHeight/2,1/1.3);
-$('fitBtn').onclick=()=>fitView(true);
+$('zoomIn').onclick=()=>{zoomAt(cv.clientWidth/2,cv.clientHeight/2,1.3);userCameraInput();};
+$('zoomOut').onclick=()=>{zoomAt(cv.clientWidth/2,cv.clientHeight/2,1/1.3);userCameraInput();};
+$('fitBtn').onclick=()=>{fitView(true);userCameraInput();};
 
 function updateCellInfo(i){
   const el=$('cellInfo');
   if(i<0||G.finished){el.classList.add('hidden');return;}
   const lv=G.level,num=lv.cells[i]+1,p=lv.palette[lv.cells[i]],cur=G.painted[i];
-  const st=cur<0?'未涂':'已涂';
+  const st=G.replay?(G.replayState[i]?'已涂':'未涂'):(cur<0?'未涂':'已涂');
   el.innerHTML=`№${num} · <span class="mono">${p.hex.toUpperCase()}</span> · (${i%lv.cols}, ${(i/lv.cols)|0}) · ${st}`;
   el.classList.remove('hidden');
 }
@@ -1148,6 +1416,7 @@ $('palRow').addEventListener('scroll',()=>palRender(false));
 function selectColor(idx,jump){
   if(!G.level||idx<0||idx>=G.level.palette.length)return;
   G.sel=idx;
+  if(!G.finished&&!G.replay)G.pendingSelTs=performance.now(); /* 选色计时：学习定位成本 */
   chipMap.forEach((c,i)=>c.el.classList.toggle('sel',i===idx));
   const row=$('palRow');
   row.scrollTo({left:idx*CHIP_STEP-row.clientWidth/2+CHIP_W/2,behavior:'smooth'});
@@ -1156,7 +1425,7 @@ function selectColor(idx,jump){
   $('palCurSw').style.background=p.hex;
   $('palCurTxt').textContent=`№${idx+1} · ${p.hex.toUpperCase()} · ${p.name} · 剩 ${fmtNum(p.total-p.done)}`;
   sfx.sel();
-  if(jump){G.highlightUntil=performance.now()+2200;jumpToColor(idx);}
+  if(jump&&!G.replay){G.highlightUntil=performance.now()+2200;jumpToColor(idx);}
   G.needsDraw=true;
 }
 function jumpToColor(idx){
@@ -1168,7 +1437,6 @@ function jumpToColor(idx){
   G.jumpCursor[idx]=found+1;
   ensureVisible(found);
 }
-/* 定位 + 自动放大直达细节 */
 function ensureVisible(i){
   const cols=G.level.cols,x=i%cols,y=(i/cols)|0,w=cv.clientWidth,h=cv.clientHeight;
   const s1=clamp(Math.max(G.scale,34),G.fitScale*.35,Math.max(64,G.fitScale*12));
@@ -1176,8 +1444,10 @@ function ensureVisible(i){
   const ty=clamp(h/2-(y+.5)*s1,40-G.level.rows*s1,h-40);
   viewAnim={t0:performance.now(),dur:380,s0:G.scale,s1,x0:G.offX,x1:tx,y0:G.offY,y1:ty};
 }
-$('locateBtn').onclick=()=>{if(G.sel<0){toast('先选择一个颜色');return;}G.highlightUntil=performance.now()+2200;jumpToColor(G.sel);};
+$('locateBtn').onclick=()=>{if(G.replay){toast('回放中，请先退出回放');return;}
+  if(G.sel<0){toast('先选择一个颜色');return;}G.highlightUntil=performance.now()+2200;jumpToColor(G.sel);};
 function doJump(){
+  if(G.replay){toast('回放中，请先退出回放');return;}
   const v=parseInt($('jumpInput').value,10);
   if(!v||v<1||v>G.level.palette.length){toast('请输入有效的颜色编号');return;}
   G.highlightUntil=performance.now()+2200;selectColor(v-1,true);
@@ -1186,6 +1456,7 @@ $('jumpBtn').onclick=doJump;
 $('jumpInput').addEventListener('keydown',e=>{if(e.key==='Enter')doJump();});
 $('undoBtn').onclick=undo;
 $('hintBtn').onclick=()=>{
+  if(G.replay){toast('回放中，请先退出回放');return;}
   if(G.finished)return;
   const lv=G.level,cand=[];
   for(let i=0;i<lv.cells.length;i++)if(G.painted[i]!==lv.cells[i])cand.push(i);
@@ -1214,12 +1485,26 @@ function syncCounters(){
   }
   if(G.sel>=0){const p=lv.palette[G.sel];
     $('palCurTxt').textContent=`№${G.sel+1} · ${p.hex.toUpperCase()} · ${p.name} · 剩 ${fmtNum(p.total-p.done)}`;}
+  const eta=liveEta();
+  $('etaText').textContent=G.finished?'已完成':(eta!=null?`预计剩余 ${fmtDur(eta)}`:'预计剩余 --');
   countersDirty=false;
   if(!G.finished&&G.doneTotal===n)finish();
 }
 function finish(){
   G.finished=true;sfx.win();
   try{idb.del(levelSig(G.level)).catch(()=>{});}catch(e){}
+  /* 通关自校准：实际有效时间 vs 预测有效时间 → 修正全局系数 */
+  if(G.predMs>5000){
+    const actual=G.activeMs+G.camMs;
+    if(actual>1000){
+      const ratio=clamp(actual/G.predMs,0.25,4);
+      model.calSamples++;
+      learnEma('calib',ratio*model.calib,0.25);
+      model.calib=clamp(model.calib,0.25,4);
+    }
+  }
+  if(G.sessionPaints>50)learnCam(G.camMs/G.sessionPaints);
+  saveModel();
   $('trophyBtn').classList.add('hidden');
   setTimeout(showDone,750);
 }
@@ -1229,6 +1514,9 @@ function showDone(){
   const dc=$('doneCanvas');dc.width=lv.cols;dc.height=lv.rows;
   const g=dc.getContext('2d');
   for(let i=0;i<lv.cells.length;i++){g.fillStyle=lv.palette[lv.cells[i]].hex;g.fillRect(i%lv.cols,(i/lv.cols)|0,1,1);}
+  const canSelf=recorder.len>0;
+  $('repSelfBtn').disabled=!canSelf;
+  $('repSelfBtn').title=canSelf?'按你实际的涂色顺序与节奏回放':'本局还没有涂色记录';
   $('doneOvl').classList.remove('hidden');startConfetti();
 }
 $('trophyBtn').onclick=showDone;
@@ -1282,8 +1570,8 @@ async function saveGame(){
     if(!saveWarned){saveWarned=true;toast('存档写入失败（浏览器存储不可用或空间不足）');}
   }
 }
-setInterval(()=>{if(gameActive)saveGame();},8000);
-window.addEventListener('pagehide',()=>{saveGame();});
+setInterval(()=>{if(gameActive){saveGame();saveModel();}},8000);
+window.addEventListener('pagehide',()=>{saveGame();saveModel();});
 
 /* ================= 开局 / 切屏 ================= */
 async function startGame(level,name,restore){
@@ -1295,6 +1583,11 @@ async function startGame(level,name,restore){
   G.history=[];G.hints=0;G.moves=0;G.combo=0;G.doneTotal=0;G.sel=-1;
   G.peek=false;G.finished=false;G.fx=[];G.jumpCursor={};
   G.elapsed=0;G.highlightUntil=0;viewAnim=null;ovTarget=null;
+  recorder.clear();
+  G.lastPaintTs=0;G.pendingSelTs=0;G.activeMs=0;G.camMs=0;G.sessionPaints=0;
+  G.recStart=performance.now();
+  G.predMs=predictSeconds(level)*1000; /* 记录本局预测，用于通关自校准 */
+  G.replay=null;G.replayState=null;$('replayBar').classList.add('hidden');
   level.palette.forEach(p=>p.done=0);
   buildOverview();
   if(rec&&rec.sig===levelSig(level)&&rec.painted&&rec.painted.length===n){
@@ -1316,16 +1609,22 @@ async function startGame(level,name,restore){
   cv.classList.remove('panning');cv.classList.remove('painting');cv.style.cursor='';
   gameActive=true;fitted=false;
   requestAnimationFrame(()=>{sizeCanvas();fitView(false);fitted=true;
-    selectColor(0,false);syncCounters();$('timerText').textContent=fmtTime(G.elapsed);G.needsDraw=true;});
+    selectColor(0,false);G.pendingSelTs=0;syncCounters();$('timerText').textContent=fmtTime(G.elapsed);G.needsDraw=true;});
   if(level.palette.length>2000)setTimeout(()=>toast(`共 ${fmtNum(level.palette.length)} 种颜色，点击色块可自动定位放大`),1200);
 }
 async function backToSetup(){
+  if(G.replay)exitReplay();
+  /* 未涂完也学习：镜头开销直接入库；落笔速度已在过程中实时学习 */
+  if(G.sessionPaints>50)learnCam(G.camMs/G.sessionPaints);
+  await saveModel();
   await saveGame();
   gameActive=false;
   document.body.classList.remove('game-open');
   $('appHdr').classList.remove('hidden');$('setupScreen').classList.remove('hidden');
   $('gameScreen').classList.add('hidden');
   loadHistory();
+  if(pvLevel)updateStats();
+  updateEstNote();
 }
 $('backBtn').onclick=backToSetup;
 setInterval(()=>{if(gameActive&&!G.finished){G.elapsed++;$('timerText').textContent=fmtTime(G.elapsed);}},1000);
@@ -1334,13 +1633,15 @@ window.addEventListener('keydown',e=>{
   if(!gameActive)return;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}
   if(e.key==='z'||e.key==='Z')undo();
-  else if(e.key==='f'||e.key==='F')fitView(true);
-  else if(e.key==='+'||e.key==='=')zoomAt(cv.clientWidth/2,cv.clientHeight/2,1.3);
-  else if(e.key==='-')zoomAt(cv.clientWidth/2,cv.clientHeight/2,1/1.3);
+  else if(e.key==='f'||e.key==='F'){fitView(true);userCameraInput();}
+  else if(e.key==='+'||e.key==='='){zoomAt(cv.clientWidth/2,cv.clientHeight/2,1.3);userCameraInput();}
+  else if(e.key==='-'){zoomAt(cv.clientWidth/2,cv.clientHeight/2,1/1.3);userCameraInput();}
+  else if(e.key===' '&&G.replay){e.preventDefault();$('repPlayBtn').click();}
 });
 
 document.fonts&&document.fonts.ready.then(()=>{G.needsDraw=true;drawPreview();});
 paintSlider();
+loadModel().then(()=>{if(pvLevel)updateStats();});
 refreshPreview();
 loadHistory();
 </script>
