@@ -368,7 +368,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 14px
+            margin-bottom: 14px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .card-h h2 {
             font-size: 17px;
@@ -409,7 +411,8 @@
             display: grid;
             place-items: center;
             padding: 18px;
-            transition: box-shadow .2s
+            transition: box-shadow .2s;
+            position: relative;
         }
         .preview-wrap.dragging {
             box-shadow: inset 0 0 0 2px var(--org)
@@ -489,44 +492,6 @@
             width: 100%;
             padding: 13px;
             font-size: 15px
-        }
-        .samples {
-            margin-top: 14px
-        }
-        .samples .lbl {
-            font-size: 12px;
-            color: var(--ink2)
-        }
-        .sample-row {
-            display: flex;
-            gap: 9px;
-            margin-top: 8px;
-            flex-wrap: wrap
-        }
-        .sample-row button {
-            width: 52px;
-            height: 52px;
-            padding: 6px;
-            background: #fff;
-            border: 1px solid var(--line);
-            border-radius: 11px;
-            cursor: pointer;
-            transition: all .15s
-        }
-        .sample-row button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 14px rgba(23, 28, 51, .12)
-        }
-        .sample-row button.on {
-            border-color: var(--acc);
-            box-shadow: 0 0 0 2px rgba(79, 109, 245, .25)
-        }
-        .sample-row canvas {
-            width: 100%;
-            height: 100%;
-            image-rendering: pixelated;
-            display: block;
-            border-radius: 5px
         }
         .field {
             margin-bottom: 16px
@@ -1217,6 +1182,19 @@
                 opacity: 0
             }
         }
+        /* 导出按钮微调 */
+        .export-preview-btn {
+            white-space: nowrap;
+        }
+        .card-h-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .card-h-right .tag {
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -1244,7 +1222,10 @@
         <section class="card">
             <div class="card-h">
                 <h2>关卡预览</h2>
-                <span class="tag" id="procBadge">就绪</span>
+                <div class="card-h-right">
+                    <span class="tag" id="procBadge">就绪</span>
+                    <button class="btn btn-ghost sm export-preview-btn" id="exportPreviewBtn" disabled title="导出完整高清像素图（自动涂好整张图）">📤 导出</button>
+                </div>
             </div>
             <div class="preview-wrap" id="previewWrap">
                 <canvas id="previewCanvas"></canvas>
@@ -1275,10 +1256,6 @@
                 <div class="step"><b>1</b>选择图片</div>
                 <button class="btn btn-primary" id="uploadBtn">📁 上传我的图片（JPG / PNG / WEBP）</button>
                 <input type="file" id="fileInput" accept="image/*" hidden>
-                <div class="samples">
-                    <span class="lbl">或使用示例图：</span>
-                    <div class="sample-row" id="sampleRow"></div>
-                </div>
             </div>
             <div class="card">
                 <div class="step"><b>2</b>网格尺寸（自由设置，无上限）</div>
@@ -1676,99 +1653,15 @@
             localStorage.setItem('pp.muted', muted ? '1' : '0');
             refreshSoundBtns(); if (!muted) sfx.sel(); };
         refreshSoundBtns();
-        /* ================= 示例图 ================= */
-        function mapToCanvas(rows, colors) {
-            const h = rows.length,
-                w = rows[0].length,
-                c = document.createElement('canvas');
-            c.width = w;
-            c.height = h;
-            const g = c.getContext('2d');
-            rows.forEach((row, y) => { for (let x = 0; x < w; x++) { const ch = row[x]; if (ch !== '.' && colors[ch]) { g
-                            .fillStyle = colors[ch];
-                        g.fillRect(x, y, 1, 1); } } });
-            return c;
-        }
+        /* ================= 示例图 (已删除) ================= */
+        // 所有示例图相关的代码（SAMPLES、mapToCanvas、genSunset、sampleRow 渲染等）已删除。
+        // 现在 source 默认为 null，用户必须通过上传按钮来加载图片。
+        let source = null;
 
-        function genSunset() {
-            const c = document.createElement('canvas');
-            c.width = 96;
-            c.height = 72;
-            const g = c.getContext('2d');
-            const sky = g.createLinearGradient(0, 0, 0, 48);
-            sky.addColorStop(0, '#35306b');
-            sky.addColorStop(.42, '#b04a98');
-            sky.addColorStop(.7, '#ff8f5e');
-            sky.addColorStop(1, '#ffd166');
-            g.fillStyle = sky;
-            g.fillRect(0, 0, 96, 48);
-            g.fillStyle = '#ffe066';
-            g.beginPath();
-            g.arc(62, 40, 9, 0, 7);
-            g.fill();
-            g.fillStyle = '#221c3f';
-            g.beginPath();
-            g.moveTo(0, 48);
-            g.lineTo(18, 26);
-            g.lineTo(38, 48);
-            g.closePath();
-            g.fill();
-            g.fillStyle = '#3a2f5b';
-            g.beginPath();
-            g.moveTo(26, 48);
-            g.lineTo(52, 30);
-            g.lineTo(78, 48);
-            g.closePath();
-            g.fill();
-            const sea = g.createLinearGradient(0, 48, 0, 72);
-            sea.addColorStop(0, '#ff9e6a');
-            sea.addColorStop(1, '#5b3a8c');
-            g.fillStyle = sea;
-            g.fillRect(0, 48, 96, 24);
-            g.fillStyle = 'rgba(255,224,102,.7)';
-            for (let i = 0; i < 6; i++) g.fillRect(56 - i * 2, 50 + i * 3.4, 12 + i * 2, 1.6);
-            g.fillStyle = 'rgba(34,28,63,.5)';
-            for (let i = 0; i < 8; i++) g.fillRect(Math.random() * 80, 49 + Math.random() * 20, 8 + Math.random() * 14, 1.2);
-            return c;
+        function srcSize() {
+            if (!source || !source.el) return { w: 0, h: 0 };
+            return { w: source.el.width || source.el.naturalWidth, h: source.el.height || source.el.naturalHeight };
         }
-        const SAMPLES = [
-            { name: '爱心', el: mapToCanvas([".RR...RR.", "RPPRRRRRR", "RPRRRRRRR", "RRRRRRRRR", "RRRRRRRRD", ".RRRRRRDD",
-                    "..RRRRRDD", "...RRRDD.", "....RDD.."
-                ], { R: '#ff4d6d', P: '#ff9eb5', D: '#c9184a' }) },
-            { name: '蘑菇', el: mapToCanvas(["...RRRRRR...", ".RRWWRRWWRR.", ".RWWRRRRWWR.", "RRWWRRRRWWRR",
-                    "RRRRRRRRRRRR", ".RRRRRRRRRR.", "...UUUUUU...", "...SSSSSS...", "...SSSSSS...",
-                    "...SSSSSS...", "..SSSSSSSS.."
-                ], { R: '#e63946', W: '#fff6ec', U: '#a5673f', S: '#f2d6a6' }) },
-            { name: '星星', el: mapToCanvas(["......Y......", ".....YYY.....", ".....YYY.....", "YYYYYYYYYYYYY",
-                    ".YYYYYYYYYYY.", "..YYYYOYYYY..", "...YYYOYYY...", "...YYOOOYY...", "..YYYOOOYYY..",
-                    "..YYY...YYY..", "..YY.....YY.."
-                ], { Y: '#ffd23f', O: '#f5a623' }) },
-            { name: '幽灵', el: mapToCanvas(["...WWWWWW...", "..WWWWWWWW..", ".WWWWWWWWWW.", ".WBBWWWWBBW.",
-                    ".WBBWWWWBBW.", "WPPWWWWWWPPW", "WWWWWBBWWWWW", "WWWWWWWWWWWW", "WWWWWWWWWWWW",
-                    "WWWWWWWWWWWW", "WWWWWWWWWWWW", "W.WW.WW.WW.W"
-                ], { W: '#f4f6ff', B: '#2b2d42', P: '#ffb3c6' }) },
-            { name: '晚霞', el: genSunset() }
-        ];
-        let source = { el: SAMPLES[0].el, name: '爱心' };
-
-        function srcSize() { return { w: source.el.width || source.el.naturalWidth, h: source.el.height || source.el
-                    .naturalHeight }; }
-        SAMPLES.forEach((s, i) => {
-            const btn = document.createElement('button');
-            btn.title = s.name;
-            btn.className = i === 0 ? 'on' : '';
-            const mini = document.createElement('canvas');
-            mini.width = s.el.width;
-            mini.height = s.el.height;
-            mini.getContext('2d').drawImage(s.el, 0, 0);
-            btn.appendChild(mini);
-            btn.onclick = () => { source = { el: s.el, name: s.name };
-                document.querySelectorAll('.sample-row button').forEach((b, j) => b.classList.toggle('on', SAMPLES[j]
-                    .name === s.name));
-                onSourceChanged();
-                sfx.sel(); };
-            $('sampleRow').appendChild(btn);
-        });
         /* ================= 关卡构建 + 结构化用时统计 ================= */
         function greedyCluster(exactArr, t) {
             const gs = Math.max(1, t),
@@ -2042,13 +1935,27 @@
             pvTimer = setTimeout(runBuild, 150); }
 
         async function runBuild() {
-            if (!source.el) return;
+            if (!source || !source.el) {
+                // 如果没有图片，清空预览和状态
+                pvLevel = null;
+                $('procBadge').textContent = '请上传图片';
+                $('startBtn').disabled = true;
+                $('exportPreviewBtn').disabled = true;
+                $('stGrid').textContent = '--';
+                $('stCells').textContent = '--';
+                $('stColors').textContent = '--';
+                $('stTime').textContent = '--';
+                const wb = $('warnBox');
+                wb.innerHTML = '';
+                return;
+            }
             const token = ++buildToken,
                 dims = readDims(),
                 opts = readOpts();
             building = true;
             $('procBadge').textContent = '生成中…';
             $('startBtn').disabled = true;
+            $('exportPreviewBtn').disabled = true;
             try {
                 const lv = await buildLevel(source.el, dims.cols, dims.rows, opts, token);
                 if (token !== buildToken) return;
@@ -2056,9 +1963,13 @@
                 drawPreview();
                 updateStats();
             } catch (e) { console.error(e); } finally {
-                if (token === buildToken) { building = false;
+                if (token === buildToken) {
+                    building = false;
                     $('procBadge').textContent = '就绪';
-                    $('startBtn').disabled = !pvLevel; }
+                    const ready = !!pvLevel;
+                    $('startBtn').disabled = !ready;
+                    $('exportPreviewBtn').disabled = !ready;
+                }
             }
         }
 
@@ -2084,7 +1995,11 @@
 
         function drawPreview() {
             const lv = pvLevel;
-            if (!lv) return;
+            if (!lv) {
+                const g = pvCv.getContext('2d');
+                g.clearRect(0, 0, pvCv.width, pvCv.height);
+                return;
+            }
             const maxW = Math.min(620, $('previewWrap').clientWidth - 36) || 560,
                 maxH = 420;
             const pc = Math.min(maxW / lv.cols, maxH / lv.rows);
@@ -2117,13 +2032,21 @@
             }
         }
         $('wInput').addEventListener('input', () => {
-            if (lockAspect) { const { h, w } = srcSize();
-                $('hInput').value = Math.max(1, Math.round(+$('wInput').value * h / w)); }
+            if (lockAspect) {
+                const size = srcSize();
+                if (size.w > 0 && size.h > 0) {
+                    $('hInput').value = Math.max(1, Math.round(+$('wInput').value * size.h / size.w));
+                }
+            }
             refreshPreview();
         });
         $('hInput').addEventListener('input', () => {
-            if (lockAspect) { const { h, w } = srcSize();
-                $('wInput').value = Math.max(1, Math.round(+$('hInput').value * w / h)); }
+            if (lockAspect) {
+                const size = srcSize();
+                if (size.w > 0 && size.h > 0) {
+                    $('wInput').value = Math.max(1, Math.round(+$('hInput').value * size.w / size.h));
+                }
+            }
             refreshPreview();
         });
         $('lockBtn').onclick = () => { lockAspect = !lockAspect;
@@ -2142,15 +2065,23 @@
             const on = $('extremeChk').checked;
             $('mergeSlider').disabled = on;
             $('targetInput').disabled = on;
-            if (on) { const { w, h } = srcSize();
-                $('wInput').value = w;
-                $('hInput').value = h; }
+            if (on) {
+                const size = srcSize();
+                if (size.w > 0 && size.h > 0) {
+                    $('wInput').value = size.w;
+                    $('hInput').value = size.h;
+                }
+            }
             refreshPreview();
         });
 
         function onSourceChanged() {
-            if (lockAspect) { const { w, h } = srcSize();
-                $('hInput').value = Math.max(1, Math.round(+$('wInput').value * h / w)); }
+            if (lockAspect) {
+                const size = srcSize();
+                if (size.w > 0 && size.h > 0) {
+                    $('hInput').value = Math.max(1, Math.round(+$('wInput').value * size.h / size.w));
+                }
+            }
             refreshPreview();
         }
         $('uploadBtn').onclick = () => $('fileInput').click();
@@ -2161,10 +2092,11 @@
             if (!/^image\//.test(f.type)) { toast('请选择图片文件（JPG / PNG / WEBP）'); return; }
             const url = URL.createObjectURL(f),
                 img = new Image();
-            img.onload = () => { source = { el: img, name: f.name.replace(/\.[^.]+$/, '') };
-                document.querySelectorAll('.sample-row button').forEach(b => b.classList.remove('on'));
+            img.onload = () => {
+                source = { el: img, name: f.name.replace(/\.[^.]+$/, '') };
                 onSourceChanged();
-                toast('图片已就绪'); };
+                toast('图片已就绪');
+            };
             img.onerror = () => toast('图片加载失败，换一张试试');
             img.src = url;
         }
@@ -2175,6 +2107,44 @@
             pw.classList.remove('dragging'); }));
         pw.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
         $('startBtn').onclick = () => { if (pvLevel && !building) startGame(pvLevel, source.name, null); };
+        /* ================= 导出预览图（新增） ================= */
+        function exportPreview() {
+            const lv = pvLevel;
+            if (!lv) { toast('请先生成关卡预览'); return; }
+            const btn = $('exportPreviewBtn');
+            btn.disabled = true;
+            toast('⏳ 正在生成高清预览图…');
+            setTimeout(() => {
+                try {
+                    const maxDim = 3000;
+                    const scale = Math.max(1, Math.min(32, Math.floor(maxDim / Math.max(lv.cols, lv.rows))));
+                    const c = document.createElement('canvas');
+                    c.width = lv.cols * scale;
+                    c.height = lv.rows * scale;
+                    const g = c.getContext('2d');
+                    const len = lv.cells.length;
+                    for (let i = 0; i < len; i++) {
+                        const p = lv.palette[lv.cells[i]];
+                        g.fillStyle = p.hex;
+                        const x = (i % lv.cols) * scale;
+                        const y = ((i / lv.cols) | 0) * scale;
+                        g.fillRect(x, y, scale, scale);
+                    }
+                    const name = source && source.name ? source.name : 'untitled';
+                    const a = document.createElement('a');
+                    a.download =
+                        `像素染坊_预览_${lv.cols}x${lv.rows}_${lv.palette.length}色_${name}.png`;
+                    a.href = c.toDataURL('image/png');
+                    a.click();
+                    toast('✅ 预览图已导出！');
+                } catch (e) {
+                    toast('❌ 导出失败：' + e.message);
+                } finally {
+                    btn.disabled = false;
+                }
+            }, 60);
+        }
+        $('exportPreviewBtn').onclick = exportPreview;
         /* ================= 历史记录 UI ================= */
         function drawHistThumb(t, rec) {
             const maxDim = 52;
@@ -3505,4 +3475,4 @@
         loadHistory();
     </script>
 </body>
-                                                                                               </html>
+</html>
