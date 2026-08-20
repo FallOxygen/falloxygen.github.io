@@ -214,7 +214,7 @@
         setStatus("⏳ 正在加载模型，首次需下载约 300-500MB，请耐心等待...");
 
         engine = await webllm.CreateMLCEngine(
-          "Qwen2.5-0.5B-Instruct-q4f32_1-MLC",
+          "Qwen2.5-3B-Instruct-q4f32_1-MLC",
           {
             initProgressCallback: (progress) => {
               updateProgress(progress);
