@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <!-- html-to-image：将渲染结果导出为 PNG -->
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
-<!-- MathJax 配置（必须在引入前定义）；改用 SVG 输出，导出图片时更稳定 -->
+<!-- MathJax 配置（必须在引入前定义）；SVG 输出，导出图片更清晰稳定 -->
 <script>
 window.MathJax = {
   tex: {
@@ -63,7 +63,6 @@ body{
 .brand p{margin:1px 0 0;font-size:11px;color:var(--dim)}
 .header-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 
-/* 开关 */
 .switch{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim);cursor:pointer;user-select:none}
 .switch input{display:none}
 .switch .track{width:34px;height:19px;border-radius:999px;background:#272c3f;border:1px solid var(--border);position:relative;transition:.2s;flex:none}
@@ -71,7 +70,6 @@ body{
 .switch input:checked + .track{background:var(--accent);border-color:transparent}
 .switch input:checked + .track::after{left:17px;background:#fff}
 
-/* 导出字号选择 */
 .export-opts{display:flex;align-items:center;gap:6px}
 .opt-label{font-size:12px;color:var(--dim)}
 select.ctrl{
@@ -81,7 +79,6 @@ select.ctrl{
 }
 select.ctrl:hover{border-color:rgba(255,255,255,.2)}
 
-/* 按钮 */
 .btn{
   display:inline-flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:9px;border:1px solid var(--border);
@@ -174,13 +171,17 @@ select.ctrl:hover{border-color:rgba(255,255,255,.2)}
 .preview-body code{font-family:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,Menlo,monospace;font-size:.875em}
 .preview-body :not(pre) > code{background:#f3f0ff;color:#7c3aed;border:1px solid #e7e1fa;padding:.14em .42em;border-radius:6px}
 
-/* 代码块（深色） */
+/* 代码块（深色）—— 超长行自动折行，不再被截断 */
 .preview-body pre{
   position:relative;background:#0d1117;color:#e6edf3;
   padding:14px 16px;border-radius:10px;border:1px solid #21262f;
   overflow:auto;margin:.85em 0;line-height:1.62;font-size:.9em;
+  white-space:pre-wrap;word-break:break-all;
 }
-.preview-body pre code{display:block;white-space:pre;background:none;border:none;padding:0;color:inherit;font-size:inherit}
+.preview-body pre code{
+  display:block;white-space:pre-wrap;word-break:break-all;
+  background:none;border:none;padding:0;color:inherit;font-size:inherit;
+}
 .pre-tools{position:absolute;top:6px;right:8px;display:flex;align-items:center;gap:6px}
 .code-lang{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8b949e;background:rgba(255,255,255,.07);padding:2px 8px;border-radius:6px;pointer-events:none}
 .code-copy{
@@ -244,13 +245,16 @@ select.ctrl:hover{border-color:rgba(255,255,255,.2)}
 .export-compact ul,.export-compact ol{margin:.4em 0;padding-left:1.7em}
 .export-compact li{margin:.12em 0}
 .export-compact blockquote{margin:.5em 0;padding:.25em .9em}
-.export-compact table{margin:.5em 0}
-.export-compact th,.export-compact td{padding:4px 10px}
-.export-compact pre{margin:.5em 0;padding:10px 12px;font-size:.9em}
 .export-compact hr{margin:.8em 0}
 .export-compact img{margin:.3em 0}
 .export-compact mjx-container[display="true"]{margin:.55em 0}
 .export-compact .code-copy{display:none !important}
+/* 导出时：代码长行折行、不裁剪 */
+.export-compact pre{margin:.5em 0;padding:10px 12px;font-size:.9em;overflow:visible;white-space:pre-wrap;word-break:break-all}
+.export-compact pre code{white-space:pre-wrap;word-break:break-all}
+/* 导出时：宽表格折行、不裁剪 */
+.export-compact table{display:table;width:100%;margin:.5em 0}
+.export-compact th,.export-compact td{padding:4px 10px;word-break:break-word;white-space:normal}
 </style>
 </head>
 <body>
@@ -260,7 +264,7 @@ select.ctrl:hover{border-color:rgba(255,255,255,.2)}
     <div class="logo">∑</div>
     <div>
       <h1>Markdown × LaTeX 渲染器</h1>
-      <p>分栏实时渲染 · 一键导出紧凑长图</p>
+      <p>分栏实时渲染 · 一键导出极清长图</p>
     </div>
   </div>
   <div class="header-actions">
@@ -277,6 +281,15 @@ select.ctrl:hover{border-color:rgba(255,255,255,.2)}
         <option value="12" selected>12 px</option>
         <option value="13">13 px</option>
         <option value="14">14 px</option>
+      </select>
+    </div>
+    <div class="export-opts" title="像素倍率：越高越清晰，文件越大、耗时越长；超出浏览器上限时会自动降档">
+      <span class="opt-label">清晰度</span>
+      <select id="exportRatio" class="ctrl">
+        <option value="2">2x 标准</option>
+        <option value="3">3x 高清</option>
+        <option value="4" selected>4x 极清</option>
+        <option value="6">6x 极致</option>
       </select>
     </div>
     <button class="btn btn-primary" id="btnRender" title="快捷键 Ctrl+Enter">
@@ -316,6 +329,7 @@ def hello():
 ```javascript
 function greet(name) {
   console.log(`Hello, ${name}!`);
+  // 一行特别长的代码：const veryLongVariableName = someFunction(anotherArgument, yetAnotherArgument, andOneMoreArgumentForGoodMeasure, finalArgument) + "这段文字很长很长很长，用来测试自动折行效果是否正常工作。";
 }
 ```
 
@@ -440,7 +454,7 @@ function toast(msg, isError){
   t.classList.toggle('error', !!isError);
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
 function setStatus(mode){
@@ -482,12 +496,11 @@ function copyText(text){
 /* ================= 解析规则 ================= */
 marked.setOptions({ gfm: true, breaks: true });
 
-const FENCE_RE       = /```([^\n`]*)\n([\s\S]*?)```/g;   // 围栏代码块
-const INLINE_CODE_RE = /`([^`\n]+)`/g;                    // 行内代码
+const FENCE_RE       = /```([^\n`]*)\n([\s\S]*?)```/g;
+const INLINE_CODE_RE = /`([^`\n]+)`/g;
 const BLOCK_MATH_RE  = [ /\$\$([\s\S]+?)\$\$/g, /\\\[([\s\S]+?)\\\]/g ];
 const INLINE_MATH_RE = [ /\\\(([\s\S]+?)\\\)/g, /\$([^\$\n]+?)\$/g ];
 
-/* 在 DOM 中查找指定内容的注释节点 */
 function findComment(root, label){
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT);
   let n;
@@ -497,7 +510,6 @@ function findComment(root, label){
   return null;
 }
 
-/* 若注释独占一个 <p>，则整体替换该 <p>，否则只替换注释本身 */
 function parentHasOtherContent(p, except){
   for (const n of p.childNodes) {
     if (n === except) continue;
@@ -525,7 +537,7 @@ function render(){
     let text = editor.value;
     const codeBlocks = [], inlineCodes = [], maths = [];
 
-    /* 1. 提取围栏代码块（最先保护，防止其中的 $ 被当作公式） */
+    /* 1. 提取围栏代码块 */
     text = text.replace(FENCE_RE, (m, lang, code) => {
       codeBlocks.push({ lang: lang.trim(), code: code.replace(/\n$/, '') });
       return '\n<!--@CB' + (codeBlocks.length - 1) + '-->\n';
@@ -598,7 +610,7 @@ function render(){
       c.parentNode.replaceChild(el, c);
     });
 
-    /* 8. 还原公式（交给 MathJax 排版） */
+    /* 8. 还原公式 */
     maths.forEach((m, i) => {
       const label = m.display ? '@MB' + i : '@MI' + i;
       const c = findComment(output, label);
@@ -619,7 +631,6 @@ function render(){
   updateStats(performance.now() - t0);
 }
 
-/* MathJax 排版（异步加载，做等待处理） */
 function typesetMath(root){
   if (!root.querySelector('span, div')) return;
   const run = () => MathJax.typesetPromise([root]).catch(e => console.error('MathJax:', e));
@@ -635,27 +646,30 @@ function typesetMath(root){
   }, 120);
 }
 
-/* ================= 导出图片 ================= */
+/* ================= 导出图片（极清 + 提速） ================= */
 async function exportImage(){
   if (!output.querySelector('*')) { toast('预览区为空，无法导出', true); return; }
   if (!window.htmlToImage) { toast('导出组件未加载，请检查网络后刷新', true); return; }
 
   const btn = $('btnExport');
-  const fontSize = $('exportFont').value;
   const originalHtml = btn.innerHTML;
+  const fontPx = $('exportFont').value;
+  const wantRatio = parseFloat($('exportRatio').value) || 4;
+  const t0 = performance.now();
+
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>生成中…';
   setStatus('exporting');
 
   let stage = null;
   try {
-    /* 离屏舞台：固定宽度 + 小字号 + 紧凑样式，让导出的图更短更紧凑 */
+    /* 1. 离屏克隆：小字号 + 紧凑样式（图片更短） */
     stage = document.createElement('div');
     stage.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;';
 
     const capture = document.createElement('div');
     capture.className = 'export-compact';
-    capture.style.cssText = 'width:880px;padding:24px 30px;background:#ffffff;color:#24292f;line-height:1.6;font-size:' + fontSize + 'px;';
+    capture.style.cssText = 'width:880px;padding:24px 30px;background:#ffffff;color:#24292f;line-height:1.6;font-size:' + fontPx + 'px;';
 
     const clone = output.cloneNode(true);
     clone.removeAttribute('id');
@@ -664,31 +678,50 @@ async function exportImage(){
     stage.appendChild(capture);
     document.body.appendChild(stage);
 
-    /* 等待布局稳定 */
-    await new Promise(r => setTimeout(r, 160));
-    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
+    await new Promise(r => setTimeout(r, 80)); // 等待布局稳定
 
-    const dataUrl = await htmlToImage.toPng(capture, {
-      pixelRatio: 2,              // 2 倍清晰度
-      backgroundColor: '#ffffff'
+    /* 2. 计算安全倍率：防止超出浏览器 canvas 上限导致大图模糊/空白 */
+    const w = capture.offsetWidth, h = capture.offsetHeight;
+    const MAX_DIM = 30000, MAX_AREA = 120000000; // 单边 ≤30000px，总面积 ≤1.2 亿像素
+    if (w > MAX_DIM || h > MAX_DIM) {
+      throw new Error('内容过长，超出单张图片 30000px 上限，请精简内容后重试');
+    }
+    let ratio = wantRatio;
+    const cap = Math.min(MAX_DIM / Math.max(w, h), Math.sqrt(MAX_AREA / (w * h)));
+    if (ratio > cap) {
+      ratio = Math.max(1, Math.floor(cap * 10) / 10);
+      toast(`图片过大，倍率已自动降为 ${ratio}x（浏览器画布上限）`);
+    }
+
+    /* 3. 截图：skipFonts 跳过字体嵌入扫描，速度更快 */
+    const canvas = await htmlToImage.toCanvas(capture, {
+      pixelRatio: ratio,
+      backgroundColor: '#ffffff',
+      skipFonts: true, // 页面使用系统字体 + MathJax 矢量输出，无需嵌入字体
+      filter: node => !(node.classList && node.classList.contains('code-copy'))
     });
 
+    /* 4. PNG 编码：toBlob 异步编码，比 toDataURL 更快 */
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('PNG 编码失败，请降低清晰度档位重试')), 'image/png');
+    });
+
+    const url = URL.createObjectURL(blob);
     const now = new Date();
     const p = n => String(n).padStart(2, '0');
     const name = 'render_' + now.getFullYear() + p(now.getMonth() + 1) + p(now.getDate()) +
                  '_' + p(now.getHours()) + p(now.getMinutes()) + p(now.getSeconds()) + '.png';
     const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-    toast('图片已导出（字号 ' + fontSize + 'px · 2x 清晰）');
+    const sec = ((performance.now() - t0) / 1000).toFixed(1);
+    toast(`已导出 ${Math.round(w * ratio)}×${Math.round(h * ratio)} px（${ratio}x · 耗时 ${sec}s）`);
     setStatus('done');
   } catch (err) {
     console.error('导出失败:', err);
-    toast('导出失败：' + (err && err.message ? err.message : '未知错误（外部图片跨域可能导致失败）'), true);
+    toast('导出失败：' + (err && err.message ? err.message : '未知错误'), true);
     setStatus('error');
   } finally {
     if (stage) stage.remove();
@@ -717,7 +750,6 @@ editor.addEventListener('input', () => {
   }
 });
 
-/* Tab 插入两个空格 */
 editor.addEventListener('keydown', e => {
   if (e.key === 'Tab') {
     e.preventDefault();
@@ -726,7 +758,6 @@ editor.addEventListener('keydown', e => {
   }
 });
 
-/* 全局快捷键：Ctrl+Enter 渲染，Ctrl+S 导出图片 */
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); exportImage(); }
