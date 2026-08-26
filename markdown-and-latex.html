@@ -1,172 +1,341 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown & LaTeX 渲染器</title>
-    <!-- 引入 Marked.js 用于 Markdown 解析 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- 引入 MathJax 用于 LaTeX 渲染 -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        @media (min-width: 768px) {
-            .container {
-                flex-direction: row;
-            }
-        }
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        h2 {
-            margin-top: 0;
-            color: #333;
-        }
-        textarea, #output {
-            width: 100%;
-            min-height: 400px;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            resize: vertical;
-        }
-        textarea {
-            font-family: monospace;
-            font-size: 14px;
-            background-color: #fff;
-        }
-        #output {
-            background-color: #fff;
-            overflow-y: auto;
-            line-height: 1.6;
-        }
-        #output img {
-            max-width: 100%;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            align-self: flex-start;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        /* 为代码块添加样式 */
-        pre {
-            background-color: #f4f4f4;
-            padding: 10px;
-            overflow: auto;
-            border-radius: 4px;
-            border: 1px solid #ddd; /* 添加边框 */
-            position: relative; /* 为语言标签定位 */
-        }
-        /* 代码块语言标签 */
-        pre .code-language {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background-color: #888;
-            color: white;
-            padding: 2px 8px;
-            font-size: 0.8em;
-            border-radius: 0 4px 0 4px;
-        }
-        code {
-            font-family: monospace;
-        }
-        /* 为行内代码添加样式 */
-        p code, li code {
-            background-color: #f4f4f4;
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
-        /* 表格样式 */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 10px 0;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        /* 引用块样式 */
-        blockquote {
-            border-left: 4px solid #ccc;
-            padding-left: 15px;
-            margin-left: 0;
-            margin-right: 0;
-            font-style: italic;
-            background-color: #f9f9f9; /* 添加背景色 */
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown × LaTeX 渲染器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%88%91%3C/text%3E%3C/svg%3E">
+
+<!-- Marked：Markdown 解析 -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<!-- html-to-image：将渲染结果导出为 PNG -->
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+<!-- MathJax 配置（必须在引入前定义）；改用 SVG 输出，导出图片时更稳定 -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]'], ['$$', '$$']]
+  },
+  svg: { fontCache: 'local' },
+  options: { enableMenu: false },
+  startup: { typeset: false }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
+
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0c0e15; --panel:#141722; --panel-2:#1c2030;
+  --border:rgba(255,255,255,.08);
+  --text:#e7eaf3; --dim:#8a91a7;
+  --accent:#7c5cff;
+  --grad:linear-gradient(135deg,#6a5cff 0%,#a855f7 100%);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:
+    radial-gradient(1100px 700px at 85% -10%,rgba(106,92,255,.14),transparent 60%),
+    radial-gradient(900px 600px at -10% 110%,rgba(56,132,255,.10),transparent 60%),
+    var(--bg);
+  color:var(--text);
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+
+/* ============ 顶栏 ============ */
+.app-header{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:10px 18px;border-bottom:1px solid var(--border);
+  background:rgba(20,23,34,.72);backdrop-filter:blur(10px);
+}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .logo{
+  width:36px;height:36px;border-radius:10px;background:var(--grad);
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;font-weight:700;color:#fff;
+  box-shadow:0 4px 16px rgba(124,92,255,.35);
+}
+.brand h1{font-size:15px;margin:0;letter-spacing:.3px}
+.brand p{margin:1px 0 0;font-size:11px;color:var(--dim)}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* 开关 */
+.switch{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim);cursor:pointer;user-select:none}
+.switch input{display:none}
+.switch .track{width:34px;height:19px;border-radius:999px;background:#272c3f;border:1px solid var(--border);position:relative;transition:.2s;flex:none}
+.switch .track::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#8a91a7;transition:.2s}
+.switch input:checked + .track{background:var(--accent);border-color:transparent}
+.switch input:checked + .track::after{left:17px;background:#fff}
+
+/* 导出字号选择 */
+.export-opts{display:flex;align-items:center;gap:6px}
+.opt-label{font-size:12px;color:var(--dim)}
+select.ctrl{
+  background:var(--panel-2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;
+  padding:6px 9px;font-size:12.5px;outline:none;cursor:pointer;
+}
+select.ctrl:hover{border-color:rgba(255,255,255,.2)}
+
+/* 按钮 */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:9px;border:1px solid var(--border);
+  background:var(--panel-2);color:var(--text);font-size:13px;
+  cursor:pointer;transition:.15s;font-family:inherit;
+}
+.btn:hover{border-color:rgba(255,255,255,.22);background:#232840}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn-primary{background:var(--grad);border:none;color:#fff;font-weight:600;box-shadow:0 3px 14px rgba(124,92,255,.35)}
+.btn-primary:hover{filter:brightness(1.12);background:var(--grad)}
+.btn-export{background:rgba(124,92,255,.14);border:1px solid rgba(124,92,255,.45);color:#c3b5ff}
+.btn-export:hover{background:rgba(124,92,255,.24)}
+.spinner{width:12px;height:12px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ 工作区 ============ */
+.workspace{flex:1;display:flex;min-height:0;padding:14px}
+.panel{
+  display:flex;flex-direction:column;min-height:0;min-width:240px;
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.28);
+}
+.editor-panel{flex:0 0 50%}
+.preview-panel{flex:1 1 auto}
+.splitter{flex:0 0 14px;cursor:col-resize;position:relative;touch-action:none}
+.splitter::after{
+  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:4px;height:46px;border-radius:4px;background:rgba(255,255,255,.12);transition:.15s;
+}
+.splitter:hover::after,.splitter.active::after{background:var(--accent)}
+
+.panel-head{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 14px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02);
+}
+.panel-head .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dot-green{background:#3fb950}
+.dot-violet{background:#a371f7}
+.panel-head .title{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#b9bed1}
+.panel-head .spacer{flex:1}
+.head-hint{font-size:11px;color:var(--dim)}
+.mini-btn{
+  background:transparent;border:1px solid var(--border);color:var(--dim);
+  font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;transition:.15s;font-family:inherit;
+}
+.mini-btn:hover{color:var(--text);border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.05)}
+
+/* 编辑器 */
+#editor{
+  flex:1;width:100%;border:none;outline:none;resize:none;
+  background:#11131c;color:#dfe3ee;
+  font-family:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:13.5px;line-height:1.7;padding:16px 18px;caret-color:#a78bfa;
+}
+#editor::placeholder{color:#4a5067}
+#editor::selection{background:rgba(124,92,255,.35)}
+
+/* 预览容器 */
+#output{
+  flex:1;overflow:auto;min-height:0;
+  background:#ffffff;color:#24292f;
+  padding:26px 30px;font-size:15px;line-height:1.75;
+}
+#output:empty::before{content:'渲染结果将显示在这里…';color:#9aa1a9;font-size:14px}
+
+/* ============ 预览排版 ============ */
+.preview-body{word-wrap:break-word}
+.preview-body > *:first-child{margin-top:0}
+.preview-body h1{font-size:1.65em;margin:.7em 0 .55em;padding-bottom:.28em;border-bottom:1px solid #e6e8ee;font-weight:700}
+.preview-body h2{font-size:1.38em;margin:.9em 0 .5em;padding-bottom:.22em;border-bottom:1px solid #eceef3;font-weight:700}
+.preview-body h3{font-size:1.17em;margin:.9em 0 .45em;font-weight:600}
+.preview-body h4{font-size:1.05em;margin:.9em 0 .4em;font-weight:600}
+.preview-body h5,.preview-body h6{font-size:1em;margin:.9em 0 .4em;color:#57606a}
+.preview-body p{margin:.65em 0}
+.preview-body a{color:#4c7dff;text-decoration:none}
+.preview-body a:hover{text-decoration:underline}
+.preview-body img{max-width:100%;border-radius:8px;margin:.4em 0}
+.preview-body ul,.preview-body ol{margin:.65em 0;padding-left:1.9em}
+.preview-body li{margin:.28em 0}
+.preview-body li > ul,.preview-body li > ol{margin:.2em 0}
+.preview-body blockquote{margin:.8em 0;padding:.45em 1em;border-left:4px solid #a78bfa;background:#f7f5ff;color:#59636e;border-radius:0 8px 8px 0}
+.preview-body blockquote p{margin:.3em 0}
+.preview-body table{border-collapse:collapse;margin:.85em 0;width:100%;display:block;overflow-x:auto;font-size:.95em}
+.preview-body th,.preview-body td{border:1px solid #d9dee7;padding:7px 13px;text-align:left}
+.preview-body th{background:#f2f4f9;font-weight:600}
+.preview-body tbody tr:nth-child(even){background:#fafbfd}
+.preview-body hr{border:none;border-top:2px solid #e6e8ee;margin:1.4em 0}
+.preview-body code{font-family:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,Menlo,monospace;font-size:.875em}
+.preview-body :not(pre) > code{background:#f3f0ff;color:#7c3aed;border:1px solid #e7e1fa;padding:.14em .42em;border-radius:6px}
+
+/* 代码块（深色） */
+.preview-body pre{
+  position:relative;background:#0d1117;color:#e6edf3;
+  padding:14px 16px;border-radius:10px;border:1px solid #21262f;
+  overflow:auto;margin:.85em 0;line-height:1.62;font-size:.9em;
+}
+.preview-body pre code{display:block;white-space:pre;background:none;border:none;padding:0;color:inherit;font-size:inherit}
+.pre-tools{position:absolute;top:6px;right:8px;display:flex;align-items:center;gap:6px}
+.code-lang{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8b949e;background:rgba(255,255,255,.07);padding:2px 8px;border-radius:6px;pointer-events:none}
+.code-copy{
+  font-size:11px;color:#9aa4b2;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:2px 9px;
+  cursor:pointer;opacity:0;transition:.15s;font-family:inherit;
+}
+.preview-body pre:hover .code-copy{opacity:1}
+.code-copy:hover{background:rgba(255,255,255,.16);color:#fff}
+.code-copy.copied{color:#57d364;border-color:rgba(87,211,100,.4)}
+
+/* MathJax SVG */
+.preview-body mjx-container{display:inline-block;max-width:100%}
+.preview-body mjx-container[display="true"]{display:block;text-align:center;margin:.95em 0;overflow-x:auto;overflow-y:hidden;padding:3px 2px}
+
+/* ============ 状态栏 ============ */
+.status-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:6px 18px;border-top:1px solid var(--border);
+  background:rgba(20,23,34,.72);font-size:11.5px;color:var(--dim);
+}
+.status-bar b{color:#c9cede;font-weight:600}
+.status-bar .spacer{flex:1}
+.status-bar .sep{opacity:.45}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#8a91a7;display:inline-block;margin-right:6px;vertical-align:1px}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:52px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:#20243a;color:#fff;border:1px solid var(--border);
+  padding:9px 18px;border-radius:10px;font-size:13px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:99;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);max-width:80vw;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.error{border-color:rgba(248,81,73,.55);background:#3a1f23}
+
+/* 滚动条 */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22)}
+#output::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15)}
+#output::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.28)}
+
+/* 移动端 */
+@media (max-width:860px){
+  .workspace{flex-direction:column}
+  .splitter{display:none}
+  .editor-panel{flex:0 0 45%}
+}
+
+/* ============ 导出图片专用紧凑样式（只作用于导出克隆） ============ */
+.export-compact{line-height:1.6}
+.export-compact h1{font-size:1.5em;margin:.45em 0 .35em;padding-bottom:.2em}
+.export-compact h2{font-size:1.3em;margin:.55em 0 .3em;padding-bottom:.15em}
+.export-compact h3{font-size:1.15em;margin:.55em 0 .28em}
+.export-compact h4{font-size:1.05em;margin:.5em 0 .25em}
+.export-compact p{margin:.4em 0}
+.export-compact ul,.export-compact ol{margin:.4em 0;padding-left:1.7em}
+.export-compact li{margin:.12em 0}
+.export-compact blockquote{margin:.5em 0;padding:.25em .9em}
+.export-compact table{margin:.5em 0}
+.export-compact th,.export-compact td{padding:4px 10px}
+.export-compact pre{margin:.5em 0;padding:10px 12px;font-size:.9em}
+.export-compact hr{margin:.8em 0}
+.export-compact img{margin:.3em 0}
+.export-compact mjx-container[display="true"]{margin:.55em 0}
+.export-compact .code-copy{display:none !important}
+</style>
 </head>
 <body>
 
-<div class="container">
-    <div class="panel">
-        <h2>输入区 (Markdown & LaTeX)</h2>
-        <textarea id="input" placeholder="请输入您的 Markdown 文本和 LaTeX 公式..."># 示例文档
+<header class="app-header">
+  <div class="brand">
+    <div class="logo">∑</div>
+    <div>
+      <h1>Markdown × LaTeX 渲染器</h1>
+      <p>分栏实时渲染 · 一键导出紧凑长图</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <label class="switch" title="输入停止后自动渲染">
+      <input type="checkbox" id="liveRender" checked>
+      <span class="track"></span>
+      <span>实时渲染</span>
+    </label>
+    <div class="export-opts" title="导出图片使用的字号：字号越小，图片越紧凑">
+      <span class="opt-label">导出字号</span>
+      <select id="exportFont" class="ctrl">
+        <option value="10">10 px</option>
+        <option value="11">11 px</option>
+        <option value="12" selected>12 px</option>
+        <option value="13">13 px</option>
+        <option value="14">14 px</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="btnRender" title="快捷键 Ctrl+Enter">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      渲染
+    </button>
+    <button class="btn btn-export" id="btnExport" title="快捷键 Ctrl+S">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      导出图片
+    </button>
+  </div>
+</header>
+
+<main class="workspace" id="workspace">
+  <section class="panel editor-panel" id="editorPanel">
+    <div class="panel-head">
+      <span class="dot dot-green"></span>
+      <span class="title">输入 · Markdown + LaTeX</span>
+      <span class="spacer"></span>
+      <button class="mini-btn" id="btnSample">载入示例</button>
+      <button class="mini-btn" id="btnClear">清空</button>
+    </div>
+    <textarea id="editor" spellcheck="false" placeholder="在此输入 Markdown 与 LaTeX …">
+# 示例文档
 
 这是一个 **粗体** 文本和 *斜体* 文本。行内公式 $E = mc^2$ 与 Markdown 语法并存。
 
 ## 代码块
 
-\```python
+```python
 def hello():
     print("Hello, World!")
     # 包含 $ 符号的注释，但不会被误认为是 LaTeX
-    # result = a + b # $x = y$ 这是注释里的 $ 符号
-\```
+    # result = a + b  # $x = y$ 这是注释里的 $ 符号
+```
 
-\```javascript
+```javascript
 function greet(name) {
-    console.log(`Hello, ${name}!`);
+  console.log(`Hello, ${name}!`);
 }
-\```
+```
 
-\```java
+```java
 public class HelloWorld {
     public static void main(String[] args) {
         System.out.println("Hello, World!");
     }
 }
-\```
+```
 
 ## 行内代码示例
 
-请查看 `main.py` 文件中的 `hello()` 函数，其中可能包含 $x$ 变量。
+请查看 `main.py` 文件中的 `hello()` 函数；行内代码里的 `$x$` 不会被误渲染成公式。
 
 ## 列表
 
 - 项目 1，包含行内公式 $a^2 + b^2 = c^2$
 - 项目 2
-  - 子项目 2.1，公式 $F=ma$
+  - 子项目 2.1，公式 $F = ma$
 
 ## 表格
 
@@ -180,228 +349,417 @@ public class HelloWorld {
 
 > 这是一个引用块。
 > 它可以包含多行文本。
-> 甚至可以包含 $E=mc^2$ 公式。
+> 甚至可以包含 $E = mc^2$ 公式。
 
-## 链接和图片
+## 链接
 
-[访问百度](https://www.baidu.com)，其公式 $E=mc^2$ 很有名。
+[访问百度](https://www.baidu.com)，旁边附上行内公式 $E = mc^2$。
 
 ## LaTeX 公式
 
-### 行内公式 (多种语法)
+### 行内公式（多种语法）
 
-- 美元符号: $E = mc^2$ 和 $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
-- 反斜杠括号: \( \alpha + \beta = \gamma \) 和 \( \sin^2\theta + \cos^2\theta = 1 \)
+- 美元符号：$E = mc^2$ 和 $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+- 反斜杠括号：\( \alpha + \beta = \gamma \) 和 \( \sin^2\theta + \cos^2\theta = 1 \)
 
-### 行间公式 (多种语法)
+### 行间公式（多种语法）
 
-美元符号:
+美元符号：
+
 $$
-\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+\int_{-\infty}^{\infty} e^{-x^2}\, dx = \sqrt{\pi}
 $$
 
-反斜杠方括号:
+反斜杠方括号：
+
 \[
 \sum_{i=1}^{n} i = \frac{n(n+1)}{2}
 \]
 
 ### 更多公式
 
-- 二次公式: $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
-- 欧拉恒等式: $e^{i\pi} + 1 = 0$
-- 带下标的公式: $F_n = F_{n-1} + F_{n-2}$
-- 带上标的公式: $E = mc^2$
-- 复杂公式: $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$
-- 嵌套在其他 Markdown 语法中 $a_{ij}^{(k)}$。
-- 行间复杂公式:
+- 欧拉恒等式：$e^{i\pi} + 1 = 0$
+- 带下标：$F_n = F_{n-1} + F_{n-2}$
+- 嵌套在列表中：$a_{ij}^{(k)}$
+- 行间复杂公式：
+
 $$
-\oint_C \vec{B} \cdot \mathrm{d}\vec{l} = \mu_0 \left( I_\text{enc} + \varepsilon_0 \frac{\mathrm{d} \Phi_E}{\mathrm{d}t} \right)
+\oint_C \vec{B} \cdot \mathrm{d}\vec{l} = \mu_0 \left( I_\text{enc} + \varepsilon_0 \frac{\mathrm{d}\Phi_E}{\mathrm{d}t} \right)
 $$
-- 使用 \[ \] 的行间公式:
+
+- 使用 `\[ \]` 的行间公式：
+
 \[
 \mathcal{L} = \frac{1}{4\pi} \left[ \frac{G M}{r^2} \right]
 \]
 </textarea>
-        <button onclick="render()">渲染</button>
-    </div>
+  </section>
 
-    <div class="panel">
-        <h2>输出区 (渲染效果)</h2>
-        <div id="output"></div>
+  <div class="splitter" id="splitter" title="拖动调整宽度 · 双击复位"></div>
+
+  <section class="panel preview-panel">
+    <div class="panel-head">
+      <span class="dot dot-violet"></span>
+      <span class="title">输出 · 渲染预览</span>
+      <span class="spacer"></span>
+      <span class="head-hint">公式引擎：MathJax（SVG 输出）</span>
     </div>
-</div>
+    <div id="output" class="preview-body"></div>
+  </section>
+</main>
+
+<footer class="status-bar">
+  <span><span class="status-dot" id="statusDot"></span><span id="statusText">就绪</span></span>
+  <span class="sep">·</span>
+  <span>字符 <b id="statChars">0</b></span>
+  <span class="sep">·</span>
+  <span>行数 <b id="statLines">0</b></span>
+  <span class="sep">·</span>
+  <span>渲染耗时 <b id="statTime">—</b></span>
+  <span class="spacer"></span>
+  <span>Ctrl+Enter 渲染 · Ctrl+S 导出图片 · 中间分栏可拖动</span>
+</footer>
+
+<div id="toast" role="status"></div>
 
 <script>
-    // 辅助函数：转义HTML特殊字符（用于行内代码等，不用于代码块）
-    function escapeHtml(unsafe) {
-        if (typeof unsafe !== 'string') {
-             console.warn('escapeHtml received non-string input:', typeof unsafe, unsafe);
-             return '';
-        }
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "<")
-            .replace(/>/g, ">")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+/* ================= 基础工具 ================= */
+const $ = id => document.getElementById(id);
+const editor = $('editor'), output = $('output'), workspace = $('workspace'),
+      editorPanel = $('editorPanel'), splitter = $('splitter');
 
-    // --- 核心修复：完全绕过 marked 的代码块解析 ---
+const LS_KEY = 'md-latex-renderer-src';
+let SAMPLE = '';
+let debounceTimer = null;
+let mathJaxWarned = false;
 
-    // 1. 定义代码块的正则表达式
-    const codeBlockRegex = /```([\s\S]*?)\n([\s\S]*?)```/g; // 匹配 ```lang\ncontent\n```
+let toastTimer;
+function toast(msg, isError){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
 
-    // 配置 Marked 以启用 GFM、breaks，并使用默认渲染器（不重写 code 方法）
-    marked.setOptions({
-        gfm: true,
-        breaks: true,
-        smartLists: true,
-        smartypants: true,
-        mangle: false,
-        headerIds: false,
-        renderer: new marked.Renderer(), // 使用默认渲染器
+function setStatus(mode){
+  const map = {
+    rendering: ['渲染中…', '#d29922'],
+    done:      ['渲染完成', '#3fb950'],
+    exporting: ['正在导出图片…', '#58a6ff'],
+    error:     ['出现错误', '#f85149'],
+    idle:      ['就绪', '#8a91a7']
+  };
+  const m = map[mode] || map.idle;
+  $('statusText').textContent = m[0];
+  $('statusDot').style.background = m[1];
+}
+
+function updateStats(ms){
+  const v = editor.value;
+  $('statChars').textContent = v.length;
+  $('statLines').textContent = v ? v.split('\n').length : 0;
+  if (typeof ms === 'number') $('statTime').textContent = ms.toFixed(1) + ' ms';
+}
+
+function saveSrc(){ try { localStorage.setItem(LS_KEY, editor.value); } catch(e){} }
+
+function copyText(text){
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  return new Promise((resolve, reject) => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy') ? resolve() : reject(new Error('copy failed')); }
+    catch(e){ reject(e); }
+    ta.remove();
+  });
+}
+
+/* ================= 解析规则 ================= */
+marked.setOptions({ gfm: true, breaks: true });
+
+const FENCE_RE       = /```([^\n`]*)\n([\s\S]*?)```/g;   // 围栏代码块
+const INLINE_CODE_RE = /`([^`\n]+)`/g;                    // 行内代码
+const BLOCK_MATH_RE  = [ /\$\$([\s\S]+?)\$\$/g, /\\\[([\s\S]+?)\\\]/g ];
+const INLINE_MATH_RE = [ /\\\(([\s\S]+?)\\\)/g, /\$([^\$\n]+?)\$/g ];
+
+/* 在 DOM 中查找指定内容的注释节点 */
+function findComment(root, label){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT);
+  let n;
+  while ((n = walker.nextNode())) {
+    if (n.textContent === label) return n;
+  }
+  return null;
+}
+
+/* 若注释独占一个 <p>，则整体替换该 <p>，否则只替换注释本身 */
+function parentHasOtherContent(p, except){
+  for (const n of p.childNodes) {
+    if (n === except) continue;
+    if (n.nodeType === Node.TEXT_NODE) { if (n.textContent.trim() !== '') return true; }
+    else return true;
+  }
+  return false;
+}
+function replaceNodeWithBlock(comment, el){
+  const parent = comment.parentNode;
+  if (!parent) return;
+  if (parent.tagName === 'P' && !parentHasOtherContent(parent, comment)) {
+    parent.parentNode.replaceChild(el, parent);
+  } else {
+    parent.replaceChild(el, comment);
+  }
+}
+
+/* ================= 渲染主流程 ================= */
+function render(){
+  const t0 = performance.now();
+  setStatus('rendering');
+  try {
+    if (!window.marked) throw new Error('marked.js 加载失败，请检查网络');
+    let text = editor.value;
+    const codeBlocks = [], inlineCodes = [], maths = [];
+
+    /* 1. 提取围栏代码块（最先保护，防止其中的 $ 被当作公式） */
+    text = text.replace(FENCE_RE, (m, lang, code) => {
+      codeBlocks.push({ lang: lang.trim(), code: code.replace(/\n$/, '') });
+      return '\n<!--@CB' + (codeBlocks.length - 1) + '-->\n';
     });
 
-    // 正则表达式，用于匹配多种 LaTeX 公式语法
-    const blockRegex = [
-        /\$\$([\s\S]+?)\$\$/g,
-        /\\\[\s*([\s\S]+?)\s*\\\]/g
-    ];
-    
-    const inlineRegex = [
-        /\\\(\s*([^$]+?)\s*\\\)/g,
-        /\$([^\$]+?)\$/g
-    ];
+    /* 2. 提取行内代码 */
+    text = text.replace(INLINE_CODE_RE, (m, code) => {
+      inlineCodes.push(code);
+      return '<!--@IC' + (inlineCodes.length - 1) + '-->';
+    });
 
-    function render() {
-        const inputText = document.getElementById('input').value;
-        const outputDiv = document.getElementById('output');
+    /* 3. 提取块级公式 */
+    BLOCK_MATH_RE.forEach(re => {
+      text = text.replace(re, (m, body) => {
+        maths.push({ display: true, body: body.trim() });
+        return '\n<!--@MB' + (maths.length - 1) + '-->\n';
+      });
+    });
 
-        try {
-            let text = inputText;
-            // --- 1. 提取代码块 ---
-            const codeBlockPlaceholders = [];
-            let codeBlockPlaceholderIndex = 0;
+    /* 4. 提取行内公式 */
+    INLINE_MATH_RE.forEach(re => {
+      text = text.replace(re, (m, body) => {
+        maths.push({ display: false, body: body.trim() });
+        return '<!--@MI' + (maths.length - 1) + '-->';
+      });
+    });
 
-            text = text.replace(codeBlockRegex, (match, language, content) => {
-                const lang = language.trim();
-                const placeholder = `<!--CODE_BLOCK_${codeBlockPlaceholderIndex}-->`;
-                // 存储原始语言和内容，以便后续处理
-                codeBlockPlaceholders[codeBlockPlaceholderIndex] = { lang, content: content.trimEnd() };
-                codeBlockPlaceholderIndex++;
-                return placeholder;
-            });
+    /* 5. Markdown 解析 */
+    output.innerHTML = marked.parse(text);
 
-            // --- 2. 提取 LaTeX 公式 ---
-            const latexPlaceholders = [];
-            let latexPlaceholderIndex = 0;
+    /* 6. 还原代码块 */
+    codeBlocks.forEach((blk, i) => {
+      const c = findComment(output, '@CB' + i);
+      if (!c) return;
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      if (blk.lang) code.className = 'language-' + blk.lang;
+      code.textContent = blk.code;
+      pre.appendChild(code);
 
-            blockRegex.forEach((regex, idx) => {
-                text = text.replace(regex, (match, content) => {
-                    const placeholder = `<!--LATEX_BLOCK_${latexPlaceholderIndex}-->`;
-                    latexPlaceholders[latexPlaceholderIndex] = { type: 'block', content: content.trim() };
-                    latexPlaceholderIndex++;
-                    return placeholder;
-                });
-            });
+      const tools = document.createElement('div');
+      tools.className = 'pre-tools';
+      if (blk.lang) {
+        const tag = document.createElement('span');
+        tag.className = 'code-lang';
+        tag.textContent = blk.lang;
+        tools.appendChild(tag);
+      }
+      const btn = document.createElement('button');
+      btn.className = 'code-copy';
+      btn.textContent = '复制';
+      btn.addEventListener('click', () => {
+        copyText(blk.code).then(() => {
+          btn.textContent = '已复制';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+        }).catch(() => toast('复制失败', true));
+      });
+      tools.appendChild(btn);
+      pre.appendChild(tools);
+      replaceNodeWithBlock(c, pre);
+    });
 
-            inlineRegex.forEach((regex, idx) => {
-                text = text.replace(regex, (match, content) => {
-                    const placeholder = `<!--LATEX_INLINE_${latexPlaceholderIndex}-->`;
-                    latexPlaceholders[latexPlaceholderIndex] = { type: 'inline', content: content.trim() };
-                    latexPlaceholderIndex++;
-                    return placeholder;
-                });
-            });
+    /* 7. 还原行内代码 */
+    inlineCodes.forEach((codeStr, i) => {
+      const c = findComment(output, '@IC' + i);
+      if (!c) return;
+      const el = document.createElement('code');
+      el.textContent = codeStr;
+      c.parentNode.replaceChild(el, c);
+    });
 
-            // --- 3. 使用 Marked 解析 Markdown (不含代码块和 LaTeX) ---
-            let parsedHTML = marked.parse(text);
+    /* 8. 还原公式（交给 MathJax 排版） */
+    maths.forEach((m, i) => {
+      const label = m.display ? '@MB' + i : '@MI' + i;
+      const c = findComment(output, label);
+      if (!c) return;
+      const el = document.createElement(m.display ? 'div' : 'span');
+      el.textContent = m.display ? '\\[' + m.body + '\\]' : '\\(' + m.body + '\\)';
+      if (m.display) replaceNodeWithBlock(c, el);
+      else c.parentNode.replaceChild(el, c);
+    });
 
-            // 将解析后的HTML设置到输出区域
-            outputDiv.innerHTML = parsedHTML;
+    typesetMath(output);
+    setStatus('done');
+  } catch (err) {
+    console.error('渲染错误:', err);
+    setStatus('error');
+    toast('渲染出错：' + err.message, true);
+  }
+  updateStats(performance.now() - t0);
+}
 
-            // --- 4. 后处理：将代码块占位符替换为渲染后的代码块 ---
-            codeBlockPlaceholders.forEach((codeBlock, index) => {
-                const commentPlaceholder = `CODE_BLOCK_${index}`;
-                const commentNode = findCommentNode(outputDiv, commentPlaceholder);
-                if (commentNode) {
-                    // --- 关键修复：不再对代码内容进行 HTML 转义 ---
-                    // 代码块内容应原样显示
-                    const rawContent = codeBlock.content;
-
-                    const codeElement = document.createElement('code');
-                    codeElement.className = `language-${codeBlock.lang}`;
-                    // 使用 textContent 来设置内容，这会自动处理特殊字符，但不会将其作为 HTML 解析
-                    // 这是安全的，因为它是文本节点，不是 HTML
-                    codeElement.textContent = rawContent;
-
-                    const preElement = document.createElement('pre');
-                    // 添加语言标签
-                    if (codeBlock.lang) {
-                        const langSpan = document.createElement('span');
-                        langSpan.className = 'code-language';
-                        langSpan.textContent = codeBlock.lang;
-                        preElement.appendChild(langSpan);
-                    }
-                    preElement.appendChild(codeElement);
-
-                    commentNode.parentNode.insertBefore(preElement, commentNode);
-                    commentNode.parentNode.removeChild(commentNode);
-                }
-            });
-
-            // --- 5. 后处理：将 LaTeX 占位符替换为渲染标记 ---
-            latexPlaceholders.forEach((latex, index) => {
-                const commentPlaceholder = `LATEX_${latex.type.toUpperCase()}_${index}`;
-                const commentNode = findCommentNode(outputDiv, commentPlaceholder);
-                if (commentNode) {
-                    let newElement;
-                    if (latex.type === 'inline') {
-                        newElement = document.createElement('span');
-                        newElement.className = 'math inline';
-                        newElement.textContent = `\\(${latex.content}\\)`;
-                    } else {
-                        newElement = document.createElement('div');
-                        newElement.className = 'math block';
-                        newElement.textContent = `\\[${latex.content}\\]`;
-                    }
-                    commentNode.parentNode.insertBefore(newElement, commentNode);
-                    commentNode.parentNode.removeChild(commentNode);
-                }
-            });
-
-            // --- 6. 强制 MathJax 重新处理 ---
-            if (typeof MathJax !== 'undefined') {
-                MathJax.typesetPromise([outputDiv]).catch(function (err) {
-                    console.error('MathJax 渲染错误:', err);
-                });
-            } else {
-                console.warn('MathJax 未加载，LaTeX 公式将不会被渲染。');
-            }
-        } catch (error) {
-            console.error('渲染过程中发生错误:', error);
-            outputDiv.innerHTML = '<p style="color:red;">渲染错误: ' + error.message + '</p>';
-        }
+/* MathJax 排版（异步加载，做等待处理） */
+function typesetMath(root){
+  if (!root.querySelector('span, div')) return;
+  const run = () => MathJax.typesetPromise([root]).catch(e => console.error('MathJax:', e));
+  if (window.MathJax && MathJax.typesetPromise) { run(); return; }
+  let waited = 0;
+  const timer = setInterval(() => {
+    waited += 120;
+    if (window.MathJax && MathJax.typesetPromise) { clearInterval(timer); run(); }
+    else if (waited > 12000) {
+      clearInterval(timer);
+      if (!mathJaxWarned) { mathJaxWarned = true; toast('MathJax 未加载，公式将以源码显示', true); }
     }
+  }, 120);
+}
 
-    // 辅助函数：在 DOM 树中查找指定内容的注释节点
-    function findCommentNode(node, content) {
-        if (node.nodeType === Node.COMMENT_NODE && node.textContent === content) {
-            return node;
-        }
-        if (node.hasChildNodes()) {
-            for (let child of node.childNodes) {
-                const found = findCommentNode(child, content);
-                if (found) return found;
-            }
-        }
-        return null;
-    }
+/* ================= 导出图片 ================= */
+async function exportImage(){
+  if (!output.querySelector('*')) { toast('预览区为空，无法导出', true); return; }
+  if (!window.htmlToImage) { toast('导出组件未加载，请检查网络后刷新', true); return; }
 
-    window.onload = function() {
-        render();
-    };
+  const btn = $('btnExport');
+  const fontSize = $('exportFont').value;
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>生成中…';
+  setStatus('exporting');
+
+  let stage = null;
+  try {
+    /* 离屏舞台：固定宽度 + 小字号 + 紧凑样式，让导出的图更短更紧凑 */
+    stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;';
+
+    const capture = document.createElement('div');
+    capture.className = 'export-compact';
+    capture.style.cssText = 'width:880px;padding:24px 30px;background:#ffffff;color:#24292f;line-height:1.6;font-size:' + fontSize + 'px;';
+
+    const clone = output.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.style.cssText = 'padding:0;margin:0;overflow:visible;min-height:0;flex:none;';
+    capture.appendChild(clone);
+    stage.appendChild(capture);
+    document.body.appendChild(stage);
+
+    /* 等待布局稳定 */
+    await new Promise(r => setTimeout(r, 160));
+    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
+
+    const dataUrl = await htmlToImage.toPng(capture, {
+      pixelRatio: 2,              // 2 倍清晰度
+      backgroundColor: '#ffffff'
+    });
+
+    const now = new Date();
+    const p = n => String(n).padStart(2, '0');
+    const name = 'render_' + now.getFullYear() + p(now.getMonth() + 1) + p(now.getDate()) +
+                 '_' + p(now.getHours()) + p(now.getMinutes()) + p(now.getSeconds()) + '.png';
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    toast('图片已导出（字号 ' + fontSize + 'px · 2x 清晰）');
+    setStatus('done');
+  } catch (err) {
+    console.error('导出失败:', err);
+    toast('导出失败：' + (err && err.message ? err.message : '未知错误（外部图片跨域可能导致失败）'), true);
+    setStatus('error');
+  } finally {
+    if (stage) stage.remove();
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
+/* ================= 事件绑定 ================= */
+$('btnRender').addEventListener('click', render);
+$('btnExport').addEventListener('click', exportImage);
+
+$('btnSample').addEventListener('click', () => {
+  editor.value = SAMPLE; saveSrc(); render(); toast('已载入示例');
+});
+$('btnClear').addEventListener('click', () => {
+  editor.value = ''; saveSrc(); render(); toast('已清空');
+});
+
+editor.addEventListener('input', () => {
+  saveSrc();
+  updateStats();
+  if ($('liveRender').checked) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(render, 500);
+  }
+});
+
+/* Tab 插入两个空格 */
+editor.addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    editor.setRangeText('  ', editor.selectionStart, editor.selectionEnd, 'end');
+    editor.dispatchEvent(new Event('input'));
+  }
+});
+
+/* 全局快捷键：Ctrl+Enter 渲染，Ctrl+S 导出图片 */
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); exportImage(); }
+});
+
+/* 分栏拖动 */
+let dragging = false;
+splitter.addEventListener('pointerdown', e => {
+  dragging = true;
+  splitter.setPointerCapture(e.pointerId);
+  splitter.classList.add('active');
+});
+splitter.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const rect = workspace.getBoundingClientRect();
+  let pct = (e.clientX - rect.left) / rect.width * 100;
+  pct = Math.min(80, Math.max(20, pct));
+  editorPanel.style.flex = '0 0 ' + pct + '%';
+});
+splitter.addEventListener('pointerup', () => {
+  dragging = false;
+  splitter.classList.remove('active');
+});
+splitter.addEventListener('dblclick', () => { editorPanel.style.flex = ''; });
+
+/* ================= 初始化 ================= */
+SAMPLE = editor.value;
+try {
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved !== null) editor.value = saved;
+} catch(e){}
+updateStats();
+render();
 </script>
-
 </body>
 </html>
