@@ -1832,9 +1832,11 @@ function lineStr(b, x, y, dx, dy, c) {
   return s;
 }
 
-function scorePoint(b, x, y, c) {
-  if (b[idx(x, y)] !== 0) return -1;
-  var total = 0, strong = 0, three = 0, d, i, P, best, s, at;
+/* ============================================================
+   【优化1】棋形打分按四方向拆分，便于精确判定五/活四/冲四
+   ============================================================ */
+function scoreDirs(b, x, y, c) {
+  var out = [0, 0, 0, 0], d, i, s, best, P, at;
   for (d = 0; d < 4; d++) {
     s = lineStr(b, x, y, DIRS[d][0], DIRS[d][1], c);
     best = 0;
@@ -1843,9 +1845,17 @@ function scorePoint(b, x, y, c) {
       at = s.indexOf(P[0]);
       if (at >= 0 && at <= 5 && at + P[0].length > 5) { best = P[1]; break; }
     }
-    total += best;
-    if (best >= 2.5e5) strong++;
-    else if (best >= 1e5) three++;
+    out[d] = best;
+  }
+  return out;
+}
+
+function sumDirs(ds) {
+  var total = 0, strong = 0, three = 0, d;
+  for (d = 0; d < 4; d++) {
+    total += ds[d];
+    if (ds[d] >= 2.5e5) strong++;
+    else if (ds[d] >= 1e5) three++;
   }
   if (strong >= 2) total += 8e5;
   else if (strong === 1 && three >= 1) total += 1.5e5;
@@ -1853,7 +1863,55 @@ function scorePoint(b, x, y, c) {
   return total;
 }
 
+function maxDir(ds) {
+  var m = 0, d;
+  for (d = 0; d < 4; d++) if (ds[d] > m) m = ds[d];
+  return m;
+}
+
+function scorePoint(b, x, y, c) {
+  if (b[idx(x, y)] !== 0) return -1;
+  return sumDirs(scoreDirs(b, x, y, c));
+}
+
 function centerBonus(x, y) { return (14 - (Math.abs(x - 7) + Math.abs(y - 7))) * 8; }
+
+/* ============================================================
+   【优化2】棋盘终局扫描：是否存在已成五连的一方
+   （用于锁定终局胜率，避免胜负已定后胜率继续变化）
+   ============================================================ */
+function boardWinner(b, renju) {
+  var x, y, d, c, dx, dy, nx, ny, cnt, px, py;
+  for (c = 1; c <= 2; c++) {
+    for (y = 0; y < N; y++) {
+      for (x = 0; x < N; x++) {
+        if (b[idx(x, y)] !== c) continue;
+        for (d = 0; d < 4; d++) {
+          dx = DIRS[d][0];
+          dy = DIRS[d][1];
+          px = x - dx;
+          py = y - dy;
+          /* 只从一段连珠的起点开始数 */
+          if (px >= 0 && py >= 0 && px < N && py < N && b[idx(px, py)] === c) continue;
+          cnt = 1;
+          nx = x + dx;
+          ny = y + dy;
+          while (nx >= 0 && ny >= 0 && nx < N && ny < N && b[idx(nx, ny)] === c) {
+            cnt++;
+            nx += dx;
+            ny += dy;
+          }
+          if (c === 1 && renju) {
+            if (cnt === 5) return 1;
+          } else if (cnt >= 5) {
+            return c;
+          }
+        }
+      }
+    }
+  }
+  return 0;
+}
 
 function isForbiddenAt(b, x, y) {
   if (b[idx(x, y)] !== 0) return null;
@@ -1941,6 +1999,38 @@ function levelOf(s) {
   return "none";
 }
 
+/* ============================================================
+   【优化3】被迫堵防校验：敌军单成五点时，堵完是否仍必败
+   ============================================================ */
+function blockCheck(b, list, U, O) {
+  var i, j, d, bp = null;
+  for (i = 0; i < list.length; i++) {
+    if (list[i].fiveO) { bp = list[i]; break; }
+  }
+  if (!bp) return null;
+  var b2 = b.slice();
+  b2[idx(bp.x, bp.y)] = U;
+  var c2 = candidatesOf(b2);
+  /* 堵完之后，敌军是否仍有成五杀着 */
+  for (j = 0; j < c2.length; j++) {
+    var ds = scoreDirs(b2, c2[j].x, c2[j].y, O);
+    for (d = 0; d < 4; d++) {
+      if (ds[d] >= 1e7) return { wr: 1, why: "lose", note: "堵住一处成五点后，敌军仍有成五杀着" };
+    }
+  }
+  /* 堵完之后，敌军是否仍可做活四 */
+  for (j = 0; j < c2.length; j++) {
+    var ds2 = scoreDirs(b2, c2[j].x, c2[j].y, O);
+    for (d = 0; d < 4; d++) {
+      if (ds2[d] >= 1e6 && ds2[d] < 1e7) return { wr: 4, why: "lose", note: "堵住成五点后，敌军仍可成活四" };
+    }
+  }
+  return { wr: 22, why: null, note: "被迫堵防，局势被动" };
+}
+
+/* ============================================================
+   【优化4】analyzeAt：加入终局锁定 + 双成五点必败 + 必胜判定
+   ============================================================ */
 function analyzeAt(k) {
   if (A_CACHE.has(k)) return A_CACHE.get(k);
   var b = boardAt(k),
@@ -1948,45 +2038,124 @@ function analyzeAt(k) {
     U = S.settings.userColor,
     O = other(U),
     renju = S.settings.renju;
-  var cands = candidatesOf(b), list = [], i, p;
+  var userTurn = toMove === U;
+  var cands = candidatesOf(b), list = [], i, p, d;
+
   for (i = 0; i < cands.length; i++) {
     p = cands[i];
-    var aU = scorePoint(b, p.x, p.y, U), aO = scorePoint(b, p.x, p.y, O);
-    var foul = null;
-    if (renju && toMove === 1) foul = isForbiddenAt(b, p.x, p.y);
-    var atk = toMove === U ? aU : aO, def = toMove === U ? aO : aU;
+    var dsU = scoreDirs(b, p.x, p.y, U);
+    var dsO = scoreDirs(b, p.x, p.y, O);
+    var aU = sumDirs(dsU), aO = sumDirs(dsO);
+    var foul = (renju && toMove === 1) ? isForbiddenAt(b, p.x, p.y) : null;
+
+    var fiveU = false, ofourU = false, fourU = false, othreeU = false;
+    var fiveO = false, ofourO = false, fourO = false, othreeO = false;
+    for (d = 0; d < 4; d++) {
+      if (dsU[d] >= 1e7) fiveU = true;
+      else if (dsU[d] >= 1e6) ofourU = true;
+      else if (dsU[d] >= 2.5e5) fourU = true;
+      else if (dsU[d] >= 1e5) othreeU = true;
+
+      if (dsO[d] >= 1e7) fiveO = true;
+      else if (dsO[d] >= 1e6) ofourO = true;
+      else if (dsO[d] >= 2.5e5) fourO = true;
+      else if (dsO[d] >= 1e5) othreeO = true;
+    }
+
+    var atk = userTurn ? aU : aO, def = userTurn ? aO : aU;
     var comb = (foul || atk < 0) ? -1 : (atk + def * 0.9 + centerBonus(p.x, p.y));
-    list.push({ x: p.x, y: p.y, aU: aU, aO: aO, comb: comb, foul: foul });
+
+    list.push({
+      x: p.x, y: p.y, aU: aU, aO: aO, comb: comb, foul: foul,
+      dsU: dsU, dsO: dsO,
+      fiveU: fiveU, ofourU: ofourU, fourU: fourU, othreeU: othreeU,
+      fiveO: fiveO, ofourO: ofourO, fourO: fourO, othreeO: othreeO
+    });
   }
   list.sort(function (a, b2) { return b2.comb - a.comb; });
   for (i = 0; i < list.length; i++) list[i].rank = i + 1;
 
-  var evalU = 0, tU = 0, tO = 0, tN = 0, tc = {};
+  /* ---------- 统计 ---------- */
+  var evalU = 0, tU = 0, tO = 0, tN = 0;
+  var tc = {};
   ["five", "ofour", "four", "othree", "sthree", "otwo"].forEach(function (L) { tc[L] = { U: 0, O: 0 }; });
+
+  var myFivePts = 0, opFivePts = 0, myOFourPts = 0, opOFourPts = 0;
+  var mustBlockMe = [], mustBlockOpp = [];
 
   for (i = 0; i < list.length; i++) {
     var c = list[i];
+    /* foul 只在 toMove===1 时算出，因此可据此判断该禁手属于哪一方 */
+    var foulIsU = c.foul && U === 1;
+    var foulIsO = c.foul && O === 1;
+
+    if (c.fiveU && !foulIsU) { myFivePts++; mustBlockOpp.push({ x: c.x, y: c.y }); }
+    if (c.fiveO && !foulIsO) { opFivePts++; mustBlockMe.push({ x: c.x, y: c.y }); }
+    if (c.ofourU && !c.fiveU && !foulIsU) myOFourPts++;
+    if (c.ofourO && !c.fiveO && !foulIsO) opOFourPts++;
+
     if (c.aU > 0 || c.aO > 0) {
       evalU += (c.foul ? 0 : c.aU) - c.aO;
-      var lU = levelOf(c.aU), lO = levelOf(c.aO);
+
+      var lU = levelOf(maxDir(c.dsU));
+      var lO = levelOf(maxDir(c.dsO));
       if (lU !== "none") tc[lU].U++;
       if (lO !== "none") tc[lO].O++;
+
       if (c.aU > c.aO * 1.6) tU++;
       else if (c.aO > c.aU * 1.6) tO++;
       else tN++;
     }
   }
 
-  var mustBlockMe = list.filter(function (c) { return c.aO >= 1e7; }).map(function (c) { return { x: c.x, y: c.y }; });
-  var mustBlockOpp = list.filter(function (c) { return c.aU >= 1e7; }).map(function (c) { return { x: c.x, y: c.y }; });
-  var userTurn = toMove === U;
-  var wr = 50 + 47 * Math.tanh(evalU / 1.6e6) + (userTurn ? 1.5 : 0);
-  if (tc.five.U > 0 && userTurn) wr = 99;
-  else if (tc.five.O > 0) wr = userTurn ? Math.min(wr, 42) : 3;
-  else if (tc.ofour.U > 0 && userTurn) wr = Math.max(wr, 93);
-  else if (tc.ofour.O > 0 && !userTurn) wr = Math.min(wr, 7);
-  wr = Math.max(1, Math.min(99, wr));
+  /* ---------- 基础胜率（启发式） ---------- */
+  var baseWr = 50 + 47 * Math.tanh(evalU / 1.6e6) + (userTurn ? 1.5 : 0);
+  if (tc.ofour.U > 0 && userTurn) baseWr = Math.max(baseWr, 88);
+  if (tc.ofour.O > 0 && !userTurn) baseWr = Math.min(baseWr, 12);
+  baseWr = Math.max(1, Math.min(99, baseWr));
 
+  /* ---------- 强制胜负判定（优先级最高） ---------- */
+  var forced = null;
+  var bw = boardWinner(b, renju);
+
+  if (bw) {
+    /* 棋盘上已出现五连 —— 结果已锁定，绝不再随棋局变化 */
+    forced = {
+      wr: bw === U ? 100 : 0,
+      why: bw === U ? "win" : "lose",
+      note: bw === U ? "棋盘已成五，我军胜局已定" : "棋盘已成五，敌军胜局已定"
+    };
+  } else if (k >= N * N) {
+    forced = { wr: 50, why: "draw", note: "棋盘已满，和棋" };
+  } else if (userTurn) {
+    /* --- 轮到我方行棋 --- */
+    if (myFivePts > 0) {
+      forced = { wr: 100, why: "win", note: "我军下一手即可连五取胜" };
+    } else if (opFivePts >= 2) {
+      forced = {
+        wr: 1, why: "lose",
+        note: "敌军有 " + opFivePts + " 处成五点，堵住一处仍有一处 —— 必输"
+      };
+    } else if (opFivePts === 1) {
+      forced = blockCheck(b, list, U, O);
+    } else if (myOFourPts > 0) {
+      forced = { wr: 99, why: "win", note: "我军可成活四，下一手双杀在即" };
+    }
+  } else {
+    /* --- 轮到敌军行棋 --- */
+    if (opFivePts > 0) {
+      forced = { wr: 0, why: "lose", note: "敌军下一手可直接连五，败局已定" };
+    } else if (myFivePts >= 2) {
+      forced = { wr: 100, why: "win", note: "我军双成五点，敌军只能堵一处" };
+    } else if (myFivePts === 1) {
+      forced = { wr: 82, why: null, note: "我军有成五点，敌军必须应" };
+    }
+  }
+
+  var wr = forced ? forced.wr : baseWr;
+  wr = Math.max(0, Math.min(100, wr));
+
+  /* ---------- 推荐落点 ---------- */
   var top = [], moverList = list.filter(function (c) { return !c.foul; });
   for (i = 0; i < Math.min(5, moverList.length); i++) {
     var c2 = moverList[i], wrC = null;
@@ -1994,6 +2163,7 @@ function analyzeAt(k) {
     top.push({ x: c2.x, y: c2.y, comb: c2.comb, winrate: wrC, rank: i + 1 });
   }
 
+  /* ---------- 对方落点预测 ---------- */
   var pred = list.map(function (c) { return { x: c.x, y: c.y, s: Math.max(0, c.aO + c.aU * 0.9) }; })
     .sort(function (a, b2) { return b2.s - a.s; });
 
@@ -2012,7 +2182,9 @@ function analyzeAt(k) {
     : [];
 
   var an = {
-    k: k, toMove: toMove, userTurn: userTurn, list: list, top: top, pred: predTop, evalU: evalU, winrateUser: wr,
+    k: k, toMove: toMove, userTurn: userTurn, list: list, top: top, pred: predTop,
+    evalU: evalU, winrateUser: wr, baseWr: baseWr, forced: forced,
+    myFive: myFivePts, opFive: opFivePts, myOFour: myOFourPts, opOFour: opOFourPts,
     threat: tc, mustBlockMe: mustBlockMe, mustBlockOpp: mustBlockOpp, forbidden: forbidden,
     terr: { U: tU, O: tO, N: tN }, stonesB: 0, stonesW: 0
   };
@@ -2084,11 +2256,20 @@ function normEq(a, b) {
   return d1a === d1b && d2a === d2b && da === db;
 }
 
+/* ============================================================
+   【优化5】军师点评：优先播报“胜局已定 / 败局已定”
+   ============================================================ */
 function junshiComment(an, U) {
   if (S.over && S.viewIndex === S.moves.length) {
     if (S.draw) return "棋盘已满，胜负未分，平分秋色。收兵歇战，他日再决雌雄。";
     return S.winner === U ? "鸣金收兵，我军大捷！当浮一大白。" : "胜败乃兵家常事，复盘得失，重整旗鼓再战。";
   }
+  if (an.forced && an.forced.why) {
+    if (an.forced.why === "win") return "胜局已定 —— " + an.forced.note + "。";
+    if (an.forced.why === "lose") return "败局已定 —— " + an.forced.note + "。";
+    if (an.forced.why === "draw") return "和局已定 —— " + an.forced.note + "。";
+  }
+  if (an.forced && an.forced.note) return an.forced.note + "。";
   var wr = an.winrateUser;
   if (an.userTurn) {
     if (an.mustBlockMe.length) return "敌军兵临城下！速防 " + an.mustBlockMe.map(function (p) { return coordName(p.x, p.y); }).join("、") + "，迟则生变。";
@@ -2726,8 +2907,6 @@ function renderLoop(t) {
     var an = null;
     try { an = analyzeAt(S.viewIndex); } catch (e) {}
 
-    var isLive = S.viewIndex === S.moves.length && !S.over;
-
     var o = {
       t: t,
       numbers: S.settings.showNumbers ? S.moves.slice(0, S.viewIndex) : null,
@@ -2887,6 +3066,9 @@ function qName(q) {
   return { best: "妙手", good: "好棋", okay: "平淡", miss: "失误", bad: "大漏" }[q] || "—";
 }
 
+/* ============================================================
+   【优化6】refresh：终局横幅 & 强制胜负提示
+   ============================================================ */
 function refresh() {
   Guard.safe("refresh", function () {
     var k = S.viewIndex, an = analyzeAt(k), U = S.settings.userColor, i;
@@ -2920,6 +3102,11 @@ function refresh() {
 
     var ov = '<div class="poem"><b>军师曰：</b>' + junshiComment(an, U) + '</div>';
     if (lastOpp) ov += '<div class="intent">敌方第' + (lastOpp.i + 1) + '手 ' + coordName(lastOpp.mv.x, lastOpp.mv.y) + ' ·「' + lastOpp.m.intent + '」</div>';
+    if (an.forced && an.forced.note) {
+      var fcls = an.forced.why === "win" ? "okbox" : (an.forced.why === "lose" ? "warnbox" : "intent");
+      var fico = an.forced.why === "win" ? "✅ " : (an.forced.why === "lose" ? "⛔ " : "🤝 ");
+      ov += '<div class="' + fcls + '">' + fico + an.forced.note + '</div>';
+    }
     ov += '<div class="wrbar"><div class="bk" style="width:' + (100 - an.winrateUser) + '%"></div><div class="wt" style="width:' + an.winrateUser + '%"></div>' +
       '<span class="lb" style="left:4px;color:#eee">敌 ' + (100 - an.winrateUser).toFixed(1) + '%</span>' +
       '<span class="lb" style="right:4px;color:#333">我 ' + an.winrateUser.toFixed(1) + '%</span></div>' +
@@ -2938,12 +3125,18 @@ function refresh() {
 
     var th = "";
     if (!S.over && S.viewIndex === S.moves.length) {
-      if (an.userTurn && an.mustBlockMe.length)
+      if (an.userTurn && an.opFive >= 2) {
+        th += '<div class="warnbox">🚨 敌军已布下 ' + an.opFive + ' 处成五点，堵住一处仍有一处 —— <b>必输局面</b></div>';
+      } else if (an.userTurn && an.mustBlockMe.length) {
         th += '<div class="warnbox">🚨 敌军已可直接成五！必须封锁：' + an.mustBlockMe.map(function (p) { return coordName(p.x, p.y); }).join("、") + '</div>';
-      else if (!an.userTurn && an.mustBlockOpp.length)
+      } else if (!an.userTurn && an.mustBlockOpp.length) {
         th += '<div class="warnbox">⚠ 我军有成五杀点，敌军多半来堵：' + an.mustBlockOpp.map(function (p) { return coordName(p.x, p.y); }).join("、") + '</div>';
-      else if (an.userTurn && an.threat.ofour.U)
+      } else if (an.userTurn && an.threat.ofour.U) {
         th += '<div class="okbox">✨ 我军有活四点，一击可定乾坤！</div>';
+      }
+      if (an.userTurn && an.myFive >= 2) {
+        th += '<div class="okbox">✨ 我军已有 ' + an.myFive + ' 处成五点，胜券在握！</div>';
+      }
     }
     var lvName = { five: "成五点", ofour: "活四点", four: "冲四点", othree: "活三点", sthree: "眠三点", otwo: "活二点" };
     th += '<table class="tbl"><tr><th>威胁点统计</th><th style="color:#7a3327">敌方</th><th style="color:#33513b">我方</th></tr>';
@@ -3001,7 +3194,7 @@ function refresh() {
     });
     sh += '</table>';
     if (an.forbidden.length) sh += '<div class="small">禁手点明细：' + an.forbidden.slice(0, 8).map(function (f) { return coordName(f.x, f.y) + "(" + f.r + ")"; }).join("、") + (an.forbidden.length > 8 ? "…" : "") + '</div>';
-    sh += '<div class="small">引擎：四向棋形识别 · 双威胁加权 · Top4 前视验证（演敌最强应手）· 候选 ' + an.list.length + ' 点</div>';
+    sh += '<div class="small">引擎：四向棋形识别 · 双威胁加权 · 终局锁定 · 双成五点判负 · 候选 ' + an.list.length + ' 点</div>';
     $("statPanel").innerHTML = sh;
 
     $("profCard").style.display = S.settings.showProfile ? "" : "none";
@@ -4149,7 +4342,10 @@ function drawVideoModule(ctx, r, id, an, k, sc, pf) {
   } else if (id === "threat") {
     vPanel(ctx, r, "烽火警报", sc);
     ctx.font = 15 * sc + "px KaiTi,STKaiti,serif";
-    if (an.mustBlockMe.length && an.userTurn) {
+    if (an.userTurn && an.opFive >= 2) {
+      ctx.fillStyle = "#a83226";
+      ctx.fillText("⛔ 敌军双成五点，必输局面", tx, ty);
+    } else if (an.mustBlockMe.length && an.userTurn) {
       ctx.fillStyle = "#a83226";
       ctx.fillText("🚨 敌成五点必防：" + an.mustBlockMe.slice(0, 3).map(function (p) { return coordName(p.x, p.y); }).join("、"), tx, ty);
     } else if (an.threat.ofour.U && an.userTurn) {
