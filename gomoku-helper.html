@@ -235,7 +235,6 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
 .gitem .loc { color: #7ee0a3; margin-left: 6px; }
 .gitem details { color: #8b96ad; margin-top: 3px; white-space: pre-wrap; }
 .legend { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: min(100%, 56vh); margin: 6px auto 0; color: var(--golddim); font-size: 11px; font-family: var(--fk); }
-/* AI 学习进度条 */
 .lw { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; font-family: var(--fk); }
 .lw .nm { width: 62px; color: var(--ink2); }
 .lw .bg { flex: 1; height: 8px; background: #cbb98e; border-radius: 4px; overflow: hidden; }
@@ -299,6 +298,10 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
       <summary>相敌之术 · 对方棋力</summary>
       <div class="bd" id="profPanel"></div>
     </details>
+    <details class="card" id="reportCard">
+      <summary>战局推演 · 全盘统计</summary>
+      <div class="bd" id="reportPanel"></div>
+    </details>
   </section>
 
   <section id="pgKifu" class="page">
@@ -344,7 +347,7 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
         <label class="sw"><input type="checkbox" id="tgHint"><i></i>棋盘推荐点标记</label>
         <label class="sw"><input type="checkbox" id="tgPred"><i></i>对方预测点标记</label>
         <label class="sw"><input type="checkbox" id="tgForb"><i></i>禁手点标记</label>
-        <label class="sw"><input type="checkbox" id="tgSound"><i></i>古琴音效</label>
+        <label class="sw"><input type="checkbox" id="tgSound"><i></i>棋子落盘音效</label>
         <label class="sw"><input type="checkbox" id="tgProfile"><i></i>对方棋力画像</label>
         <label class="sw"><input type="checkbox" id="tgLearn"><i></i>AI 自我学习（实验性）</label>
       </div>
@@ -360,6 +363,7 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
           <button class="btn" id="btnNew2">✚ 新对局</button>
           <button class="btn" id="btnVideo2">🎬 导出视频</button>
           <button class="btn" id="btnCard">📜 战报分享图</button>
+          <button class="btn" id="btnSheet2">📊 全局分析图</button>
           <button class="btn" id="btnShot2">🖼 棋盘截图</button>
           <button class="btn" id="btnKifu2">📋 复制棋谱</button>
           <button class="btn dark" id="btnGuard">🛡 报错日志</button>
@@ -373,9 +377,10 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
         ② 轮到我方时，棋盘金菱为最推荐点，点击落子（防误触需点两次）；轮到对方时，红圈为敌方预测点，照着对方实际落点输入；<br>
         ③ <b>长按任意空点</b>可沙盘推演该点棋形与胜率；<br>
         ④ 「复盘」页可点任意一手回看当时局势，支持自动播放与坏手扫描；<br>
-        ⑤ 视频导出为程序逐帧合成（非录屏），模块与间隔可自选；<br>
-        ⑥ 所有存档保存在本机；连点左上角印章五次或按 Ctrl+Shift+L 可打开报错日志。<br>
-        ⑦ <b>AI 自我学习</b>：每局无论是否保存，都会静默分析双方棋步，找出我方薄弱点，在下一场对局中微调策略权重。开关在「设置」→「AI 自我学习」。
+        ⑤ 视频导出为程序逐帧合成（非录屏），<b>格式可选</b>：MP4 (H.264) 优先，WebM (VP9) 更省资源；移动端默认建议 WebM + 720p + 24fps；<br>
+        ⑥ 「全局分析图」可导出一张包含棋盘、胜率曲线、双方统计与关键手点评的长图；<br>
+        ⑦ 所有存档保存在本机；连点左上角印章五次或按 Ctrl+Shift+L 可打开报错日志。<br>
+        ⑧ <b>AI 自我学习</b>：每局无论是否保存，都会静默分析双方棋步，找出我方薄弱点，在下一场对局中微调策略权重。
       </div>
     </details>
   </section>
@@ -395,6 +400,7 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
       <button class="btn primary" id="mNew">✚ 新对局</button>
       <button class="btn" id="mVideo">🎬 导出视频</button>
       <button class="btn" id="mCard">📜 战报分享图</button>
+      <button class="btn" id="mSheet">📊 全局分析图</button>
       <button class="btn" id="mShot">🖼 棋盘截图</button>
       <button class="btn" id="mKifu">📋 复制棋谱</button>
       <button class="btn" id="mSave2">💾 保存棋局</button>
@@ -439,17 +445,33 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
     <h3>🎬 导出复盘视频 · 程序离线合成</h3>
     <div id="vidCfg">
       <div class="mrow">
-        <label>间隔(秒)</label>
-        <input type="number" id="vGap" value="2" min="0.5" max="10" step="0.5" style="width:70px">
+        <label>每手(秒)</label>
+        <input type="number" id="vGap" value="1.6" min="0.4" max="10" step="0.2" style="width:66px">
+        <label>帧率</label>
+        <select id="vFps" style="width:92px">
+          <option value="20">20fps</option>
+          <option value="24">24fps</option>
+          <option value="30" selected>30fps</option>
+          <option value="60">60fps</option>
+        </select>
+      </div>
+      <div class="mrow">
         <label>分辨率</label>
-        <select id="vRes" style="flex:1;min-width:120px">
-          <option value="1280">720p</option>
+        <select id="vRes" style="flex:1;min-width:110px">
+          <option value="854">480p 流畅</option>
+          <option value="1280">720p 标清</option>
           <option value="1920" selected>1080p 高清</option>
           <option value="2560">2K</option>
           <option value="3840">4K</option>
         </select>
+        <label>格式</label>
+        <select id="vFormat" style="width:120px">
+          <option value="auto">自动</option>
+          <option value="mp4">MP4 (H.264)</option>
+          <option value="webm">WebM (VP9)</option>
+        </select>
       </div>
-      <div class="mrow small" style="margin-top:10px">勾选视频中显示的分析模块（排版自动适配）：</div>
+      <div class="mrow small" style="margin-top:6px">勾选视频中显示的分析模块（排版自动适配）：</div>
       <div class="mrow" id="vMods" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <label class="chk"><input type="checkbox" data-m="winrate" checked>胜率条</label>
         <label class="chk"><input type="checkbox" data-m="rec" checked>推荐落点</label>
@@ -460,8 +482,10 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
         <label class="chk"><input type="checkbox" data-m="kifu" checked>棋谱</label>
         <label class="chk"><input type="checkbox" data-m="intro" checked>片头片尾</label>
       </div>
-      <div class="mrow small" style="margin-top:10px;color:var(--ink2)">
-        * ✨ <b>极速合成</b>：WebCodecs 离线“关键帧”合成。需 Chrome/Edge + localhost/https；不支持时自动降级实时录制。
+      <div class="mrow small" style="margin-top:10px;color:var(--ink2);line-height:1.7">
+        * ✨ <b>流畅动画合成</b>：WebCodecs 逐帧离线渲染，棋子落盘带缓动与涟漪，片头片尾元素连续过渡。<br>
+        * 🎯 <b>格式可选</b>：MP4 (H.264) 优先，WebM (VP9) 更省资源；若选择格式不被支持会自动回退另一种。<br>
+        * 📱 <b>移动端建议</b>：选 WebM + 720p + 24fps 最为流畅；或降低分辨率/帧率换取速度。
       </div>
       <div class="mrow" style="justify-content:flex-end;margin-top:15px">
         <button class="btn" onclick="closeModal('mVideoModal')">取消</button>
@@ -536,21 +560,24 @@ input[type=number], input[type=text], select { background: #fbf4e2; border: 1px 
   <div id="guardList"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/webm-muxer@4.1.1/build/webm-muxer.min.js"></script>
 <script>
 "use strict";
 var NL = String.fromCharCode(10);
 
 /* ============================================================
-   一、Guard 报错系统
+   一、Guard 报错系统（去重 + 资源错误忽略）
    ============================================================ */
 var Guard = (function () {
   var entries = [], panelOpen = false, badge = null, list = null, filterVal = "all";
+  var _lastSig = "", _lastT = 0;
+
   try {
     var old = JSON.parse(localStorage.getItem("GOMO_LOG") || "[]");
     if (Array.isArray(old)) entries = old;
   } catch (e) {}
+
   function now() { try { return new Date().toLocaleTimeString(); } catch (e) { return ""; } }
+
   function renderBadge() {
     try {
       if (!badge) badge = document.getElementById("guardBadge");
@@ -561,6 +588,7 @@ var Guard = (function () {
       badge.textContent = "⚠ " + n + " 处错误 · 点击查看";
     } catch (e) {}
   }
+
   function loc(d) {
     var s = "";
     try {
@@ -569,6 +597,7 @@ var Guard = (function () {
     } catch (e) {}
     return s;
   }
+
   function renderList() {
     try {
       if (!list) list = document.getElementById("guardList");
@@ -588,43 +617,70 @@ var Guard = (function () {
       if (c) c.textContent = "共 " + entries.length + " 条（显示 " + shown + "）";
     } catch (e) {}
   }
+
   function push(level, msg, d) {
     try {
       d = d || {};
-      entries.push({ time: now(), level: level, msg: msg == null ? "" : String(msg),
-        line: d.line || "", col: d.col || "", src: d.src || "", stack: d.stack || "" });
+      var text = msg == null ? "" : String(msg);
+      if (!text) return;
+      var sig = level + "|" + text;
+      var tm = Date.now();
+      if (sig === _lastSig && tm - _lastT < 320) { _lastT = tm; return; }
+      _lastSig = sig; _lastT = tm;
+
+      entries.push({
+        time: now(), level: level, msg: text,
+        line: d.line || "", col: d.col || "", src: d.src || "", stack: d.stack || ""
+      });
       if (entries.length > 800) entries.splice(0, entries.length - 800);
       try { localStorage.setItem("GOMO_LOG", JSON.stringify(entries.slice(-200))); } catch (e2) {}
       renderBadge(); renderList();
     } catch (e) {}
   }
+
   try {
     window.addEventListener("error", function (ev) {
-      var msg = (ev && ev.message) || "未知脚本错误";
-      if (msg.indexOf("Guard自检测试") !== -1) {
-        push("info", "[自检测试] " + msg, { line: ev && ev.lineno, col: ev && ev.colno, src: ev && ev.filename, stack: ev && ev.error && ev.error.stack });
-        ev.preventDefault(); return;
-      }
-      push("error", msg, { line: ev && ev.lineno, col: ev && ev.colno, src: ev && ev.filename, stack: ev && ev.error && ev.error.stack });
+      try {
+        var tgt = ev && ev.target;
+        if (tgt && tgt !== window && tgt.tagName &&
+            (tgt.tagName === "SCRIPT" || tgt.tagName === "IMG" ||
+             tgt.tagName === "LINK" || tgt.tagName === "VIDEO" || tgt.tagName === "AUDIO")) {
+          return;
+        }
+        var msg = (ev && ev.message) || (ev && ev.error && ev.error.message) || "";
+        if (!msg) return;
+        if (msg.indexOf("Guard自检测试") !== -1) {
+          push("info", "[自检测试] " + msg, {
+            line: ev && ev.lineno, col: ev && ev.colno, src: ev && ev.filename,
+            stack: ev && ev.error && ev.error.stack
+          });
+          ev.preventDefault(); return;
+        }
+        push("error", msg, {
+          line: ev && ev.lineno, col: ev && ev.colno, src: ev && ev.filename,
+          stack: ev && ev.error && ev.error.stack
+        });
+      } catch (e) {}
     }, true);
+
     window.addEventListener("unhandledrejection", function (ev) {
-      var r = ev && ev.reason, msg = (r && (r.message || r)) || r;
-      if (String(msg).indexOf("Guard自检测试") !== -1) { push("info", "[自检测试] Promise拒绝: " + msg, { stack: r && r.stack }); ev.preventDefault(); return; }
-      push("error", "未处理的Promise拒绝: " + msg, { stack: r && r.stack });
+      try {
+        var r = ev && ev.reason, msg = (r && (r.message || r)) || r || "";
+        if (!msg) return;
+        if (String(msg).indexOf("Guard自检测试") !== -1) {
+          push("info", "[自检测试] Promise拒绝: " + msg, { stack: r && r.stack });
+          ev.preventDefault(); return;
+        }
+        push("error", "未处理的Promise拒绝: " + msg, { stack: r && r.stack });
+      } catch (e) {}
     });
-    window.onerror = function (msg, src, line, col, err) {
-      if (String(msg).indexOf("Guard自检测试") !== -1) {
-        push("info", "[自检测试] " + msg, { line: line, col: col, src: src, stack: err && err.stack }); return true;
-      }
-      push("error", msg, { line: line, col: col, src: src, stack: err && err.stack });
-      return false;
-    };
+
     var _e = console.error, _w = console.warn;
     console.error = function () {
       try {
         var args = Array.prototype.map.call(arguments, function (a) { return a && a.message ? a.message : String(a); });
         var msg = args.join(" ");
-        if (msg.indexOf("Guard自检测试") !== -1) push("info", "[自检测试] " + msg, { stack: (new Error()).stack });
+        if (msg.indexOf("Guard自检测试") !== -1) push("info", "[自检测试] " + msg);
         else push("error", msg, { stack: (new Error()).stack });
       } catch (e) {}
       _e.apply(console, arguments);
@@ -638,6 +694,7 @@ var Guard = (function () {
       _w.apply(console, arguments);
     };
   } catch (e) {}
+
   function toggle(force) {
     try {
       var p = document.getElementById("guardPanel");
@@ -646,11 +703,7 @@ var Guard = (function () {
       if (panelOpen) renderList();
     } catch (e) {}
   }
-  function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { toast("已复制到剪贴板"); }).catch(function () { fallbackCopy(text); });
-    } else { fallbackCopy(text); }
-  }
+
   function fallbackCopy(text) {
     try {
       var ta = document.createElement("textarea");
@@ -660,8 +713,14 @@ var Guard = (function () {
       document.body.removeChild(ta);
       if (ok) toast("已复制到剪贴板");
       else { dlBlob(new Blob([text], { type: "text/plain" }), "导出_" + Date.now() + ".txt"); toast("剪贴板不可用，已下载为文本文件"); }
-    } catch (e) { dlBlob(new Blob([text], { type: "text/plain" }), "导出_" + Date.now() + ".txt"); toast("复制失败，已下载为文本文件"); }
+    } catch (e) { dlBlob(new Blob([text], { type: "text/plain" }), "导出_" + Date.now() + ".txt"); }
   }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast("已复制到剪贴板"); }).catch(function () { fallbackCopy(text); });
+    } else { fallbackCopy(text); }
+  }
+
   function ensurePanel() {
     try {
       document.getElementById("gClose").onclick = function () { toggle(false); };
@@ -692,7 +751,7 @@ var Guard = (function () {
   document.addEventListener("keydown", function (ev) {
     try { if (ev.ctrlKey && ev.shiftKey && (ev.key === "L" || ev.key === "l")) { ev.preventDefault(); toggle(); } } catch (e) {}
   });
-  push("info", "Guard 日志系统已就绪");
+  push("info", "Guard 日志系统已就绪（去重模式）");
   return {
     error: function (m, d) { push("error", m, d); },
     warn: function (m, d) { push("warn", m, d); },
@@ -747,32 +806,152 @@ function nowStr() {
   var d = new Date();
   return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function clamp01(x) { return x < 0 ? 0 : (x > 1 ? 1 : x); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+function easeInOutCubic(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+function easeOutBack(x) { var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
+function easeOutQuint(x) { return 1 - Math.pow(1 - x, 5); }
+function easeInOutQuint(x) { return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2; }
+
+/* 快速让出：使用 MessageChannel 避免 setTimeout(0) 的 4ms 钳制 */
+var _yield = (function () {
+  try {
+    var ch = new MessageChannel();
+    var cb = null;
+    ch.port1.onmessage = function () {
+      var f = cb; cb = null;
+      if (f) f();
+    };
+    return function () {
+      return new Promise(function (res) { cb = res; ch.port2.postMessage(0); });
+    };
+  } catch (e) {
+    return function () { return new Promise(function (r) { setTimeout(r, 0); }); };
+  }
+})();
+
+/* 移动端检测：用于自动降低默认分辨率/帧率/比特率 */
+var IS_MOBILE = (function () {
+  try {
+    if (/(Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet)/i.test(navigator.userAgent)) return true;
+    if (navigator.userAgentData && navigator.userAgentData.mobile) return true;
+    if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches && window.innerWidth < 1024) return true;
+    if ("ontouchstart" in window && window.innerWidth < 1024) return true;
+  } catch (e) {}
+  return false;
+})();
 
 /* ============================================================
-   三、音效
+   三、音效（拟真落子声 · 木盘共鸣）
    ============================================================ */
-var AC = null;
+var AC = null, MASTER = null;
+
 function unlockAudio() {
-  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch (e) {}
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    if (!MASTER) {
+      MASTER = AC.createGain();
+      MASTER.gain.value = 0.85;
+      var comp = AC.createDynamicsCompressor();
+      comp.threshold.value = -16; comp.knee.value = 14;
+      comp.ratio.value = 5; comp.attack.value = 0.002; comp.release.value = 0.14;
+      MASTER.connect(comp); comp.connect(AC.destination);
+    }
+  } catch (e) {}
 }
 document.addEventListener("pointerdown", unlockAudio, { once: true });
 document.addEventListener("touchstart", unlockAudio, { once: true });
+document.addEventListener("keydown", unlockAudio, { once: true });
+
 function beep(freq, dur, type, vol) {
   try {
     if (!S.settings.sound) return;
-    unlockAudio(); if (!AC) return;
+    unlockAudio(); if (!AC || !MASTER) return;
     var o = AC.createOscillator(), g = AC.createGain();
     o.type = type || "sine"; o.frequency.value = freq;
-    g.gain.setValueAtTime(vol || 0.18, AC.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + (dur || 0.09));
-    o.connect(g); g.connect(AC.destination);
-    o.start(); o.stop(AC.currentTime + (dur || 0.09));
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol || 0.18, AC.currentTime + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + (dur || 0.09));
+    o.connect(g); g.connect(MASTER);
+    o.start(); o.stop(AC.currentTime + (dur || 0.09) + 0.02);
   } catch (e) {}
 }
-function sndStone() { beep(147, 0.09, "triangle", 0.3); beep(740, 0.03, "sine", 0.05); }
-function sndErr() { beep(110, 0.2, "sawtooth", 0.1); }
-function sndPluck() { beep(660, 0.12, "sine", 0.08); }
-function sndWin() { [262,294,330,392,440,523].forEach(function (f,i) { setTimeout(function () { beep(f, 0.3, "sine", 0.15); }, i * 140); }); }
+
+function sndStone() {
+  try {
+    if (!S.settings.sound) return;
+    unlockAudio();
+    if (!AC || !MASTER) return;
+    var now = AC.currentTime;
+
+    var dur = 0.030;
+    var len = Math.max(8, Math.floor(AC.sampleRate * dur));
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var ch = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) {
+      var env = Math.pow(1 - i / len, 2.8);
+      ch[i] = (Math.random() * 2 - 1) * env;
+    }
+    var src = AC.createBufferSource(); src.buffer = buf;
+    var hp = AC.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = 850;
+    var bp = AC.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 2500 + Math.random() * 1200;
+    bp.Q.value = 0.85;
+    var gN = AC.createGain();
+    gN.gain.setValueAtTime(0.62, now);
+    gN.gain.exponentialRampToValueAtTime(0.0001, now + 0.052);
+    src.connect(hp); hp.connect(bp); bp.connect(gN); gN.connect(MASTER);
+    src.start(now); src.stop(now + 0.06);
+
+    var partials = [
+      { f: 620 + Math.random() * 70, v: 0.17, d: 0.115, s: 0.80 },
+      { f: 1180 + Math.random() * 110, v: 0.23, d: 0.082, s: 0.86 },
+      { f: 2360 + Math.random() * 190, v: 0.105, d: 0.056, s: 0.88 },
+      { f: 3580 + Math.random() * 300, v: 0.048, d: 0.036, s: 0.90 },
+      { f: 4620 + Math.random() * 400, v: 0.022, d: 0.026, s: 0.92 }
+    ];
+    partials.forEach(function (p) {
+      var o = AC.createOscillator(), g = AC.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(p.f, now);
+      o.frequency.exponentialRampToValueAtTime(p.f * p.s, now + p.d);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(p.v, now + 0.0035);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + p.d);
+      o.connect(g); g.connect(MASTER);
+      o.start(now); o.stop(now + p.d + 0.03);
+    });
+
+    var oL = AC.createOscillator(), gL = AC.createGain();
+    oL.type = "sine";
+    oL.frequency.setValueAtTime(180, now);
+    oL.frequency.exponentialRampToValueAtTime(95, now + 0.07);
+    gL.gain.setValueAtTime(0.0001, now);
+    gL.gain.exponentialRampToValueAtTime(0.09, now + 0.005);
+    gL.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    oL.connect(gL); gL.connect(MASTER);
+    oL.start(now); oL.stop(now + 0.1);
+
+    var oT = AC.createOscillator(), gT = AC.createGain();
+    oT.type = "triangle";
+    oT.frequency.setValueAtTime(880 + Math.random() * 120, now);
+    oT.frequency.exponentialRampToValueAtTime(760, now + 0.16);
+    gT.gain.setValueAtTime(0.0001, now);
+    gT.gain.exponentialRampToValueAtTime(0.035, now + 0.01);
+    gT.gain.exponentialRampToValueAtTime(0.0001, now + 0.17);
+    oT.connect(gT); gT.connect(MASTER);
+    oT.start(now); oT.stop(now + 0.2);
+  } catch (e) {}
+}
+
+function sndPluck() { beep(720, 0.055, "sine", 0.055); }
+function sndErr() { beep(120, 0.18, "sawtooth", 0.08); }
+function sndWin() { [262, 294, 330, 392, 440, 523].forEach(function (f, i) { setTimeout(function () { beep(f, 0.3, "sine", 0.14); }, i * 140); }); }
 
 /* ============================================================
    四、IndexedDB
@@ -828,43 +1007,14 @@ function dbGet(store, key) {
 }
 
 /* ============================================================
-   五、AI 学习模块（实验性）
-   —— 记录所有对局的每一步，分析薄弱点，动态调权
+   五、AI 学习模块
    ============================================================ */
 var AI_LEARN = {
-  // 引擎权重（默认基线，被学习模块动态调整）
-  wAttack: 1.00,
-  wDefense: 1.00,
-  wDouble: 1.00,
-  wCenter: 1.00,
-  wVcfAggr: 1.00,
-
-  // 学习统计
-  games: 0,
-  movesSeen: 0,
-  wins: 0,
-  losses: 0,
-  draws: 0,
-
-  // 错误指纹（累计）
-  missFiveDef: 0,      // 漏防对手成五
-  missFourDef: 0,      // 漏防活四/冲四
-  missThreeDef: 0,     // 漏防活三
-  missWin: 0,          // 错失成五/活四胜机
-  wasteMove: 0,        // 无谓缓手
-
-  // 步日志（内存缓冲，攒 20 条写盘一次）
-  stepBuf: [],
-  stepLog: [],   // 最近 200 步（供分析）
-
-  // 世代
-  version: 1,
-  lastUpdate: 0,
-
-  // 是否启用
-  enabled: true
+  wAttack: 1.00, wDefense: 1.00, wDouble: 1.00, wCenter: 1.00, wVcfAggr: 1.00,
+  games: 0, movesSeen: 0, wins: 0, losses: 0, draws: 0,
+  missFiveDef: 0, missFourDef: 0, missThreeDef: 0, missWin: 0, wasteMove: 0,
+  stepBuf: [], stepLog: [], version: 1, lastUpdate: 0, enabled: true
 };
-
 var LEARN_MEMO = { dirty: false, timer: null };
 
 function aiLoad() {
@@ -890,7 +1040,6 @@ function aiSave() {
   Object.keys(AI_LEARN).forEach(function (k) {
     if (k !== "stepBuf" && k !== "stepLog") toSave[k] = AI_LEARN[k];
   });
-  // 保留最近 200 步
   toSave.stepLog = AI_LEARN.stepLog.slice(-200);
   return dbPut("learn", { key: "state", v: toSave }).catch(function (e) { Guard.warn("AI 学习保存失败:" + e); });
 }
@@ -900,56 +1049,30 @@ function aiSaveDebounced() {
   LEARN_MEMO.timer = setTimeout(function () { aiSave(); LEARN_MEMO.timer = null; }, 900);
 }
 
-/**
- * 记录单步（含双方）
- * @param {Object} mv       {x,y,color}
- * @param {Object} meta     S.moveMeta[last]
- * @param {Object} anBefore analyzeAt(k)（落子前）
- * @param {Object} anAfter  analyzeAt(k+1)（落子后）
- */
 function aiRecordStep(mv, meta, anBefore, anAfter) {
   if (!AI_LEARN.enabled) return;
   var U = S.settings.userColor;
   var isMine = (mv.color === U);
 
-  // 精简记录
   AI_LEARN.stepBuf.push({
-    t: Date.now(),
-    x: mv.x, y: mv.y, c: mv.color,
-    mine: isMine,
-    q: meta.quality,
-    rank: meta.rank,
+    t: Date.now(), x: mv.x, y: mv.y, c: mv.color, mine: isMine,
+    q: meta.quality, rank: meta.rank,
     wrB: anBefore ? anBefore.winrateUser : 50,
     wrA: anAfter ? anAfter.winrateUser : 50,
     five: anBefore ? (isMine ? anBefore.myFive : anBefore.opFive) : 0,
-    four: anBefore ? (isMine ? anBefore.myOFour : anBefore.opOFour) : 0,
-    opFive: anBefore ? anBefore.opFive : 0,
-    myFive: anBefore ? anBefore.myFive : 0
+    four: anBefore ? (isMine ? anBefore.myOFour : anBefore.opOFour) : 0
   });
   AI_LEARN.movesSeen++;
 
-  if (AI_LEARN.stepBuf.length >= 20) {
-    aiFlushStepBuf();
-  }
+  if (AI_LEARN.stepBuf.length >= 20) aiFlushStepBuf();
 
-  // 实时学习：若本步是我方大漏，立即累计错误指纹
+  var bad = false;
   if (isMine && anBefore) {
-    var bad = false;
-    if (anBefore.mustBlockMe.length > 0 && meta.quality !== "best" && meta.quality !== "good") {
-      AI_LEARN.missFiveDef++; bad = true;
-    }
-    if (anBefore.threat.ofour.O > 0 && meta.quality === "bad") {
-      AI_LEARN.missFourDef++; bad = true;
-    }
-    if (anBefore.threat.othree.O > 0 && meta.quality === "bad") {
-      AI_LEARN.missThreeDef++; bad = true;
-    }
-    if (anBefore.threat.ofour.U > 0 && (meta.quality === "bad" || meta.quality === "miss")) {
-      AI_LEARN.missWin++; bad = true;
-    }
-    if (!bad && (meta.quality === "bad" || meta.quality === "miss")) {
-      AI_LEARN.wasteMove++;
-    }
+    if (anBefore.mustBlockMe.length > 0 && meta.quality !== "best" && meta.quality !== "good") { AI_LEARN.missFiveDef++; bad = true; }
+    if (anBefore.threat.ofour.O > 0 && meta.quality === "bad") { AI_LEARN.missFourDef++; bad = true; }
+    if (anBefore.threat.othree.O > 0 && meta.quality === "bad") { AI_LEARN.missThreeDef++; bad = true; }
+    if (anBefore.threat.ofour.U > 0 && (meta.quality === "bad" || meta.quality === "miss")) { AI_LEARN.missWin++; bad = true; }
+    if (!bad && (meta.quality === "bad" || meta.quality === "miss")) AI_LEARN.wasteMove++;
   }
   if (bad) aiSaveDebounced();
 }
@@ -962,14 +1085,8 @@ function aiFlushStepBuf() {
   aiSaveDebounced();
 }
 
-/**
- * 对局结束时：统计本局结果 → 动态调权
- * 策略：
- *   - 防守失误占主导 → 提高 wDefense（更重视封堵、更重视对手威胁）
- *   - 错失胜机占主导 → 提高 wAttack（更积极进攻）
- *   - 无谓缓手多   → 提高 wCenter（更靠近主战场）
- *   - 活三防守漏洞 → 提高 wDefense + wVcfAggr（更重视连续攻防）
- */
+function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+
 function aiLearnFromGame() {
   if (!AI_LEARN.enabled) return;
   aiFlushStepBuf();
@@ -982,40 +1099,30 @@ function aiLearnFromGame() {
     else AI_LEARN.losses++;
   }
 
-  // 本局指纹（与累计对比，看趋势）
   var f = {
-    fiveDef: AI_LEARN.missFiveDef,
-    fourDef: AI_LEARN.missFourDef,
-    threeDef: AI_LEARN.missThreeDef,
-    win: AI_LEARN.missWin,
-    waste: AI_LEARN.wasteMove
+    fiveDef: AI_LEARN.missFiveDef, fourDef: AI_LEARN.missFourDef,
+    threeDef: AI_LEARN.missThreeDef, win: AI_LEARN.missWin, waste: AI_LEARN.wasteMove
   };
   var total = f.fiveDef + f.fourDef + f.threeDef + f.win + f.waste;
   if (total < 3) { aiSave(); return; }
 
-  // 若本局我方败北，同类型错误权重放大
   var loseBias = 1.0;
   if (S.over && S.winner !== 0 && S.winner !== U) loseBias = 1.6;
 
-  var defScore   = (f.fiveDef * 4 + f.fourDef * 2.5 + f.threeDef * 1.2) * loseBias;
-  var atkScore   = (f.win * 3) * loseBias;
+  var defScore = (f.fiveDef * 4 + f.fourDef * 2.5 + f.threeDef * 1.2) * loseBias;
+  var atkScore = (f.win * 3) * loseBias;
   var wasteScore = f.waste;
 
-  // 归一化学习率：越接近 1.0 越难被推动，避免震荡
   var lr = 0.028;
-  var defW = defScore / (defScore + atkScore + wasteScore + 1);
-  var atkW = atkScore / (defScore + atkScore + wasteScore + 1);
-  var ctrW = wasteScore / (defScore + atkScore + wasteScore + 1);
+  var denom = defScore + atkScore + wasteScore + 1;
+  var defW = defScore / denom, atkW = atkScore / denom, ctrW = wasteScore / denom;
 
   AI_LEARN.wDefense = clamp(AI_LEARN.wDefense + (defW - 0.5) * lr, 0.75, 1.45);
   AI_LEARN.wAttack  = clamp(AI_LEARN.wAttack  + (atkW - 0.5) * lr, 0.75, 1.45);
   AI_LEARN.wCenter  = clamp(AI_LEARN.wCenter  + (ctrW - 0.5) * lr * 0.8, 0.85, 1.25);
 
-  // VCF 攻击性：若我方胜率长期偏低，也调高 VCF 搜索倾向
   var winRate = AI_LEARN.games ? AI_LEARN.wins / AI_LEARN.games : 0.5;
   AI_LEARN.wVcfAggr = clamp(AI_LEARN.wVcfAggr + (0.5 - winRate) * 0.01, 0.85, 1.25);
-
-  // 双威胁权重：漏防冲四多 → 更重视对手双威胁
   AI_LEARN.wDouble = clamp(1 + (f.fourDef - f.win) * 0.004, 0.9, 1.25);
 
   A_CACHE.clear();
@@ -1024,8 +1131,6 @@ function aiLearnFromGame() {
   Guard.info("AI 学习更新：A=" + AI_LEARN.wAttack.toFixed(3) + " D=" + AI_LEARN.wDefense.toFixed(3) +
     " C=" + AI_LEARN.wCenter.toFixed(3) + " V=" + AI_LEARN.wVcfAggr.toFixed(3));
 }
-
-function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
 function aiReset() {
   if (!confirm("清空 AI 学习的所有记忆？（权重恢复默认，统计归零）")) return;
@@ -1052,33 +1157,22 @@ function renderLearnPanel() {
     var wrPct = AI_LEARN.games ? (AI_LEARN.wins / AI_LEARN.games * 100).toFixed(0) + "%" : "—";
 
     var h = '<div class="infobox">🧠 军师已研习 <b>' + AI_LEARN.games + '</b> 局 · <b>' + AI_LEARN.movesSeen + '</b> 手；胜率 ' + wrPct + '。以下为自适应权重，逐局微调。</div>';
-
     h += '<div style="margin-top:6px">';
     var wrows = [
-      ["进攻", AI_LEARN.wAttack, 0.75, 1.45],
-      ["防守", AI_LEARN.wDefense, 0.75, 1.45],
-      ["双威", AI_LEARN.wDouble, 0.9, 1.25],
-      ["中心", AI_LEARN.wCenter, 0.85, 1.25],
+      ["进攻", AI_LEARN.wAttack, 0.75, 1.45], ["防守", AI_LEARN.wDefense, 0.75, 1.45],
+      ["双威", AI_LEARN.wDouble, 0.9, 1.25], ["中心", AI_LEARN.wCenter, 0.85, 1.25],
       ["冲胜", AI_LEARN.wVcfAggr, 0.85, 1.25]
     ];
     wrows.forEach(function (w) {
       var pct = Math.round((w[1] - w[2]) / (w[3] - w[2]) * 100);
       pct = Math.max(2, Math.min(98, pct));
-      h += '<div class="lw"><span class="nm">' + w[0] + '</span>' +
-        '<div class="bg"><i style="width:' + pct + '%"></i></div>' +
-        '<span class="vl">' + w[1].toFixed(3) + '</span></div>';
+      h += '<div class="lw"><span class="nm">' + w[0] + '</span><div class="bg"><i style="width:' + pct + '%"></i></div><span class="vl">' + w[1].toFixed(3) + '</span></div>';
     });
     h += '</div>';
 
     h += '<table class="tbl" style="margin-top:10px"><tr><th>错误指纹</th><th>次数</th><th>占比</th></tr>';
-    var fp = [
-      ["漏防成五", AI_LEARN.missFiveDef],
-      ["漏防冲四", AI_LEARN.missFourDef],
-      ["漏防活三", AI_LEARN.missThreeDef],
-      ["错失胜机", AI_LEARN.missWin],
-      ["无谓缓手", AI_LEARN.wasteMove]
-    ];
-    fp.forEach(function (r) {
+    [["漏防成五", AI_LEARN.missFiveDef], ["漏防冲四", AI_LEARN.missFourDef], ["漏防活三", AI_LEARN.missThreeDef],
+     ["错失胜机", AI_LEARN.missWin], ["无谓缓手", AI_LEARN.wasteMove]].forEach(function (r) {
       var pct = totalErr ? (r[1] / totalErr * 100).toFixed(1) + "%" : "0%";
       h += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + pct + '</td></tr>';
     });
@@ -1088,19 +1182,12 @@ function renderLearnPanel() {
       var d = new Date(AI_LEARN.lastUpdate);
       h += '<div class="small">上次更新：' + d.toLocaleString() + '</div>';
     }
-
-    // 最近对局记录
     if (AI_LEARN.stepLog.length) {
       var recent = AI_LEARN.stepLog.slice(-8).reverse();
       h += '<div class="small" style="margin-top:8px"><b>最近研习步迹：</b>' +
-        recent.map(function (s) {
-          return (s.mine ? "我" : "敌") + "·" + s.q;
-        }).join(" / ") + '</div>';
+        recent.map(function (s) { return (s.mine ? "我" : "敌") + "·" + s.q; }).join(" / ") + '</div>';
     }
-
-    h += '<div class="mrow" style="margin-top:12px;justify-content:flex-end">' +
-      '<button class="btn dark" id="btnLearnReset">🗑 重置记忆</button>' +
-      '</div>';
+    h += '<div class="mrow" style="margin-top:12px;justify-content:flex-end"><button class="btn dark" id="btnLearnReset">🗑 重置记忆</button></div>';
     p.innerHTML = h;
     var rb = $("btnLearnReset");
     if (rb) rb.onclick = aiReset;
@@ -1111,8 +1198,8 @@ function renderLearnPanel() {
    六、棋盘常量 & 状态
    ============================================================ */
 var N = 15,
-  DIRS = [[1,0],[0,1],[1,1],[1,-1]],
-  DIRCN = ["横","竖","斜","挑"];
+  DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]],
+  DIRCN = ["横", "竖", "斜", "挑"];
 
 var S = {
   moves: [], redo: [], moveMeta: [],
@@ -1197,7 +1284,6 @@ function maxDir(ds) { var m = 0, d; for (d = 0; d < 4; d++) if (ds[d] > m) m = d
 function scorePoint(b, x, y, c) { if (b[idx(x, y)] !== 0) return -1; return sumDirs(scoreDirs(b, x, y, c)); }
 function centerBonus(x, y) { return (14 - (Math.abs(x - 7) + Math.abs(y - 7))) * 8; }
 
-/* 全盘扫描是否存在连五 */
 function boardWinner(b, renju) {
   var x, y, d, c, dx, dy, nx, ny, cnt, px, py;
   for (c = 1; c <= 2; c++) {
@@ -1331,7 +1417,7 @@ function findThreatMoves(b, c, minLevel) {
     for (var d = 0; d < 4; d++) if (ds[d] > best) best = ds[d];
     if (best >= minLevel) out.push({ x: p.x, y: p.y, level: best, ds: ds });
   }
-  out.sort(function (a, b) { return b.level - a.level; });
+  out.sort(function (a, b2) { return b2.level - a.level; });
   return out;
 }
 
@@ -1404,7 +1490,7 @@ function vcfCached(b, c, maxDepth) {
 }
 
 /* ============================================================
-   九、核心分析 analyzeAt（含 AI 权重 + 强制胜负判定）
+   九、核心分析 analyzeAt
    ============================================================ */
 function analyzeAt(k) {
   if (A_CACHE.has(k)) return A_CACHE.get(k);
@@ -1439,10 +1525,7 @@ function analyzeAt(k) {
     }
 
     var atk = userTurn ? aU : aO, def = userTurn ? aO : aU;
-    var atkW = atk * wA;
-    var defW = def * wD;
-    var ctrW = centerBonus(p.x, p.y) * wC;
-    var comb = (foul || atk < 0) ? -1 : (atkW + defW * 0.9 + ctrW);
+    var comb = (foul || atk < 0) ? -1 : (atk * wA + def * wD * 0.9 + centerBonus(p.x, p.y) * wC);
 
     list.push({
       x: p.x, y: p.y, aU: aU, aO: aO, comb: comb, foul: foul,
@@ -1454,10 +1537,9 @@ function analyzeAt(k) {
   list.sort(function (a, b2) { return b2.comb - a.comb; });
   for (i = 0; i < list.length; i++) list[i].rank = i + 1;
 
-  // 统计
   var evalU = 0, tU = 0, tO = 0, tN = 0;
   var tc = {};
-  ["five","ofour","four","othree","sthree","otwo"].forEach(function (L) { tc[L] = { U: 0, O: 0 }; });
+  ["five", "ofour", "four", "othree", "sthree", "otwo"].forEach(function (L) { tc[L] = { U: 0, O: 0 }; });
   var myFivePts = 0, opFivePts = 0, myOFourPts = 0, opOFourPts = 0;
   var mustBlockMe = [], mustBlockOpp = [];
 
@@ -1483,7 +1565,6 @@ function analyzeAt(k) {
   if (tc.ofour.O > 0 && !userTurn) baseWr = Math.min(baseWr, 12);
   baseWr = Math.max(1, Math.min(99, baseWr));
 
-  // ==================== 强制胜负判定 ====================
   var forced = null;
   var bw = boardWinner(b, renju);
 
@@ -1558,7 +1639,6 @@ function analyzeAt(k) {
       }
     }
 
-    // 我方候选点陷阱检测
     if (!forced && userTurn) {
       var candidateWin = null, viable = 0;
       for (i = 0; i < Math.min(list.length, 10); i++) {
@@ -1575,7 +1655,6 @@ function analyzeAt(k) {
           var isBlock = (cd.fiveO && !(cd.foul && O === 1));
           if (!isBlock) { cd.isLosing = true; continue; }
         }
-
         if (!cd.isLosing) {
           var ov = vcfCached(bb, O, 4);
           if (ov && ov.length > 0) { cd.isLosing = true; continue; }
@@ -1595,7 +1674,6 @@ function analyzeAt(k) {
   var wr = forced ? forced.wr : baseWr;
   wr = Math.max(0, Math.min(100, wr));
 
-  // 推荐落点
   var top = [], moverList = list.filter(function (c) { return !c.foul; });
   for (i = 0; i < Math.min(5, moverList.length); i++) {
     var c2 = moverList[i], wrC = null;
@@ -1607,7 +1685,6 @@ function analyzeAt(k) {
     });
   }
 
-  // 对方预测
   var pred = list.map(function (c) { return { x: c.x, y: c.y, s: Math.max(0, c.aO + c.aU * 0.9) }; })
     .sort(function (a, b2) { return b2.s - a.s; });
   var maxS = pred.length ? pred[0].s : 0, sum = 0;
@@ -1687,10 +1764,10 @@ function openingName() {
 function normEq(a, b) {
   var pa = a.split("|").map(function (s) { return s.split(",").map(Number); });
   var pb = b.split("|").map(function (s) { return s.split(",").map(Number); });
-  var d1a = pa[0][0]*pa[0][0]+pa[0][1]*pa[0][1], d1b = pb[0][0]*pb[0][0]+pb[0][1]*pb[0][1];
-  var d2a = pa[1][0]*pa[1][0]+pa[1][1]*pa[1][1], d2b = pb[1][0]*pb[1][0]+pb[1][1]*pb[1][1];
-  var da = (pa[1][0]-pa[0][0])*(pa[1][0]-pa[0][0]) + (pa[1][1]-pa[0][1])*(pa[1][1]-pa[0][1]);
-  var db = (pb[1][0]-pb[0][0])*(pb[1][0]-pb[0][0]) + (pb[1][1]-pb[0][1])*(pb[1][1]-pb[0][1]);
+  var d1a = pa[0][0] * pa[0][0] + pa[0][1] * pa[0][1], d1b = pb[0][0] * pb[0][0] + pb[0][1] * pb[0][1];
+  var d2a = pa[1][0] * pa[1][0] + pa[1][1] * pa[1][1], d2b = pb[1][0] * pb[1][0] + pb[1][1] * pb[1][1];
+  var da = (pa[1][0] - pa[0][0]) * (pa[1][0] - pa[0][0]) + (pa[1][1] - pa[0][1]) * (pa[1][1] - pa[0][1]);
+  var db = (pb[1][0] - pb[0][0]) * (pb[1][0] - pb[0][0]) + (pb[1][1] - pb[0][1]) * (pb[1][1] - pb[0][1]);
   return d1a === d1b && d2a === d2b && da === db;
 }
 
@@ -1791,7 +1868,6 @@ function tryPlace(x, y) {
   };
   S.moveMeta.push(meta);
 
-  // === AI 学习：记录本步 ===
   aiRecordStep({ x: x, y: y, color: toMove }, meta, pre, post);
 
   S.lastMoveTime = Date.now();
@@ -1809,7 +1885,6 @@ function tryPlace(x, y) {
       if (S.winner === U) sndWin(); else sndErr();
       Guard.info("对局结束，胜者：" + colorCN(S.winner) + "，共 " + S.moves.length + " 手");
     }
-    // === AI 学习：对局结束 → 更新权重 ===
     aiLearnFromGame();
     renderLearnPanel();
   }
@@ -1825,7 +1900,7 @@ function undo() {
   S.pending = null; S.viewIndex = S.moves.length;
   A_CACHE.clear(); viewBoardCache.k = -1;
   stopAutoplay();
-  beep(300, 0.06, "sine", 0.08);
+  beep(320, 0.06, "sine", 0.07);
   refresh();
   autoDraft();
 }
@@ -1845,7 +1920,7 @@ function redoMove() {
     block: null, attack: null, opening: k <= 10, thinkMs: 0, intent: "—"
   });
   S.viewIndex = k;
-  beep(380, 0.06, "sine", 0.08);
+  beep(400, 0.06, "sine", 0.07);
   refresh();
   autoDraft();
 }
@@ -1861,15 +1936,35 @@ function fitBoard() {
   if (boardCv.width !== px) { boardCv.width = px; boardCv.height = px; }
 }
 function geo(size) { var m = size * 0.058, span = size - 2 * m, cell = span / 14; return { m: m, cell: cell }; }
-function drawStone(ctx, cx, cy, r, color, alpha) {
+
+/* drawStone 增加 fast 参数：视频渲染时用简化画法，绕开 radialGradient + shadowBlur（移动端最大瓶颈） */
+function drawStone(ctx, cx, cy, r, color, alpha, fast) {
+  if (r <= 0.2) return;
   ctx.save();
   ctx.globalAlpha = alpha == null ? 1 : alpha;
-  ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = r * 0.35; ctx.shadowOffsetY = r * 0.15;
-  var g = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
-  if (color === 1) { g.addColorStop(0, "#6a6a6a"); g.addColorStop(1, "#050505"); }
-  else { g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#b9c0cc"); }
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+  if (fast) {
+    if (color === 1) {
+      ctx.fillStyle = "#0d0d0d";
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(160,160,160,.45)";
+      ctx.beginPath(); ctx.arc(cx - r * 0.28, cy - r * 0.30, r * 0.34, 0, 7); ctx.fill();
+    } else {
+      ctx.fillStyle = "#e8eef5";
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+      ctx.strokeStyle = "rgba(90,100,120,.45)";
+      ctx.lineWidth = Math.max(1, r * 0.05);
+      ctx.beginPath(); ctx.arc(cx, cy, r - ctx.lineWidth * 0.5, 0, 7); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.beginPath(); ctx.arc(cx - r * 0.28, cy - r * 0.30, r * 0.32, 0, 7); ctx.fill();
+    }
+  } else {
+    ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = r * 0.35; ctx.shadowOffsetY = r * 0.15;
+    var grd = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
+    if (color === 1) { grd.addColorStop(0, "#6a6a6a"); grd.addColorStop(1, "#050505"); }
+    else { grd.addColorStop(0, "#ffffff"); grd.addColorStop(1, "#b9c0cc"); }
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+  }
   ctx.restore();
 }
 function diamond(ctx, cx, cy, r) {
@@ -1877,43 +1972,65 @@ function diamond(ctx, cx, cy, r) {
   ctx.lineTo(cx, cy + r); ctx.lineTo(cx - r, cy); ctx.closePath();
 }
 function roundRect(ctx, x, y, w, h, r) {
+  if (w < 0) w = 0;
+  if (h < 0) h = 0;
+  r = Math.min(r, w / 2, h / 2);
   ctx.beginPath(); ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
 
-function drawBoardTo(ctx, px, py, size, b, o) {
-  o = o || {};
-  var g = geo(size), m = g.m, cell = g.cell, i;
-  ctx.save(); ctx.translate(px, py);
-  var wg = ctx.createLinearGradient(0, 0, size, size);
+/* 棋盘背景缓存：木质 + 网格 + 星位 + 坐标，绘制一次反复复用 */
+var _boardBgCache = { size: 0, cv: null };
+function getBoardBgCanvas(size) {
+  var s = Math.max(64, Math.round(size));
+  if (_boardBgCache.size === s && _boardBgCache.cv) return _boardBgCache.cv;
+  var cv = document.createElement("canvas");
+  cv.width = s; cv.height = s;
+  var ctx = cv.getContext("2d");
+  var g = geo(s), m = g.m, cell = g.cell, i;
+  var wg = ctx.createLinearGradient(0, 0, s, s);
   wg.addColorStop(0, "#e3b877"); wg.addColorStop(0.5, "#d7a45f"); wg.addColorStop(1, "#c8934e");
-  ctx.fillStyle = wg; roundRect(ctx, 0, 0, size, size, size * 0.02); ctx.fill();
+  ctx.fillStyle = wg; roundRect(ctx, 0, 0, s, s, s * 0.02); ctx.fill();
   ctx.strokeStyle = "rgba(90,55,20,.3)"; ctx.lineWidth = 1;
   for (var t = 0; t < 12; t++) {
-    var yy = (t * 97) % size;
+    var yy = (t * 97) % s;
     ctx.beginPath(); ctx.moveTo(0, yy);
-    ctx.bezierCurveTo(size * 0.3, yy + 9, size * 0.6, yy - 9, size, yy + 4); ctx.stroke();
+    ctx.bezierCurveTo(s * 0.3, yy + 9, s * 0.6, yy - 9, s, yy + 4); ctx.stroke();
   }
-  ctx.strokeStyle = "rgba(70,42,14,.9)"; ctx.lineWidth = Math.max(1, size / 840);
+  ctx.strokeStyle = "rgba(70,42,14,.9)"; ctx.lineWidth = Math.max(1, s / 840);
   for (i = 0; i < N; i++) {
-    ctx.beginPath(); ctx.moveTo(m + i * cell, m); ctx.lineTo(m + i * cell, size - m); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(m, m + i * cell); ctx.lineTo(size - m, m + i * cell); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(m + i * cell, m); ctx.lineTo(m + i * cell, s - m); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(m, m + i * cell); ctx.lineTo(s - m, m + i * cell); ctx.stroke();
   }
-  ctx.lineWidth = Math.max(2, size / 420); ctx.strokeRect(m, m, 14 * cell, 14 * cell);
+  ctx.lineWidth = Math.max(2, s / 420); ctx.strokeRect(m, m, 14 * cell, 14 * cell);
   ctx.fillStyle = "rgba(70,42,14,.95)";
-  [[7,7],[3,3],[11,3],[3,11],[11,11]].forEach(function (s) {
-    ctx.beginPath(); ctx.arc(m + s[0]*cell, m + s[1]*cell, Math.max(2.5, cell*0.1), 0, 7); ctx.fill();
+  [[7, 7], [3, 3], [11, 3], [3, 11], [11, 11]].forEach(function (pt) {
+    ctx.beginPath(); ctx.arc(m + pt[0] * cell, m + pt[1] * cell, Math.max(2.5, cell * 0.1), 0, 7); ctx.fill();
   });
   ctx.fillStyle = "rgba(70,42,14,.85)";
   ctx.font = "bold " + (cell * 0.32) + "px sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (i = 0; i < N; i++) {
     ctx.fillText(colName(i), m + i * cell, m * 0.42);
-    ctx.fillText(colName(i), m + i * cell, size - m * 0.42);
+    ctx.fillText(colName(i), m + i * cell, s - m * 0.42);
     ctx.fillText(String(N - i), m * 0.42, m + i * cell);
-    ctx.fillText(String(N - i), size - m * 0.42, m + i * cell);
+    ctx.fillText(String(N - i), s - m * 0.42, m + i * cell);
   }
+  _boardBgCache = { size: s, cv: cv };
+  return cv;
+}
+
+function drawBoardTo(ctx, px, py, size, b, o) {
+  o = o || {};
+  size = Math.round(size);
+  var g = geo(size), m = g.m, cell = g.cell, i;
+  ctx.save(); ctx.translate(px, py);
+
+  /* 从缓存绘制棋盘背景（这一层是静态的，绘制一次反复复用） */
+  var bgCv = getBoardBgCanvas(size);
+  ctx.drawImage(bgCv, 0, 0, size, size);
+
   function tagAt(cx, cy, text, bg, fg, dy) {
     if (!text) return;
     var fs = Math.max(9, cell * 0.24);
@@ -1932,30 +2049,39 @@ function drawBoardTo(ctx, px, py, size, b, o) {
     ctx.fillText(text, tx, ty + fs * 0.05);
     ctx.restore();
   }
+
+  var fast = !!o.fast;
   var nums = o.numbers, sx, sy;
   for (sy = 0; sy < N; sy++) {
     for (sx = 0; sx < N; sx++) {
       var v = b[idx(sx, sy)];
       if (!v) continue;
       var cx2 = m + sx * cell, cy2 = m + sy * cell, rr = cell * 0.44;
-      if (o.anim && o.anim.x === sx && o.anim.y === sy) rr *= o.anim.s;
-      drawStone(ctx, cx2, cy2, rr, v);
-      if (nums && nums.length) {
+      var aMul = 1, dyOff = 0;
+      if (o.anim && o.anim.x === sx && o.anim.y === sy) {
+        rr *= (o.anim.s == null ? 1 : o.anim.s);
+        aMul = (o.anim.a == null ? 1 : o.anim.a);
+        dyOff = (o.anim.dy || 0);
+      }
+      drawStone(ctx, cx2, cy2 + dyOff, rr, v, aMul, fast);
+      if (nums && nums.length && aMul > 0.35) {
         var mi = -1, q2;
         for (q2 = 0; q2 < nums.length; q2++) if (nums[q2].x === sx && nums[q2].y === sy) { mi = q2; break; }
         if (mi >= 0) {
           ctx.save();
+          ctx.globalAlpha = aMul;
           ctx.fillStyle = v === 1 ? "#f5f2e8" : "#222";
-          ctx.font = "bold " + cell * 0.28 + "px sans-serif";
+          ctx.font = "bold " + (cell * 0.28 * (rr / (cell * 0.44))) + "px sans-serif";
           ctx.textAlign = "center"; ctx.textBaseline = "middle";
           ctx.shadowColor = v === 1 ? "rgba(0,0,0,.55)" : "rgba(255,255,255,.45)";
           ctx.shadowBlur = 1;
-          ctx.fillText(String(mi + 1), cx2, cy2 + cell * 0.015);
+          ctx.fillText(String(mi + 1), cx2, cy2 + dyOff + cell * 0.015);
           ctx.restore();
         }
       }
     }
   }
+
   if (o.winLine && o.winLine.length > 1) {
     var x0 = m + o.winLine[0][0] * cell, y0 = m + o.winLine[0][1] * cell;
     var x1 = m + o.winLine[o.winLine.length - 1][0] * cell, y1 = m + o.winLine[o.winLine.length - 1][1] * cell;
@@ -1966,10 +2092,11 @@ function drawBoardTo(ctx, px, py, size, b, o) {
     ctx.strokeStyle = grad; ctx.lineWidth = cell * 0.2; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     ctx.fillStyle = "rgba(255,244,210,.95)";
-    [[x0,y0],[x1,y1]].forEach(function (pt) { ctx.beginPath(); ctx.arc(pt[0], pt[1], cell*0.14, 0, 7); ctx.fill(); });
+    [[x0, y0], [x1, y1]].forEach(function (pt) { ctx.beginPath(); ctx.arc(pt[0], pt[1], cell * 0.14, 0, 7); ctx.fill(); });
     ctx.restore();
   }
-  if (o.forbidden) {
+
+  if (o.forbidden && o.forbidden.length) {
     o.forbidden.forEach(function (f) {
       var cx = m + f.x * cell, cy = m + f.y * cell, r = cell * 0.36;
       ctx.save();
@@ -1992,7 +2119,8 @@ function drawBoardTo(ctx, px, py, size, b, o) {
       ctx.restore();
     });
   }
-  if (o.must) {
+
+  if (o.must && o.must.length) {
     o.must.forEach(function (p) {
       var cx = m + p.x * cell, cy = m + p.y * cell;
       var pulse = 1 + 0.08 * Math.sin((o.t || 0) / 160);
@@ -2007,7 +2135,8 @@ function drawBoardTo(ctx, px, py, size, b, o) {
       tagAt(cx, cy, "必防", "rgba(210,40,20,.92)", "#ffe6cf", -cell * 0.98);
     });
   }
-  if (o.preds) {
+
+  if (o.preds && o.preds.length) {
     o.preds.forEach(function (p, pi) {
       var cx = m + p.x * cell, cy = m + p.y * cell;
       var r = cell * (pi === 0 ? 0.42 : 0.34);
@@ -2036,7 +2165,8 @@ function drawBoardTo(ctx, px, py, size, b, o) {
       else if (pi === 0) tagAt(cx, cy, "敌", "rgba(214,48,32,.85)", "#fff", -cell * 0.9);
     });
   }
-  if (o.hints) {
+
+  if (o.hints && o.hints.length) {
     o.hints.forEach(function (h, hi) {
       var cx = m + h.x * cell, cy = m + h.y * cell;
       if (hi === 0) {
@@ -2071,6 +2201,7 @@ function drawBoardTo(ctx, px, py, size, b, o) {
       }
     });
   }
+
   if (o.last) {
     var lx = m + o.last.x * cell, ly = m + o.last.y * cell;
     ctx.save();
@@ -2082,9 +2213,25 @@ function drawBoardTo(ctx, px, py, size, b, o) {
     ctx.restore();
     tagAt(lx, ly, coordName(o.last.x, o.last.y), "rgba(35,28,20,.88)", "#ffd48f", -cell * 0.95);
   }
+
+  if (o.ripple && o.ripple.p > 0 && o.ripple.p < 1) {
+    var rx = m + o.ripple.x * cell, ry = m + o.ripple.y * cell;
+    var rp = o.ripple.p;
+    ctx.save();
+    ctx.globalAlpha = (1 - rp) * 0.85;
+    ctx.strokeStyle = "#ffe6b0";
+    ctx.lineWidth = cell * 0.09 * (1 - rp * 0.6);
+    ctx.beginPath(); ctx.arc(rx, ry, cell * (0.42 + rp * 0.95), 0, 7); ctx.stroke();
+    ctx.globalAlpha = (1 - rp) * 0.5;
+    ctx.strokeStyle = "#c9a15c";
+    ctx.lineWidth = cell * 0.05;
+    ctx.beginPath(); ctx.arc(rx, ry, cell * (0.42 + rp * 1.5), 0, 7); ctx.stroke();
+    ctx.restore();
+  }
+
   if (o.pending) {
     var pcx = m + o.pending.x * cell, pcy = m + o.pending.y * cell;
-    drawStone(ctx, pcx, pcy, cell * 0.46, o.pendingColor, 0.52);
+    drawStone(ctx, pcx, pcy, cell * 0.46, o.pendingColor, 0.52, fast);
     var ph = 0.5 + 0.5 * Math.sin((o.t || 0) / 180);
     ctx.save();
     ctx.strokeStyle = "rgba(212,160,60," + (0.55 + 0.45 * ph) + ")";
@@ -2095,6 +2242,7 @@ function drawBoardTo(ctx, px, py, size, b, o) {
     ctx.restore();
     tagAt(pcx, pcy, "待落 " + coordName(o.pending.x, o.pending.y), "rgba(201,161,92,.92)", "#2f2721", -cell * 1.05);
   }
+
   ctx.restore();
 }
 
@@ -2118,7 +2266,6 @@ function renderLoop(t) {
       winLine: (S.viewIndex === S.moves.length && S.over && !S.draw) ? S.winLine : null,
       pending: (S.viewIndex === S.moves.length) ? S.pending : null,
       pendingColor: colorOfMove(S.moves.length),
-      hover: null,
       forbidden: (S.settings.showForb && an && S.viewIndex === S.moves.length) ? an.forbidden : [],
       must: []
     };
@@ -2192,7 +2339,7 @@ boardCv.addEventListener("click", function (ev) {
   if (S.settings.antiMisclick) {
     S.pending = { x: c.x, y: c.y };
     toast("待确认：" + coordName(c.x, c.y) + "（再点一次即落子）");
-    beep(520, 0.05, "sine", 0.07);
+    beep(560, 0.05, "sine", 0.06);
   } else tryPlace(c.x, c.y);
 });
 
@@ -2268,7 +2415,7 @@ function buildProfile(upTo) {
     sumRank += Math.min(m.rank, 25);
     if (m.block && m.block.needed) { blkNeed++; if (m.block.ok) blkOk++; }
     if (m.attack && m.attack.avail) { atkAvail++; if (m.attack.took) atkTook++; }
-    if (m.opening) { openSum += ({ best:100, good:85, okay:65, miss:40, bad:15 })[m.quality] || 50; openN++; }
+    if (m.opening) { openSum += ({ best: 100, good: 85, okay: 65, miss: 40, bad: 15 })[m.quality] || 50; openN++; }
   });
   var n = metas.length;
   var opening = openN ? Math.round(openSum / openN) : 70;
@@ -2282,7 +2429,105 @@ function buildProfile(upTo) {
     overall >= 55 ? "中规中矩，有攻防意识，漏洞可寻。" :
     overall >= 40 ? "初窥门径，常漏看威胁，多造双活三可胜。" :
     "尚属新学，以防守牵制即可稳操胜券。";
-  return { opening, attack, defense, calc, stab, overall, comment, n, top1r: Math.round(top1 / n * 100), top3r: Math.round(top3 / n * 100) };
+  return { opening: opening, attack: attack, defense: defense, calc: calc, stab: stab, overall: overall, comment: comment, n: n, top1r: Math.round(top1 / n * 100), top3r: Math.round(top3 / n * 100) };
+}
+
+function buildFullReport() {
+  var U = S.settings.userColor, O = other(U);
+  var n = S.moves.length;
+  var r = {
+    total: n,
+    mine: 0, opp: 0,
+    q: { me: { best: 0, good: 0, okay: 0, miss: 0, bad: 0 }, opp: { best: 0, good: 0, okay: 0, miss: 0, bad: 0 } },
+    sumRankMe: 0, sumRankOpp: 0, cntMe: 0, cntOpp: 0,
+    maxDropMe: 0, maxDropOpp: 0, maxDropMeIdx: -1, maxDropOppIdx: -1,
+    bestMoveMe: -1, bestMoveOpp: -1,
+    thrMe: 0, thrOpp: 0,
+    blkNeedMe: 0, blkOkMe: 0, blkNeedOpp: 0, blkOkOpp: 0,
+    atkAvailMe: 0, atkTookMe: 0, atkAvailOpp: 0, atkTookOpp: 0,
+    winSwings: 0,
+    opening: openingName(),
+    turnCount: 0,
+    longestStreakMe: 0, longestStreakOpp: 0
+  };
+  var i;
+  for (i = 0; i < n; i++) {
+    var m = S.moves[i], mt = S.moveMeta[i];
+    if (!mt) continue;
+    var isMe = (m.color === U);
+    if (isMe) { r.mine++; r.cntMe++; r.sumRankMe += Math.min(mt.rank || 99, 25); }
+    else { r.opp++; r.cntOpp++; r.sumRankOpp += Math.min(mt.rank || 99, 25); }
+    var bucket = isMe ? r.q.me : r.q.opp;
+    bucket[mt.quality] = (bucket[mt.quality] || 0) + 1;
+
+    var prevWr = i > 0 && S.moveMeta[i - 1] ? S.moveMeta[i - 1].wr : 50;
+    var drop = isMe ? (prevWr - mt.wr) : (mt.wr - prevWr);
+    if (drop > 0) {
+      if (isMe && drop > r.maxDropMe) { r.maxDropMe = drop; r.maxDropMeIdx = i; }
+      if (!isMe && drop > r.maxDropOpp) { r.maxDropOpp = drop; r.maxDropOppIdx = i; }
+      if (drop > 20) r.winSwings++;
+    }
+    if (isMe) { if (r.bestMoveMe < 0 || mt.rank < (S.moveMeta[r.bestMoveMe] || {}).rank) r.bestMoveMe = i; }
+    else { if (r.bestMoveOpp < 0 || mt.rank < (S.moveMeta[r.bestMoveOpp] || {}).rank) r.bestMoveOpp = i; }
+
+    if (mt.block && mt.block.needed) { if (isMe) { r.blkNeedMe++; if (mt.block.ok) r.blkOkMe++; } else { r.blkNeedOpp++; if (mt.block.ok) r.blkOkOpp++; } }
+    if (mt.attack && mt.attack.avail) { if (isMe) { r.atkAvailMe++; if (mt.attack.took) r.atkTookMe++; } else { r.atkAvailOpp++; if (mt.attack.took) r.atkTookOpp++; } }
+  }
+  var curMe = 0, curOpp = 0;
+  for (i = 0; i < n; i++) {
+    var mm = S.moveMeta[i];
+    if (!mm) continue;
+    var good = (mm.quality === "best" || mm.quality === "good");
+    if (S.moves[i].color === U) {
+      if (good) { curMe++; r.longestStreakMe = Math.max(r.longestStreakMe, curMe); } else curMe = 0;
+    } else {
+      if (good) { curOpp++; r.longestStreakOpp = Math.max(r.longestStreakOpp, curOpp); } else curOpp = 0;
+    }
+  }
+  r.avgRankMe = r.cntMe ? (r.sumRankMe / r.cntMe) : 0;
+  r.avgRankOpp = r.cntOpp ? (r.sumRankOpp / r.cntOpp) : 0;
+  r.blkRateMe = r.blkNeedMe ? Math.round(r.blkOkMe / r.blkNeedMe * 100) : -1;
+  r.blkRateOpp = r.blkNeedOpp ? Math.round(r.blkOkOpp / r.blkNeedOpp * 100) : -1;
+  r.atkRateMe = r.atkAvailMe ? Math.round(r.atkTookMe / r.atkAvailMe * 100) : -1;
+  r.atkRateOpp = r.atkAvailOpp ? Math.round(r.atkTookOpp / r.atkAvailOpp * 100) : -1;
+  return r;
+}
+
+function renderReportPanel() {
+  Guard.safe("renderReportPanel", function () {
+    var p = $("reportPanel");
+    if (!p) return;
+    if (!S.moves.length) { p.innerHTML = '<div class="small">尚未落子。</div>'; return; }
+    var R = buildFullReport();
+    var U = S.settings.userColor;
+
+    var h = '<div class="infobox">📊 本局共 <b>' + R.total + '</b> 手，我方 <b>' + R.mine + '</b> 手，对方 <b>' + R.opp + '</b> 手。开局形态：<b>' + R.opening + '</b>。</div>';
+
+    h += '<table class="tbl"><tr><th>指标</th><th>我方</th><th>对方</th></tr>';
+    h += '<tr><td>平均候选位次</td><td>' + (R.avgRankMe ? R.avgRankMe.toFixed(1) : "—") + '</td><td>' + (R.avgRankOpp ? R.avgRankOpp.toFixed(1) : "—") + '</td></tr>';
+    h += '<tr><td>妙手 / 好棋</td><td>' + R.q.me.best + ' / ' + R.q.me.good + '</td><td>' + R.q.opp.best + ' / ' + R.q.opp.good + '</td></tr>';
+    h += '<tr><td>平淡</td><td>' + R.q.me.okay + '</td><td>' + R.q.opp.okay + '</td></tr>';
+    h += '<tr><td>失误 / 大漏</td><td>' + R.q.me.miss + ' / ' + R.q.me.bad + '</td><td>' + R.q.opp.miss + ' / ' + R.q.opp.bad + '</td></tr>';
+    h += '<tr><td>最长好手连击</td><td>' + R.longestStreakMe + '</td><td>' + R.longestStreakOpp + '</td></tr>';
+    h += '<tr><td>防守成功率</td><td>' + (R.blkRateMe < 0 ? "—" : R.blkRateMe + "%") + '</td><td>' + (R.blkRateOpp < 0 ? "—" : R.blkRateOpp + "%") + '</td></tr>';
+    h += '<tr><td>进攻抓住率</td><td>' + (R.atkRateMe < 0 ? "—" : R.atkRateMe + "%") + '</td><td>' + (R.atkRateOpp < 0 ? "—" : R.atkRateOpp + "%") + '</td></tr>';
+    h += '</table>';
+
+    h += '<div class="small">最大胜率跌幅：我方 <b>' + R.maxDropMe.toFixed(1) + '%</b>' +
+      (R.maxDropMeIdx >= 0 ? '（第' + (R.maxDropMeIdx + 1) + '手 ' + coordName(S.moves[R.maxDropMeIdx].x, S.moves[R.maxDropMeIdx].y) + '）' : '') +
+      '；对方 <b>' + R.maxDropOpp.toFixed(1) + '%</b>' +
+      (R.maxDropOppIdx >= 0 ? '（第' + (R.maxDropOppIdx + 1) + '手 ' + coordName(S.moves[R.maxDropOppIdx].x, S.moves[R.maxDropOppIdx].y) + '）' : '') + '</div>';
+
+    h += '<div class="small">胜率大幅震荡（>20%）共 <b>' + R.winSwings + '</b> 次，说明局势多次易手。</div>';
+
+    if (R.bestMoveMe >= 0 && S.moveMeta[R.bestMoveMe]) {
+      h += '<div class="okbox">我方最佳一手：第' + (R.bestMoveMe + 1) + '手 ' + coordName(S.moves[R.bestMoveMe].x, S.moves[R.bestMoveMe].y) + '（' + qName(S.moveMeta[R.bestMoveMe].quality) + '）</div>';
+    }
+    if (R.bestMoveOpp >= 0 && S.moveMeta[R.bestMoveOpp]) {
+      h += '<div class="intent">对方最佳一手：第' + (R.bestMoveOpp + 1) + '手 ' + coordName(S.moves[R.bestMoveOpp].x, S.moves[R.bestMoveOpp].y) + '（' + qName(S.moveMeta[R.bestMoveOpp].quality) + '）</div>';
+    }
+    p.innerHTML = h;
+  });
 }
 
 function refresh() {
@@ -2398,14 +2643,14 @@ function refresh() {
     if (an.pred.length) ph += '<div class="small">敌之倾向：' + (an.pred[0].aggr ? "主动进击" : "防守封堵") + ' · 棋盘以红圈标注</div>';
     $("predPanel").innerHTML = ph;
 
-    var qd = { best:0, good:0, okay:0, miss:0, bad:0 }, qdU = { best:0, good:0, okay:0, miss:0, bad:0 };
+    var qd = { best: 0, good: 0, okay: 0, miss: 0, bad: 0 }, qdU = { best: 0, good: 0, okay: 0, miss: 0, bad: 0 };
     S.moveMeta.forEach(function (m, mi) {
       if (mi >= S.moves.length) return;
       var tgt = (m.color === U) ? qdU : qd;
       tgt[m.quality] = (tgt[m.quality] || 0) + 1;
     });
     var sh = '<table class="tbl"><tr><th>落子品评</th><th>我方</th><th>对方</th></tr>';
-    ["best","good","okay","miss","bad"].forEach(function (q) {
+    ["best", "good", "okay", "miss", "bad"].forEach(function (q) {
       sh += '<tr><td><i class="dot" style="background:' + qColor(q) + '"></i>' + qName(q) + '</td><td>' + qdU[q] + '</td><td>' + qd[q] + '</td></tr>';
     });
     sh += '</table>';
@@ -2427,6 +2672,8 @@ function refresh() {
         $("profPanel").innerHTML = dh;
       }
     }
+
+    renderReportPanel();
 
     var kh = "";
     for (i = 0; i < S.moves.length; i++) {
@@ -2573,7 +2820,6 @@ function openNewModal() { $("nmRenju").checked = S.settings.renju; openModal("mN
 
 $("btnNewGo").onclick = function () {
   if (S.moves.length && !confirm("将清空当前棋局（可先收入藏谱阁），确定开新对局？")) return;
-  // 若上一局未结束就退出，也学习一次
   if (S.moves.length >= 4 && !S.over) {
     S.over = true; S.winner = 0; S.draw = false;
     aiLearnFromGame();
@@ -2737,6 +2983,9 @@ function shotBoard() {
 $("btnShot2").onclick = shotBoard;
 $("mShot").onclick = function () { closeModal("mMenu"); shotBoard(); };
 
+/* ============================================================
+   十五之二、战报分享图
+   ============================================================ */
 function shareCard() {
   Guard.safe("shareCard", function () {
     if (!S.moves.length) { toast("尚无落子"); return; }
@@ -2760,7 +3009,7 @@ function shareCard() {
     var y0 = 1200, pf = buildProfile();
     ctx.fillStyle = "#2f2721"; ctx.font = "bold 46px KaiTi,STKaiti,serif";
     ctx.fillText(resultText() === "进行中" ? "战局正酣" : (S.draw ? "平 分 秋 色" : (S.winner === S.settings.userColor ? "我 军 大 捷" : "敌 军 胜 出")), W / 2, y0);
-    ctx.font = "28px SongTi,SimSun,serif"; ctx.fillStyle = "#6b5b49";
+    ctx.font = "28px Songti,SimSun,serif"; ctx.fillStyle = "#6b5b49";
     ctx.fillText("我军执" + colorCN(S.settings.userColor) + (S.settings.firstMover === "me" ? "（先手）" : "（后手）") + (pf ? " · 敌方棋力估算 " + pf.overall : ""), W / 2, y0 + 55);
     ctx.fillText("开局：" + openingName() + " · 用时 " + fmtMs(Date.now() - S.startTime), W / 2, y0 + 100);
     ctx.save();
@@ -2778,34 +3027,756 @@ $("btnCard").onclick = shareCard;
 $("mCard").onclick = function () { closeModal("mMenu"); shareCard(); };
 
 /* ============================================================
-   十六、视频导出
+   十五之三、全局分析长图
    ============================================================ */
-var VID = { abort: null };
+function exportAnalysisSheet() {
+  Guard.safe("exportAnalysisSheet", function () {
+    if (!S.moves.length) { toast("尚无落子"); return; }
+    toast("正在绘制分析长图…", 2000);
+
+    setTimeout(function () {
+      var W = 1400, H = 3000;
+      var cv = document.createElement("canvas");
+      cv.width = W; cv.height = H;
+      var ctx = cv.getContext("2d");
+
+      var g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#f7f0dd"); g.addColorStop(0.5, "#f1e5c9"); g.addColorStop(1, "#e6d5b3");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "#8a6d3b"; ctx.lineWidth = 8; ctx.strokeRect(24, 24, W - 48, H - 48);
+      ctx.strokeStyle = "rgba(138,109,59,.45)"; ctx.lineWidth = 2; ctx.strokeRect(42, 42, W - 84, H - 84);
+
+      ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+
+      var y = 120;
+      ctx.fillStyle = "#a83226";
+      ctx.font = "bold 58px KaiTi,STKaiti,serif";
+      ctx.fillText("五 子 棋 全 局 分 析 图", W / 2, y);
+      y += 52;
+      ctx.fillStyle = "#6b5b49"; ctx.font = "26px Songti,SimSun,serif";
+      ctx.fillText(nowStr() + " · 共 " + S.moves.length + " 手 · " + resultText() +
+        " · 开局：" + openingName(), W / 2, y);
+      y += 46;
+
+      var bSize = 1180;
+      var bx = (W - bSize) / 2;
+      drawBoardTo(ctx, bx, y, bSize, boardAt(S.moves.length), {
+        numbers: S.settings.showNumbers ? S.moves : null,
+        last: S.moves[S.moves.length - 1],
+        winLine: (S.over && !S.draw) ? S.winLine : null,
+        t: 0
+      });
+      y += bSize + 66;
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#a83226"; ctx.font = "bold 34px KaiTi,STKaiti,serif";
+      ctx.fillText("◆ 胜率走势曲线", bx, y);
+      y += 20;
+      var chH = 300, chW = bSize;
+      ctx.fillStyle = "rgba(255,252,244,.72)";
+      ctx.fillRect(bx, y, chW, chH);
+      ctx.strokeStyle = "#8a6d3b"; ctx.lineWidth = 2;
+      ctx.strokeRect(bx, y, chW, chH);
+
+      ctx.strokeStyle = "rgba(138,109,59,.28)";
+      ctx.lineWidth = 1;
+      var gi;
+      for (gi = 1; gi < 4; gi++) {
+        var gy = y + chH * gi / 4;
+        ctx.beginPath(); ctx.moveTo(bx, gy); ctx.lineTo(bx + chW, gy); ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(168,50,38,.5)";
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath(); ctx.moveTo(bx, y + chH / 2); ctx.lineTo(bx + chW, y + chH / 2); ctx.stroke();
+      ctx.setLineDash([]);
+
+      var hist = [{ wr: 50 }].concat(S.moveMeta.slice(0, S.moves.length).map(function (m) { return { wr: m.wr }; }));
+      ctx.strokeStyle = "#a83226"; ctx.lineWidth = 3.5;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      var padC = 26;
+      hist.forEach(function (h, i2) {
+        var px2 = bx + padC + (hist.length === 1 ? 0 : i2 / (hist.length - 1) * (chW - padC * 2));
+        var py2 = y + chH - padC - (h.wr / 100) * (chH - padC * 2);
+        if (i2 === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+      });
+      ctx.stroke();
+
+      S.moveMeta.slice(0, S.moves.length).forEach(function (m, i2) {
+        if (i2 >= S.moves.length) return;
+        if (m.quality !== "bad" && m.quality !== "miss") return;
+        var px3 = bx + padC + (hist.length === 1 ? 0 : (i2 + 1) / (hist.length - 1) * (chW - padC * 2));
+        var py3 = y + chH - padC - (m.wr / 100) * (chH - padC * 2);
+        ctx.fillStyle = m.quality === "bad" ? "#a83226" : "#c07830";
+        ctx.beginPath(); ctx.arc(px3, py3, 7, 0, 7); ctx.fill();
+      });
+
+      ctx.fillStyle = "#8a6d3b"; ctx.font = "18px Songti,SimSun,serif";
+      ctx.textAlign = "left";
+      ctx.fillText("100%", bx - 4, y + padC + 6);
+      ctx.fillText("50%", bx - 4, y + chH / 2 + 6);
+      ctx.fillText("0%", bx - 4, y + chH - padC + 6);
+      ctx.textAlign = "center";
+      ctx.fillText("手数 →", bx + chW / 2, y + chH + 24);
+      ctx.textAlign = "left";
+      y += chH + 66;
+
+      var R = buildFullReport();
+      ctx.fillStyle = "#a83226"; ctx.font = "bold 34px KaiTi,STKaiti,serif";
+      ctx.fillText("◆ 双方数据对比", bx, y);
+      y += 26;
+
+      var rows = [
+        ["平均候选位次", R.avgRankMe ? R.avgRankMe.toFixed(1) : "—", R.avgRankOpp ? R.avgRankOpp.toFixed(1) : "—"],
+        ["妙手 (Top1)", String(R.q.me.best), String(R.q.opp.best)],
+        ["好棋 (Top3)", String(R.q.me.good), String(R.q.opp.good)],
+        ["平淡", String(R.q.me.okay), String(R.q.opp.okay)],
+        ["失误", String(R.q.me.miss), String(R.q.opp.miss)],
+        ["大漏", String(R.q.me.bad), String(R.q.opp.bad)],
+        ["最长好手连击", String(R.longestStreakMe), String(R.longestStreakOpp)],
+        ["防守成功率", R.blkRateMe < 0 ? "—" : R.blkRateMe + "%", R.blkRateOpp < 0 ? "—" : R.blkRateOpp + "%"],
+        ["进攻抓住率", R.atkRateMe < 0 ? "—" : R.atkRateMe + "%", R.atkRateOpp < 0 ? "—" : R.atkRateOpp + "%"],
+        ["最大胜率跌幅", R.maxDropMe.toFixed(1) + "%", R.maxDropOpp.toFixed(1) + "%"]
+      ];
+      var rowH = 38;
+      ctx.fillStyle = "rgba(255,252,244,.72)";
+      ctx.fillRect(bx, y, chW, rowH * (rows.length + 1));
+      ctx.strokeStyle = "#8a6d3b"; ctx.lineWidth = 2;
+      ctx.strokeRect(bx, y, chW, rowH * (rows.length + 1));
+
+      ctx.fillStyle = "#a83226"; ctx.font = "bold 22px KaiTi,STKaiti,serif";
+      ctx.textAlign = "left";
+      ctx.fillText("指标", bx + 22, y + 27);
+      ctx.textAlign = "center";
+      ctx.fillText("我方", bx + chW * 0.62, y + 27);
+      ctx.fillText("对方", bx + chW * 0.85, y + 27);
+
+      ctx.strokeStyle = "rgba(138,109,59,.4)"; ctx.lineWidth = 1;
+      rows.forEach(function (rw, ri) {
+        var ry = y + rowH * (ri + 1);
+        ctx.beginPath(); ctx.moveTo(bx, ry); ctx.lineTo(bx + chW, ry); ctx.stroke();
+        ctx.fillStyle = "#6b5b49"; ctx.font = "21px Songti,SimSun,serif";
+        ctx.textAlign = "left";
+        ctx.fillText(rw[0], bx + 22, ry + 26);
+        ctx.fillStyle = "#2f2721"; ctx.font = "bold 21px Songti,SimSun,serif";
+        ctx.textAlign = "center";
+        ctx.fillText(rw[1], bx + chW * 0.62, ry + 26);
+        ctx.fillText(rw[2], bx + chW * 0.85, ry + 26);
+      });
+      y += rowH * (rows.length + 1) + 56;
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#a83226"; ctx.font = "bold 34px KaiTi,STKaiti,serif";
+      ctx.fillText("◆ 关键手点评", bx, y);
+      y += 30;
+
+      var badList = [];
+      S.moveMeta.slice(0, S.moves.length).forEach(function (m, i2) {
+        if (m.quality === "bad" || m.quality === "miss") {
+          badList.push({ i: i2, m: m, mv: S.moves[i2] });
+        }
+      });
+      badList.sort(function (a, b2) {
+        var da = (a.m.color === S.settings.userColor) ? (a.m.quality === "bad" ? 2 : 1) : (a.m.quality === "bad" ? 1 : 0.5);
+        var db2 = (b2.m.color === S.settings.userColor) ? (b2.m.quality === "bad" ? 2 : 1) : (b2.m.quality === "bad" ? 1 : 0.5);
+        return db2 - da;
+      });
+      badList = badList.slice(0, 10);
+
+      if (!badList.length) {
+        ctx.fillStyle = "#4f7a5a"; ctx.font = "24px KaiTi,STKaiti,serif";
+        ctx.fillText("双方皆无明显坏手，堪称高手对局。", bx + 10, y + 26);
+        y += 60;
+      } else {
+        badList.forEach(function (b, bi) {
+          var who = (b.m.color === S.settings.userColor) ? "我方" : "对方";
+          var tag = qName(b.m.quality);
+          var color = b.m.quality === "bad" ? "#a83226" : "#c07830";
+          ctx.fillStyle = color;
+          ctx.font = "bold 22px KaiTi,STKaiti,serif";
+          ctx.fillText("第 " + (b.i + 1) + " 手 · " + who + " " + colorCN(b.m.color) + " " +
+            coordName(b.mv.x, b.mv.y) + " 【" + tag + "】", bx + 10, y + 26);
+          ctx.fillStyle = "#6b5b49"; ctx.font = "19px Songti,SimSun,serif";
+          var line = "意图：" + (b.m.intent || "—") + "    落子后胜率：" + (b.m.wr || 0).toFixed(1) + "%";
+          ctx.fillText(line, bx + 34, y + 54);
+          y += 74;
+          if (y > H - 160) return;
+        });
+        y += 10;
+      }
+
+      if (y < H - 120) {
+        ctx.fillStyle = "#8a6d3b"; ctx.font = "24px KaiTi,STKaiti,serif";
+        ctx.textAlign = "center";
+        ctx.fillText("—— 五子军师 · 全盘分析 ——", W / 2, y + 40);
+      }
+
+      cv.toBlob(function (b) {
+        dlBlob(b, "五子棋分析图_" + Date.now() + ".png");
+        toast("全局分析图已导出");
+      }, "image/png");
+    }, 60);
+  });
+}
+$("btnSheet2").onclick = exportAnalysisSheet;
+$("mSheet").onclick = function () { closeModal("mMenu"); exportAnalysisSheet(); };
+
+/* ============================================================
+   十六、视频导出（流畅动画 · 格式可选 · 性能优化）
+   ============================================================ */
+var VID = { abort: null, _enc: null, _running: false };
+
 function loadScriptWithTimeout(src, ms) {
   return new Promise(function (res, rej) {
     var done = false, s = document.createElement("script");
     s.src = src;
+    s.async = true;
     s.onload = function () { if (!done) { done = true; res(); } };
-    s.onerror = function () { if (!done) { done = true; rej(new Error("script load fail")); } };
-    setTimeout(function () { if (!done) { done = true; rej(new Error("script timeout")); } }, ms);
+    s.onerror = function () { if (!done) { done = true; rej(new Error("脚本加载失败")); } };
+    setTimeout(function () { if (!done) { done = true; rej(new Error("脚本加载超时")); } }, ms || 9000);
     document.head.appendChild(s);
   });
 }
-async function ensureWebMMuxer() {
-  if (window.WebMMuxer && window.WebMMuxer.Muxer && window.WebMMuxer.ArrayBufferTarget) return true;
-  var urls = [
+
+async function ensureLib(kind) {
+  if (kind === "mp4" && window.Mp4Muxer && window.Mp4Muxer.Muxer) return true;
+  if (kind === "webm" && window.WebMMuxer && window.WebMMuxer.Muxer) return true;
+  var urls = kind === "mp4" ? [
+    "https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.1/build/mp4-muxer.min.js",
+    "https://unpkg.com/mp4-muxer@5.2.1/build/mp4-muxer.min.js",
+    "https://cdn.jsdelivr.net/npm/mp4-muxer/build/mp4-muxer.min.js"
+  ] : [
     "https://cdn.jsdelivr.net/npm/webm-muxer@4.1.1/build/webm-muxer.min.js",
-    "https://unpkg.com/webm-muxer@4.1.1/build/webm-muxer.min.js",
-    "https://cdn.jsdelivr.net/npm/webm-muxer@5.0.1/build/webm-muxer.min.js"
+    "https://unpkg.com/webm-muxer@4.1.1/build/webm-muxer.min.js"
   ];
   for (var i = 0; i < urls.length; i++) {
-    try { await loadScriptWithTimeout(urls[i], 8000); if (window.WebMMuxer && window.WebMMuxer.Muxer && window.WebMMuxer.ArrayBufferTarget) return true; } catch (e) {}
+    try {
+      await loadScriptWithTimeout(urls[i], 9000);
+      if (kind === "mp4" && window.Mp4Muxer && window.Mp4Muxer.Muxer) return true;
+      if (kind === "webm" && window.WebMMuxer && window.WebMMuxer.Muxer) return true;
+    } catch (e) { /* 静默继续尝试下一镜像 */ }
   }
   return false;
 }
 
+/* 分别尝试 MP4 和 WebM 编码器 */
+async function tryMp4Encoder(W, H, fps, bitrate) {
+  if (!await ensureLib("mp4")) return null;
+  var h264 = ["avc1.640033", "avc1.64002A", "avc1.640028", "avc1.4D4028", "avc1.4D401F", "avc1.42001F"];
+  for (var a = 0; a < h264.length; a++) {
+    try {
+      var sup = await VideoEncoder.isConfigSupported({
+        codec: h264[a], width: W, height: H, bitrate: bitrate, framerate: fps
+      });
+      if (!sup || !sup.supported) continue;
+    } catch (e) { continue; }
+
+    try {
+      var tgt = new Mp4Muxer.ArrayBufferTarget();
+      var mux = new Mp4Muxer.Muxer({
+        target: tgt,
+        video: { codec: "avc", width: W, height: H, frameRate: fps },
+        fastStart: "in-memory"
+      });
+      var enc = new VideoEncoder({
+        output: function (c, m) { try { mux.addVideoChunk(c, m); } catch (e) {} },
+        error: function (e) { Guard.warn("MP4 编码器提示：" + ((e && e.message) || e)); }
+      });
+      var cfg = { codec: h264[a], width: W, height: H, bitrate: bitrate, framerate: fps };
+      try {
+        var supHW = await VideoEncoder.isConfigSupported(Object.assign({}, cfg, { hardwareAcceleration: "prefer-hardware" }));
+        if (supHW && supHW.supported) cfg.hardwareAcceleration = "prefer-hardware";
+      } catch (e) {}
+      enc.configure(cfg);
+      Guard.info("视频编码器已就绪：MP4 / " + h264[a]);
+      return {
+        encoder: enc, mime: "video/mp4", ext: "mp4", codecName: h264[a],
+        finish: async function () {
+          await enc.flush();
+          try { if (enc.state !== "closed") enc.close(); } catch (e) {}
+          mux.finalize();
+          return new Blob([tgt.buffer], { type: "video/mp4" });
+        }
+      };
+    } catch (e) { /* 继续下一个 */ }
+  }
+  return null;
+}
+
+async function tryWebmEncoder(W, H, fps, bitrate) {
+  if (!await ensureLib("webm")) return null;
+  var vps = [{ c: "vp09.00.10.08", m: "V_VP9" }, { c: "vp8", m: "V_VP8" }];
+  for (var b = 0; b < vps.length; b++) {
+    try {
+      var sup = await VideoEncoder.isConfigSupported({
+        codec: vps[b].c, width: W, height: H, bitrate: bitrate, framerate: fps
+      });
+      if (!sup || !sup.supported) continue;
+    } catch (e) { continue; }
+
+    try {
+      var tgt = new WebMMuxer.ArrayBufferTarget();
+      var mux = new WebMMuxer.Muxer({
+        target: tgt,
+        video: { codec: vps[b].m, width: W, height: H, frameRate: fps },
+        firstTimestampBehavior: "offset"
+      });
+      var enc = new VideoEncoder({
+        output: function (c, m) { try { mux.addVideoChunk(c, m); } catch (e) {} },
+        error: function (e) { Guard.warn("WebM 编码器提示：" + ((e && e.message) || e)); }
+      });
+      var cfg = { codec: vps[b].c, width: W, height: H, bitrate: bitrate, framerate: fps };
+      try {
+        var supHW = await VideoEncoder.isConfigSupported(Object.assign({}, cfg, { hardwareAcceleration: "prefer-hardware" }));
+        if (supHW && supHW.supported) cfg.hardwareAcceleration = "prefer-hardware";
+      } catch (e) {}
+      enc.configure(cfg);
+      Guard.info("视频编码器已就绪：WebM / " + vps[b].c);
+      return {
+        encoder: enc, mime: "video/webm", ext: "webm", codecName: vps[b].c,
+        finish: async function () {
+          await enc.flush();
+          try { if (enc.state !== "closed") enc.close(); } catch (e) {}
+          mux.finalize();
+          return new Blob([tgt.buffer], { type: "video/webm" });
+        }
+      };
+    } catch (e) {}
+  }
+  return null;
+}
+
+/* 按用户偏好创建编码器；失败的格式自动回退另一种 */
+async function createVideoEncoder(W, H, fps, preferred) {
+  if (typeof VideoEncoder === "undefined" || typeof VideoFrame === "undefined") return null;
+  var bitrate = Math.min(48e6, Math.max(4e6, Math.round(W * H * fps * 0.065)));
+  if (IS_MOBILE) bitrate = Math.min(bitrate, 12e6);
+
+  var order;
+  if (preferred === "mp4") order = ["mp4", "webm"];
+  else if (preferred === "webm") order = ["webm", "mp4"];
+  else order = ["mp4", "webm"];
+
+  for (var i = 0; i < order.length; i++) {
+    var r = order[i] === "mp4" ? await tryMp4Encoder(W, H, fps, bitrate) : await tryWebmEncoder(W, H, fps, bitrate);
+    if (r) return r;
+  }
+  return null;
+}
+
+/* ---------- 背景 ---------- */
+function vBg(ctx, W, H, t) {
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, "#17130f");
+  g.addColorStop(0.5, "#1e1813");
+  g.addColorStop(1, "#241b14");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  var gx = W * (0.5 + 0.34 * Math.sin(t * 0.26));
+  var gy = H * (0.42 + 0.28 * Math.cos(t * 0.19));
+  var rg = ctx.createRadialGradient(gx, gy, 0, gx, gy, W * 0.58);
+  rg.addColorStop(0, "rgba(201,161,92,.09)");
+  rg.addColorStop(1, "rgba(201,161,92,0)");
+  ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+
+  var gx2 = W * (0.2 + 0.6 * (0.5 + 0.5 * Math.sin(t * 0.14 + 2)));
+  var gy2 = H * (0.75 + 0.2 * Math.cos(t * 0.11));
+  var rg2 = ctx.createRadialGradient(gx2, gy2, 0, gx2, gy2, W * 0.4);
+  rg2.addColorStop(0, "rgba(168,50,38,.05)");
+  rg2.addColorStop(1, "rgba(168,50,38,0)");
+  ctx.fillStyle = rg2; ctx.fillRect(0, 0, W, H);
+}
+
+/* ---------- 模块面板 ---------- */
+function vPanel(ctx, r, title, sc, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.fillStyle = "rgba(244,234,214,.95)";
+  roundRect(ctx, r.x, r.y, r.w, r.h, 12 * sc); ctx.fill();
+  ctx.strokeStyle = "rgba(138,109,59,.8)"; ctx.lineWidth = 1.6 * sc;
+  roundRect(ctx, r.x, r.y, r.w, r.h, 12 * sc); ctx.stroke();
+  ctx.strokeStyle = "rgba(138,109,59,.3)"; ctx.lineWidth = 1 * sc;
+  roundRect(ctx, r.x + 5 * sc, r.y + 5 * sc, r.w - 10 * sc, r.h - 10 * sc, 8 * sc); ctx.stroke();
+  if (title) {
+    ctx.fillStyle = "#a83226"; ctx.font = "bold " + 18 * sc + "px KaiTi,STKaiti,serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("◆ " + title, r.x + 14 * sc, r.y + 10 * sc);
+  }
+  ctx.restore();
+}
+
+function drawVideoModule(ctx, r, id, an, k, sc, pf, alpha, t) {
+  var U = S.settings.userColor, pad = 14 * sc, tx = r.x + pad, ty = r.y + pad + 24 * sc, i;
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.textAlign = "left"; ctx.textBaseline = "top";
+
+  if (id === "winrate") {
+    vPanel(ctx, r, "局势胜率", sc, alpha);
+    var bw = r.w - 2 * pad, bh = 28 * sc, bx = r.x + pad, by2 = r.y + 50 * sc;
+    ctx.fillStyle = "#cbb98e"; roundRect(ctx, bx, by2, bw, bh, bh / 2); ctx.fill();
+    var wrVal = an.winrateUser;
+    ctx.fillStyle = "#1c1c1c";
+    ctx.fillRect(bx, by2, bw * (100 - wrVal) / 100, bh);
+    ctx.fillStyle = "#f2f5fa";
+    ctx.fillRect(bx + bw * (100 - wrVal) / 100, by2, bw * wrVal / 100, bh);
+    ctx.fillStyle = "#fff"; ctx.font = "bold " + 16 * sc + "px sans-serif";
+    ctx.fillText("敌 " + (100 - wrVal).toFixed(1) + "%", bx + 8 * sc, by2 + 6 * sc);
+    ctx.fillStyle = "#222"; ctx.textAlign = "right";
+    ctx.fillText("我 " + wrVal.toFixed(1) + "%", bx + bw - 8 * sc, by2 + 6 * sc);
+    ctx.textAlign = "left";
+  } else if (id === "rec") {
+    vPanel(ctx, r, an.userTurn ? "我军推荐落点" : "敌方最佳着法推演", sc, alpha);
+    an.top.slice(0, 5).forEach(function (c, ci) {
+      var y = ty + ci * 33 * sc;
+      var pct = c.winrate != null ? c.winrate : (50 + 47 * Math.tanh((c.comb - an.top[0].comb * 0.4) / 8e5));
+      pct = Math.max(2, Math.min(99, pct));
+      ctx.fillStyle = ci === 0 ? "#a83226" : "#8d7c60";
+      ctx.font = "bold " + 17 * sc + "px KaiTi,STKaiti,serif";
+      ctx.fillText(ci === 0 ? "★" : String(ci + 1), tx, y);
+      ctx.fillStyle = "#2f2721";
+      ctx.font = (ci === 0 ? "bold " : "") + 17 * sc + "px KaiTi,STKaiti,serif";
+      ctx.fillText(coordName(c.x, c.y), tx + 24 * sc, y);
+      var barX = tx + 84 * sc, barW = r.w - pad - 118 * sc;
+      ctx.fillStyle = "#cbb98e";
+      roundRect(ctx, barX, y + 4 * sc, barW, 13 * sc, 6 * sc); ctx.fill();
+      ctx.fillStyle = ci === 0 ? "#a83226" : "#8a6d3b";
+      roundRect(ctx, barX, y + 4 * sc, barW * pct / 100, 13 * sc, 6 * sc); ctx.fill();
+      ctx.fillStyle = "#6b5b49"; ctx.font = 14 * sc + "px sans-serif";
+      ctx.fillText(pct.toFixed(1) + "%", barX + barW + 6 * sc, y + 2 * sc);
+    });
+  } else if (id === "pred") {
+    vPanel(ctx, r, "对方下一手预测", sc, alpha);
+    an.pred.forEach(function (p, pi) {
+      var y = ty + pi * 35 * sc;
+      ctx.fillStyle = pi === 0 ? "#a83226" : "#8d6a5a";
+      ctx.font = (pi === 0 ? "bold " : "") + 17 * sc + "px KaiTi,STKaiti,serif";
+      ctx.fillText((pi + 1) + ". " + coordName(p.x, p.y), tx, y);
+      var barX = tx + 96 * sc, barW = r.w - pad - 150 * sc;
+      ctx.fillStyle = "#cbb98e";
+      roundRect(ctx, barX, y + 4 * sc, barW, 13 * sc, 6 * sc); ctx.fill();
+      ctx.fillStyle = "#c8604f";
+      roundRect(ctx, barX, y + 4 * sc, barW * Math.min(1, p.p / 60), 13 * sc, 6 * sc); ctx.fill();
+      ctx.fillStyle = "#6b5b49"; ctx.font = 14 * sc + "px sans-serif";
+      ctx.fillText(p.p.toFixed(1) + "%", barX + barW + 6 * sc, y + 2 * sc);
+    });
+  } else if (id === "threat") {
+    vPanel(ctx, r, "烽火警报", sc, alpha);
+    ctx.font = 16 * sc + "px KaiTi,STKaiti,serif";
+    if (an.userTurn && an.opFive >= 2) {
+      ctx.fillStyle = "#a83226"; ctx.fillText("⛔ 敌军双成五点，必输局面", tx, ty);
+    } else if (an.mustBlockMe.length && an.userTurn) {
+      ctx.fillStyle = "#a83226";
+      ctx.fillText("🚨 敌成五点必防：" + an.mustBlockMe.slice(0, 3).map(function (p) { return coordName(p.x, p.y); }).join("、"), tx, ty);
+    } else if (an.threat.ofour.U && an.userTurn) {
+      ctx.fillStyle = "#4f7a5a"; ctx.fillText("✨ 我军有活四，一击可定乾坤！", tx, ty);
+    } else {
+      ctx.fillStyle = "#6b5b49"; ctx.fillText("暂无燃眉之急。", tx, ty);
+    }
+    ctx.fillStyle = "#6b5b49"; ctx.font = 14 * sc + "px sans-serif";
+    ctx.fillText("敌威胁：五" + an.threat.five.O + " 活四" + an.threat.ofour.O + " 冲四" + an.threat.four.O + " 活三" + an.threat.othree.O, tx, ty + 30 * sc);
+    ctx.fillText("我威胁：五" + an.threat.five.U + " 活四" + an.threat.ofour.U + " 冲四" + an.threat.four.U + " 活三" + an.threat.othree.U, tx, ty + 54 * sc);
+  } else if (id === "stats") {
+    vPanel(ctx, r, "详析数据", sc, alpha);
+    ctx.font = 15 * sc + "px KaiTi,STKaiti,serif";
+    var rows = [
+      ["开局", openingName()],
+      ["评估值", (an.evalU >= 0 ? "+" : "") + Math.round(an.evalU / 1000) + "k"],
+      ["黑 / 白", an.stonesB + " / " + an.stonesW],
+      ["禁手点", String(an.forbidden.length)],
+      ["轮次", colorCN(an.toMove) + " · " + whoName(an.toMove)]
+    ];
+    rows.forEach(function (row, ri) {
+      ctx.fillStyle = "#8d7c60"; ctx.fillText(row[0], tx, ty + ri * 27 * sc);
+      ctx.fillStyle = "#2f2721"; ctx.fillText(row[1], tx + 92 * sc, ty + ri * 27 * sc);
+    });
+    var tt = an.terr.U + an.terr.O + an.terr.N || 1;
+    var by3 = ty + rows.length * 27 * sc + 10 * sc, bw2 = r.w - 2 * pad;
+    ctx.fillStyle = "#8d7c60";
+    ctx.fillText("疆域 我" + Math.round(an.terr.U / tt * 100) + "% / 敌" + Math.round(an.terr.O / tt * 100) + "%", tx, by3);
+    ctx.fillStyle = "#7d8aa5"; roundRect(ctx, tx, by3 + 24 * sc, bw2, 13 * sc, 6 * sc); ctx.fill();
+    ctx.fillStyle = "#8a6d3b";
+    roundRect(ctx, tx + bw2 * (an.terr.O / tt), by3 + 24 * sc, bw2 * (an.terr.U / tt), 13 * sc, 6 * sc); ctx.fill();
+  } else if (id === "profile") {
+    vPanel(ctx, r, "敌方棋力画像", sc, alpha);
+    ctx.fillStyle = "#a83226"; ctx.font = "bold " + 34 * sc + "px KaiTi,STKaiti,serif";
+    ctx.fillText(String(pf.overall), tx, ty);
+    ctx.fillStyle = "#8d7c60"; ctx.font = 14 * sc + "px KaiTi,STKaiti,serif";
+    ctx.fillText("综合", tx + 60 * sc, ty + 18 * sc);
+    var dims = [["开局", pf.opening], ["进攻", pf.attack], ["防守", pf.defense], ["算度", pf.calc], ["稳定", pf.stab]];
+    dims.forEach(function (d, di) {
+      var y = ty + 46 * sc + di * 28 * sc;
+      ctx.fillStyle = "#8d7c60"; ctx.font = 14 * sc + "px KaiTi,STKaiti,serif";
+      ctx.fillText(d[0], tx, y);
+      var bx2 = tx + 50 * sc, bw3 = r.w - pad - 104 * sc;
+      ctx.fillStyle = "#cbb98e"; roundRect(ctx, bx2, y + 2 * sc, bw3, 11 * sc, 5 * sc); ctx.fill();
+      ctx.fillStyle = "#8a6d3b"; roundRect(ctx, bx2, y + 2 * sc, bw3 * d[1] / 100, 11 * sc, 5 * sc); ctx.fill();
+      ctx.fillStyle = "#6b5b49"; ctx.fillText(String(d[1]), bx2 + bw3 + 6 * sc, y);
+    });
+  } else if (id === "kifu") {
+    vPanel(ctx, r, "棋谱（金=最新）", sc, alpha);
+    var start = Math.max(0, k - 15), col = 0, row = 0, cw = (r.w - 2 * pad) / 3;
+    for (i = start; i < k; i++) {
+      var mv2 = S.moves[i];
+      ctx.fillStyle = i === k - 1 ? "#a83226" : "#6b5b49";
+      ctx.font = (i === k - 1 ? "bold " : "") + 15 * sc + "px KaiTi,STKaiti,serif";
+      ctx.fillText((i + 1) + "." + (mv2.color === 1 ? "●" : "○") + coordName(mv2.x, mv2.y), tx + col * cw, ty + row * 25 * sc);
+      col++;
+      if (col === 3) { col = 0; row++; }
+    }
+  }
+  ctx.restore();
+}
+
+/* ---------- 单帧绘制 ---------- */
+function drawVideoFrame(ctx, W, H, t, cfg) {
+  var sc = H / 1080;
+  var n = cfg.n, mods = cfg.mods, prof = cfg.profile;
+  var introDur = cfg.introDur, gap = cfg.gap, outroDur = cfg.outroDur;
+  var bodyStart = introDur, bodyEnd = bodyStart + n * gap;
+
+  vBg(ctx, W, H, t);
+
+  var introP = clamp01(t / Math.max(0.001, introDur));
+  var outroP = clamp01((t - bodyEnd) / Math.max(0.001, outroDur));
+
+  var u = (t - bodyStart) / gap;
+  var i, local;
+  if (u <= 0) { i = 1; local = 0; }
+  else if (u >= n) { i = n; local = 1; }
+  else { i = Math.floor(u) + 1; local = u - Math.floor(u); }
+  if (n < 1) { i = 0; local = 1; }
+
+  var inBoard = easeOutCubic(clamp01((introP - 0.40) / 0.50));
+  var inPanel = easeOutCubic(clamp01((introP - 0.50) / 0.46));
+  var outFade = 1 - easeInOutCubic(clamp01(outroP / 0.44));
+  var boardA = inBoard * outFade;
+  var panelA = inPanel * outFade;
+  var boardDY = (1 - inBoard) * H * 0.09;
+  var panelDX = (1 - inPanel) * W * 0.07;
+
+  var headerH = 74 * sc, pad = 26 * sc;
+  var availH = H - headerH - pad * 1.7;
+  var bs = Math.min(availH, W * 0.575);
+  var bx = pad, by = headerH + pad * 0.85 + (availH - bs) / 2;
+  var panelX = pad + bs + pad * 1.05;
+  var panelW = W - panelX - pad;
+  var panelY = headerH + pad * 0.85;
+  var panelH = availH;
+
+  var titleP = easeInOutCubic(clamp01((introP - 0.48) / 0.48));
+  var appear = easeOutBack(clamp01(t / 0.8));
+  var titleA = easeOutCubic(clamp01(t / 0.55));
+  var titleX = lerp(W * 0.5, pad + 16 * sc, titleP);
+  var titleY = lerp(H * 0.42, headerH * 0.52, titleP);
+  var titleSize = lerp(130 * sc, 31 * sc, titleP);
+
+  ctx.save();
+  ctx.globalAlpha = titleA;
+  ctx.fillStyle = "#c9a15c";
+  ctx.font = "bold " + (titleSize * (0.75 + 0.25 * appear)) + "px KaiTi,STKaiti,'Kaiti SC',serif";
+  ctx.textAlign = titleP > 0.5 ? "left" : "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = "rgba(201,161,92,.55)";
+  ctx.shadowBlur = titleSize * 0.3;
+  ctx.fillText("五 子 军 师", titleX, titleY);
+  ctx.restore();
+
+  if (introP < 0.65) {
+    var subA = clamp01((introP - 0.16) / 0.22) * (1 - clamp01((introP - 0.46) / 0.2));
+    ctx.save();
+    ctx.globalAlpha = subA;
+    ctx.fillStyle = "#e8d8b6";
+    ctx.font = Math.round(30 * sc) + "px KaiTi,STKaiti,serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("运 筹 帷 幄 · 决 胜 棋 枰", W / 2, H * 0.42 + 76 * sc);
+
+    var lineW = 560 * sc * easeOutCubic(clamp01((introP - 0.2) / 0.3));
+    var lineY = H * 0.42 + 118 * sc;
+    var lg = ctx.createLinearGradient(W / 2 - lineW / 2, lineY, W / 2 + lineW / 2, lineY);
+    lg.addColorStop(0, "rgba(201,161,92,0)");
+    lg.addColorStop(0.5, "rgba(201,161,92,.9)");
+    lg.addColorStop(1, "rgba(201,161,92,0)");
+    ctx.strokeStyle = lg; ctx.lineWidth = 2.2 * sc;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - lineW / 2, lineY);
+    ctx.lineTo(W / 2 + lineW / 2, lineY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  var hdrA = clamp01((introP - 0.72) / 0.28) * outFade;
+  if (hdrA > 0.01 && i >= 1 && i <= n) {
+    ctx.save();
+    ctx.globalAlpha = hdrA;
+    var mv = S.moves[i - 1];
+    ctx.fillStyle = "#e8d8b6";
+    ctx.font = Math.round(22 * sc) + "px KaiTi,STKaiti,serif";
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillText("第 " + i + " / " + n + " 手 · " + (mv.color === 1 ? "● 黑" : "○ 白") + " " + coordName(mv.x, mv.y),
+      W - pad - 4 * sc, headerH * 0.52);
+    ctx.restore();
+  }
+
+  if (boardA > 0.01 && n >= 1) {
+    ctx.save();
+    ctx.globalAlpha = boardA;
+
+    var breathe = 1 + 0.007 * Math.sin(t * 0.95);
+    var drawSize = bs * breathe;
+    var drawX = bx + (bs - drawSize) / 2;
+    var drawY = by + boardDY + (bs - drawSize) / 2;
+
+    var curBoard = cfg.boards[i];
+    var animInfo = null;
+    var ripple = null;
+    if (i >= 1 && local < 0.999) {
+      var ap = easeOutBack(clamp01(local / 0.34));
+      var sAlpha = easeOutCubic(clamp01(local / 0.18));
+      var mvv = S.moves[i - 1];
+      animInfo = {
+        x: mvv.x, y: mvv.y,
+        s: 0.45 + 0.55 * ap,
+        a: sAlpha,
+        dy: (1 - ap) * -bs * 0.055
+      };
+      ripple = { x: mvv.x, y: mvv.y, p: clamp01((local - 0.02) / 0.55) };
+    }
+
+    var anCur = cfg.ans[i] || cfg.ans[n];
+    var stableP = clamp01((local - 0.34) / 0.3);
+
+    var hintsList = null, predsList = null, mustList = null;
+    if (stableP > 0.01) {
+      if (anCur.userTurn && mods.rec) {
+        hintsList = anCur.top.slice(0, 3).map(function (c) {
+          return { x: c.x, y: c.y, winrate: c.winrate, comb: c.comb };
+        });
+      }
+      if (!anCur.userTurn && mods.pred) {
+        predsList = anCur.pred.slice(0, 3);
+      }
+      if (mods.threat) {
+        mustList = anCur.userTurn ? anCur.mustBlockMe : anCur.mustBlockOpp;
+      }
+    }
+
+    drawBoardTo(ctx, drawX, drawY, drawSize, curBoard, {
+      numbers: S.settings.showNumbers ? S.moves.slice(0, i) : null,
+      last: (local > 0.4 && i >= 1) ? S.moves[i - 1] : null,
+      winLine: (S.over && i === n && !S.draw) ? S.winLine : null,
+      anim: animInfo,
+      ripple: ripple,
+      forbidden: (S.settings.showForb && anCur) ? anCur.forbidden : [],
+      hints: hintsList,
+      preds: predsList,
+      must: mustList,
+      fast: true,  /* 视频渲染走简化绘制路径 */
+      t: t * 1000
+    });
+    ctx.restore();
+  }
+
+  if (panelA > 0.01 && n >= 1) {
+    ctx.save();
+    ctx.globalAlpha = panelA;
+
+    var anShow = cfg.ans[i] || cfg.ans[n];
+    var anPrev = cfg.ans[Math.max(0, i - 1)];
+    var smoothLocal = easeOutCubic(clamp01(local / 0.85));
+    var anSmooth = Object.assign({}, anShow);
+    if (anPrev && anShow && typeof anPrev.winrateUser === "number" && typeof anShow.winrateUser === "number") {
+      anSmooth.winrateUser = lerp(anPrev.winrateUser, anShow.winrateUser, smoothLocal);
+    }
+
+    var list = [];
+    if (mods.winrate) list.push({ id: "winrate", h: 108 });
+    if (mods.rec) list.push({ id: "rec", h: 224 });
+    if (mods.pred) list.push({ id: "pred", h: 168 });
+    if (mods.threat) list.push({ id: "threat", h: 150 });
+    if (mods.stats) list.push({ id: "stats", h: 250 });
+    if (mods.profile && prof) list.push({ id: "profile", h: 236 });
+    if (mods.kifu) list.push({ id: "kifu", h: 250 });
+
+    if (list.length) {
+      var gapP = 12 * sc;
+      var totalH = list.reduce(function (a, m2) { return a + m2.h * sc + gapP; }, 0) - gapP;
+      var layoutScale = Math.min(1, panelH / Math.max(1, totalH));
+      var curY = panelY;
+      list.forEach(function (m2) {
+        var hh = m2.h * sc * layoutScale;
+        if (curY + hh > panelY + panelH) hh = Math.max(20, panelY + panelH - curY);
+        var r = { x: panelX + panelDX, y: curY, w: panelW, h: hh };
+        curY += hh + gapP * layoutScale;
+        if (hh > 20) drawVideoModule(ctx, r, m2.id, anSmooth, i, layoutScale, prof, 1, t);
+      });
+    }
+    ctx.restore();
+  }
+
+  if (outroP > 0) {
+    var darkA = easeOutCubic(clamp01(outroP / 0.42)) * 0.86;
+    ctx.fillStyle = "rgba(12,9,7," + darkA + ")";
+    ctx.fillRect(0, 0, W, H);
+
+    var sealP = easeOutBack(clamp01((outroP - 0.16) / 0.44));
+    var sealA = clamp01((outroP - 0.12) / 0.36);
+    if (sealA > 0.01) {
+      var winU = S.winner === S.settings.userColor;
+      var sealTxt = S.draw ? "和" : (winU ? "勝" : "負");
+      var sealClr = S.draw ? "#4f7a5a" : "#a83226";
+
+      ctx.save();
+      ctx.globalAlpha = sealA;
+      ctx.translate(W * 0.5, H * 0.40);
+      ctx.rotate(-0.13 + (1 - sealP) * 0.35);
+      var sq = 200 * sc * (0.6 + 0.4 * sealP);
+      ctx.strokeStyle = sealClr; ctx.lineWidth = 13 * sc * sealP;
+      ctx.strokeRect(-sq / 2, -sq / 2, sq, sq);
+      ctx.fillStyle = "rgba(242,232,213,.1)";
+      ctx.fillRect(-sq / 2, -sq / 2, sq, sq);
+      ctx.fillStyle = sealClr;
+      ctx.font = "bold " + (sq * 0.68) + "px KaiTi,STKaiti,serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(sealTxt, 0, sq * 0.05);
+      ctx.restore();
+
+      var titleA2 = easeOutCubic(clamp01((outroP - 0.26) / 0.4));
+      var rise = (1 - easeOutQuint(clamp01((outroP - 0.26) / 0.5))) * 60 * sc;
+      if (titleA2 > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = titleA2;
+        ctx.fillStyle = S.draw ? "#c9a15c" : (winU ? "#e8c987" : "#e0796a");
+        ctx.font = "bold " + (92 * sc) + "px KaiTi,STKaiti,serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.shadowColor = "rgba(201,161,92,.45)"; ctx.shadowBlur = 40 * sc;
+        ctx.fillText(S.draw ? "平 分 秋 色" : (winU ? "我 军 大 捷" : "敌 军 胜 出"),
+          W * 0.5, H * 0.62 + rise);
+        ctx.restore();
+      }
+
+      var infoA = easeOutCubic(clamp01((outroP - 0.42) / 0.36));
+      if (infoA > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = infoA;
+        ctx.fillStyle = "#d8c9a8";
+        ctx.font = Math.round(26 * sc) + "px KaiTi,STKaiti,serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("共 " + S.moves.length + " 手 · " + (S.draw ? "棋盘已满 · 和棋" : "胜方 " + colorCN(S.winner)) +
+          (prof ? " · 敌方棋力估算 " + prof.overall : ""), W * 0.5, H * 0.72 + rise * 0.6);
+        ctx.fillStyle = "#8d7c60";
+        ctx.font = Math.round(20 * sc) + "px KaiTi,STKaiti,serif";
+        ctx.fillText("—— 五子军师 · 运筹帷幄 ——", W * 0.5, H * 0.80 + rise * 0.4);
+        ctx.restore();
+      }
+    }
+  }
+}
+
+/* ---------- 视频启动 ---------- */
 function openVideoModal() {
   if (!S.moves.length) { toast("尚无落子，无从成影"); return; }
+  if (VID._running) { toast("视频正在合成中，请稍候"); return; }
   $("vidCfg").style.display = "";
   $("vidProg").style.display = "none";
   $("videoPreview").style.display = "none";
@@ -2817,158 +3788,216 @@ $("btnVideo2").onclick = openVideoModal;
 $("mVideo").onclick = openVideoModal;
 $("btnVidCancel").onclick = function () { if (VID.abort) VID.abort("已取消合成"); };
 
-$("btnVidGo").onclick = async function () {
-  $("btnVidGo").disabled = true;
-  try {
-    var hasMuxer = await ensureWebMMuxer();
-    if (typeof VideoEncoder !== "undefined" && typeof VideoFrame !== "undefined" && hasMuxer) startVideoFast();
-    else { toast("当前环境不支持 WebCodecs 极速合成（需 Chrome/Edge + https/localhost），将使用实时录制。", 5200); startVideoLegacy(); }
-  } catch (e) { Guard.error("视频启动失败:" + e.message); toast("极速合成启动失败，尝试实时录制"); startVideoLegacy(); }
-  finally { $("btnVidGo").disabled = false; }
-};
-
-function pickMime() {
-  var ts = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"], i;
-  for (i = 0; i < ts.length; i++) if (window.MediaRecorder && MediaRecorder.isTypeSupported(ts[i])) return ts[i];
-  return "";
-}
-
-function finishVideo(blob, totalDur, W, H) {
+function finishVideo(blob, totalDur, W, H, mime, ext) {
   var url = URL.createObjectURL(blob);
-  $("vpTxt").textContent = "✅ 功成 · 时长 " + totalDur.toFixed(1) + " 秒";
+  $("vpTxt").textContent = "✅ 合成完成 · 时长 " + totalDur.toFixed(1) + " 秒";
   $("vpPct").textContent = "100%";
   $("vpBar").style.width = "100%";
-  $("vpDetail").textContent = "极速合成完毕，文件大小 " + (blob.size / 1048576).toFixed(2) + " MB";
+  $("vpDetail").textContent = "文件大小 " + (blob.size / 1048576).toFixed(2) + " MB · 格式 " + (ext === "mp4" ? "MP4 (H.264)" : "WebM (VP9)");
   var vp = $("videoPreview");
   vp.src = url; vp.style.display = "block";
-  $("vidSize").textContent = (blob.size / 1048576).toFixed(2) + " MB · " + W + "×" + H;
+  $("vidSize").textContent = (blob.size / 1048576).toFixed(2) + " MB · " + W + "×" + H + " · ." + ext;
   var dl = $("vidDl");
-  dl.href = url; dl.download = "五子棋复盘_" + nowStr().replace(/[: ]/g, "-") + ".webm";
+  dl.href = url;
+  dl.download = "五子棋复盘_" + nowStr().replace(/[: ]/g, "-") + "." + ext;
   $("vidDone").style.display = "flex";
-  Guard.info("极速视频合成完成：" + totalDur.toFixed(1) + "s，" + (blob.size / 1048576).toFixed(2) + "MB");
+  Guard.info("视频合成完成：" + totalDur.toFixed(1) + "s，" + (blob.size / 1048576).toFixed(2) + "MB，" + ext);
 }
 
+$("btnVidGo").onclick = async function () {
+  if (VID._running) return;
+  VID._running = true;
+  this.disabled = true;
+  try {
+    var hasWC = (typeof VideoEncoder !== "undefined" && typeof VideoFrame !== "undefined");
+    if (hasWC) {
+      await startVideoFast();
+    } else {
+      toast("当前环境不支持 WebCodecs 极速合成（需 Chrome/Edge + https/localhost），将使用实时录制。", 5200);
+      startVideoLegacy();
+    }
+  } catch (e) {
+    Guard.warn("视频合成异常，回退实时录制：" + (e && e.message || e));
+    try { startVideoLegacy(); } catch (e2) { Guard.error("实时录制也不可用：" + (e2 && e2.message || e2)); }
+  } finally {
+    this.disabled = false;
+    VID._running = false;
+  }
+};
+
 async function startVideoFast() {
-  var gap = Math.max(0.5, Math.min(10, parseFloat($("vGap") ? $("vGap").value : 2) || 2));
-  var W = parseInt($("vRes") ? $("vRes").value : 1920, 10), H = Math.round(W * 9 / 16);
-  var fps = 30;
-  var bitrate = ({ 1280: 8e6, 1920: 14e6, 2560: 22e6, 3840: 40e6 })[W] || 14e6;
+  var gap = Math.max(0.4, Math.min(10, parseFloat($("vGap") ? $("vGap").value : 1.6) || 1.6));
+  var W = parseInt($("vRes") ? $("vRes").value : 1920, 10);
+  var H = Math.round(W * 9 / 16);
+  var fps = parseInt($("vFps") ? $("vFps").value : 30, 10);
+  if (!fps || fps < 12) fps = 30;
+  if (!W || W < 320) W = 1920;
+  if (H % 2 !== 0) H += 1;
+  var preferred = ($("vFormat") ? $("vFormat").value : "auto") || "auto";
+
   var mods = {};
   Array.prototype.forEach.call($("vMods").querySelectorAll("input"), function (c) { mods[c.dataset.m] = c.checked; });
 
   $("vidCfg").style.display = "none";
   $("vidProg").style.display = "block";
-  $("vpTxt").textContent = "阶段 1/3：预计算局面...";
+  $("videoPreview").style.display = "none";
+  $("vidDone").style.display = "none";
+  $("vpTxt").textContent = "阶段 1/3：预计算局面…";
   $("vpPct").textContent = "0%";
   $("vpBar").style.width = "0%";
-  $("vpDetail").textContent = "极速模式：只渲染关键帧。";
+  $("vpDetail").textContent = "";
 
   var n = S.moves.length;
   var boards = [], ans = [];
-  var cancelled = false, encoder = null;
+  var cancelled = false;
+  VID._enc = null;
+
   VID.abort = function (msg) {
     cancelled = true;
-    try { if (encoder && encoder.state !== "closed") encoder.close(); } catch (e) {}
+    try { if (VID._enc && VID._enc.state !== "closed") VID._enc.close(); } catch (e) {}
     $("vpTxt").textContent = "⛔ " + (msg || "已取消");
     $("vpBar").style.width = "0%";
+    $("vpPct").textContent = "";
+    setTimeout(function () {
+      if (cancelled) { $("vidProg").style.display = "none"; $("vidCfg").style.display = ""; }
+    }, 900);
   };
-  var profileFinal = buildProfile();
 
   try {
+    var profileFinal = buildProfile();
+
+    /* ---- 阶段 1：预计算（后台空闲时推进，避免长时间阻塞） ---- */
     for (var k = 0; k <= n; k++) {
       if (cancelled) return;
       boards[k] = boardAt(k);
       ans[k] = analyzeAt(k);
-      var p = Math.round(k / (n + 1) * 25);
+      var p = Math.round(k / (n + 1) * 22);
       $("vpBar").style.width = p + "%";
       $("vpPct").textContent = p + "%";
-      if (k % 3 === 0) await new Promise(function (r) { setTimeout(r, 0); });
+      if (k % 2 === 0) await _yield();
     }
+    if (cancelled) return;
 
-    var introDur = mods.intro ? 2.5 : 0;
-    var endDur = mods.intro ? 3 : 0;
-    var totalDur = Math.max(0.1, introDur + n * gap + endDur);
+    var introDur = mods.intro ? 3.4 : 0.6;
+    var outroDur = mods.intro ? 4.2 : 1.4;
+    var bodyDur = n * gap;
+    var totalDur = introDur + bodyDur + outroDur;
 
-    var frames = [];
-    if (mods.intro) frames.push({ type: "intro", t: 0 });
-    for (var mi = 1; mi <= n; mi++) frames.push({ type: "move", k: mi, t: introDur + (mi - 1) * gap });
-    if (mods.intro) frames.push({ type: "end", t: introDur + n * gap });
-    var lastFrame = frames[frames.length - 1];
-    frames.push({ type: lastFrame.type, k: lastFrame.k, t: Math.max(lastFrame.t + 0.001, totalDur - 0.05), dup: true });
+    /* ---- 阶段 2：编码器 ---- */
+    $("vpTxt").textContent = "阶段 2/3：初始化编码器…";
+    $("vpBar").style.width = "24%";
+    $("vpPct").textContent = "24%";
+    await _yield();
 
-    $("vpTxt").textContent = "阶段 2/3：初始化硬件编码器...";
-    var codecStr = "", muxerCodec = "", support = null;
-    var candidates = [{ codec: "vp09.00.10.08", mux: "V_VP9" }, { codec: "vp8", mux: "V_VP8" }];
-    for (var ci = 0; ci < candidates.length; ci++) {
-      try {
-        support = await VideoEncoder.isConfigSupported({ codec: candidates[ci].codec, width: W, height: H, bitrate: bitrate, framerate: fps });
-        if (support && support.supported) { codecStr = candidates[ci].codec; muxerCodec = candidates[ci].mux; break; }
-      } catch (e) {}
-    }
-    if (!codecStr) { toast("硬件编码不可用，降级实时录制"); startVideoLegacy(); return; }
+    var enc = await createVideoEncoder(W, H, fps, preferred);
+    if (!enc) throw new Error("浏览器无法创建视频编码器");
+    VID._enc = enc.encoder;
 
-    var target = new WebMMuxer.ArrayBufferTarget();
-    var muxer = new WebMMuxer.Muxer({
-      target: target,
-      video: { codec: muxerCodec, width: W, height: H, frameRate: fps },
-      firstTimestampBehavior: "offset"
-    });
-    encoder = new VideoEncoder({
-      output: function (chunk, meta) { muxer.addVideoChunk(chunk, meta); },
-      error: function (e) { Guard.error("VideoEncoder 错误: " + (e && e.message || e)); cancelled = true; }
-    });
-    encoder.configure({ codec: codecStr, width: W, height: H, bitrate: bitrate, framerate: fps });
-
+    /* ---- 阶段 3：逐帧渲染 ---- */
     var cv = document.createElement("canvas");
     cv.width = W; cv.height = H;
-    var ctx = cv.getContext("2d");
+    /* alpha:false 可显著加快移动端绘制 */
+    var ctx = cv.getContext("2d", { alpha: false });
+    if (!ctx) throw new Error("无法创建画布上下文");
 
-    $("vpTxt").textContent = "阶段 3/3：离线渲染关键帧 (0/" + frames.length + ")";
-    for (var fi = 0; fi < frames.length; fi++) {
-      if (cancelled) { try { encoder.close(); } catch (e) {} return; }
-      var fr = frames[fi];
-      if (fr.type === "intro") drawIntro(ctx, W, H, fr.t);
-      else if (fr.type === "end") drawEnd(ctx, W, H, profileFinal);
-      else drawMoveFrame(ctx, W, H, fr.k, boards[fr.k], ans[fr.k], Math.max(1, gap), mods, profileFinal);
-      var vf = new VideoFrame(cv, { timestamp: Math.round(fr.t * 1e6) });
-      encoder.encode(vf, { keyFrame: true });
+    var cfg = {
+      n: n, boards: boards, ans: ans, mods: mods, profile: profileFinal,
+      introDur: introDur, gap: gap, outroDur: outroDur, totalDur: totalDur
+    };
+
+    var totalFrames = Math.max(2, Math.ceil(totalDur * fps));
+    var keyEvery = Math.max(1, Math.round(fps * 3));
+    var QUEUE_HIGH = IS_MOBILE ? 4 : 8;  /* 移动端更谨慎，避免内存暴涨 */
+    var QUEUE_LOW = IS_MOBILE ? 2 : 4;
+    $("vpTxt").textContent = "阶段 3/3：逐帧渲染 (0/" + totalFrames + ")";
+
+    for (var f = 0; f < totalFrames; f++) {
+      if (cancelled) { try { enc.encoder.close(); } catch (e) {} return; }
+
+      /* 队列流控：编码器跟不上就暂停一下，避免内存堆积和卡死 */
+      if (enc.encoder.encodeQueueSize > QUEUE_HIGH) {
+        while (enc.encoder.encodeQueueSize > QUEUE_LOW) {
+          await sleep(2);
+          if (cancelled) return;
+        }
+      }
+
+      var tt = f / fps;
+      drawVideoFrame(ctx, W, H, tt, cfg);
+
+      var vf = new VideoFrame(cv, {
+        timestamp: Math.round(f * 1e6 / fps),
+        duration: Math.round(1e6 / fps)
+      });
+      enc.encoder.encode(vf, { keyFrame: (f % keyEvery === 0) });
       vf.close();
-      var pct = 25 + Math.round((fi + 1) / frames.length * 75);
-      $("vpBar").style.width = pct + "%";
-      $("vpPct").textContent = pct + "%";
-      $("vpTxt").textContent = "阶段 3/3：离线渲染关键帧 (" + (fi + 1) + "/" + frames.length + ")";
-      if (fi % 2 === 0) await new Promise(function (r) { setTimeout(r, 0); });
+
+      /* 每 20 帧让出一次，保持 UI 响应（比原每 3 帧更省时间） */
+      if ((f & 19) === 19) await _yield();
+
+      /* 每 30 帧刷新一次进度 */
+      if (f % 30 === 0) {
+        var pct2 = 24 + Math.round(f / totalFrames * 74);
+        $("vpBar").style.width = pct2 + "%";
+        $("vpPct").textContent = pct2 + "%";
+        $("vpTxt").textContent = "阶段 3/3：逐帧渲染 (" + (f + 1) + "/" + totalFrames + ")";
+        $("vpDetail").textContent = "格式 " + (enc.ext === "mp4" ? "MP4/H.264" : "WebM/VP9") +
+          " · " + W + "×" + H + "@" + fps + "fps · " + gap.toFixed(1) + "s/手" +
+          (IS_MOBILE ? " · 移动端优化中" : "");
+        await _yield();
+      }
     }
-    $("vpTxt").textContent = "封装收尾...";
-    await encoder.flush();
-    encoder.close();
-    muxer.finalize();
-    var blob = new Blob([target.buffer], { type: "video/webm" });
-    finishVideo(blob, totalDur, W, H);
+
+    if (cancelled) { try { enc.encoder.close(); } catch (e) {} return; }
+
+    $("vpTxt").textContent = "封装收尾…";
+    $("vpBar").style.width = "99%";
+    $("vpPct").textContent = "99%";
+    var blob = await enc.finish();
+    if (cancelled) return;
+    finishVideo(blob, totalDur, W, H, enc.mime, enc.ext);
   } catch (e) {
-    try { if (encoder && encoder.state !== "closed") encoder.close(); } catch (e2) {}
-    Guard.error("极速合成失败: " + (e && e.message || e), { stack: e && e.stack });
-    toast("极速合成失败：" + (e && e.message || e));
+    try { if (VID._enc && VID._enc.state !== "closed") VID._enc.close(); } catch (e2) {}
+    Guard.warn("极速合成失败: " + (e && e.message || e));
+    toast("极速合成失败：" + (e && e.message || e) + "，尝试实时录制");
     $("vidProg").style.display = "none";
     $("vidCfg").style.display = "";
+    try { startVideoLegacy(); } catch (e3) { Guard.error("实时录制也不可用：" + (e3 && e3.message || e3)); }
   }
 }
 
+/* ---------- 降级：MediaRecorder 实时录制 ---------- */
+function pickMime() {
+  var ts = [
+    "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm",
+    "video/mp4;codecs=avc1.640028", "video/mp4;codecs=avc1.42E01E", "video/mp4"
+  ], i;
+  for (i = 0; i < ts.length; i++) {
+    try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(ts[i])) return ts[i]; } catch (e) {}
+  }
+  return "";
+}
+
 function startVideoLegacy() {
-  if (!window.MediaRecorder) { toast("此浏览器不支持视频合成，请用 Chrome/Edge"); Guard.error("MediaRecorder 不可用"); return; }
+  if (!window.MediaRecorder) { toast("此浏览器不支持视频合成，请用 Chrome/Edge"); Guard.warn("MediaRecorder 不可用"); return; }
   var mime = pickMime();
-  if (!mime) { toast("不支持 webm 格式"); return; }
-  var gap = Math.max(0.5, Math.min(10, parseFloat($("vGap") ? $("vGap").value : 2) || 2));
-  var W = parseInt($("vRes") ? $("vRes").value : 1920, 10), H = Math.round(W * 9 / 16);
-  var fps = parseInt($("vFps") ? $("vFps").value : 30, 10);
+  if (!mime) { toast("浏览器不支持任何可用的视频格式"); return; }
+
+  var isMp4 = mime.indexOf("mp4") >= 0;
+  var gap = Math.max(0.4, Math.min(10, parseFloat($("vGap") ? $("vGap").value : 1.6) || 1.6));
+  var W = parseInt($("vRes") ? $("vRes").value : 1920, 10);
+  var H = Math.round(W * 9 / 16);
+  var fps = parseInt($("vFps") ? $("vFps").value : 30, 10) || 30;
   var mods = {};
   Array.prototype.forEach.call($("vMods").querySelectorAll("input"), function (c) { mods[c.dataset.m] = c.checked; });
+
   $("vidCfg").style.display = "none";
   $("vidProg").style.display = "block";
-  $("vpTxt").textContent = "阶段 1/2：分析棋局生成数据...";
+  $("vpTxt").textContent = "阶段 1/2：分析棋局…";
   $("vpPct").textContent = "0%";
   $("vpBar").style.width = "0%";
-  $("vpDetail").textContent = "正在预计算所有局面的胜率与推荐点...";
+  $("vpDetail").textContent = "正在预计算所有局面的胜率与推荐点…";
+
   var n = S.moves.length, boards = [], ans = [], cancelled = false;
   var profileFinal = buildProfile();
 
@@ -2990,309 +4019,84 @@ function startVideoLegacy() {
     $("vpBar").style.width = pct + "%";
     $("vpPct").textContent = pct + "%";
     $("vpTxt").textContent = "阶段 1/2：分析棋局 (" + k + "/" + n + " 手)";
-    if (k % 3 === 0) setTimeout(function () { pre(k + 1); }, 0);
+    if (k % 2 === 0) setTimeout(function () { pre(k + 1); }, 0);
     else pre(k + 1);
   }
 
   function record() {
-    var introDur = mods.intro ? 2.5 : 0, endDur = mods.intro ? 3 : 0, total = introDur + n * gap + endDur;
+    var introDur = mods.intro ? 3.4 : 0.6;
+    var outroDur = mods.intro ? 4.2 : 1.4;
+    var total = introDur + n * gap + outroDur;
+
     var cv = document.createElement("canvas");
     cv.width = W; cv.height = H;
     cv.style.position = "fixed"; cv.style.left = "-99999px"; cv.style.top = "0";
     document.body.appendChild(cv);
     if (!cv.captureStream) {
       cv.parentNode.removeChild(cv);
-      toast("此浏览器不支持画布合成视频，请使用Chrome/Edge");
-      Guard.error("captureStream 不可用");
+      toast("此浏览器不支持画布合成视频，请使用 Chrome/Edge");
+      Guard.warn("captureStream 不可用");
       $("vidProg").style.display = "none"; $("vidCfg").style.display = "";
       return;
     }
-    var ctx = cv.getContext("2d");
+    var ctx = cv.getContext("2d", { alpha: false });
     var stream = cv.captureStream(fps);
     var bitrate = ({ 1280: 9e6, 1920: 18e6, 2560: 30e6, 3840: 48e6 })[W] || 16e6;
     var rec;
     try { rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate }); }
     catch (e) {
-      Guard.error("录制器初始化失败:" + e.message);
+      Guard.warn("录制器初始化失败:" + (e && e.message || e));
       cv.parentNode.removeChild(cv);
       toast("录制器初始化失败");
       $("vidProg").style.display = "none"; $("vidCfg").style.display = "";
       return;
     }
-    var chunks = [], t0 = null;
+    var chunks = [], t0 = null, finished = false;
     rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
-    rec.onerror = function () { Guard.error("MediaRecorder 录制出错"); cancelled = true; };
+    rec.onerror = function () { Guard.warn("MediaRecorder 录制出错"); cancelled = true; };
     rec.onstop = function () {
+      if (finished) return;
+      finished = true;
       if (cv.parentNode) cv.parentNode.removeChild(cv);
-      if (cancelled) { toast("合成已取消"); $("vidProg").style.display = "none"; $("vidCfg").style.display = ""; return; }
-      var blob = new Blob(chunks, { type: "video/webm" });
-      var url = URL.createObjectURL(blob);
-      $("vpTxt").textContent = "✅ 功成 · 时长 " + total.toFixed(1) + " 秒";
-      $("vpPct").textContent = "100%";
-      $("vpBar").style.width = "100%";
-      $("vpDetail").textContent = "合成完毕，文件大小 " + (blob.size / 1048576).toFixed(2) + " MB";
-      var vp = $("videoPreview");
-      vp.src = url; vp.style.display = "block";
-      $("vidSize").textContent = (blob.size / 1048576).toFixed(2) + " MB · " + W + "×" + H;
-      var dl = $("vidDl");
-      dl.href = url; dl.download = "五子棋复盘_" + nowStr().replace(/[: ]/g, "-") + ".webm";
-      $("vidDone").style.display = "flex";
-      Guard.info("视频合成完成：" + total.toFixed(1) + "s，" + (blob.size / 1048576).toFixed(2) + "MB");
+      if (cancelled) {
+        toast("合成已取消");
+        $("vidProg").style.display = "none"; $("vidCfg").style.display = "";
+        return;
+      }
+      var blob = new Blob(chunks, { type: isMp4 ? "video/mp4" : "video/webm" });
+      finishVideo(blob, total, W, H, isMp4 ? "video/mp4" : "video/webm", isMp4 ? "mp4" : "webm");
     };
-    function segAt(t) {
-      var tt = t;
-      if (tt < introDur) return { type: "intro", local: tt };
-      tt -= introDur;
-      var mi = Math.floor(tt / gap);
-      if (mi < n) return { type: "move", i: mi, local: tt - mi * gap };
-      return { type: "end", local: tt - introDur - n * gap };
-    }
-    function frame(t) {
-      var seg = segAt(t);
-      if (seg.type === "intro") drawIntro(ctx, W, H, seg.local);
-      else if (seg.type === "end") drawEnd(ctx, W, H, profileFinal);
-      else drawMoveFrame(ctx, W, H, seg.i + 1, boards[seg.i + 1], ans[seg.i + 1], seg.local, mods, profileFinal);
-    }
+
+    var cfg = {
+      n: n, boards: boards, ans: ans, mods: mods, profile: profileFinal,
+      introDur: introDur, gap: gap, outroDur: outroDur, totalDur: total
+    };
+
     function loop(ts) {
       if (cancelled) { try { if (rec.state && rec.state !== "inactive") rec.stop(); } catch (e) {} return; }
       if (t0 === null) t0 = ts;
       var t = (ts - t0) / 1000;
       if (t >= total) {
-        frame(total - 0.001);
-        setTimeout(function () { try { rec.stop(); } catch (e) {} }, 160);
+        drawVideoFrame(ctx, W, H, total - 0.001, cfg);
+        setTimeout(function () { try { if (rec.state && rec.state !== "inactive") rec.stop(); } catch (e) {} }, 200);
         return;
       }
-      frame(t);
+      drawVideoFrame(ctx, W, H, t, cfg);
       var pct = 50 + Math.round((t / total) * 50);
       $("vpBar").style.width = pct + "%";
       $("vpPct").textContent = pct + "%";
       var rem = Math.max(0, total - t);
-      $("vpTxt").textContent = "阶段 2/2：逐帧渲染中...";
-      $("vpDetail").textContent = "已渲染 " + t.toFixed(1) + "s / 总时长 " + total.toFixed(1) + "s (预计剩余 " + rem.toFixed(1) + "s)";
+      $("vpTxt").textContent = "阶段 2/2：逐帧渲染中…";
+      $("vpDetail").textContent = "已渲染 " + t.toFixed(1) + "s / 总时长 " + total.toFixed(1) + "s（剩余约 " + rem.toFixed(1) + "s）· 实时录制模式";
       requestAnimationFrame(loop);
     }
-    frame(0);
-    rec.start(250);
+
+    drawVideoFrame(ctx, W, H, 0, cfg);
+    try { rec.start(200); } catch (e) { Guard.warn("录制启动失败:" + (e && e.message || e)); }
     requestAnimationFrame(loop);
-    Guard.info("视频合成开始：" + W + "×" + H + "@" + fps + "fps，间隔" + gap + "s");
+    Guard.info("实时录制开始：" + W + "×" + H + "@" + fps + "fps，格式 " + mime);
   }
   pre(0);
-}
-
-function vBg(ctx, W, H) {
-  var g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, "#181410"); g.addColorStop(1, "#241c14");
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-}
-function vPanel(ctx, r, title, sc) {
-  ctx.fillStyle = "rgba(244,234,214,.94)";
-  roundRect(ctx, r.x, r.y, r.w, r.h, 10 * sc); ctx.fill();
-  ctx.strokeStyle = "rgba(138,109,59,.8)"; ctx.lineWidth = 1.5 * sc; ctx.stroke();
-  roundRect(ctx, r.x + 4*sc, r.y + 4*sc, r.w - 8*sc, r.h - 8*sc, 7*sc);
-  ctx.strokeStyle = "rgba(138,109,59,.35)"; ctx.lineWidth = 1*sc; ctx.stroke();
-  if (title) {
-    ctx.fillStyle = "#a83226"; ctx.font = "bold " + 17*sc + "px KaiTi,STKaiti,serif";
-    ctx.textAlign = "left"; ctx.textBaseline = "top";
-    ctx.fillText("◆ " + title, r.x + 12*sc, r.y + 9*sc);
-  }
-}
-function drawIntro(ctx, W, H, t) {
-  vBg(ctx, W, H);
-  var sc = H / 1080;
-  ctx.globalAlpha = Math.min(1, t / 0.6);
-  ctx.fillStyle = "#c9a15c"; ctx.font = "bold " + 64*sc + "px KaiTi,STKaiti,serif";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText("五 子 军 师 · 复 盘", W / 2, H * 0.38);
-  ctx.fillStyle = "#e8d8b6"; ctx.font = 28*sc + "px KaiTi,STKaiti,serif";
-  ctx.fillText(nowStr() + " · 共 " + S.moves.length + " 手 · " + (S.settings.renju ? "禁手规则" : "无禁手"), W / 2, H * 0.5);
-  ctx.fillStyle = "#8d7c60"; ctx.font = 22*sc + "px KaiTi,STKaiti,serif";
-  ctx.fillText("我军执" + colorCN(S.settings.userColor) + (S.settings.firstMover === "me" ? "（先手）" : "（后手）") + " · " + resultText(), W / 2, H * 0.58);
-  ctx.globalAlpha = 1;
-}
-function drawEnd(ctx, W, H, pf) {
-  vBg(ctx, W, H);
-  var sc = H / 1080;
-  var winU = S.winner === S.settings.userColor;
-  var title = S.draw ? "平 分 秋 色" : (winU ? "我 军 大 捷" : "敌 军 胜 出");
-  ctx.fillStyle = S.draw ? "#c9a15c" : (winU ? "#c9a15c" : "#c8604f");
-  ctx.font = "bold " + 76*sc + "px KaiTi,STKaiti,serif";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(title, W / 2, H * 0.4);
-  ctx.fillStyle = "#e8d8b6"; ctx.font = 26*sc + "px KaiTi,STKaiti,serif";
-  ctx.fillText("共 " + S.moves.length + " 手 · " + (S.draw ? "棋盘已满 · 和棋" : "胜方 " + colorCN(S.winner)) + (pf ? (" · 敌方棋力估算 " + pf.overall) : ""), W / 2, H * 0.52);
-  ctx.fillStyle = "#8d7c60"; ctx.font = 20*sc + "px KaiTi,STKaiti,serif";
-  ctx.fillText("—— 五子军师 · 合成导出 ——", W / 2, H * 0.62);
-}
-function drawMoveFrame(ctx, W, H, k, b, an, local, mods, pf) {
-  vBg(ctx, W, H);
-  var sc = H / 1080, m = 22*sc, headerH = 64*sc;
-  ctx.fillStyle = "rgba(30,25,19,.92)"; ctx.fillRect(0, 0, W, headerH);
-  var mv = S.moves[k - 1];
-  ctx.fillStyle = "#c9a15c"; ctx.font = "bold " + 24*sc + "px KaiTi,STKaiti,serif";
-  ctx.textAlign = "left"; ctx.textBaseline = "middle";
-  ctx.fillText("第 " + k + " / " + S.moves.length + " 手 · " + colorCN(mv.color) + " " + coordName(mv.x, mv.y) + " · " + whoName(mv.color), m, headerH / 2);
-  ctx.fillStyle = "#8d7c60"; ctx.font = 18*sc + "px KaiTi,STKaiti,serif";
-  ctx.textAlign = "right";
-  ctx.fillText("我军胜率 " + an.winrateUser.toFixed(1) + "%", W - m, headerH / 2);
-  ctx.textAlign = "left";
-
-  var list = [];
-  if (mods.winrate) list.push({ id: "winrate", h: 92 });
-  if (mods.rec) list.push({ id: "rec", h: 205 });
-  if (mods.pred) list.push({ id: "pred", h: 150 });
-  if (mods.threat) list.push({ id: "threat", h: 125 });
-  if (mods.stats) list.push({ id: "stats", h: 235 });
-  if (mods.profile && pf) list.push({ id: "profile", h: 220 });
-  if (mods.kifu) list.push({ id: "kifu", h: 230 });
-
-  var boardSize = Math.min(H - headerH - 2*m, W * 0.62);
-  var bx = m, by = headerH + (H - headerH - boardSize) / 2;
-  var anim = { x: mv.x, y: mv.y, s: Math.min(1, local / 0.25) };
-  anim.s = 1 - Math.pow(1 - anim.s, 3);
-
-  drawBoardTo(ctx, bx, by, boardSize, b, {
-    numbers: S.settings.showNumbers ? S.moves.slice(0, k) : null,
-    last: mv,
-    winLine: (S.over && k === S.moves.length && !S.draw) ? S.winLine : null,
-    anim: anim,
-    forbidden: S.settings.showForb ? an.forbidden : [],
-    hints: (mods.rec && an.userTurn) ? an.top.slice(0, 3) : null,
-    preds: (mods.pred && !an.userTurn) ? an.pred.slice(0, 3) : null,
-    must: (mods.threat) ? (an.userTurn ? an.mustBlockMe : an.mustBlockOpp) : [],
-    t: local * 1000
-  });
-
-  var areaX = bx + boardSize + m, areaW = W - areaX - m, areaY = headerH + m, areaH = H - headerH - 2*m;
-  var layoutScale = sc, cols = 1;
-  var testColY = [areaY, areaY], testIdx = 0;
-  list.forEach(function (mm) {
-    var hh = mm.h * layoutScale;
-    if (testColY[testIdx] + hh > areaY + areaH && cols === 1) { cols = 2; testColY = [areaY, areaY]; testIdx = 0; hh = mm.h * layoutScale; }
-    if (testColY[testIdx] + hh > areaY + areaH && cols === 2 && testIdx === 0) testIdx = 1;
-    testColY[testIdx] += hh + 12 * layoutScale;
-  });
-  var maxH = Math.max(testColY[0], testColY[1]);
-  if (maxH > areaY + areaH) layoutScale = layoutScale * (areaH / (maxH - areaY));
-  var colW = cols === 1 ? areaW : (areaW - 12 * layoutScale) / 2;
-  var colY = [areaY, areaY], colIdx = 0;
-  list.forEach(function (mm) {
-    var hh = mm.h * layoutScale;
-    if (colY[colIdx] + hh > areaY + areaH && cols === 2 && colIdx === 0) colIdx = 1;
-    var r = { x: colIdx === 0 ? areaX : areaX + colW + 12 * layoutScale, y: colY[colIdx], w: colW, h: hh };
-    colY[colIdx] += hh + 12 * layoutScale;
-    drawVideoModule(ctx, r, mm.id, an, k, layoutScale, pf);
-  });
-}
-
-function drawVideoModule(ctx, r, id, an, k, sc, pf) {
-  var U = S.settings.userColor, pad = 12 * sc, tx = r.x + pad, ty = r.y + pad + 22 * sc, i;
-  ctx.textAlign = "left"; ctx.textBaseline = "top";
-
-  if (id === "winrate") {
-    vPanel(ctx, r, "局势胜率", sc);
-    var bw = r.w - 2*pad, bh = 26*sc, bx = r.x + pad, by2 = r.y + 48*sc;
-    ctx.fillStyle = "#cbb98e"; roundRect(ctx, bx, by2, bw, bh, bh/2); ctx.fill();
-    ctx.fillStyle = "#1c1c1c"; ctx.fillRect(bx, by2, bw * (100 - an.winrateUser)/100, bh);
-    ctx.fillStyle = "#f2f5fa"; ctx.fillRect(bx + bw * (100 - an.winrateUser)/100, by2, bw * an.winrateUser/100, bh);
-    ctx.fillStyle = "#fff"; ctx.font = "bold " + 15*sc + "px sans-serif";
-    ctx.fillText("敌 " + (100 - an.winrateUser).toFixed(1) + "%", bx + 6*sc, by2 + 5*sc);
-    ctx.fillStyle = "#222"; ctx.textAlign = "right";
-    ctx.fillText("我 " + an.winrateUser.toFixed(1) + "%", bx + bw - 6*sc, by2 + 5*sc);
-    ctx.textAlign = "left";
-  } else if (id === "rec") {
-    vPanel(ctx, r, an.userTurn ? "我军推荐落点" : "敌方最佳着法推演", sc);
-    an.top.slice(0, 5).forEach(function (c, ci) {
-      var y = ty + ci * 32 * sc;
-      var pct = c.winrate != null ? c.winrate : (50 + 47 * Math.tanh((c.comb - an.top[0].comb * 0.4) / 8e5));
-      pct = Math.max(2, Math.min(99, pct));
-      ctx.fillStyle = ci === 0 ? "#a83226" : "#8d7c60";
-      ctx.font = "bold " + 16*sc + "px KaiTi,STKaiti,serif";
-      ctx.fillText(ci === 0 ? "★" : String(ci + 1), tx, y);
-      ctx.fillStyle = "#2f2721";
-      ctx.font = (ci === 0 ? "bold " : "") + 16*sc + "px KaiTi,STKaiti,serif";
-      ctx.fillText(coordName(c.x, c.y), tx + 22*sc, y);
-      ctx.fillStyle = "#cbb98e";
-      roundRect(ctx, tx + 76*sc, y + 3*sc, r.w - pad - 100*sc, 12*sc, 6*sc); ctx.fill();
-      ctx.fillStyle = ci === 0 ? "#a83226" : "#8a6d3b";
-      roundRect(ctx, tx + 76*sc, y + 3*sc, (r.w - pad - 100*sc) * pct/100, 12*sc, 6*sc); ctx.fill();
-      ctx.fillStyle = "#6b5b49"; ctx.font = 13*sc + "px sans-serif";
-      ctx.fillText(pct.toFixed(1) + "%", tx + 82*sc + (r.w - pad - 100*sc), y + 1*sc);
-    });
-  } else if (id === "pred") {
-    vPanel(ctx, r, "对方下一手预测", sc);
-    an.pred.forEach(function (p, pi) {
-      var y = ty + pi * 34 * sc;
-      ctx.fillStyle = pi === 0 ? "#a83226" : "#8d6a5a";
-      ctx.font = (pi === 0 ? "bold " : "") + 16*sc + "px KaiTi,STKaiti,serif";
-      ctx.fillText((pi + 1) + ". " + coordName(p.x, p.y), tx, y);
-      ctx.fillStyle = "#cbb98e";
-      roundRect(ctx, tx + 90*sc, y + 3*sc, r.w - pad - 135*sc, 12*sc, 6*sc); ctx.fill();
-      ctx.fillStyle = "#c8604f";
-      roundRect(ctx, tx + 90*sc, y + 3*sc, (r.w - pad - 135*sc) * Math.min(1, p.p / 60), 12*sc, 6*sc); ctx.fill();
-      ctx.fillStyle = "#6b5b49"; ctx.font = 13*sc + "px sans-serif";
-      ctx.fillText(p.p.toFixed(1) + "%", tx + 96*sc + (r.w - pad - 135*sc), y + 1*sc);
-    });
-  } else if (id === "threat") {
-    vPanel(ctx, r, "烽火警报", sc);
-    ctx.font = 15*sc + "px KaiTi,STKaiti,serif";
-    if (an.userTurn && an.opFive >= 2) {
-      ctx.fillStyle = "#a83226"; ctx.fillText("⛔ 敌军双成五点，必输局面", tx, ty);
-    } else if (an.mustBlockMe.length && an.userTurn) {
-      ctx.fillStyle = "#a83226";
-      ctx.fillText("🚨 敌成五点必防：" + an.mustBlockMe.slice(0, 3).map(function (p) { return coordName(p.x, p.y); }).join("、"), tx, ty);
-    } else if (an.threat.ofour.U && an.userTurn) {
-      ctx.fillStyle = "#4f7a5a"; ctx.fillText("✨ 我军有活四，一击可定乾坤！", tx, ty);
-    } else {
-      ctx.fillStyle = "#6b5b49"; ctx.fillText("暂无燃眉之急。", tx, ty);
-    }
-    ctx.fillStyle = "#6b5b49"; ctx.font = 13*sc + "px sans-serif";
-    ctx.fillText("敌威胁：五" + an.threat.five.O + " 活四" + an.threat.ofour.O + " 冲四" + an.threat.four.O + " 活三" + an.threat.othree.O, tx, ty + 28*sc);
-    ctx.fillText("我威胁：五" + an.threat.five.U + " 活四" + an.threat.ofour.U + " 冲四" + an.threat.four.U + " 活三" + an.threat.othree.U, tx, ty + 50*sc);
-  } else if (id === "stats") {
-    vPanel(ctx, r, "详析数据", sc);
-    ctx.font = 14*sc + "px KaiTi,STKaiti,serif";
-    var rows = [
-      ["开局", openingName()],
-      ["评估值", (an.evalU >= 0 ? "+" : "") + Math.round(an.evalU/1000) + "k"],
-      ["黑/白", an.stonesB + " / " + an.stonesW],
-      ["禁手点", String(an.forbidden.length)]
-    ];
-    rows.forEach(function (row, ri) {
-      ctx.fillStyle = "#8d7c60"; ctx.fillText(row[0], tx, ty + ri * 25 * sc);
-      ctx.fillStyle = "#2f2721"; ctx.fillText(row[1], tx + 86*sc, ty + ri * 25 * sc);
-    });
-    var tt = an.terr.U + an.terr.O + an.terr.N || 1, by3 = ty + rows.length * 25 * sc + 8 * sc, bw = r.w - 2 * pad;
-    ctx.fillStyle = "#8d7c60";
-    ctx.fillText("疆域 我" + Math.round(an.terr.U / tt * 100) + "% / 敌" + Math.round(an.terr.O / tt * 100) + "%", tx, by3);
-    ctx.fillStyle = "#7d8aa5"; roundRect(ctx, tx, by3 + 22*sc, bw, 12*sc, 6*sc); ctx.fill();
-    ctx.fillStyle = "#8a6d3b"; roundRect(ctx, tx + bw * (an.terr.O / tt), by3 + 22*sc, bw * (an.terr.U / tt), 12*sc, 6*sc); ctx.fill();
-  } else if (id === "profile") {
-    vPanel(ctx, r, "敌方棋力画像", sc);
-    ctx.fillStyle = "#a83226"; ctx.font = "bold " + 32*sc + "px KaiTi,STKaiti,serif";
-    ctx.fillText(String(pf.overall), tx, ty);
-    ctx.fillStyle = "#8d7c60"; ctx.font = 13*sc + "px KaiTi,STKaiti,serif";
-    ctx.fillText("综合", tx + 56*sc, ty + 16*sc);
-    var dims = [["开局", pf.opening], ["进攻", pf.attack], ["防守", pf.defense], ["算度", pf.calc], ["稳定", pf.stab]];
-    dims.forEach(function (d, di) {
-      var y = ty + 44*sc + di * 27*sc;
-      ctx.fillStyle = "#8d7c60"; ctx.font = 13*sc + "px KaiTi,STKaiti,serif";
-      ctx.fillText(d[0], tx, y);
-      ctx.fillStyle = "#cbb98e"; roundRect(ctx, tx + 46*sc, y + 2*sc, r.w - pad - 95*sc, 10*sc, 5*sc); ctx.fill();
-      ctx.fillStyle = "#8a6d3b"; roundRect(ctx, tx + 46*sc, y + 2*sc, (r.w - pad - 95*sc) * d[1] / 100, 10*sc, 5*sc); ctx.fill();
-      ctx.fillText(String(d[1]), tx + 52*sc + (r.w - pad - 95*sc), y);
-    });
-  } else if (id === "kifu") {
-    vPanel(ctx, r, "棋谱（金=最新）", sc);
-    var start = Math.max(0, k - 14), col = 0, row = 0, cw = (r.w - 2 * pad) / 3;
-    for (i = start; i < k; i++) {
-      var mv2 = S.moves[i];
-      ctx.fillStyle = i === k - 1 ? "#a83226" : "#6b5b49";
-      ctx.font = (i === k - 1 ? "bold " : "") + 14*sc + "px KaiTi,STKaiti,serif";
-      ctx.fillText((i + 1) + "." + (mv2.color === 1 ? "●" : "○") + coordName(mv2.x, mv2.y), tx + col * cw, ty + row * 23 * sc);
-      col++;
-      if (col === 3) { col = 0; row++; }
-    }
-  }
 }
 
 /* ============================================================
@@ -3323,12 +4127,11 @@ document.addEventListener("keydown", function (ev) {
     else if (ev.key === "Home") { S.viewIndex = 0; refresh(); }
     else if (ev.key === "End") { S.viewIndex = S.moves.length; refresh(); }
     else if (ev.key === "Escape") { S.pending = null; }
-  } catch (e) { Guard.error("快捷键处理异常:" + e.message); }
+  } catch (e) { Guard.warn("快捷键处理异常:" + e.message); }
 });
 
 window.addEventListener("resize", fitBoard);
 window.addEventListener("beforeunload", function () {
-  // 退出前保存 AI 学习数据
   if (AI_LEARN.enabled) {
     aiFlushStepBuf();
     try { aiSave(); } catch (e) {}
@@ -3344,10 +4147,23 @@ document.addEventListener("visibilitychange", function () {
 document.addEventListener("DOMContentLoaded", function () {
   Guard.safe("init", function () {
     applySettings();
+
+    /* 移动端默认降配，让合成更顺畅 */
+    try {
+      if (IS_MOBILE) {
+        var selRes = $("vRes");
+        if (selRes) selRes.value = "1280";
+        var selFps = $("vFps");
+        if (selFps) selFps.value = "24";
+        var selFmt = $("vFormat");
+        if (selFmt) selFmt.value = "webm"; /* 移动端 WebM 更省资源，可手动改回 MP4 */
+        Guard.info("检测到移动端：默认 720p / 24fps / WebM");
+      }
+    } catch (e) {}
+
     dbGet("kv", "settings").then(function (r) {
       if (r && r.v) Object.assign(S.settings, r.v);
       applySettings();
-      // AI 学习加载
       AI_LEARN.enabled = S.settings.learn !== false;
       return aiLoad();
     }).then(function () {
@@ -3362,7 +4178,7 @@ document.addEventListener("DOMContentLoaded", function () {
       renderSaveList();
       renderLearnPanel();
     }).catch(function (e) {
-      Guard.error("初始化存档读取失败:" + e, { stack: (e && e.stack) || "" });
+      Guard.warn("初始化存档读取失败:" + (e && e.message || e));
       refresh();
       renderSaveList();
       renderLearnPanel();
@@ -3370,7 +4186,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     requestAnimationFrame(renderLoop);
     if (!S.moves.length) setTimeout(openNewModal, 400);
-    Guard.info("页面初始化完成（v2 · 深度引擎 + AI 学习）");
+    Guard.info("页面初始化完成（v3 · 流畅动画视频 + 格式可选 + 移动端优化）");
   });
 });
 </script>
