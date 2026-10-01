@@ -3444,6 +3444,12 @@
       function advOnResult(msg) {
         var an = A_CACHE.get(advSearchTargetK);
         var elapsed = (Date.now() - advSearchBeginTime) / 1000;
+        // 新增：若搜索期间棋盘已发生变化，则丢弃本次结果，避免用过期的坐标落子
+        if (advSearchTargetK !== S.moves.length) {
+          if (an) an.deepScheduled = false;
+          hideAdvProgress();
+          return;
+        }
         var fill = $("advBarFill");
         if (fill) fill.style.width = "100%";
         var stat = $("advStat");
@@ -3840,6 +3846,34 @@
         if (S.over) { toast(t("toast.over")); return; }
         if (S.viewIndex !== S.moves.length) { toast(t("toast.reviewFirst")); sndErr(); return; }
         if (S.moves.length >= N * N) { toast(t("toast.boardFull")); return; }
+        // 关键修复：落子前必须校验目标格为空，防止 AI 覆盖已有棋子
+if (boardAt(S.moves.length)[idx(x, y)] !== 0) {
+  if (isAI) {
+    Guard.warn("AI 落子被拦截：(" + x + "," + y + ") 已被占据，清空缓存后重新思考");
+    // 清空该局面下过期的深度搜索结果，否则 scheduleDeepSearch 会因 deepDone 直接返回
+    var kk = S.moves.length;
+    var anc = A_CACHE.get(kk);
+    if (anc) {
+      anc.deepDone = false;
+      anc.deepScheduled = false;
+      anc.searchMove = -1;
+      anc.searchDepth = 0;
+      anc.searchNodes = 0;
+    }
+    aiPendingAdv = false;
+    aiThinking = false;
+    // 稍作延迟后重新思考，避免与当前调用栈纠缠
+    setTimeout(function () {
+      if (S.aiMode && !S.over && S.viewIndex === S.moves.length &&
+          colorOfMove(S.moves.length) === S.settings.userColor) {
+        aiThink();
+      }
+    }, 150);
+  } else {
+    toast(t("toast.occupied")); sndErr();
+  }
+  return;
+}
         var k = S.moves.length, toMove = colorOfMove(k), U = S.settings.userColor;
         if (S.settings.renju && toMove === 1) {
           var f = isForbiddenAt(boardAt(k), x, y);
