@@ -275,6 +275,50 @@
       .lang-toggle { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
       .lang-toggle button { flex: 1; padding: 8px 10px; background: #fbf4e2; border: none; font-family: var(--fk); font-size: 13px; }
       .lang-toggle button.on { background: var(--cinnabar); color: #fff; }
+      /* ===== 移动端紧凑布局 ===== */
+@media (max-width: 820px), (pointer: coarse) and (max-height: 900px) {
+  header { padding: 5px 9px; gap: 8px; }
+  header h1 { font-size: 16px; letter-spacing: 2px; }
+  header .sub { font-size: 9px; letter-spacing: .5px; margin-top: 1px; }
+  #hdSeal { width: 26px; height: 26px; font-size: 16px; border-radius: 5px; }
+  #btnMenu { padding: 4px 9px; font-size: 12px; border-radius: 6px; letter-spacing: 1px; }
+  #btnTheme { padding: 4px 7px !important; font-size: 12px !important; border-radius: 6px !important; }
+
+  #boardSec { padding: 4px 5px 3px; }
+  #boardWrap { width: min(100%, 42vh); padding: 4px; border-radius: 8px; }
+  #stamp { width: 70px; height: 70px; font-size: 44px; line-height: 60px; border-width: 5px; border-radius: 9px; }
+
+  .ctrlRow { width: min(100%, 42vh); gap: 5px; margin: 4px auto 0; }
+  #statusBar { padding: 5px 4px; font-size: 11px; border-radius: 6px; letter-spacing: .5px; }
+  .cbtn { padding: 5px 9px; font-size: 11px; border-radius: 6px; box-shadow: 0 1.5px 0 #8a6d3b; }
+  .cbtn.ai, .cbtn.danger { padding: 6px 8px; font-size: 12px; }
+  .cbtn:active { transform: translateY(1px); }
+
+  .legend { width: min(100%, 42vh); gap: 5px; margin: 3px auto 0; font-size: 9px; line-height: 1.15; }
+
+  #app { padding: 8px 8px 96px; }
+  details.card { margin-bottom: 8px; border-radius: 8px; }
+  details.card > summary { padding: 8px 10px; font-size: 13px; letter-spacing: 1px; }
+  .card .bd { padding: 2px 10px 10px; gap: 7px; }
+  .kv { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; }
+  .kv .it { padding: 5px 8px; }
+  .kv .it b { font-size: 14px; }
+  .kv .it span { font-size: 10px; }
+  .poem { padding: 8px 10px; font-size: 13px; line-height: 1.5; }
+  .wrbar { height: 20px; }
+  .wrbar .lb { line-height: 19px; font-size: 11px; padding: 0 7px; }
+  .rec { padding: 6px 9px; gap: 6px; }
+  .rec .pct { width: 52px; font-size: 12px; }
+  .pred { padding: 6px 9px; }
+  .btn { padding: 7px 10px; font-size: 12px; }
+  .stat-card { padding: 10px 6px; }
+  .stat-card .num { font-size: 22px; }
+  .stat-card .lbl { font-size: 10px; }
+  .stat-grid { gap: 7px; }
+  #tabBar .tab { padding: 6px 0 5px; }
+  #tabBar .tab .ti { font-size: 19px; }
+  #tabBar .tab .tl { font-size: 9px; letter-spacing: 1px; }
+}
     </style>
   </head>
   <body>
