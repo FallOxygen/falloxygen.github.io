@@ -1,796 +1,1309 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markdown × LaTeX 渲染器</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%88%91%3C/text%3E%3C/svg%3E">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown × LaTeX 渲染器</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%88%91%3C/text%3E%3C/svg%3E">
 
-<!-- Marked：Markdown 解析 -->
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<!-- html-to-image：将渲染结果导出为 PNG -->
-<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
-<!-- MathJax 配置（必须在引入前定义）；SVG 输出，导出图片更清晰稳定 -->
-<script>
-window.MathJax = {
-  tex: {
-    inlineMath: [['\\(', '\\)']],
-    displayMath: [['\\[', '\\]'], ['$$', '$$']]
-  },
-  svg: { fontCache: 'local' },
-  options: { enableMenu: false },
-  startup: { typeset: false }
-};
-</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
+    <!-- Marked：Markdown 解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 
-<style>
-:root{
-  color-scheme:dark;
-  --bg:#0c0e15; --panel:#141722; --panel-2:#1c2030;
-  --border:rgba(255,255,255,.08);
-  --text:#e7eaf3; --dim:#8a91a7;
-  --accent:#7c5cff;
-  --grad:linear-gradient(135deg,#6a5cff 0%,#a855f7 100%);
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-  background:
-    radial-gradient(1100px 700px at 85% -10%,rgba(106,92,255,.14),transparent 60%),
-    radial-gradient(900px 600px at -10% 110%,rgba(56,132,255,.10),transparent 60%),
-    var(--bg);
-  color:var(--text);
-  display:flex;flex-direction:column;height:100vh;overflow:hidden;
-}
+      <!-- html-to-image：将渲染结果导出为 PNG -->
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
 
-/* ============ 顶栏 ============ */
-.app-header{
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  padding:10px 18px;border-bottom:1px solid var(--border);
-  background:rgba(20,23,34,.72);backdrop-filter:blur(10px);
-}
-.brand{display:flex;align-items:center;gap:11px}
-.brand .logo{
-  width:36px;height:36px;border-radius:10px;background:var(--grad);
-  display:flex;align-items:center;justify-content:center;
-  font-size:19px;font-weight:700;color:#fff;
-  box-shadow:0 4px 16px rgba(124,92,255,.35);
-}
-.brand h1{font-size:15px;margin:0;letter-spacing:.3px}
-.brand p{margin:1px 0 0;font-size:11px;color:var(--dim)}
-.header-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      <!-- highlight.js：代码语法高亮 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
 
-.switch{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim);cursor:pointer;user-select:none}
-.switch input{display:none}
-.switch .track{width:34px;height:19px;border-radius:999px;background:#272c3f;border:1px solid var(--border);position:relative;transition:.2s;flex:none}
-.switch .track::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#8a91a7;transition:.2s}
-.switch input:checked + .track{background:var(--accent);border-color:transparent}
-.switch input:checked + .track::after{left:17px;background:#fff}
+      <!-- MathJax 配置（必须在引入前定义）；SVG 输出，导出图片更清晰稳定 -->
+      <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)']],
+          displayMath: [['\\[', '\\]'], ['$$', '$$']]
+        },
+        svg: { fontCache: 'local' },
+        options: { enableMenu: false },
+        startup: { typeset: false }
+      };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
 
-.export-opts{display:flex;align-items:center;gap:6px}
-.opt-label{font-size:12px;color:var(--dim)}
-select.ctrl{
-  background:var(--panel-2);color:var(--text);
-  border:1px solid var(--border);border-radius:8px;
-  padding:6px 9px;font-size:12.5px;outline:none;cursor:pointer;
-}
-select.ctrl:hover{border-color:rgba(255,255,255,.2)}
+    <style>
+    :root{
+      color-scheme:dark;
+      --bg:#0c0e15; --panel:#141722; --panel-2:#1c2030;
+      --border:rgba(255,255,255,.08);
+      --text:#e7eaf3; --dim:#8a91a7;
+      --accent:#7c5cff;
+      --grad:linear-gradient(135deg,#6a5cff 0%,#a855f7 100%);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      background:
+      radial-gradient(1100px 700px at 85% -10%,rgba(106,92,255,.14),transparent 60%),
+      radial-gradient(900px 600px at -10% 110%,rgba(56,132,255,.10),transparent 60%),
+      var(--bg);
+      color:var(--text);
+      display:flex;flex-direction:column;height:100vh;overflow:hidden;
+    }
 
-.btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:7px 14px;border-radius:9px;border:1px solid var(--border);
-  background:var(--panel-2);color:var(--text);font-size:13px;
-  cursor:pointer;transition:.15s;font-family:inherit;
-}
-.btn:hover{border-color:rgba(255,255,255,.22);background:#232840}
-.btn:active{transform:translateY(1px)}
-.btn:disabled{opacity:.6;cursor:wait}
-.btn-primary{background:var(--grad);border:none;color:#fff;font-weight:600;box-shadow:0 3px 14px rgba(124,92,255,.35)}
-.btn-primary:hover{filter:brightness(1.12);background:var(--grad)}
-.btn-export{background:rgba(124,92,255,.14);border:1px solid rgba(124,92,255,.45);color:#c3b5ff}
-.btn-export:hover{background:rgba(124,92,255,.24)}
-.spinner{width:12px;height:12px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+    /* ============ 顶栏 ============ */
+      .app-header{
+      display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+      padding:10px 18px;border-bottom:1px solid var(--border);
+      background:rgba(20,23,34,.72);backdrop-filter:blur(10px);
+    }
+      .brand{display:flex;align-items:center;gap:11px}
+      .brand .logo{
+      width:36px;height:36px;border-radius:10px;background:var(--grad);
+      display:flex;align-items:center;justify-content:center;
+      font-size:19px;font-weight:700;color:#fff;
+      box-shadow:0 4px 16px rgba(124,92,255,.35);
+    }
+      .brand h1{font-size:15px;margin:0;letter-spacing:.3px}
+      .brand p{margin:1px 0 0;font-size:11px;color:var(--dim)}
+      .header-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .switch{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim);cursor:pointer;user-select:none}
+      .switch input{display:none}
+      .switch .track{width:34px;height:19px;border-radius:999px;background:#272c3f;border:1px solid var(--border);position:relative;transition:.2s;flex:none}
+      .switch .track::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#8a91a7;transition:.2s}
+      .switch input:checked + .track{background:var(--accent);border-color:transparent}
+      .switch input:checked + .track::after{left:17px;background:#fff}
+      .export-opts{display:flex;align-items:center;gap:6px}
+      .opt-label{font-size:12px;color:var(--dim)}
+    select.ctrl,
+    input.ctrl{
+      background:var(--panel-2);color:var(--text);
+      border:1px solid var(--border);border-radius:8px;
+      padding:6px 9px;font-size:12.5px;outline:none;
+      font-family:inherit;
+    }
+    select.ctrl{cursor:pointer}
+    select.ctrl:hover,
+    input.ctrl:hover{border-color:rgba(255,255,255,.2)}
+    input.ctrl:focus{border-color:rgba(124,92,255,.65)}
+    #exportFont{width:80px}
+    input.ctrl::-webkit-outer-spin-button,
+    input.ctrl::-webkit-inner-spin-button{
+      -webkit-appearance:none;
+      margin:0;
+    }
+    input.ctrl[type="number"]{
+      -moz-appearance:textfield;
+      appearance:textfield;
+    }
+      .btn{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:7px 14px;border-radius:9px;border:1px solid var(--border);
+      background:var(--panel-2);color:var(--text);font-size:13px;
+      cursor:pointer;transition:.15s;font-family:inherit;
+    }
+      .btn:hover{border-color:rgba(255,255,255,.22);background:#232840}
+      .btn:active{transform:translateY(1px)}
+      .btn:disabled{opacity:.6;cursor:wait}
+      .btn-primary{background:var(--grad);border:none;color:#fff;font-weight:600;box-shadow:0 3px 14px rgba(124,92,255,.35)}
+      .btn-primary:hover{filter:brightness(1.12);background:var(--grad)}
+      .btn-export{background:rgba(124,92,255,.14);border:1px solid rgba(124,92,255,.45);color:#c3b5ff}
+      .btn-export:hover{background:rgba(124,92,255,.24)}
+      .spinner{width:12px;height:12px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ============ 工作区 ============ */
-.workspace{flex:1;display:flex;min-height:0;padding:14px}
-.panel{
-  display:flex;flex-direction:column;min-height:0;min-width:240px;
-  background:var(--panel);border:1px solid var(--border);border-radius:12px;
-  overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.28);
-}
-.editor-panel{flex:0 0 50%}
-.preview-panel{flex:1 1 auto}
-.splitter{flex:0 0 14px;cursor:col-resize;position:relative;touch-action:none}
-.splitter::after{
-  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:4px;height:46px;border-radius:4px;background:rgba(255,255,255,.12);transition:.15s;
-}
-.splitter:hover::after,.splitter.active::after{background:var(--accent)}
+    /* ============ 工作区 ============ */
+      .workspace{flex:1;display:flex;min-height:0;padding:14px}
+      .panel{
+      display:flex;flex-direction:column;min-height:0;min-width:240px;
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.28);
+    }
+      .editor-panel{flex:0 0 50%}
+      .preview-panel{flex:1 1 auto}
+      .splitter{flex:0 0 14px;cursor:col-resize;position:relative;touch-action:none}
+      .splitter::after{
+      content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      width:4px;height:46px;border-radius:4px;background:rgba(255,255,255,.12);transition:.15s;
+    }
+      .splitter:hover::after,.splitter.active::after{background:var(--accent)}
+      .panel-head{
+      display:flex;align-items:center;gap:8px;
+      padding:9px 14px;border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.02);
+    }
+      .panel-head .dot{width:9px;height:9px;border-radius:50%;flex:none}
+      .dot-green{background:#3fb950}
+      .dot-violet{background:#a371f7}
+      .panel-head .title{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#b9bed1}
+      .panel-head .spacer{flex:1}
+      .head-hint{font-size:11px;color:var(--dim)}
+      .mini-btn{
+      background:transparent;border:1px solid var(--border);color:var(--dim);
+      font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;transition:.15s;font-family:inherit;
+    }
+      .mini-btn:hover{color:var(--text);border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.05)}
 
-.panel-head{
-  display:flex;align-items:center;gap:8px;
-  padding:9px 14px;border-bottom:1px solid var(--border);
-  background:rgba(255,255,255,.02);
-}
-.panel-head .dot{width:9px;height:9px;border-radius:50%;flex:none}
-.dot-green{background:#3fb950}
-.dot-violet{background:#a371f7}
-.panel-head .title{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#b9bed1}
-.panel-head .spacer{flex:1}
-.head-hint{font-size:11px;color:var(--dim)}
-.mini-btn{
-  background:transparent;border:1px solid var(--border);color:var(--dim);
-  font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;transition:.15s;font-family:inherit;
-}
-.mini-btn:hover{color:var(--text);border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.05)}
+    /* 编辑器 */
+    #editor{
+      flex:1;width:100%;border:none;outline:none;resize:none;
+      background:#11131c;color:#dfe3ee;
+      font-family:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,"Liberation Mono",Menlo,monospace;
+      font-size:13.5px;line-height:1.7;padding:16px 18px;caret-color:#a78bfa;
+    }
+    #editor::placeholder{color:#4a5067}
+    #editor::selection{background:rgba(124,92,255,.35)}
 
-/* 编辑器 */
-#editor{
-  flex:1;width:100%;border:none;outline:none;resize:none;
-  background:#11131c;color:#dfe3ee;
-  font-family:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,"Liberation Mono",Menlo,monospace;
-  font-size:13.5px;line-height:1.7;padding:16px 18px;caret-color:#a78bfa;
-}
-#editor::placeholder{color:#4a5067}
-#editor::selection{background:rgba(124,92,255,.35)}
+    /* 预览容器 */
+    #output{
+      flex:1;overflow:auto;min-height:0;
+      background:#ffffff;color:#24292f;
+      padding:26px 30px;font-size:15px;line-height:1.75;
+    }
+    #output:empty::before{content:'渲染结果将显示在这里…';color:#9aa1a9;font-size:14px}
 
-/* 预览容器 */
-#output{
-  flex:1;overflow:auto;min-height:0;
-  background:#ffffff;color:#24292f;
-  padding:26px 30px;font-size:15px;line-height:1.75;
-}
-#output:empty::before{content:'渲染结果将显示在这里…';color:#9aa1a9;font-size:14px}
+    /* ============ 预览排版 ============ */
+      .preview-body{word-wrap:break-word;overflow-wrap:anywhere}
+      .preview-body > *:first-child{margin-top:0}
 
-/* ============ 预览排版 ============ */
-.preview-body{word-wrap:break-word}
-.preview-body > *:first-child{margin-top:0}
-.preview-body h1{font-size:1.65em;margin:.7em 0 .55em;padding-bottom:.28em;border-bottom:1px solid #e6e8ee;font-weight:700}
-.preview-body h2{font-size:1.38em;margin:.9em 0 .5em;padding-bottom:.22em;border-bottom:1px solid #eceef3;font-weight:700}
-.preview-body h3{font-size:1.17em;margin:.9em 0 .45em;font-weight:600}
-.preview-body h4{font-size:1.05em;margin:.9em 0 .4em;font-weight:600}
-.preview-body h5,.preview-body h6{font-size:1em;margin:.9em 0 .4em;color:#57606a}
-.preview-body p{margin:.65em 0}
-.preview-body a{color:#4c7dff;text-decoration:none}
-.preview-body a:hover{text-decoration:underline}
-.preview-body img{max-width:100%;border-radius:8px;margin:.4em 0}
-.preview-body ul,.preview-body ol{margin:.65em 0;padding-left:1.9em}
-.preview-body li{margin:.28em 0}
-.preview-body li > ul,.preview-body li > ol{margin:.2em 0}
-.preview-body blockquote{margin:.8em 0;padding:.45em 1em;border-left:4px solid #a78bfa;background:#f7f5ff;color:#59636e;border-radius:0 8px 8px 0}
-.preview-body blockquote p{margin:.3em 0}
-.preview-body table{border-collapse:collapse;margin:.85em 0;width:100%;display:block;overflow-x:auto;font-size:.95em}
-.preview-body th,.preview-body td{border:1px solid #d9dee7;padding:7px 13px;text-align:left}
-.preview-body th{background:#f2f4f9;font-weight:600}
-.preview-body tbody tr:nth-child(even){background:#fafbfd}
-.preview-body hr{border:none;border-top:2px solid #e6e8ee;margin:1.4em 0}
-.preview-body code{font-family:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,Menlo,monospace;font-size:.875em}
-.preview-body :not(pre) > code{background:#f3f0ff;color:#7c3aed;border:1px solid #e7e1fa;padding:.14em .42em;border-radius:6px}
+      .preview-body h1,.preview-body h2,.preview-body h3,.preview-body h4,.preview-body h5,.preview-body h6{
+      color:#1f2328;
+      scroll-margin-top:12px;
+    }
+      .preview-body h1{font-size:1.65em;margin:.7em 0 .55em;padding-bottom:.28em;border-bottom:1px solid #e6e8ee;font-weight:700}
+      .preview-body h2{font-size:1.38em;margin:.9em 0 .5em;padding-bottom:.22em;border-bottom:1px solid #eceef3;font-weight:700}
+      .preview-body h3{font-size:1.17em;margin:.9em 0 .45em;font-weight:650}
+      .preview-body h4{font-size:1.05em;margin:.9em 0 .4em;font-weight:650}
+      .preview-body h5,.preview-body h6{font-size:1em;margin:.9em 0 .4em;color:#57606a}
 
-/* 代码块（深色）—— 超长行自动折行，不再被截断 */
-.preview-body pre{
-  position:relative;background:#0d1117;color:#e6edf3;
-  padding:14px 16px;border-radius:10px;border:1px solid #21262f;
-  overflow:auto;margin:.85em 0;line-height:1.62;font-size:.9em;
-  white-space:pre-wrap;word-break:break-all;
-}
-.preview-body pre code{
-  display:block;white-space:pre-wrap;word-break:break-all;
-  background:none;border:none;padding:0;color:inherit;font-size:inherit;
-}
-.pre-tools{position:absolute;top:6px;right:8px;display:flex;align-items:center;gap:6px}
-.code-lang{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8b949e;background:rgba(255,255,255,.07);padding:2px 8px;border-radius:6px;pointer-events:none}
-.code-copy{
-  font-size:11px;color:#9aa4b2;background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:2px 9px;
-  cursor:pointer;opacity:0;transition:.15s;font-family:inherit;
-}
-.preview-body pre:hover .code-copy{opacity:1}
-.code-copy:hover{background:rgba(255,255,255,.16);color:#fff}
-.code-copy.copied{color:#57d364;border-color:rgba(87,211,100,.4)}
+      .preview-body p{margin:.65em 0}
+      .preview-body a{
+      color:#4c7dff;
+      text-decoration:none;
+      border-bottom:1px solid rgba(76,125,255,.22);
+      transition:.15s;
+    }
+      .preview-body a:hover{color:#2f5fe0;border-bottom-color:currentColor}
 
-/* MathJax SVG */
-.preview-body mjx-container{display:inline-block;max-width:100%}
-.preview-body mjx-container[display="true"]{display:block;text-align:center;margin:.95em 0;overflow-x:auto;overflow-y:hidden;padding:3px 2px}
+      .preview-body img{
+      max-width:100%;
+      border-radius:10px;
+      box-shadow:0 6px 22px rgba(15,23,42,.12);
+      margin:.5em 0;
+    }
 
-/* ============ 状态栏 ============ */
-.status-bar{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:6px 18px;border-top:1px solid var(--border);
-  background:rgba(20,23,34,.72);font-size:11.5px;color:var(--dim);
-}
-.status-bar b{color:#c9cede;font-weight:600}
-.status-bar .spacer{flex:1}
-.status-bar .sep{opacity:.45}
-.status-dot{width:7px;height:7px;border-radius:50%;background:#8a91a7;display:inline-block;margin-right:6px;vertical-align:1px}
+      .preview-body ul,.preview-body ol{margin:.65em 0;padding-left:1.9em}
+      .preview-body li{margin:.28em 0}
+      .preview-body li > ul,.preview-body li > ol{margin:.2em 0}
+      .preview-body li::marker{color:#7c5cff}
 
-/* Toast */
-#toast{
-  position:fixed;bottom:52px;left:50%;
-  transform:translateX(-50%) translateY(16px);
-  background:#20243a;color:#fff;border:1px solid var(--border);
-  padding:9px 18px;border-radius:10px;font-size:13px;
-  opacity:0;pointer-events:none;transition:.25s;z-index:99;
-  box-shadow:0 10px 30px rgba(0,0,0,.45);max-width:80vw;
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#toast.error{border-color:rgba(248,81,73,.55);background:#3a1f23}
+      .preview-body blockquote{
+      margin:.9em 0;
+      padding:.68em 1.1em;
+      border-left:4px solid #7c5cff;
+      background:linear-gradient(135deg,rgba(124,92,255,.10),rgba(168,85,247,.05));
+      color:#55606d;
+      border-radius:0 12px 12px 0;
+    }
+      .preview-body blockquote p{margin:.35em 0}
 
-/* 滚动条 */
-::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:8px}
-::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22)}
-#output::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15)}
-#output::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.28)}
+    /* 表格包裹层：解决原生 table 设置 display:block 导致的边框和列宽塌陷问题 */
+      .table-wrapper {
+      overflow-x: auto;
+      margin: .95em 0;
+      border: 1px solid #d0d7de;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(15,23,42,.04);
+    }
+      .preview-body table {
+      display: table;
+      width: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      font-size: .95em;
+    }
+      .preview-body th, .preview-body td {
+      padding: 10px 14px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #d9dee7;
+      border-right: 1px solid #d9dee7;
+      word-break: break-word;
+    }
+      .preview-body th:last-child, .preview-body td:last-child {
+      border-right: 0;
+    }
+      .preview-body thead th {
+      background: #f6f8fa;
+      font-weight: 650;
+      border-bottom: 2px solid #d0d7de;
+    }
+      .preview-body tbody tr:last-child td {
+      border-bottom: 0;
+    }
+      .preview-body tbody tr:nth-child(even) {
+      background: #fafbfd;
+    }
+      .preview-body tbody tr:hover {
+      background: #f4f6ff;
+    }
 
-/* 移动端 */
-@media (max-width:860px){
-  .workspace{flex-direction:column}
-  .splitter{display:none}
-  .editor-panel{flex:0 0 45%}
-}
+      .preview-body hr{
+      border:none;
+      height:2px;
+      background:linear-gradient(90deg,transparent,#d8dbe6,transparent);
+      margin:1.5em 0;
+    }
 
-/* ============ 导出图片专用紧凑样式（只作用于导出克隆） ============ */
-.export-compact{line-height:1.6}
-.export-compact h1{font-size:1.5em;margin:.45em 0 .35em;padding-bottom:.2em}
-.export-compact h2{font-size:1.3em;margin:.55em 0 .3em;padding-bottom:.15em}
-.export-compact h3{font-size:1.15em;margin:.55em 0 .28em}
-.export-compact h4{font-size:1.05em;margin:.5em 0 .25em}
-.export-compact p{margin:.4em 0}
-.export-compact ul,.export-compact ol{margin:.4em 0;padding-left:1.7em}
-.export-compact li{margin:.12em 0}
-.export-compact blockquote{margin:.5em 0;padding:.25em .9em}
-.export-compact hr{margin:.8em 0}
-.export-compact img{margin:.3em 0}
-.export-compact mjx-container[display="true"]{margin:.55em 0}
-.export-compact .code-copy{display:none !important}
-/* 导出时：代码长行折行、不裁剪 */
-.export-compact pre{margin:.5em 0;padding:10px 12px;font-size:.9em;overflow:visible;white-space:pre-wrap;word-break:break-all}
-.export-compact pre code{white-space:pre-wrap;word-break:break-all}
-/* 导出时：宽表格折行、不裁剪 */
-.export-compact table{display:table;width:100%;margin:.5em 0}
-.export-compact th,.export-compact td{padding:4px 10px;word-break:break-word;white-space:normal}
-</style>
-</head>
-<body>
+      .preview-body code{
+      font-family:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,"Liberation Mono",Menlo,monospace;
+      font-size:.875em;
+    }
+      .preview-body :not(pre) > code{
+      background:#f3f0ff;
+      color:#6d28d9;
+      border:1px solid #e4dcff;
+      padding:.18em .45em;
+      border-radius:7px;
+    }
 
-<header class="app-header">
-  <div class="brand">
+    /* ============ 代码块（重构为 Wrapper 结构，彻底解决绝对定位漂移问题） ============ */
+      .code-block-wrapper {
+      position: relative;
+      margin: .95em 0;
+      border-radius: 12px;
+      border: 1px solid #21262f;
+      overflow: hidden;
+      background: #0d1117;
+      box-shadow: 0 8px 24px rgba(0,0,0,.16);
+    }
+      .code-block-wrapper .pre-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 14px;
+      background: #161b22;
+      border-bottom: 1px solid #21262f;
+    }
+      .code-block-wrapper .code-lang {
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #8b949e;
+      font-weight: 600;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+      .code-block-wrapper .code-copy {
+      font-size: 11px;
+      color: #8b949e;
+      background: transparent;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: .15s;
+      font-family: inherit;
+    }
+      .code-block-wrapper .code-copy:hover {
+      color: #e6edf3;
+      background: #21262d;
+      border-color: #8b949e;
+    }
+      .code-block-wrapper .code-copy.copied {
+      color: #3fb950;
+      border-color: #3fb950;
+    }
+      .code-block-wrapper pre {
+      margin: 0;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      padding: 14px 0;
+      background: transparent;
+      overflow: visible;
+      line-height: 1.62;
+      font-size: .9em;
+    }
+      .code-block-wrapper pre code {
+      display: block;
+      background: none;
+      border: none;
+      padding: 0;
+      color: #e6edf3;
+      font-size: inherit;
+      white-space: normal;
+      tab-size: 4;
+    }
+      .code-line {
+      display: flex;
+      align-items: flex-start;
+      padding: 0 16px;
+      min-width: 0;
+    }
+      .code-line:hover { background: rgba(255,255,255,.035); }
+      .line-no {
+      flex: 0 0 2.6em;
+      width: 2.6em;
+      margin-right: 14px;
+      text-align: right;
+      color: #6e7681;
+      user-select: none;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+      .line-content {
+      flex: 1;
+      min-width: 0;
+      min-height: 1.62em;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+      .line-content:empty::before { content: '\00a0'; }
+
+    /* highlight.js 内置暗色主题 */
+      .hljs{color:#e6edf3;background:transparent}
+      .hljs-comment,.hljs-quote{color:#8b949e;font-style:italic}
+      .hljs-keyword,.hljs-selector-tag,.hljs-literal,.hljs-name,.hljs-strong{color:#ff7b72}
+      .hljs-string,.hljs-regexp,.hljs-addition,.hljs-attribute,.hljs-meta .hljs-string{color:#a5d6ff}
+      .hljs-number,.hljs-symbol,.hljs-bullet,.hljs-meta,.hljs-link{color:#79c0ff}
+      .hljs-title,.hljs-title.class_,.hljs-title.function_,.hljs-section{color:#d2a8ff}
+      .hljs-attr,.hljs-variable,.hljs-template-variable,.hljs-type,.hljs-selector-class,.hljs-selector-attr,.hljs-selector-pseudo,.hljs-selector-id{color:#79c0ff}
+      .hljs-built_in,.hljs-built_in-name{color:#ffa657}
+      .hljs-deletion{color:#ffa198;background:rgba(248,81,73,.12)}
+      .hljs-emphasis{font-style:italic}
+      .hljs-strong{font-weight:700}
+
+    /* MathJax SVG */
+      .preview-body mjx-container{display:inline-block;max-width:100%}
+      .preview-body mjx-container[display="true"]{
+      display:block;
+      text-align:center;
+      margin:.95em 0;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding:3px 2px;
+    }
+
+    /* ============ 状态栏 ============ */
+      .status-bar{
+      display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+      padding:6px 18px;border-top:1px solid var(--border);
+      background:rgba(20,23,34,.72);font-size:11.5px;color:var(--dim);
+    }
+      .status-bar b{color:#c9cede;font-weight:600}
+      .status-bar .spacer{flex:1}
+      .status-bar .sep{opacity:.45}
+      .status-dot{width:7px;height:7px;border-radius:50%;background:#8a91a7;display:inline-block;margin-right:6px;vertical-align:1px}
+
+    /* Toast */
+    #toast{
+      position:fixed;bottom:52px;left:50%;
+      transform:translateX(-50%) translateY(16px);
+      background:#20243a;color:#fff;border:1px solid var(--border);
+      padding:9px 18px;border-radius:10px;font-size:13px;
+      opacity:0;pointer-events:none;transition:.25s;z-index:99;
+      box-shadow:0 10px 30px rgba(0,0,0,.45);max-width:80vw;
+    }
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    #toast.error{border-color:rgba(248,81,73,.55);background:#3a1f23}
+
+    /* 滚动条 */
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:8px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22)}
+    #output::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15)}
+    #output::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.28)}
+
+    /* 移动端 */
+    @media (max-width:860px){
+        .workspace{flex-direction:column}
+        .splitter{display:none}
+        .editor-panel{flex:0 0 45%}
+    }
+
+    /* ============ 导出图片专用排版优化 ============ */
+      .export-compact {
+      line-height: 1.7;
+      color: #24292f;
+    }
+      .export-compact h1 { font-size: 1.6em; margin: .8em 0 .5em; padding-bottom: .3em; border-bottom: 1px solid #eaecef; font-weight: 700; }
+      .export-compact h2 { font-size: 1.35em; margin: .9em 0 .4em; padding-bottom: .25em; border-bottom: 1px solid #eaecef; font-weight: 650; }
+      .export-compact h3 { font-size: 1.15em; margin: .8em 0 .3em; font-weight: 600; }
+      .export-compact h4 { font-size: 1.05em; margin: .7em 0 .25em; font-weight: 600; }
+      .export-compact p { margin: .6em 0; }
+      .export-compact ul, .export-compact ol { margin: .6em 0; padding-left: 2em; }
+      .export-compact li { margin: .2em 0; }
+      .export-compact blockquote { 
+      margin: .8em 0; 
+      padding: .6em 1.2em; 
+      border-left: 4px solid #7c5cff; 
+      background: #f8f7ff; 
+      color: #4a5568; 
+      border-radius: 0 8px 8px 0;
+    }
+      .export-compact blockquote p { margin: .3em 0; }
+      .export-compact hr { margin: 1.2em 0; border: none; height: 1px; background: #eaecef; }
+      .export-compact img { margin: .6em 0; max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+      .export-compact a { color: #4c7dff; text-decoration: none; border-bottom: 1px solid rgba(76,125,255,0.3); }
+      .export-compact :not(pre) > code {
+      background: #f3f0ff; color: #6d28d9; border: 1px solid #e4dcff;
+      padding: .15em .4em; border-radius: 6px; font-size: .9em;
+    }
+
+    /* 导出时：代码块 */
+      .export-compact .code-block-wrapper {
+      margin: .8em 0;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+      .export-compact .pre-tools {
+      padding: 6px 12px;
+    }
+      .export-compact .code-copy {
+      display: none !important;
+    }
+      .export-compact pre {
+      padding: 12px 0;
+    }
+      .export-compact .code-line { padding: 0 16px; }
+      .export-compact .line-no {
+      flex-basis: 2.6em;
+      width: 2.6em;
+      margin-right: 14px;
+      color: #6e7681;
+    }
+      .export-compact .line-content {
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    /* 导出时：表格 */
+      .export-compact .table-wrapper {
+      overflow: visible;
+      margin: .8em 0;
+      border-radius: 8px;
+      box-shadow: none;
+    }
+      .export-compact table {
+      width: 100%;
+    }
+      .export-compact th, .export-compact td {
+      padding: 8px 14px;
+      word-break: break-word;
+      white-space: normal;
+    }
+      .export-compact tbody tr:nth-child(even) { background: #fafbfc; }
+    </style>
+    </head>
+    <body>
+
+    <header class="app-header">
+    <div class="brand">
     <div class="logo">∑</div>
     <div>
-      <h1>Markdown × LaTeX 渲染器</h1>
-      <p>分栏实时渲染 · 一键导出极清长图</p>
+    <h1>Markdown × LaTeX 渲染器</h1>
+    <p>分栏实时渲染 · 语法高亮 · 一键导出极清长图</p>
     </div>
-  </div>
-  <div class="header-actions">
-    <label class="switch" title="输入停止后自动渲染">
-      <input type="checkbox" id="liveRender" checked>
-      <span class="track"></span>
-      <span>实时渲染</span>
-    </label>
-    <div class="export-opts" title="导出图片使用的字号：字号越小，图片越紧凑">
-      <span class="opt-label">导出字号</span>
-      <select id="exportFont" class="ctrl">
-        <option value="10">10 px</option>
-        <option value="11">11 px</option>
-        <option value="12" selected>12 px</option>
-        <option value="13">13 px</option>
-        <option value="14">14 px</option>
-      </select>
     </div>
-    <div class="export-opts" title="像素倍率：越高越清晰，文件越大、耗时越长；超出浏览器上限时会自动降档">
-      <span class="opt-label">清晰度</span>
-      <select id="exportRatio" class="ctrl">
-        <option value="2">2x 标准</option>
-        <option value="3">3x 高清</option>
-        <option value="4" selected>4x 极清</option>
-        <option value="6">6x 极致</option>
-      </select>
-    </div>
-    <button class="btn btn-primary" id="btnRender" title="快捷键 Ctrl+Enter">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      渲染
-    </button>
-    <button class="btn btn-export" id="btnExport" title="快捷键 Ctrl+S">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      导出图片
-    </button>
-  </div>
-</header>
 
-<main class="workspace" id="workspace">
-  <section class="panel editor-panel" id="editorPanel">
+    <div class="header-actions">
+    <label class="switch" title="输入停止后自动渲染">
+    <input type="checkbox" id="liveRender" checked>
+    <span class="track"></span>
+    <span>实时渲染</span>
+    </label>
+
+    <div class="export-opts" title="导出图片使用的字号：可输入任意正数，单位 px">
+    <span class="opt-label">导出字号</span>
+    <input id="exportFont" class="ctrl" type="number" min="1" max="512" step="any" value="14">
+    </div>
+
+    <div class="export-opts" title="像素倍率：越高越清晰，文件越大、耗时越长；超出浏览器上限时会自动降档">
+    <span class="opt-label">清晰度</span>
+    <select id="exportRatio" class="ctrl">
+    <option value="2">2x 标准</option>
+    <option value="3">3x 高清</option>
+    <option value="4" selected>4x 极清</option>
+    <option value="6">6x 极致</option>
+    </select>
+    </div>
+
+    <button class="btn btn-primary" id="btnRender" title="快捷键 Ctrl+Enter">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    渲染
+    </button>
+
+    <button class="btn btn-export" id="btnExport" title="快捷键 Ctrl+S">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    导出图片
+    </button>
+    </div>
+    </header>
+
+    <main class="workspace" id="workspace">
+    <section class="panel editor-panel" id="editorPanel">
     <div class="panel-head">
-      <span class="dot dot-green"></span>
-      <span class="title">输入 · Markdown + LaTeX</span>
-      <span class="spacer"></span>
-      <button class="mini-btn" id="btnSample">载入示例</button>
-      <button class="mini-btn" id="btnClear">清空</button>
+    <span class="dot dot-green"></span>
+    <span class="title">输入 · Markdown + LaTeX</span>
+    <span class="spacer"></span>
+    <button class="mini-btn" id="btnSample">载入示例</button>
+    <button class="mini-btn" id="btnClear">清空</button>
     </div>
     <textarea id="editor" spellcheck="false" placeholder="在此输入 Markdown 与 LaTeX …">
-# 示例文档
+    # Markdown 解析器综合测试文档
 
-这是一个 **粗体** 文本和 *斜体* 文本。行内公式 $E = mc^2$ 与 Markdown 语法并存。
+    > **注意**：本文档旨在覆盖 CommonMark 及 GFM (GitHub Flavored Markdown) 的核心语法，用于验证解析器的完整性与健壮性。
 
-## 代码块
+    ---
 
-```python
-def hello():
-    print("Hello, World!")
-    # 包含 $ 符号的注释，但不会被误认为是 LaTeX
-    # result = a + b  # $x = y$ 这是注释里的 $ 符号
-```
+    ## 1. 文本样式与内联元素
 
-```javascript
-function greet(name) {
-  console.log(`Hello, ${name}!`);
-  // 一行特别长的代码：const veryLongVariableName = someFunction(anotherArgument, yetAnotherArgument, andOneMoreArgumentForGoodMeasure, finalArgument) + "这段文字很长很长很长，用来测试自动折行效果是否正常工作。";
-}
-```
+    这是普通段落。包含 **粗体**、*斜体*、***粗斜体***、~~删除线~~ 以及 `行内代码`。
+    测试语法冲突：XXX**(XX)**XXX 会被正确处理为加粗，而不是保留原始星号。
 
-```java
-public class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
-    }
-}
-```
+    还可以使用上标 H~2~O 和下标 X^2^（注：非标准扩展），以及 [链接](https://example.com "悬停提示文本") 和 ![替代文本](https://via.placeholder.com/150x50?text=Image "图片标题")。
 
-## 行内代码示例
+      ### 转义与特殊字符
+      - 星号：\* \* \*
+      - 反斜杠：\\
+      - HTML 实体：&amp; &lt; &gt; &copy;
+      - 换行测试：第一行  
+      第二行（两个空格换行）
 
-请查看 `main.py` 文件中的 `hello()` 函数；行内代码里的 `$x$` 不会被误渲染成公式。
+      ---
 
-## 列表
+      ## 2. 列表系统
 
-- 项目 1，包含行内公式 $a^2 + b^2 = c^2$
-- 项目 2
-  - 子项目 2.1，公式 $F = ma$
+      ### 无序列表
+      - 一级项目
+      - 二级嵌套
+      - 三级嵌套
+      - 四级极限嵌套
+      - 回到二级
+      - 另一个一级项目
 
-## 表格
+      ### 有序列表
+      1. 第一项
+      1. 嵌套有序
+      2. 嵌套有序
+      2. 第二项
+      3. 第三项
 
-| 语言 | 作者 | 年份 |
-|------|------|------|
-| Python | Guido van Rossum | 1991 |
-| JavaScript | Brendan Eich | 1995 |
-| Java | James Gosling | 1995 |
+      ### 任务列表 (GFM)
+      - [x] 已完成任务
+      - [ ] 未完成任务
+      - [ ] 含 **格式化** 的任务
 
-## 引用
+      ---
 
-> 这是一个引用块。
-> 它可以包含多行文本。
-> 甚至可以包含 $E = mc^2$ 公式。
+      ## 3. 引用与嵌套
 
-## 链接
+      > 一级引用
+      >
+      > > 二级嵌套引用
+      > >
+      > > > 三级嵌套引用
+      >
+      > 回到一级，包含 `代码` 和 **强调**。
 
-[访问百度](https://www.baidu.com)，旁边附上行内公式 $E = mc^2$。
+      ---
 
-## LaTeX 公式
+      ## 4. 代码块
 
-### 行内公式（多种语法）
+      ### 行内代码
+      使用 `console.log("Hello")` 输出调试信息。
 
-- 美元符号：$E = mc^2$ 和 $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
-- 反斜杠括号：\( \alpha + \beta = \gamma \) 和 \( \sin^2\theta + \cos^2\theta = 1 \)
+      ### 围栏代码块 (Fenced Code Block)
 
-### 行间公式（多种语法）
+      ```python
+      # Python 语法高亮测试
+      def fibonacci(n: int) -> list[int]:
+      """生成斐波那契数列"""
+      if n <= 0:
+      return []
+      seq = [0, 1]
+      while len(seq) < n:
+      seq.append(seq[-1] + seq[-2])
+      return seq[:n]
 
-美元符号：
+      print(fibonacci(10))
+      ```
 
-$$
-\int_{-\infty}^{\infty} e^{-x^2}\, dx = \sqrt{\pi}
-$$
+      ```json
+      {
+      "name": "markdown-test",
+      "version": 1.0,
+      "features": ["tables", "tasklists", "footnotes"],
+      "valid": true
+      }
+      ```
 
-反斜杠方括号：
+      ```
+      纯文本代码块（无语言标识）
+      Line 1
+      Line 2
+      ```
 
-\[
-\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
-\]
+      ---
 
-### 更多公式
+      ## 5. 表格 (GFM)
 
-- 欧拉恒等式：$e^{i\pi} + 1 = 0$
-- 带下标：$F_n = F_{n-1} + F_{n-2}$
-- 嵌套在列表中：$a_{ij}^{(k)}$
-- 行间复杂公式：
+      | 左对齐 | 居中对齐 | 右对齐 | 默认对齐 |
+      | :------ | :-------: | ------: | -------- |
+      | 单元格 | 单元格 | 单元格 | 单元格 |
+      | **粗体** | *斜体* | `代码` | [链接](#) |
+      | 长内容测试以验证列宽自适应行为是否正常 | B2 | C2 | D2 |
+      | A3 | B3 | C3 | D3 |
 
-$$
-\oint_C \vec{B} \cdot \mathrm{d}\vec{l} = \mu_0 \left( I_\text{enc} + \varepsilon_0 \frac{\mathrm{d}\Phi_E}{\mathrm{d}t} \right)
-$$
+      ---
 
-- 使用 `\[ \]` 的行间公式：
+      ## 6. 脚注与数学公式
 
-\[
-\mathcal{L} = \frac{1}{4\pi} \left[ \frac{G M}{r^2} \right]
-\]
-</textarea>
-  </section>
+      这是一个带脚注的句子[^1]，还有另一个[^longnote]。
 
-  <div class="splitter" id="splitter" title="拖动调整宽度 · 双击复位"></div>
+      [^1]: 第一条脚注内容。
+      [^longnote]: 这是一条较长的脚注，用于测试多行脚注的解析能力。
+      包含缩进的续行内容。
 
-  <section class="panel preview-panel">
-    <div class="panel-head">
+      ### 数学公式 (LaTeX / KaTeX)
+
+      行内公式：$E = mc^2$
+
+      块级公式：
+
+      $$
+      \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+      $$
+
+      ---
+
+      ## 7. HTML 混排
+
+      <div style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      <p>这是一段嵌入的 HTML 内容。</p>
+      <details>
+      <summary>点击展开折叠内容</summary>
+      <p>折叠区域内的 Markdown **应该** 被正确解析。</p>
+      </details>
+      </div>
+
+      <!-- 这是一段 HTML 注释，不应在渲染结果中显示 -->
+
+      ---
+
+      ## 8. 边界情况与压力测试
+
+      ### 连续分隔线
+      ---
+      ***
+      ___
+
+      ### 空列表项
+      - 
+      - 有效项
+      - 
+
+      ### 极端嵌套
+      > - [x] > **`code`** ~~strike~~ [link](#)
+      >   1. 混合嵌套测试
+
+      ### 无内容标题
+      #### 
+
+      ### 超长单行
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      </textarea>
+      </section>
+
+      <div class="splitter" id="splitter" title="拖动调整宽度 · 双击复位"></div>
+
+      <section class="panel preview-panel">
+      <div class="panel-head">
       <span class="dot dot-violet"></span>
       <span class="title">输出 · 渲染预览</span>
       <span class="spacer"></span>
-      <span class="head-hint">公式引擎：MathJax（SVG 输出）</span>
-    </div>
-    <div id="output" class="preview-body"></div>
-  </section>
-</main>
+      <span class="head-hint">公式引擎：MathJax · 代码高亮：highlight.js</span>
+      </div>
+      <div id="output" class="preview-body"></div>
+      </section>
+      </main>
 
-<footer class="status-bar">
-  <span><span class="status-dot" id="statusDot"></span><span id="statusText">就绪</span></span>
-  <span class="sep">·</span>
-  <span>字符 <b id="statChars">0</b></span>
-  <span class="sep">·</span>
-  <span>行数 <b id="statLines">0</b></span>
-  <span class="sep">·</span>
-  <span>渲染耗时 <b id="statTime">—</b></span>
-  <span class="spacer"></span>
-  <span>Ctrl+Enter 渲染 · Ctrl+S 导出图片 · 中间分栏可拖动</span>
-</footer>
+      <footer class="status-bar">
+      <span><span class="status-dot" id="statusDot"></span><span id="statusText">就绪</span></span>
+      <span class="sep">·</span>
+      <span>字符 <b id="statChars">0</b></span>
+      <span class="sep">·</span>
+      <span>行数 <b id="statLines">0</b></span>
+      <span class="sep">·</span>
+      <span>渲染耗时 <b id="statTime">—</b></span>
+      <span class="spacer"></span>
+      <span>Ctrl+Enter 渲染 · Ctrl+S 导出图片 · 中间分栏可拖动</span>
+      </footer>
 
-<div id="toast" role="status"></div>
+      <div id="toast" role="status"></div>
 
-<script>
-/* ================= 基础工具 ================= */
-const $ = id => document.getElementById(id);
-const editor = $('editor'), output = $('output'), workspace = $('workspace'),
+      <script>
+      /* ================= 基础工具 ================= */
+      const $ = id => document.getElementById(id);
+      const editor = $('editor'), output = $('output'), workspace = $('workspace'),
       editorPanel = $('editorPanel'), splitter = $('splitter');
 
-const LS_KEY = 'md-latex-renderer-src';
-let SAMPLE = '';
-let debounceTimer = null;
-let mathJaxWarned = false;
+      const LS_KEY = 'md-latex-renderer-src';
 
-let toastTimer;
-function toast(msg, isError){
-  const t = $('toast');
-  t.textContent = msg;
-  t.classList.toggle('error', !!isError);
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
-}
+      /* 导出默认参数 */
+      const EXPORT_WIDTH = 960;
+      const EXPORT_MAX_DIM = 30000;
+      const EXPORT_MAX_AREA = 120000000;
 
-function setStatus(mode){
-  const map = {
-    rendering: ['渲染中…', '#d29922'],
-    done:      ['渲染完成', '#3fb950'],
-    exporting: ['正在导出图片…', '#58a6ff'],
-    error:     ['出现错误', '#f85149'],
-    idle:      ['就绪', '#8a91a7']
-  };
-  const m = map[mode] || map.idle;
-  $('statusText').textContent = m[0];
-  $('statusDot').style.background = m[1];
-}
+      let SAMPLE = '';
+      let debounceTimer = null;
+      let mathJaxWarned = false;
+      let toastTimer;
 
-function updateStats(ms){
-  const v = editor.value;
-  $('statChars').textContent = v.length;
-  $('statLines').textContent = v ? v.split('\n').length : 0;
-  if (typeof ms === 'number') $('statTime').textContent = ms.toFixed(1) + ' ms';
-}
-
-function saveSrc(){ try { localStorage.setItem(LS_KEY, editor.value); } catch(e){} }
-
-function copyText(text){
-  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
-  return new Promise((resolve, reject) => {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy') ? resolve() : reject(new Error('copy failed')); }
-    catch(e){ reject(e); }
-    ta.remove();
-  });
-}
-
-/* ================= 解析规则 ================= */
-marked.setOptions({ gfm: true, breaks: true });
-
-const FENCE_RE       = /```([^\n`]*)\n([\s\S]*?)```/g;
-const INLINE_CODE_RE = /`([^`\n]+)`/g;
-const BLOCK_MATH_RE  = [ /\$\$([\s\S]+?)\$\$/g, /\\\[([\s\S]+?)\\\]/g ];
-const INLINE_MATH_RE = [ /\\\(([\s\S]+?)\\\)/g, /\$([^\$\n]+?)\$/g ];
-
-function findComment(root, label){
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT);
-  let n;
-  while ((n = walker.nextNode())) {
-    if (n.textContent === label) return n;
-  }
-  return null;
-}
-
-function parentHasOtherContent(p, except){
-  for (const n of p.childNodes) {
-    if (n === except) continue;
-    if (n.nodeType === Node.TEXT_NODE) { if (n.textContent.trim() !== '') return true; }
-    else return true;
-  }
-  return false;
-}
-function replaceNodeWithBlock(comment, el){
-  const parent = comment.parentNode;
-  if (!parent) return;
-  if (parent.tagName === 'P' && !parentHasOtherContent(parent, comment)) {
-    parent.parentNode.replaceChild(el, parent);
-  } else {
-    parent.replaceChild(el, comment);
-  }
-}
-
-/* ================= 渲染主流程 ================= */
-function render(){
-  const t0 = performance.now();
-  setStatus('rendering');
-  try {
-    if (!window.marked) throw new Error('marked.js 加载失败，请检查网络');
-    let text = editor.value;
-    const codeBlocks = [], inlineCodes = [], maths = [];
-
-    /* 1. 提取围栏代码块 */
-    text = text.replace(FENCE_RE, (m, lang, code) => {
-      codeBlocks.push({ lang: lang.trim(), code: code.replace(/\n$/, '') });
-      return '\n<!--@CB' + (codeBlocks.length - 1) + '-->\n';
-    });
-
-    /* 2. 提取行内代码 */
-    text = text.replace(INLINE_CODE_RE, (m, code) => {
-      inlineCodes.push(code);
-      return '<!--@IC' + (inlineCodes.length - 1) + '-->';
-    });
-
-    /* 3. 提取块级公式 */
-    BLOCK_MATH_RE.forEach(re => {
-      text = text.replace(re, (m, body) => {
-        maths.push({ display: true, body: body.trim() });
-        return '\n<!--@MB' + (maths.length - 1) + '-->\n';
-      });
-    });
-
-    /* 4. 提取行内公式 */
-    INLINE_MATH_RE.forEach(re => {
-      text = text.replace(re, (m, body) => {
-        maths.push({ display: false, body: body.trim() });
-        return '<!--@MI' + (maths.length - 1) + '-->';
-      });
-    });
-
-    /* 5. Markdown 解析 */
-    output.innerHTML = marked.parse(text);
-
-    /* 6. 还原代码块 */
-    codeBlocks.forEach((blk, i) => {
-      const c = findComment(output, '@CB' + i);
-      if (!c) return;
-      const pre = document.createElement('pre');
-      const code = document.createElement('code');
-      if (blk.lang) code.className = 'language-' + blk.lang;
-      code.textContent = blk.code;
-      pre.appendChild(code);
-
-      const tools = document.createElement('div');
-      tools.className = 'pre-tools';
-      if (blk.lang) {
-        const tag = document.createElement('span');
-        tag.className = 'code-lang';
-        tag.textContent = blk.lang;
-        tools.appendChild(tag);
+      function toast(msg, isError){
+        const t = $('toast');
+        t.textContent = msg;
+        t.classList.toggle('error', !!isError);
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
       }
-      const btn = document.createElement('button');
-      btn.className = 'code-copy';
-      btn.textContent = '复制';
-      btn.addEventListener('click', () => {
-        copyText(blk.code).then(() => {
-          btn.textContent = '已复制';
-          btn.classList.add('copied');
-          setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
-        }).catch(() => toast('复制失败', true));
-      });
-      tools.appendChild(btn);
-      pre.appendChild(tools);
-      replaceNodeWithBlock(c, pre);
-    });
 
-    /* 7. 还原行内代码 */
-    inlineCodes.forEach((codeStr, i) => {
-      const c = findComment(output, '@IC' + i);
-      if (!c) return;
-      const el = document.createElement('code');
-      el.textContent = codeStr;
-      c.parentNode.replaceChild(el, c);
-    });
+      function setStatus(mode){
+        const map = {
+          rendering: ['渲染中…', '#d29922'],
+          done:      ['渲染完成', '#3fb950'],
+          exporting: ['正在导出图片…', '#58a6ff'],
+          error:     ['出现错误', '#f85149'],
+          idle:      ['就绪', '#8a91a7']
+        };
+        const m = map[mode] || map.idle;
+        $('statusText').textContent = m[0];
+        $('statusDot').style.background = m[1];
+      }
 
-    /* 8. 还原公式 */
-    maths.forEach((m, i) => {
-      const label = m.display ? '@MB' + i : '@MI' + i;
-      const c = findComment(output, label);
-      if (!c) return;
-      const el = document.createElement(m.display ? 'div' : 'span');
-      el.textContent = m.display ? '\\[' + m.body + '\\]' : '\\(' + m.body + '\\)';
-      if (m.display) replaceNodeWithBlock(c, el);
-      else c.parentNode.replaceChild(el, c);
-    });
+      function updateStats(ms){
+        const v = editor.value;
+        $('statChars').textContent = v.length;
+        $('statLines').textContent = v ? v.split('\n').length : 0;
+        if (typeof ms === 'number') $('statTime').textContent = ms.toFixed(1) + ' ms';
+      }
 
-    typesetMath(output);
-    setStatus('done');
-  } catch (err) {
-    console.error('渲染错误:', err);
-    setStatus('error');
-    toast('渲染出错：' + err.message, true);
-  }
-  updateStats(performance.now() - t0);
-}
+      function saveSrc(){
+        try { localStorage.setItem(LS_KEY, editor.value); } catch(e){}
+      }
 
-function typesetMath(root){
-  if (!root.querySelector('span, div')) return;
-  const run = () => MathJax.typesetPromise([root]).catch(e => console.error('MathJax:', e));
-  if (window.MathJax && MathJax.typesetPromise) { run(); return; }
-  let waited = 0;
-  const timer = setInterval(() => {
-    waited += 120;
-    if (window.MathJax && MathJax.typesetPromise) { clearInterval(timer); run(); }
-    else if (waited > 12000) {
-      clearInterval(timer);
-      if (!mathJaxWarned) { mathJaxWarned = true; toast('MathJax 未加载，公式将以源码显示', true); }
-    }
-  }, 120);
-}
+      function copyText(text){
+        if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+        return new Promise((resolve, reject) => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;opacity:0';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+              document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+            } catch(e){
+              reject(e);
+            }
+            ta.remove();
+          });
+      }
 
-/* ================= 导出图片（极清 + 提速） ================= */
-async function exportImage(){
-  if (!output.querySelector('*')) { toast('预览区为空，无法导出', true); return; }
-  if (!window.htmlToImage) { toast('导出组件未加载，请检查网络后刷新', true); return; }
+      /* ================= 解析规则 ================= */
+      marked.setOptions({ gfm: true, breaks: true });
 
-  const btn = $('btnExport');
-  const originalHtml = btn.innerHTML;
-  const fontPx = $('exportFont').value;
-  const wantRatio = parseFloat($('exportRatio').value) || 4;
-  const t0 = performance.now();
+      const FENCE_RE       = /```([^\n`]*)\r?\n([\s\S]*?)```/g;
+      const INLINE_CODE_RE = /`([^`\n]+)`/g;
+      const BLOCK_MATH_RE  = [ /\$\$([\s\S]+?)\$\$/g, /\\\[([\s\S]+?)\\\]/g ];
+      const INLINE_MATH_RE = [ /\\\(([\s\S]+?)\\\)/g, /\$([^$\n]+?)\$/g ];
 
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>生成中…';
-  setStatus('exporting');
+      function findComment(root, label){
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT);
+        let n;
+        while ((n = walker.nextNode())) {
+          if (n.textContent === label) return n;
+        }
+        return null;
+      }
 
-  let stage = null;
-  try {
-    /* 1. 离屏克隆：小字号 + 紧凑样式（图片更短） */
-    stage = document.createElement('div');
-    stage.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;';
+      function parentHasOtherContent(p, except){
+        for (const n of p.childNodes) {
+          if (n === except) continue;
+          if (n.nodeType === Node.TEXT_NODE) {
+            if (n.textContent.trim() !== '') return true;
+          } else {
+            return true;
+          }
+        }
+        return false;
+      }
 
-    const capture = document.createElement('div');
-    capture.className = 'export-compact';
-    capture.style.cssText = 'width:880px;padding:24px 30px;background:#ffffff;color:#24292f;line-height:1.6;font-size:' + fontPx + 'px;';
+      function replaceNodeWithBlock(comment, el){
+        const parent = comment.parentNode;
+        if (!parent) return;
+        if (parent.tagName === 'P' && !parentHasOtherContent(parent, comment)) {
+          parent.parentNode.replaceChild(el, parent);
+        } else {
+          parent.replaceChild(el, comment);
+        }
+      }
 
-    const clone = output.cloneNode(true);
-    clone.removeAttribute('id');
-    clone.style.cssText = 'padding:0;margin:0;overflow:visible;min-height:0;flex:none;';
-    capture.appendChild(clone);
-    stage.appendChild(capture);
-    document.body.appendChild(stage);
+      /* ================= Markdown 冲突修复 ================= */
+      function normalizeEmphasis(text){
+        text = text.replace(/\\\*/g, '&#42;');
+        text = text.replace(/\\_/g, '&#95;');
 
-    await new Promise(r => setTimeout(r, 80)); // 等待布局稳定
+        const complexContent = s => /[*`]|\[[^\]]*\]\(/.test(s);
 
-    /* 2. 计算安全倍率：防止超出浏览器 canvas 上限导致大图模糊/空白 */
-    const w = capture.offsetWidth, h = capture.offsetHeight;
-    const MAX_DIM = 30000, MAX_AREA = 120000000; // 单边 ≤30000px，总面积 ≤1.2 亿像素
-    if (w > MAX_DIM || h > MAX_DIM) {
-      throw new Error('内容过长，超出单张图片 30000px 上限，请精简内容后重试');
-    }
-    let ratio = wantRatio;
-    const cap = Math.min(MAX_DIM / Math.max(w, h), Math.sqrt(MAX_AREA / (w * h)));
-    if (ratio > cap) {
-      ratio = Math.max(1, Math.floor(cap * 10) / 10);
-      toast(`图片过大，倍率已自动降为 ${ratio}x（浏览器画布上限）`);
-    }
+        text = text.replace(/\*\*([^\s*](?:[^*\n]*?[^\s*])?)\*\*/g, (m, inner) => {
+            if (complexContent(inner)) return m;
+            return '<strong>' + inner + '</strong>';
+          });
 
-    /* 3. 截图：skipFonts 跳过字体嵌入扫描，速度更快 */
-    const canvas = await htmlToImage.toCanvas(capture, {
-      pixelRatio: ratio,
-      backgroundColor: '#ffffff',
-      skipFonts: true, // 页面使用系统字体 + MathJax 矢量输出，无需嵌入字体
-      filter: node => !(node.classList && node.classList.contains('code-copy'))
-    });
+        text = text.replace(/__([^\s_](?:[^_\n]*?[^\s_])?)__/g, (m, inner) => {
+            if (complexContent(inner)) return m;
+            return '<strong>' + inner + '</strong>';
+          });
 
-    /* 4. PNG 编码：toBlob 异步编码，比 toDataURL 更快 */
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(b => b ? resolve(b) : reject(new Error('PNG 编码失败，请降低清晰度档位重试')), 'image/png');
-    });
+        return text;
+      }
 
-    const url = URL.createObjectURL(blob);
-    const now = new Date();
-    const p = n => String(n).padStart(2, '0');
-    const name = 'render_' + now.getFullYear() + p(now.getMonth() + 1) + p(now.getDate()) +
-                 '_' + p(now.getHours()) + p(now.getMinutes()) + p(now.getSeconds()) + '.png';
-    const a = document.createElement('a');
-    a.href = url; a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+      /* ================= 代码高亮 + 行号 ================= */
+      function wrapHighlightedLines(codeEl){
+        const frag = document.createDocumentFragment();
+        let lineNo = 0;
+        let active = [];
+        let line, lineContent, currentParent;
 
-    const sec = ((performance.now() - t0) / 1000).toFixed(1);
-    toast(`已导出 ${Math.round(w * ratio)}×${Math.round(h * ratio)} px（${ratio}x · 耗时 ${sec}s）`);
-    setStatus('done');
-  } catch (err) {
-    console.error('导出失败:', err);
-    toast('导出失败：' + (err && err.message ? err.message : '未知错误'), true);
-    setStatus('error');
-  } finally {
-    if (stage) stage.remove();
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
-  }
-}
+        function newLine(){
+          lineNo++;
+          line = document.createElement('div');
+          line.className = 'code-line';
 
-/* ================= 事件绑定 ================= */
-$('btnRender').addEventListener('click', render);
-$('btnExport').addEventListener('click', exportImage);
+          const num = document.createElement('span');
+          num.className = 'line-no';
+          num.setAttribute('aria-hidden', 'true');
+          num.textContent = lineNo;
 
-$('btnSample').addEventListener('click', () => {
-  editor.value = SAMPLE; saveSrc(); render(); toast('已载入示例');
-});
-$('btnClear').addEventListener('click', () => {
-  editor.value = ''; saveSrc(); render(); toast('已清空');
-});
+          lineContent = document.createElement('span');
+          lineContent.className = 'line-content';
 
-editor.addEventListener('input', () => {
-  saveSrc();
-  updateStats();
-  if ($('liveRender').checked) {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(render, 500);
-  }
-});
+          line.appendChild(num);
+          line.appendChild(lineContent);
+          frag.appendChild(line);
 
-editor.addEventListener('keydown', e => {
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    editor.setRangeText('  ', editor.selectionStart, editor.selectionEnd, 'end');
-    editor.dispatchEvent(new Event('input'));
-  }
-});
+          currentParent = lineContent;
+          active.forEach(a => {
+              const el = document.createElement(a.tag);
+              if (a.cls) el.className = a.cls;
+              currentParent.appendChild(el);
+              currentParent = el;
+            });
+        }
 
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); exportImage(); }
-});
+        function addText(text){
+          const parts = text.split('\n');
+          parts.forEach((part, i) => {
+              if (i > 0) newLine();
+              if (part) currentParent.appendChild(document.createTextNode(part));
+            });
+        }
 
-/* 分栏拖动 */
-let dragging = false;
-splitter.addEventListener('pointerdown', e => {
-  dragging = true;
-  splitter.setPointerCapture(e.pointerId);
-  splitter.classList.add('active');
-});
-splitter.addEventListener('pointermove', e => {
-  if (!dragging) return;
-  const rect = workspace.getBoundingClientRect();
-  let pct = (e.clientX - rect.left) / rect.width * 100;
-  pct = Math.min(80, Math.max(20, pct));
-  editorPanel.style.flex = '0 0 ' + pct + '%';
-});
-splitter.addEventListener('pointerup', () => {
-  dragging = false;
-  splitter.classList.remove('active');
-});
-splitter.addEventListener('dblclick', () => { editorPanel.style.flex = ''; });
+        function walk(node){
+          Array.from(node.childNodes).forEach(child => {
+              if (child.nodeType === Node.TEXT_NODE) {
+                addText(child.nodeValue);
+              } else if (child.nodeType === Node.ELEMENT_NODE) {
+                const tag = child.tagName.toLowerCase();
+                const cls = child.getAttribute ? (child.getAttribute('class') || '') : '';
 
-/* ================= 初始化 ================= */
-SAMPLE = editor.value;
-try {
-  const saved = localStorage.getItem(LS_KEY);
-  if (saved !== null) editor.value = saved;
-} catch(e){}
-updateStats();
-render();
+                active.push({ tag, cls });
+
+                const clone = child.cloneNode(false);
+                if (cls) clone.className = cls;
+                currentParent.appendChild(clone);
+
+                const prev = currentParent;
+                currentParent = clone;
+
+                walk(child);
+
+                currentParent = prev;
+                active.pop();
+              }
+            });
+        }
+
+        newLine();
+        walk(codeEl);
+
+        codeEl.innerHTML = '';
+        codeEl.appendChild(frag);
+      }
+
+      function enhanceCodeBlocks(root){
+        root.querySelectorAll('.code-block-wrapper pre code').forEach(code => {
+            const raw = code.dataset.raw !== undefined ? code.dataset.raw : code.textContent;
+            code.dataset.raw = raw;
+            code.textContent = raw;
+            code.classList.remove('hljs');
+
+            if (window.hljs && !code.classList.contains('nohighlight')) {
+              try {
+                hljs.highlightElement(code);
+              } catch(e){
+                console.warn('代码高亮失败：', e);
+              }
+            }
+            wrapHighlightedLines(code);
+          });
+      }
+
+      /* ================= 渲染主流程 ================= */
+      function render(){
+        const t0 = performance.now();
+        setStatus('rendering');
+
+        try {
+          if (!window.marked) throw new Error('marked.js 加载失败，请检查网络');
+
+          let text = editor.value;
+          const codeBlocks = [], inlineCodes = [], maths = [];
+
+          text = text.replace(FENCE_RE, (m, lang, code) => {
+              code = code.replace(/\r/g, '\n').replace(/\n$/, '');
+              codeBlocks.push({ lang: lang.trim(), code });
+              return '\n<!--@CB' + (codeBlocks.length - 1) + '-->\n';
+            });
+
+          text = text.replace(INLINE_CODE_RE, (m, code) => {
+              inlineCodes.push(code);
+              return '<!--@IC' + (inlineCodes.length - 1) + '-->';
+            });
+
+          BLOCK_MATH_RE.forEach(re => {
+              text = text.replace(re, (m, body) => {
+                  maths.push({ display: true, body: body.trim() });
+                  return '\n<!--@MB' + (maths.length - 1) + '-->\n';
+                });
+            });
+
+          INLINE_MATH_RE.forEach(re => {
+              text = text.replace(re, (m, body) => {
+                  maths.push({ display: false, body: body.trim() });
+                  return '<!--@MI' + (maths.length - 1) + '-->';
+                });
+            });
+
+          text = normalizeEmphasis(text);
+          output.innerHTML = marked.parse(text);
+
+          // 动态包裹表格，修复原生 table display:block 导致的 UI 破损问题
+          output.querySelectorAll('table').forEach(table => {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'table-wrapper';
+              table.parentNode.insertBefore(wrapper, table);
+              wrapper.appendChild(table);
+            });
+
+          codeBlocks.forEach((blk, i) => {
+              const c = findComment(output, '@CB' + i);
+              if (!c) return;
+
+              const wrapper = document.createElement('div');
+              wrapper.className = 'code-block-wrapper';
+
+              const tools = document.createElement('div');
+              tools.className = 'pre-tools';
+
+              const displayLang = blk.lang || 'text';
+              const tag = document.createElement('span');
+              tag.className = 'code-lang';
+              tag.textContent = displayLang;
+              tools.appendChild(tag);
+
+              const btn = document.createElement('button');
+              btn.className = 'code-copy';
+              btn.textContent = '复制';
+              btn.addEventListener('click', () => {
+                  copyText(blk.code).then(() => {
+                      btn.textContent = '已复制';
+                      btn.classList.add('copied');
+                      setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+                    }).catch(() => toast('复制失败', true));
+                });
+              tools.appendChild(btn);
+
+              const pre = document.createElement('pre');
+              const code = document.createElement('code');
+              if (blk.lang) code.className = 'language-' + blk.lang;
+              else code.className = 'nohighlight';
+
+              code.dataset.raw = blk.code;
+              code.textContent = blk.code;
+              pre.appendChild(code);
+
+              wrapper.appendChild(tools);
+              wrapper.appendChild(pre);
+              replaceNodeWithBlock(c, wrapper);
+            });
+
+          inlineCodes.forEach((codeStr, i) => {
+              const c = findComment(output, '@IC' + i);
+              if (!c) return;
+              const el = document.createElement('code');
+              el.textContent = codeStr;
+              c.parentNode.replaceChild(el, c);
+            });
+
+          maths.forEach((m, i) => {
+              const label = m.display ? '@MB' + i : '@MI' + i;
+              const c = findComment(output, label);
+              if (!c) return;
+              const el = document.createElement(m.display ? 'div' : 'span');
+              el.textContent = m.display ? '\\[' + m.body + '\\]' : '\\(' + m.body + '\\)';
+              if (m.display) replaceNodeWithBlock(c, el);
+              else c.parentNode.replaceChild(el, c);
+            });
+
+          enhanceCodeBlocks(output);
+          typesetMath(output);
+          setStatus('done');
+        } catch (err) {
+          console.error('渲染错误:', err);
+          setStatus('error');
+          toast('渲染出错：' + err.message, true);
+        }
+        updateStats(performance.now() - t0);
+      }
+
+      function typesetMath(root){
+        if (!root.querySelector('span, div')) return;
+        const run = () => MathJax.typesetPromise([root]).catch(e => console.error('MathJax:', e));
+        if (window.MathJax && MathJax.typesetPromise) { run(); return; }
+        let waited = 0;
+        const timer = setInterval(() => {
+            waited += 120;
+            if (window.MathJax && MathJax.typesetPromise) { clearInterval(timer); run(); }
+            else if (waited > 12000) {
+              clearInterval(timer);
+              if (!mathJaxWarned) { mathJaxWarned = true; toast('MathJax 未加载，公式将以源码显示', true); }
+            }
+          }, 120);
+      }
+
+      /* ================= 导出图片 ================= */
+      async function exportImage(){
+        if (!output.querySelector('*')) { toast('预览区为空，无法导出', true); return; }
+        if (!window.htmlToImage) { toast('导出组件未加载，请检查网络后刷新', true); return; }
+
+        const btn = $('btnExport');
+        const originalHtml = btn.innerHTML;
+        const t0 = performance.now();
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>生成中…';
+        setStatus('exporting');
+
+        let stage = null;
+
+        try {
+          let fontPx = parseFloat(($('exportFont').value || '').trim());
+          if (!isFinite(fontPx) || fontPx <= 0) fontPx = 14;
+          fontPx = Math.min(Math.max(fontPx, 8), 512);
+          const wantRatio = parseFloat($('exportRatio').value) || 4;
+
+          stage = document.createElement('div');
+          stage.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;';
+
+          const capture = document.createElement('div');
+          capture.className = 'export-compact';
+          capture.style.cssText =
+          'width:' + EXPORT_WIDTH + 'px;' +
+          'padding:48px 64px;' +
+          'background:#ffffff;color:#24292f;' +
+          'line-height:1.7;' +
+          'font-size:' + fontPx + 'px;' +
+          'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;';
+
+          const clone = output.cloneNode(true);
+          clone.removeAttribute('id');
+          clone.style.cssText = 'padding:0;margin:0;overflow:visible;min-height:0;flex:none;';
+
+          /* ================= 导出前 DOM 修复 ================= */
+          clone.querySelectorAll('details').forEach(d => d.setAttribute('open', ''));
+
+          const imgs = Array.from(clone.querySelectorAll('img'));
+          for (const img of imgs) {
+            if (img.src && img.src.startsWith('http')) {
+              try {
+                const response = await fetch(img.src, { mode: 'cors', cache: 'force-cache' });
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const reader = new FileReader();
+                  const dataUrl = await new Promise((resolve, reject) => {
+                      reader.onloadend = () => resolve(reader.result);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(blob);
+                    });
+                  img.src = dataUrl;
+                } else {
+                  throw new Error('fetch failed');
+                }
+              } catch (e) {
+                img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="50"%3E%3Crect width="100%25" height="100%25" fill="%23eee"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-size="12"%3EImage%3C/text%3E%3C/svg%3E';
+              }
+            }
+          }
+
+          clone.querySelectorAll('script').forEach(s => s.remove());
+          /* ==================================================================== */
+
+          capture.appendChild(clone);
+          stage.appendChild(capture);
+          document.body.appendChild(stage);
+
+          await new Promise(r => setTimeout(r, 150));
+
+          const w = capture.offsetWidth;
+          const h = capture.offsetHeight;
+
+          if (w > EXPORT_MAX_DIM || h > EXPORT_MAX_DIM) {
+            throw new Error('内容过长，超出单张图片 30000px 上限，请精简内容后重试');
+          }
+
+          let ratio = wantRatio;
+          const cap = Math.min(
+            EXPORT_MAX_DIM / Math.max(w, h, 1),
+            Math.sqrt(EXPORT_MAX_AREA / Math.max(w * h, 1))
+          );
+
+          if (ratio > cap) {
+            ratio = Math.floor(cap * 10) / 10;
+            if (ratio < 0.5) {
+              throw new Error('内容过大，无法在浏览器画布限制内导出，请精简内容或降低字号后重试');
+            }
+            toast(`图片过大，倍率已自动降为 ${ratio}x（浏览器画布上限）`);
+          }
+
+          const canvas = await htmlToImage.toCanvas(capture, {
+              pixelRatio: ratio,
+              backgroundColor: '#ffffff',
+              skipFonts: true,
+              filter: node => !(node.classList && node.classList.contains('code-copy'))
+            });
+
+          const blob = await new Promise((resolve, reject) => {
+              canvas.toBlob(b => b ? resolve(b) : reject(new Error('PNG 编码失败，请降低清晰度档位重试')), 'image/png');
+            });
+
+          const url = URL.createObjectURL(blob);
+          const now = new Date();
+          const p = n => String(n).padStart(2, '0');
+          const name = 'render_' + now.getFullYear() + p(now.getMonth() + 1) + p(now.getDate()) +
+          '_' + p(now.getHours()) + p(now.getMinutes()) + p(now.getSeconds()) + '.png';
+
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+          const sec = ((performance.now() - t0) / 1000).toFixed(1);
+          toast(`已导出 ${Math.round(w * ratio)}×${Math.round(h * ratio)} px（${ratio}x · 耗时 ${sec}s）`);
+          setStatus('done');
+        } catch (err) {
+          console.error('导出失败详细错误:', err);
+          const msg = err && err.message ? err.message : '未知错误 (可能由于跨域图片或浏览器画布限制)';
+          toast('导出失败：' + msg, true);
+          setStatus('error');
+        } finally {
+          if (stage) stage.remove();
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      }
+
+      /* ================= 事件绑定 ================= */
+      $('btnRender').addEventListener('click', render);
+      $('btnExport').addEventListener('click', exportImage);
+
+      $('btnSample').addEventListener('click', () => {
+          editor.value = SAMPLE;
+          saveSrc();
+          render();
+          toast('已载入示例');
+        });
+
+      $('btnClear').addEventListener('click', () => {
+          editor.value = '';
+          saveSrc();
+          render();
+          toast('已清空');
+        });
+
+      editor.addEventListener('input', () => {
+          saveSrc();
+          updateStats();
+          if ($('liveRender').checked) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(render, 500);
+          }
+        });
+
+      editor.addEventListener('keydown', e => {
+          if (e.key === 'Tab') {
+            e.preventDefault();
+            editor.setRangeText('  ', editor.selectionStart, editor.selectionEnd, 'end');
+            editor.dispatchEvent(new Event('input'));
+          }
+        });
+
+      document.addEventListener('keydown', e => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); exportImage(); }
+        });
+
+      let dragging = false;
+      splitter.addEventListener('pointerdown', e => {
+          dragging = true;
+          splitter.setPointerCapture(e.pointerId);
+          splitter.classList.add('active');
+        });
+      splitter.addEventListener('pointermove', e => {
+          if (!dragging) return;
+          const rect = workspace.getBoundingClientRect();
+          let pct = (e.clientX - rect.left) / rect.width * 100;
+          pct = Math.min(80, Math.max(20, pct));
+          editorPanel.style.flex = '0 0 ' + pct + '%';
+        });
+      splitter.addEventListener('pointerup', () => {
+          dragging = false;
+          splitter.classList.remove('active');
+        });
+      splitter.addEventListener('dblclick', () => { editorPanel.style.flex = ''; });
+
+      /* ================= 初始化 ================= */
+      SAMPLE = editor.value;
+      try {
+        const saved = localStorage.getItem(LS_KEY);
+        if (saved !== null) editor.value = saved;
+      } catch(e){}
+      updateStats();
+      render();
+
+      window.addEventListener('load', () => {
+          if (window.hljs) enhanceCodeBlocks(output);
+        });
 </script>
 </body>
 </html>
