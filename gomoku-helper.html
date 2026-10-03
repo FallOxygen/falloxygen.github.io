@@ -2125,708 +2125,681 @@
     高级算法核心（自 gomoku-ai.html 移植，供 Web Worker 使用）
     ============================================================ -->
     <script id="adv-core">
-      /* ===== 高级五子棋搜索内核：Board / Evaluator / Searcher ===== */
-      const BOARD_SIZE = 15;
-      const EMPTY = 0, BLACK = 1, WHITE = 2;
-      const DIRECTIONS = [[0,1],[1,0],[1,1],[1,-1]];
-      const PATTERN = {
-        FIVE:0, LIVE_FOUR:1, RUSH_FOUR:2, LIVE_THREE:3, SLEEP_THREE:4, LIVE_TWO:5, SLEEP_TWO:6, ONE:7
-      };
-      const SEARCH_CONFIG = {
-        maxDepth: 12, candidateRange: 2, defenseWeight: 1.1, vcfMaxDepth: 20, quiescenceDepth: 3, ttSize: 1 << 20, timeCheckInterval: 512
-      };
-      const PATTERN_SCORES = {
-        [PATTERN.FIVE]:1000000, [PATTERN.LIVE_FOUR]:100000, [PATTERN.RUSH_FOUR]:10000, [PATTERN.LIVE_THREE]:5000, [PATTERN.SLEEP_THREE]:500, [PATTERN.LIVE_TWO]:300, [PATTERN.SLEEP_TWO]:50, [PATTERN.ONE]:10
-      };
-      const COMBO_BONUS = {
-        doubleFour:50000, fourThree:30000, doubleThree:8000
-      };
-      const _dirBuf = new Int8Array(11);
-      const PATTERN_DEFS = [ [PATTERN.FIVE, [1,1,1,1,1]], [PATTERN.LIVE_FOUR, [0,1,1,1,1,0]], [PATTERN.RUSH_FOUR, [2,1,1,1,1,0]], [PATTERN.RUSH_FOUR, [0,1,1,1,1,2]], [PATTERN.RUSH_FOUR, [1,0,1,1,1]], [PATTERN.RUSH_FOUR, [1,1,0,1,1]], [PATTERN.RUSH_FOUR, [1,1,1,0,1]], [PATTERN.LIVE_THREE, [0,0,1,1,1,0]], [PATTERN.LIVE_THREE, [0,1,1,1,0,0]], [PATTERN.LIVE_THREE, [0,1,0,1,1,0]], [PATTERN.LIVE_THREE, [0,1,1,0,1,0]], [PATTERN.SLEEP_THREE, [2,1,1,1,0,0]], [PATTERN.SLEEP_THREE, [0,0,1,1,1,2]], [PATTERN.SLEEP_THREE, [2,1,1,1,0]], [PATTERN.SLEEP_THREE, [0,1,1,1,2]], [PATTERN.SLEEP_THREE, [2,0,1,1,1,0]], [PATTERN.SLEEP_THREE, [0,1,1,1,0,2]], [PATTERN.SLEEP_THREE, [2,1,0,1,1,0]], [PATTERN.SLEEP_THREE, [0,1,1,0,1,2]], [PATTERN.SLEEP_THREE, [1,0,1,1,0]], [PATTERN.SLEEP_THREE, [0,1,1,0,1]], [PATTERN.SLEEP_THREE, [1,1,0,0,1]], [PATTERN.SLEEP_THREE, [1,0,0,1,1]], [PATTERN.LIVE_TWO, [0,0,1,1,0,0]], [PATTERN.LIVE_TWO, [0,1,1,0,0,0]], [PATTERN.LIVE_TWO, [0,0,0,1,1,0]], [PATTERN.LIVE_TWO, [0,1,0,1,0,0]], [PATTERN.LIVE_TWO, [0,0,1,0,1,0]], [PATTERN.LIVE_TWO, [0,1,0,0,1,0]], [PATTERN.SLEEP_TWO, [2,1,1,0,0,0]], [PATTERN.SLEEP_TWO, [0,0,0,1,1,2]], [PATTERN.SLEEP_TWO, [2,0,1,1,0,0]], [PATTERN.SLEEP_TWO, [0,0,1,1,0,2]], [PATTERN.SLEEP_TWO, [2,1,1,0,0]], [PATTERN.SLEEP_TWO, [0,0,1,1,2]], [PATTERN.SLEEP_TWO, [1,0,1,0,0]], [PATTERN.SLEEP_TWO, [0,0,1,0,1]], [PATTERN.SLEEP_TWO, [1,0,0,1,0]]];
-      function _matchPattern(buf, pat) {
-        const plen = pat.length;
-        const minStart = Math.max(0, 6 - plen);
-        const maxStart = Math.min(5, 11 - plen);
-        for (let start = minStart; start <= maxStart; start++) {
-          const cInPat = 5 - start;
-          if (pat[cInPat] !== 1) continue;
-          let ok = true;
-          for (let i = 0; i < plen; i++) {
-            if (buf[start + i] !== pat[i]) {
-              ok = false;
-              break;
-            }
-          }
-          if (ok) return true;
+/* ===== 高级五子棋搜索内核 v2 ===== */
+const BOARD_SIZE = 15;
+const CELLS = BOARD_SIZE * BOARD_SIZE;
+const EMPTY = 0, BLACK = 1, WHITE = 2;
+const DIRECTIONS = [[0,1],[1,0],[1,1],[1,-1]];
+
+const P_NONE = 0, P_ONE = 1, P_SLEEP_TWO = 2, P_LIVE_TWO = 3,
+      P_SLEEP_THREE = 4, P_LIVE_THREE = 5, P_RUSH_FOUR = 6,
+      P_LIVE_FOUR = 7, P_FIVE = 8, P_OVER = 9;
+
+const P_SCORES = [0, 10, 100, 1000, 5000, 50000, 100000, 1000000, 10000000, 10000000];
+const COMBO_BONUS = { doubleFour: 2000000, fourThree: 1500000, doubleThree: 800000 };
+const WIN_SCORE = 100000000;
+const WIN_THRESHOLD = 50000000;
+
+const SEARCH_CONFIG = { maxDepth: 12, candidateRange: 2, vcfMaxDepth: 14 };
+
+const ZOBRIST = (function () {
+    const t = new Array(CELLS);
+    for (let i = 0; i < CELLS; i++) {
+        t[i] = [0, (Math.random() * 0x100000000) >>> 0, (Math.random() * 0x100000000) >>> 0];
+    }
+    return t;
+})();
+
+const PATTERN_TABLE = (function () {
+    const SIZE = 6561;
+    const table = new Uint8Array(SIZE);
+    const chars = new Array(9);
+    for (let code = 0; code < SIZE; code++) {
+        const vals = new Array(8);
+        let cc = code;
+        for (let i = 7; i >= 0; i--) { vals[i] = cc % 3; cc = (cc / 3) | 0; }
+        chars[4] = 'X';
+        for (let i = 0; i < 8; i++) {
+            const charIdx = i < 4 ? i : i + 1;
+            chars[charIdx] = vals[i] === 0 ? '.' : (vals[i] === 1 ? 'X' : 'O');
+        }
+        table[code] = classifyPattern(chars.join(''));
+    }
+    return table;
+})();
+
+function classifyPattern(s) {
+    if (s.indexOf('XXXXXX') !== -1) return P_OVER;
+    if (s.indexOf('XXXXX') !== -1) return P_FIVE;
+    if (s.indexOf('.XXXX.') !== -1) return P_LIVE_FOUR;
+    if (s.indexOf('XXXX.') !== -1 || s.indexOf('.XXXX') !== -1) return P_RUSH_FOUR;
+    if (s.indexOf('X.XXX') !== -1 || s.indexOf('XX.XX') !== -1 || s.indexOf('XXX.X') !== -1) return P_RUSH_FOUR;
+    if (s.indexOf('.XXX.') !== -1) return P_LIVE_THREE;
+    if (s.indexOf('.X.XX.') !== -1 || s.indexOf('.XX.X.') !== -1) return P_LIVE_THREE;
+    if (s.indexOf('XXX..') !== -1 || s.indexOf('..XXX') !== -1) return P_SLEEP_THREE;
+    if (s.indexOf('XX.X.') !== -1 || s.indexOf('.X.XX') !== -1) return P_SLEEP_THREE;
+    if (s.indexOf('X.XX.') !== -1 || s.indexOf('.XX.X') !== -1) return P_SLEEP_THREE;
+    if (s.indexOf('X.X.X') !== -1) return P_SLEEP_THREE;
+    if (s.indexOf('OXXX') !== -1 || s.indexOf('XXXO') !== -1) return P_SLEEP_THREE;
+    if (s.indexOf('.XX.') !== -1) return P_LIVE_TWO;
+    if (s.indexOf('.X.X.') !== -1) return P_LIVE_TWO;
+    if (s.indexOf('XX') !== -1) return P_SLEEP_TWO;
+    if (s.indexOf('X.X') !== -1) return P_SLEEP_TWO;
+    return P_ONE;
+}
+
+function dirPattern(grid, r, c, d, color) {
+    const dr = DIRECTIONS[d][0], dc = DIRECTIONS[d][1];
+    let code = 0;
+    for (let i = -4; i <= 4; i++) {
+        if (i === 0) continue;
+        const nr = r + dr * i, nc = c + dc * i;
+        let v;
+        if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) v = 2;
+        else {
+            const cell = grid[nr * BOARD_SIZE + nc];
+            v = cell === EMPTY ? 0 : (cell === color ? 1 : 2);
+        }
+        code = code * 3 + v;
+    }
+    return PATTERN_TABLE[code];
+}
+
+class Board {
+    constructor() {
+        this.grid = new Int8Array(CELLS);
+        this.history = [];
+        this.forbiddenEnabled = true;
+        this.hash = 0;
+    }
+    inBounds(r, c) { return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE; }
+    get(r, c) { return this.inBounds(r, c) ? this.grid[r * BOARD_SIZE + c] : -1; }
+    isEmpty(r, c) { return this.inBounds(r, c) && this.grid[r * BOARD_SIZE + c] === EMPTY; }
+    isForbidden(r, c) { return this.isForbiddenAt(r, c) !== null; }
+
+    place(r, c, color) {
+        if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return false;
+        const idx = r * BOARD_SIZE + c;
+        if (this.grid[idx] !== EMPTY) return false;
+        this.grid[idx] = color;
+        this.history.push({ r: r, c: c, color: color });
+        this.hash ^= ZOBRIST[idx][color];
+        return true;
+    }
+
+    undo() {
+        if (this.history.length === 0) return false;
+        const last = this.history.pop();
+        const idx = last.r * BOARD_SIZE + last.c;
+        this.grid[idx] = EMPTY;
+        this.hash ^= ZOBRIST[idx][last.color];
+        return true;
+    }
+
+    getLastMove() { return this.history.length ? this.history[this.history.length - 1] : null; }
+
+    checkWinAt(r, c, color) {
+        for (let d = 0; d < 4; d++) {
+            const dr = DIRECTIONS[d][0], dc = DIRECTIONS[d][1];
+            let count = 1;
+            let nr = r + dr, nc = c + dc;
+            while (this.inBounds(nr, nc) && this.grid[nr * BOARD_SIZE + nc] === color) { count++; nr += dr; nc += dc; }
+            nr = r - dr; nc = c - dc;
+            while (this.inBounds(nr, nc) && this.grid[nr * BOARD_SIZE + nc] === color) { count++; nr -= dr; nc -= dc; }
+            if (color === BLACK && this.forbiddenEnabled) { if (count === 5) return true; }
+            else if (count >= 5) return true;
         }
         return false;
-      }
-      class Board {
-        constructor() {
-          this.grid = [];
-          this.history = [];
-          this.zobristTable = [];
-          this.zobristHash = 0;
-          this.forbiddenEnabled = true;
-          this._initGrid();
-          this._initZobrist();
-        }
-        _initGrid() {
-          this.grid = [];
-          for (let i = 0; i < BOARD_SIZE; i++) this.grid.push(new Array(BOARD_SIZE).fill(EMPTY));
-        }
-        _initZobrist() {
-          this.zobristTable = [];
-          for (let i = 0; i < BOARD_SIZE; i++) {
-            this.zobristTable[i] = [];
-            for (let j = 0; j < BOARD_SIZE; j++) {
-              this.zobristTable[i][j] = [0, this._random64(), this._random64()];
-            }
-          }
-          this.zobristHash = 0;
-        }
-        _random64() {
-          return (Math.random() * 0x100000000) >>> 0;
-        }
-        clone() {
-          const b = new Board();
-          b.grid = this.grid.map(function (row) {
-              return row.slice();
-            });
-          b.history = this.history.slice();
-          b.zobristHash = this.zobristHash;
-          b.forbiddenEnabled = this.forbiddenEnabled;
-          return b;
-        }
-        inBounds(r, c) {
-          return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
-        }
-        get(r, c) {
-          if (!this.inBounds(r, c)) return -1; return this.grid[r][c];
-        }
-        place(r, c, color) {
-          if (!this.inBounds(r, c) || this.grid[r][c] !== EMPTY) return false;
-          this.grid[r][c] = color;
-          this.history.push({
-              r: r, c: c, color: color
-            });
-          this.zobristHash ^= this.zobristTable[r][c][color];
-          return true;
-        }
-        undo() {
-          if (this.history.length === 0) return null;
-          const last = this.history.pop();
-          this.grid[last.r][last.c] = EMPTY;
-          this.zobristHash ^= this.zobristTable[last.r][last.c][last.color];
-          return last;
-        }
-        getLastMove() {
-          return this.history.length > 0 ? this.history[this.history.length - 1] : null;
-        }
-        isForbidden(r, c) {
-          if (!this.forbiddenEnabled) return false;
-          if (this.grid[r][c] !== EMPTY) return false;
-          this.grid[r][c] = BLACK;
-          const result = this._checkForbiddenAt(r, c);
-          this.grid[r][c] = EMPTY;
-          return result;
-        }
-        _checkForbiddenAt(r, c) {
-          for (let i = 0; i < DIRECTIONS.length; i++) {
-            const dr = DIRECTIONS[i][0], dc = DIRECTIONS[i][1];
-            if (this._countLine(r, c, dr, dc, BLACK) > 5) return true;
-          }
-          for (let i = 0; i < DIRECTIONS.length; i++) {
-            const dr = DIRECTIONS[i][0], dc = DIRECTIONS[i][1];
-            if (this._countLine(r, c, dr, dc, BLACK) === 5) return false;
-          }
-          let fourCount = 0, liveThreeCount = 0;
-          for (let i = 0; i < DIRECTIONS.length; i++) {
-            const dr = DIRECTIONS[i][0], dc = DIRECTIONS[i][1];
-            const p = this._classifyDirection(r, c, dr, dc, BLACK);
-            if (p === PATTERN.RUSH_FOUR || p === PATTERN.LIVE_FOUR) fourCount++;
-            if (p === PATTERN.LIVE_THREE) liveThreeCount++;
-          }
-          if (fourCount >= 2) return true;
-          if (liveThreeCount >= 2) return true;
-          return false;
-        }
-        _countLine(r, c, dr, dc, color) {
-          let count = 1;
-          let nr = r + dr, nc = c + dc;
-          while (this.inBounds(nr, nc) && this.grid[nr][nc] === color) {
-            count++; nr += dr; nc += dc;
-          }
-          nr = r - dr; nc = c - dc;
-          while (this.inBounds(nr, nc) && this.grid[nr][nc] === color) {
-            count++; nr -= dr; nc -= dc;
-          }
-          return count;
-        }
-        _classifyDirection(r, c, dr, dc, color) {
-          const g = this.grid;
-          const buf = _dirBuf;
-          for (let i = 0; i < 11; i++) {
-            const off = i - 5;
-            const nr = r + off * dr, nc = c + off * dc;
-            if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) buf[i] = 2;
-            else {
-              const v = g[nr][nc];
-              buf[i] = v === EMPTY ? 0 : (v === color ? 1 : 2);
-            }
-          }
-          for (let p = 0; p < PATTERN_DEFS.length; p++) {
-            if (_matchPattern(buf, PATTERN_DEFS[p][1])) return PATTERN_DEFS[p][0];
-          }
-          return PATTERN.ONE;
-        }
-        checkWin(r, c, color) {
-          for (let i = 0; i < DIRECTIONS.length; i++) {
-            if (this._countLine(r, c, DIRECTIONS[i][0], DIRECTIONS[i][1], color) >= 5) return true;
-          }
-          return false;
-        }
-        hasFive(color) {
-          for (let r = 0; r < BOARD_SIZE; r++) {
-            for (let c = 0; c < BOARD_SIZE; c++) {
-              if (this.grid[r][c] === color && this.checkWin(r, c, color)) return true;
-            }
-          }
-          return false;
-        }
-        getForbiddenPoints() {
-          if (!this.forbiddenEnabled) return [];
-          const points = [];
-          for (let r = 0; r < BOARD_SIZE; r++) {
-            for (let c = 0; c < BOARD_SIZE; c++) {
-              if (this.grid[r][c] === EMPTY && this.isForbidden(r, c)) points.push({
-                  r: r, c: c
-                });
-            }
-          }
-          return points;
-        }
-        isFull() {
-          return this.history.length >= BOARD_SIZE * BOARD_SIZE;
-        }
-        reset() {
-          this._initGrid(); this.history = []; this.zobristHash = 0;
-        }
-      }
-      class Evaluator {
-        constructor(board) {
-          this.board = board;
-        }
-        evaluatePoint(r, c, color) {
-          if (!this.board.inBounds(r, c) || this.board.get(r, c) !== EMPTY) return -1;
-          const g = this.board.grid;
-          g[r][c] = color;
-          let totalScore = 0, fourCount = 0, liveThreeCount = 0;
-          for (let d = 0; d < 4; d++) {
+    }
+
+    isForbiddenAt(r, c) {
+        if (!this.forbiddenEnabled) return null;
+        if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return null;
+        const idx = r * BOARD_SIZE + c;
+        if (this.grid[idx] !== EMPTY) return null;
+
+        this.grid[idx] = BLACK;
+        let hasOverline = false, fiveCount = 0, fourCount = 0, liveThreeCount = 0;
+
+        for (let d = 0; d < 4; d++) {
             const dr = DIRECTIONS[d][0], dc = DIRECTIONS[d][1];
-            const pattern = this.board._classifyDirection(r, c, dr, dc, color);
-            totalScore += PATTERN_SCORES[pattern];
-            if (pattern === PATTERN.LIVE_FOUR || pattern === PATTERN.RUSH_FOUR) fourCount++;
-            else if (pattern === PATTERN.LIVE_THREE) liveThreeCount++;
-          }
-          if (fourCount >= 2) totalScore += COMBO_BONUS.doubleFour;
-          else if (fourCount >= 1 && liveThreeCount >= 1) totalScore += COMBO_BONUS.fourThree;
-          else if (liveThreeCount >= 2) totalScore += COMBO_BONUS.doubleThree;
-          g[r][c] = EMPTY;
-          return totalScore;
+            let count = 1;
+            let nr = r + dr, nc = c + dc;
+            while (this.inBounds(nr, nc) && this.grid[nr * BOARD_SIZE + nc] === BLACK) { count++; nr += dr; nc += dc; }
+            nr = r - dr; nc = c - dc;
+            while (this.inBounds(nr, nc) && this.grid[nr * BOARD_SIZE + nc] === BLACK) { count++; nr -= dr; nc -= dc; }
+            if (count > 5) hasOverline = true;
+            else if (count === 5) fiveCount++;
+
+            const lv = dirPattern(this.grid, r, c, d, BLACK);
+            if (lv === P_LIVE_FOUR || lv === P_RUSH_FOUR) fourCount++;
+            else if (lv === P_LIVE_THREE) liveThreeCount++;
         }
-        evaluate(color) {
-          const opp = color === BLACK ? WHITE : BLACK;
-          let myScore = 0, oppScore = 0;
-          const myPatterns = this._countAllPatterns(color);
-          const oppPatterns = this._countAllPatterns(opp);
-          for (const p in myPatterns) myScore += myPatterns[p] * PATTERN_SCORES[p];
-          for (const p in oppPatterns) oppScore += oppPatterns[p] * PATTERN_SCORES[p];
-          myScore += this._calcGlobalComboBonus(myPatterns);
-          oppScore += this._calcGlobalComboBonus(oppPatterns);
-          const firstMoveBonus = color === BLACK ? 50 : 0;
-          return myScore - oppScore * SEARCH_CONFIG.defenseWeight + firstMoveBonus;
+        this.grid[idx] = EMPTY;
+
+        if (hasOverline) return 'overline';
+        if (fiveCount > 0) return null;
+        if (fourCount >= 2) return 'double4';
+        if (liveThreeCount >= 2) return 'double3';
+        return null;
+    }
+
+    isFull() { return this.history.length >= CELLS; }
+}
+
+class Evaluator {
+    constructor(board) { this.board = board; }
+
+    evaluatePoint(r, c, color) {
+        const g = this.board.grid;
+        let total = 0, fours = 0, threes = 0;
+        for (let d = 0; d < 4; d++) {
+            const lv = dirPattern(g, r, c, d, color);
+            total += P_SCORES[lv];
+            if (lv === P_LIVE_FOUR || lv === P_RUSH_FOUR) fours++;
+            else if (lv === P_LIVE_THREE) threes++;
         }
-        _countAllPatterns(color) {
-          const counts = {};
-          for (let r = 0; r < BOARD_SIZE; r++) {
+        if (fours >= 2) total += COMBO_BONUS.doubleFour;
+        else if (fours >= 1 && threes >= 1) total += COMBO_BONUS.fourThree;
+        else if (threes >= 2) total += COMBO_BONUS.doubleThree;
+        return total;
+    }
+
+    evaluate(color) {
+        const opp = color === BLACK ? WHITE : BLACK;
+        return this._scanAll(color) - this._scanAll(opp) * 1.05;
+    }
+
+    _scanAll(color) {
+        const g = this.board.grid;
+        const counts = new Array(10).fill(0);
+        for (let r = 0; r < BOARD_SIZE; r++) {
             for (let c = 0; c < BOARD_SIZE; c++) {
-              if (this.board.get(r, c) !== color) continue;
-              for (let d = 0; d < DIRECTIONS.length; d++) {
-                const dr = DIRECTIONS[d][0], dc = DIRECTIONS[d][1];
-                const pr = r - dr, pc = c - dc;
-                if (this.board.inBounds(pr, pc) && this.board.get(pr, pc) === color) continue;
-                const pattern = this._scanLinePattern(r, c, dr, dc, color);
-                if (pattern !== null) counts[pattern] = (counts[pattern] || 0) + 1;
-              }
+                if (g[r * BOARD_SIZE + c] !== color) continue;
+                for (let d = 0; d < 4; d++) {
+                    const dr = DIRECTIONS[d][0], dc = DIRECTIONS[d][1];
+                    const pr = r - dr, pc = c - dc;
+                    if (pr >= 0 && pr < BOARD_SIZE && pc >= 0 && pc < BOARD_SIZE && g[pr * BOARD_SIZE + pc] === color) continue;
+                    const lv = this._scanLine(r, c, dr, dc, color);
+                    if (lv > 0) counts[lv]++;
+                }
             }
-          }
-          return counts;
         }
-        _scanLinePattern(r, c, dr, dc, color) {
-          const opp = color === BLACK ? WHITE : BLACK;
-          let count = 0, nr = r, nc = c;
-          while (this.board.inBounds(nr, nc) && this.board.get(nr, nc) === color) {
+        let score = 0;
+        for (let i = 0; i < 10; i++) score += counts[i] * P_SCORES[i];
+        const fours = counts[P_LIVE_FOUR] + counts[P_RUSH_FOUR];
+        const threes = counts[P_LIVE_THREE];
+        if (fours >= 2) score += COMBO_BONUS.doubleFour * (fours - 1);
+        if (fours >= 1 && threes >= 1) score += COMBO_BONUS.fourThree * Math.min(fours, threes);
+        if (threes >= 2) score += COMBO_BONUS.doubleThree * (threes - 1);
+        return score;
+    }
+
+    _scanLine(r, c, dr, dc, color) {
+        const g = this.board.grid;
+        let count = 0;
+        let nr = r, nc = c;
+        while (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && g[nr * BOARD_SIZE + nc] === color) {
             count++; nr += dr; nc += dc;
-          }
-          const rightBlocked = !this.board.inBounds(nr, nc) || this.board.get(nr, nc) === opp;
-          const pl = r - dr, pc = c - dc;
-          const leftBlocked = !this.board.inBounds(pl, pc) || this.board.get(pl, pc) === opp;
-          if (count >= 5) return PATTERN.FIVE;
-          if (count === 4) {
-            if (!leftBlocked && !rightBlocked) return PATTERN.LIVE_FOUR;
-            if (!leftBlocked || !rightBlocked) return PATTERN.RUSH_FOUR;
-            return null;
-          }
-          if (count === 3) {
-            if (!leftBlocked && !rightBlocked) return PATTERN.LIVE_THREE;
-            if (!leftBlocked || !rightBlocked) return PATTERN.SLEEP_THREE;
-            return null;
-          }
-          if (count === 2) {
-            if (!leftBlocked && !rightBlocked) return PATTERN.LIVE_TWO;
-            if (!leftBlocked || !rightBlocked) return PATTERN.SLEEP_TWO;
-            return null;
-          }
-          return null;
         }
-        _calcGlobalComboBonus(counts) {
-          let bonus = 0;
-          const fourCount = (counts[PATTERN.LIVE_FOUR] || 0) + (counts[PATTERN.RUSH_FOUR] || 0);
-          const threeCount = counts[PATTERN.LIVE_THREE] || 0;
-          if (fourCount >= 2) bonus += COMBO_BONUS.doubleFour * (fourCount - 1);
-          if (fourCount >= 1 && threeCount >= 1) bonus += COMBO_BONUS.fourThree * Math.min(fourCount, threeCount);
-          if (threeCount >= 2) bonus += COMBO_BONUS.doubleThree * (threeCount - 1);
-          return bonus;
+        const rBlocked = !(nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) || g[nr * BOARD_SIZE + nc] !== EMPTY;
+        const pr = r - dr, pc = c - dc;
+        const lBlocked = !(pr >= 0 && pr < BOARD_SIZE && pc >= 0 && pc < BOARD_SIZE) || g[pr * BOARD_SIZE + pc] !== EMPTY;
+        if (count >= 5) return P_FIVE;
+        if (count === 4) {
+            if (!rBlocked && !lBlocked) return P_LIVE_FOUR;
+            if (!rBlocked || !lBlocked) return P_RUSH_FOUR;
+            return P_NONE;
         }
-        generateCandidates(color, range) {
-          if (range === undefined) range = SEARCH_CONFIG.candidateRange;
-          const candidates = new Map();
-          const rangeInt = Math.ceil(range);
-          for (let r = 0; r < BOARD_SIZE; r++) {
-            for (let c = 0; c < BOARD_SIZE; c++) {
-              if (this.board.get(r, c) === EMPTY) continue;
-              for (let dr = -rangeInt; dr <= rangeInt; dr++) {
-                for (let dc = -rangeInt; dc <= rangeInt; dc++) {
-                  if (dr === 0 && dc === 0) continue;
-                  const nr = r + dr, nc = c + dc;
-                  if (!this.board.inBounds(nr, nc)) continue;
-                  if (this.board.get(nr, nc) !== EMPTY) continue;
-                  const key = nr * BOARD_SIZE + nc;
-                  if (!candidates.has(key)) candidates.set(key, {
-                      r: nr, c: nc
-                    });
+        if (count === 3) {
+            if (!rBlocked && !lBlocked) return P_LIVE_THREE;
+            if (!rBlocked || !lBlocked) return P_SLEEP_THREE;
+            return P_NONE;
+        }
+        if (count === 2) {
+            if (!rBlocked && !lBlocked) return P_LIVE_TWO;
+            if (!rBlocked || !lBlocked) return P_SLEEP_TWO;
+            return P_NONE;
+        }
+        return P_NONE;
+    }
+
+    generateCandidates(color) {
+        const g = this.board.grid;
+        const candidates = [];
+        const visited = new Uint8Array(CELLS);
+        const checkForbidden = color === BLACK && this.board.forbiddenEnabled;
+
+        if (this.board.history.length === 0) {
+            return [{ r: 7, c: 7, score: 0, attackScore: 0, defenseScore: 0 }];
+        }
+
+        for (let i = 0; i < CELLS; i++) {
+            if (g[i] === EMPTY) continue;
+            const r = (i / BOARD_SIZE) | 0, c = i % BOARD_SIZE;
+            for (let dr = -2; dr <= 2; dr++) {
+                for (let dc = -2; dc <= 2; dc++) {
+                    if (!dr && !dc) continue;
+                    const nr = r + dr, nc = c + dc;
+                    if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) continue;
+                    const ni = nr * BOARD_SIZE + nc;
+                    if (g[ni] !== EMPTY || visited[ni]) continue;
+                    visited[ni] = 1;
+                    if (checkForbidden && this.board.isForbiddenAt(nr, nc)) continue;
+                    candidates.push({ r: nr, c: nc });
                 }
-              }
             }
-          }
-          if (candidates.size === 0) return [{
-              r: 7, c: 7, score: 0
-            }];
-          const opp = color === BLACK ? WHITE : BLACK;
-          const result = [];
-          for (const item of candidates.values()) {
-            const r = item.r, c = item.c;
-            if (color === BLACK && this.board.forbiddenEnabled && this.board.isForbidden(r, c)) continue;
-            const attackScore = this.evaluatePoint(r, c, color);
-            const defenseScore = this.evaluatePoint(r, c, opp);
-            const score = attackScore + defenseScore * 0.9;
-            result.push({
-                r: r, c: c, score: score, attackScore: attackScore, defenseScore: defenseScore
-              });
-          }
-          result.sort(function (a, b) {
-              return b.score - a.score;
-            });
-          return result;
         }
-        findWinningMove(color) {
-          const opp = color === BLACK ? WHITE : BLACK;
-          const candidates = this.generateCandidates(color, 2);
-          for (let i = 0; i < candidates.length; i++) {
-            const r = candidates[i].r, c = candidates[i].c;
-            this.board.grid[r][c] = color;
-            if (this.board.checkWin(r, c, color)) {
-              this.board.grid[r][c] = EMPTY; return {
-                r: r, c: c, type: 'five'
-              };
+
+        if (candidates.length === 0) {
+            for (let i = 0; i < CELLS; i++) {
+                if (g[i] !== EMPTY) continue;
+                const r = (i / BOARD_SIZE) | 0, c = i % BOARD_SIZE;
+                if (checkForbidden && this.board.isForbiddenAt(r, c)) continue;
+                return [{ r: r, c: c, score: 0, attackScore: 0, defenseScore: 0 }];
             }
-            this.board.grid[r][c] = EMPTY;
-          }
-          for (let i = 0; i < candidates.length; i++) {
-            const r = candidates[i].r, c = candidates[i].c;
-            this.board.grid[r][c] = opp;
-            if (this.board.checkWin(r, c, opp)) {
-              this.board.grid[r][c] = EMPTY;
-              if (color === BLACK && this.board.forbiddenEnabled && this.board.isForbidden(r, c)) continue;
-              return {
-                r: r, c: c, type: 'block'
-              };
-            }
-            this.board.grid[r][c] = EMPTY;
-          }
-          return null;
+            return [];
         }
-      }
-      const TT_EXACT = 0, TT_LOWER = 1, TT_UPPER = 2;
-      const WIN_SCORE_THRESHOLD = PATTERN_SCORES[PATTERN.FIVE] - 1000;
-      const DECISIVE_SCORE_THRESHOLD = PATTERN_SCORES[PATTERN.LIVE_FOUR];
-      class Searcher {
-        constructor(board, aiColor) {
-          this.board = board;
-          this.aiColor = aiColor;
-          this.evaluator = new Evaluator(board);
-          this.tt = new Array(SEARCH_CONFIG.ttSize);
-          this.killerMoves = [];
-          this.historyTable = {};
-          this.nodesSearched = 0;
-          this.startTime = 0;
-          this.timeLimit = 5000;
-          this.timedOut = false;
-          this.currentDepth = 0;
-          this.bestMove = null;
-          this.bestScore = 0;
-          this.onProgress = null;
-          for (let i = 0; i < SEARCH_CONFIG.maxDepth + 2; i++) this.killerMoves.push([null, null]);
+
+        const opp = color === BLACK ? WHITE : BLACK;
+        const result = new Array(candidates.length);
+        for (let i = 0; i < candidates.length; i++) {
+            const item = candidates[i];
+            const atk = this.evaluatePoint(item.r, item.c, color);
+            const def = this.evaluatePoint(item.r, item.c, opp);
+            result[i] = {
+                r: item.r, c: item.c,
+                attackScore: atk, defenseScore: def,
+                score: atk + def * 0.9
+            };
         }
-        checkTime() {
-          this.nodesSearched++;
-          if (this.nodesSearched % SEARCH_CONFIG.timeCheckInterval === 0) {
+        result.sort((a, b) => b.score - a.score);
+        return result;
+    }
+
+    findWinningMove(color) {
+        const cands = this.generateCandidates(color);
+        for (let i = 0; i < cands.length; i++) {
+            const m = cands[i];
+            if (!this.board.isEmpty(m.r, m.c)) continue;
+            const idx = m.r * BOARD_SIZE + m.c;
+            this.board.grid[idx] = color;
+            const win = this.board.checkWinAt(m.r, m.c, color);
+            this.board.grid[idx] = EMPTY;
+            if (win) return { r: m.r, c: m.c };
+        }
+        return null;
+    }
+
+    findFivePoints(color) {
+        const pts = [];
+        const cands = this.generateCandidates(color);
+        for (let i = 0; i < cands.length; i++) {
+            const m = cands[i];
+            if (!this.board.isEmpty(m.r, m.c)) continue;
+            const idx = m.r * BOARD_SIZE + m.c;
+            this.board.grid[idx] = color;
+            const win = this.board.checkWinAt(m.r, m.c, color);
+            this.board.grid[idx] = EMPTY;
+            if (win) pts.push({ r: m.r, c: m.c });
+        }
+        return pts;
+    }
+}
+
+const TT_EXACT = 0, TT_LOWER = 1, TT_UPPER = 2;
+
+class Searcher {
+    constructor(board, aiColor) {
+        this.board = board;
+        this.aiColor = aiColor;
+        this.oppColor = aiColor === BLACK ? WHITE : BLACK;
+        this.evaluator = new Evaluator(board);
+        this.tt = new Map();
+        this.killerMoves = [];
+        this.historyTable = new Map();
+        this.nodesSearched = 0;
+        this.startTime = 0;
+        this.timeLimit = 5000;
+        this.timedOut = false;
+        this.currentDepth = 0;
+        this.bestMove = null;
+        this.bestScore = 0;
+        this.onProgress = null;
+        for (let i = 0; i < 32; i++) this.killerMoves.push([null, null]);
+    }
+
+    checkTime() {
+        this.nodesSearched++;
+        if ((this.nodesSearched & 1023) === 0) {
             if (Date.now() - this.startTime > this.timeLimit) {
-              this.timedOut = true; return true;
+                this.timedOut = true;
+                return true;
             }
-          }
-          return false;
         }
-        ttStore(hash, depth, score, flag, bestMove) {
-          const idx = hash % SEARCH_CONFIG.ttSize;
-          this.tt[idx] = {
-            hash: hash, depth: depth, score: score, flag: flag, bestMove: bestMove
-          };
+        return false;
+    }
+
+    isIllegal(r, c, color) {
+        if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return true;
+        if (!this.board.isEmpty(r, c)) return true;
+        if (color === BLACK && this.board.forbiddenEnabled && this.board.isForbiddenAt(r, c)) return true;
+        return false;
+    }
+
+    search(timeLimitMs) {
+        this.timeLimit = timeLimitMs;
+        this.startTime = Date.now();
+        this.timedOut = false;
+        this.nodesSearched = 0;
+        this.bestMove = null;
+        this.bestScore = 0;
+
+        const color = this.aiColor;
+
+        const win = this.evaluator.findWinningMove(color);
+        if (win) {
+            this.bestMove = { r: win.r, c: win.c };
+            return { move: this.bestMove, score: WIN_SCORE, depth: 0, nodes: 0, time: Date.now() - this.startTime, reason: 'immediate-win' };
         }
-        ttProbe(hash) {
-          const idx = hash % SEARCH_CONFIG.ttSize;
-          const entry = this.tt[idx];
-          if (entry && entry.hash === hash) return entry;
-          return null;
-        }
-        search(timeLimitMs) {
-          this.timeLimit = timeLimitMs;
-          this.startTime = Date.now();
-          this.timedOut = false;
-          this.nodesSearched = 0;
-          this.bestMove = null;
-          this.bestScore = 0;
-          const color = this.aiColor;
-          const winning = this.evaluator.findWinningMove(color);
-          if (winning) {
-            this.bestMove = {
-              r: winning.r, c: winning.c
-            };
-            this.bestScore = PATTERN_SCORES[PATTERN.FIVE];
-            return {
-              move: this.bestMove, score: this.bestScore, depth: 0, nodes: this.nodesSearched, time: Date.now() - this.startTime, reason: winning.type === 'five' ? 'immediate-win' : 'immediate-block'
-            };
-          }
-          const vcfResult = this.vcfSearch(color, SEARCH_CONFIG.vcfMaxDepth);
-          if (vcfResult) {
-            this.bestMove = vcfResult;
-            this.bestScore = PATTERN_SCORES[PATTERN.FIVE] - 100;
-            return {
-              move: this.bestMove, score: this.bestScore, depth: 0, nodes: this.nodesSearched, time: Date.now() - this.startTime, vcf: true, reason: 'vcf'
-            };
-          }
-          let lastBestMove = null, stableCount = 0;
-          for (let depth = 1; depth <= SEARCH_CONFIG.maxDepth; depth++) {
-            this.currentDepth = depth;
-            this.timedOut = false;
-            let alpha = -Infinity, beta = Infinity;
-            if (depth > 2 && lastBestMove) {
-              const windowSize = 500;
-              alpha = this.bestScore - windowSize;
-              beta = this.bestScore + windowSize;
-            }
-            const score = this.pvs(depth, alpha, beta, color, 0);
-            if (depth > 2 && (score <= alpha || score >= beta)) {
-              const retryScore = this.pvs(depth, -Infinity, Infinity, color, 0);
-              if (!this.timedOut) this.bestScore = retryScore;
-            } else if (!this.timedOut) {
-              this.bestScore = score;
-            }
-            if (this.timedOut) break;
-            if (this.onProgress) {
-              this.onProgress({
-                  depth: depth, score: this.bestScore, move: this.bestMove, nodes: this.nodesSearched, time: Date.now() - this.startTime
-                });
-            }
-            const absScore = Math.abs(this.bestScore);
-            if (absScore >= WIN_SCORE_THRESHOLD) break;
-            if (lastBestMove && this.bestMove && lastBestMove.r === this.bestMove.r && lastBestMove.c === this.bestMove.c) stableCount++;
-            else stableCount = 0;
-            lastBestMove = this.bestMove ? {
-              r: this.bestMove.r, c: this.bestMove.c
-            }
-            : null;
-            if (stableCount >= 2 && absScore >= DECISIVE_SCORE_THRESHOLD) break;
-            if (depth >= 6 && stableCount >= 2 && absScore >= PATTERN_SCORES[PATTERN.LIVE_THREE]) break;
-            if (depth >= 8 && stableCount >= 3) break;
-          }
-          const _badBest = !this.bestMove || !this.board.inBounds(this.bestMove.r, this.bestMove.c) || this.board.get(this.bestMove.r, this.bestMove.c) !== EMPTY || (this.board.forbiddenEnabled && color === BLACK && this.board.isForbidden(this.bestMove.r, this.bestMove.c));
-          if (_badBest) {
-            const fallback = this.evaluator.generateCandidates(color, 2);
-            let okMove = null;
-            for (let fi = 0; fi < fallback.length; fi++) {
-              const fm = fallback[fi];
-              if (this.board.inBounds(fm.r, fm.c) && this.board.get(fm.r, fm.c) === EMPTY && !(this.board.forbiddenEnabled && color === BLACK && this.board.isForbidden(fm.r, fm.c))) {
-                okMove = fm;
-                break;
-              }
-            }
-            if (!okMove) {
-              outer: for (let rr = 0; rr < BOARD_SIZE; rr++) {
-                for (let cc = 0; cc < BOARD_SIZE; cc++) {
-                  if (this.board.get(rr, cc) === EMPTY && !(this.board.forbiddenEnabled && color === BLACK && this.board.isForbidden(rr, cc))) {
-                    okMove = {
-                      r: rr, c: cc, score: 0
-                    };
-                    break outer;
-                  }
+
+        const oppFives = this.evaluator.findFivePoints(this.oppColor);
+        if (oppFives.length > 0) {
+            for (let i = 0; i < oppFives.length; i++) {
+                const p = oppFives[i];
+                if (!this.isIllegal(p.r, p.c, color)) {
+                    this.bestMove = { r: p.r, c: p.c };
+                    this.bestScore = -WIN_SCORE / 4;
+                    return { move: this.bestMove, score: this.bestScore, depth: 0, nodes: 0, time: Date.now() - this.startTime, reason: 'must-block' };
                 }
-              }
             }
-            if (okMove) {
-              this.bestMove = {
-                r: okMove.r, c: okMove.c
-              };
-              this.bestScore = okMove.score || 0;
-            }
-          }
-          return {
-            move: this.bestMove, score: this.bestScore, depth: this.currentDepth, nodes: this.nodesSearched, time: Date.now() - this.startTime
-          };
         }
-        pvs(depth, alpha, beta, color, ply) {
-          if (this.checkTime()) return alpha;
-          const origAlpha = alpha;
-          const hash = this.board.zobristHash;
-          const ttEntry = this.ttProbe(hash);
-          if (ttEntry && ttEntry.depth >= depth) {
-            if (ttEntry.flag === TT_EXACT) {
-              if (ply === 0) this.bestMove = ttEntry.bestMove;
-              return ttEntry.score;
+
+        const vcf = this.vcfSearch(color, SEARCH_CONFIG.vcfMaxDepth);
+        if (vcf) {
+            this.bestMove = { r: vcf.r, c: vcf.c };
+            this.bestScore = WIN_SCORE - 10000;
+            return { move: this.bestMove, score: this.bestScore, depth: 0, nodes: this.nodesSearched, time: Date.now() - this.startTime, reason: 'vcf' };
+        }
+
+        let lastBestMove = null, stableCount = 0;
+        for (let depth = 1; depth <= SEARCH_CONFIG.maxDepth; depth++) {
+            this.currentDepth = depth;
+            const score = this.pvs(depth, -Infinity, Infinity, color, 0);
+            if (this.timedOut) break;
+
+            if (!this.bestMove || this.isIllegal(this.bestMove.r, this.bestMove.c, color)) {
+                const cands = this.evaluator.generateCandidates(color);
+                let recovered = null;
+                for (let i = 0; i < cands.length; i++) {
+                    if (!this.isIllegal(cands[i].r, cands[i].c, color)) {
+                        recovered = { r: cands[i].r, c: cands[i].c };
+                        break;
+                    }
+                }
+                this.bestMove = recovered;
             }
-            if (ttEntry.flag === TT_LOWER && ttEntry.score <= alpha) return alpha;
-            if (ttEntry.flag === TT_UPPER && ttEntry.score >= beta) {
-              if (ply === 0) this.bestMove = ttEntry.bestMove;
-              return beta;
+
+            this.bestScore = score;
+            if (this.onProgress) {
+                this.onProgress({ depth: depth, score: score, move: this.bestMove, nodes: this.nodesSearched, time: Date.now() - this.startTime });
             }
-          }
-          if (depth <= 0) return this.quiescenceSearch(alpha, beta, color, ply, SEARCH_CONFIG.quiescenceDepth);
-          const candidates = this._orderMoves(color, ply, ttEntry ? ttEntry.bestMove : null);
-          if (candidates.length === 0) return this.evaluator.evaluate(color);
-          let bestScore = -Infinity, bestMove = null;
-          const opp = color === BLACK ? WHITE : BLACK;
-          for (let i = 0; i < candidates.length; i++) {
+            if (Math.abs(score) >= WIN_THRESHOLD) break;
+
+            if (lastBestMove && this.bestMove && lastBestMove.r === this.bestMove.r && lastBestMove.c === this.bestMove.c) {
+                stableCount++;
+                if (stableCount >= 2 && depth >= 4) break;
+            } else {
+                stableCount = 0;
+            }
+            lastBestMove = this.bestMove ? { r: this.bestMove.r, c: this.bestMove.c } : null;
+        }
+
+        if (!this.bestMove || this.isIllegal(this.bestMove.r, this.bestMove.c, color)) {
+            const cands = this.evaluator.generateCandidates(color);
+            for (let i = 0; i < cands.length; i++) {
+                if (!this.isIllegal(cands[i].r, cands[i].c, color)) {
+                    this.bestMove = { r: cands[i].r, c: cands[i].c };
+                    break;
+                }
+            }
+        }
+
+        return {
+            move: this.bestMove, score: this.bestScore, depth: this.currentDepth,
+            nodes: this.nodesSearched, time: Date.now() - this.startTime
+        };
+    }
+
+    pvs(depth, alpha, beta, color, ply) {
+        if (this.checkTime()) return alpha;
+        if (depth <= 0) return this.quiescence(alpha, beta, color, ply);
+
+        const hash = this.board.hash;
+        const tt = this.tt.get(hash);
+        if (tt && tt.depth >= depth) {
+            if (tt.flag === TT_EXACT) {
+                if (ply === 0 && tt.move && !this.isIllegal(tt.move.r, tt.move.c, color)) {
+                    this.bestMove = { r: tt.move.r, c: tt.move.c };
+                }
+                return tt.score;
+            }
+            if (tt.flag === TT_LOWER && tt.score <= alpha) return alpha;
+            if (tt.flag === TT_UPPER && tt.score >= beta) return beta;
+        }
+
+        const ttMove = tt ? tt.move : null;
+        const candidates = this.orderMoves(color, ply, ttMove);
+        if (candidates.length === 0) return this.evaluator.evaluate(color);
+
+        let bestScore = -Infinity;
+        let bestMove = null;
+        const origAlpha = alpha;
+        const opp = color === BLACK ? WHITE : BLACK;
+
+        for (let i = 0; i < candidates.length; i++) {
             const move = candidates[i];
-            if (color === BLACK && this.board.forbiddenEnabled && this.board.isForbidden(move.r, move.c)) continue;
-            this.board.place(move.r, move.c, color);
-            if (this.board.checkWin(move.r, move.c, color)) {
-              this.board.undo();
-              const winScore = PATTERN_SCORES[PATTERN.FIVE] - ply;
-              this.ttStore(hash, depth, winScore, TT_EXACT, move);
-              if (ply === 0) this.bestMove = move;
-              return winScore;
-            }
+            if (this.isIllegal(move.r, move.c, color)) continue;
+            if (!this.board.place(move.r, move.c, color)) continue;
+
             let score;
-            if (i === 0) score = -this.pvs(depth - 1, -beta, -alpha, opp, ply + 1);
-            else {
-              score = -this.pvs(depth - 1, -alpha - 1, -alpha, opp, ply + 1);
-              if (score > alpha && score < beta) score = -this.pvs(depth - 1, -beta, -alpha, opp, ply + 1);
+            if (this.board.checkWinAt(move.r, move.c, color)) {
+                score = WIN_SCORE - ply;
+            } else if (i === 0) {
+                score = -this.pvs(depth - 1, -beta, -alpha, opp, ply + 1);
+            } else {
+                score = -this.pvs(depth - 1, -alpha - 1, -alpha, opp, ply + 1);
+                if (score > alpha && score < beta) {
+                    score = -this.pvs(depth - 1, -beta, -alpha, opp, ply + 1);
+                }
             }
+
             this.board.undo();
+
             if (this.timedOut) return alpha;
+
             if (score > bestScore) {
-              bestScore = score;
-              bestMove = move;
-              if (ply === 0) this.bestMove = move;
+                bestScore = score;
+                bestMove = { r: move.r, c: move.c };
+                if (ply === 0) this.bestMove = { r: move.r, c: move.c };
             }
             if (score > alpha) alpha = score;
             if (alpha >= beta) {
-              this._recordKiller(ply, move);
-              this._recordHistory(move, depth);
-              break;
+                this.recordKiller(ply, move);
+                this.recordHistory(move, depth);
+                break;
             }
-          }
-          let flag;
-          if (bestScore <= origAlpha) flag = TT_UPPER;
-          else if (bestScore >= beta) flag = TT_LOWER;
-          else flag = TT_EXACT;
-          this.ttStore(hash, depth, bestScore, flag, bestMove);
-          return bestScore;
         }
-        quiescenceSearch(alpha, beta, color, ply, qDepth) {
-          if (this.checkTime()) return alpha;
-          if (qDepth <= 0) return this.evaluator.evaluate(color);
-          const standPat = this.evaluator.evaluate(color);
-          if (standPat >= beta) return beta;
-          if (standPat > alpha) alpha = standPat;
-          const forcingMoves = this._getForcingMoves(color);
-          if (forcingMoves.length === 0) return standPat;
-          const opp = color === BLACK ? WHITE : BLACK;
-          for (let i = 0; i < forcingMoves.length; i++) {
-            const move = forcingMoves[i];
-            if (color === BLACK && this.board.forbiddenEnabled && this.board.isForbidden(move.r, move.c)) continue;
-            this.board.place(move.r, move.c, color);
-            if (this.board.checkWin(move.r, move.c, color)) {
-              this.board.undo();
-              return PATTERN_SCORES[PATTERN.FIVE] - ply;
+
+        let flag;
+        if (bestScore <= origAlpha) flag = TT_UPPER;
+        else if (bestScore >= beta) flag = TT_LOWER;
+        else flag = TT_EXACT;
+        this.tt.set(hash, { depth: depth, score: bestScore, flag: flag, move: bestMove });
+        return bestScore;
+    }
+
+    quiescence(alpha, beta, color, ply) {
+        if (this.checkTime()) return alpha;
+        if (ply > 24) return this.evaluator.evaluate(color);
+
+        const standPat = this.evaluator.evaluate(color);
+        if (standPat >= beta) return beta;
+        if (standPat > alpha) alpha = standPat;
+
+        const forcing = this.getForcingMoves(color);
+        if (forcing.length === 0) return standPat;
+
+        const opp = color === BLACK ? WHITE : BLACK;
+        for (let i = 0; i < forcing.length; i++) {
+            const move = forcing[i];
+            if (this.isIllegal(move.r, move.c, color)) continue;
+            if (!this.board.place(move.r, move.c, color)) continue;
+
+            let score;
+            if (this.board.checkWinAt(move.r, move.c, color)) {
+                this.board.undo();
+                return WIN_SCORE - ply;
             }
-            const score = -this.quiescenceSearch(-beta, -alpha, opp, ply + 1, qDepth - 1);
+            score = -this.quiescence(-beta, -alpha, opp, ply + 1);
             this.board.undo();
+
             if (this.timedOut) return alpha;
             if (score >= beta) return beta;
             if (score > alpha) alpha = score;
-          }
-          return alpha;
         }
-        _getForcingMoves(color) {
-          const candidates = this.evaluator.generateCandidates(color, 2);
-          const forcing = [];
-          for (let i = 0; i < candidates.length; i++) {
-            const move = candidates[i];
-            if (move.attackScore >= PATTERN_SCORES[PATTERN.RUSH_FOUR]) {
-              forcing.push(move); continue;
+        return alpha;
+    }
+
+    getForcingMoves(color) {
+        const cands = this.evaluator.generateCandidates(color);
+        const forcing = [];
+        const threshold = P_SCORES[P_RUSH_FOUR];
+        for (let i = 0; i < cands.length; i++) {
+            const m = cands[i];
+            if (m.attackScore >= threshold || m.defenseScore >= threshold) {
+                forcing.push(m);
+                if (forcing.length >= 12) break;
             }
-            if (move.defenseScore >= PATTERN_SCORES[PATTERN.RUSH_FOUR]) forcing.push(move);
-          }
-          if (forcing.length > 12) forcing.length = 12;
-          return forcing;
         }
-        vcfSearch(color, maxDepth) {
-          const result = this._vcfRecursive(color, maxDepth, 0);
-          return result ? result.firstMove : null;
+        return forcing;
+    }
+
+    orderMoves(color, ply, ttMove) {
+        const cands = this.evaluator.generateCandidates(color);
+        let maxCandidates = 18;
+        if (this.currentDepth >= 4) maxCandidates = 14;
+        if (this.currentDepth >= 6) maxCandidates = 10;
+        if (this.currentDepth >= 8) maxCandidates = 8;
+
+        const killers = this.killerMoves[ply] || [null, null];
+        const scored = new Array(cands.length);
+        for (let i = 0; i < cands.length; i++) {
+            const m = cands[i];
+            let sortScore = m.score;
+            if (ttMove && ttMove.r === m.r && ttMove.c === m.c) sortScore += 1e9;
+            for (let k = 0; k < killers.length; k++) {
+                if (killers[k] && killers[k].r === m.r && killers[k].c === m.c) { sortScore += 1e7; break; }
+            }
+            const histVal = this.historyTable.get(m.r * BOARD_SIZE + m.c);
+            if (histVal) sortScore += Math.min(histVal, 1e6);
+            scored[i] = {
+                r: m.r, c: m.c, score: m.score,
+                attackScore: m.attackScore, defenseScore: m.defenseScore,
+                sortScore: sortScore
+            };
         }
-        _vcfRecursive(color, depth, ply) {
-          if (depth <= 0 || this.checkTime()) return null;
-          const opp = color === BLACK ? WHITE : BLACK;
-          const fourMoves = [];
-          const candidates = this.evaluator.generateCandidates(color, 2);
-          for (let i = 0; i < candidates.length; i++) {
-            const move = candidates[i];
-            if (color === BLACK && this.board.forbiddenEnabled && this.board.isForbidden(move.r, move.c)) continue;
-            this.board.grid[move.r][move.c] = color;
-            if (this.board.checkWin(move.r, move.c, color)) {
-              this.board.grid[move.r][move.c] = EMPTY;
-              return {
-                firstMove: move, winning: true
-              };
-            }
-            let isFour = false;
-            for (let d = 0; d < DIRECTIONS.length; d++) {
-              const p = this.board._classifyDirection(move.r, move.c, DIRECTIONS[d][0], DIRECTIONS[d][1], color);
-              if (p === PATTERN.RUSH_FOUR || p === PATTERN.LIVE_FOUR) {
-                isFour = true; break;
-              }
-            }
-            this.board.grid[move.r][move.c] = EMPTY;
-            if (isFour) fourMoves.push(move);
-          }
-          const lim = fourMoves.length > 10 ? 10 : fourMoves.length;
-          for (let fi = 0; fi < lim; fi++) {
-            const fourMove = fourMoves[fi];
-            this.board.place(fourMove.r, fourMove.c, color);
-            const blocks = this._findVCFBlocks(opp, color);
-            let allBlockedWin = true, anyBlockWin = false;
-            if (blocks.length === 0) {
-              this.board.undo();
-              return {
-                firstMove: fourMove, winning: true
-              };
-            }
-            for (let bi = 0; bi < blocks.length; bi++) {
-              const block = blocks[bi];
-              this.board.place(block.r, block.c, opp);
-              if (this.board.checkWin(block.r, block.c, opp)) {
+        scored.sort((a, b) => b.sortScore - a.sortScore);
+        return scored.slice(0, maxCandidates);
+    }
+
+    recordKiller(ply, move) {
+        if (!this.killerMoves[ply]) this.killerMoves[ply] = [null, null];
+        const k = this.killerMoves[ply];
+        if (k[0] && k[0].r === move.r && k[0].c === move.c) return;
+        k[1] = k[0];
+        k[0] = { r: move.r, c: move.c };
+    }
+
+    recordHistory(move, depth) {
+        const key = move.r * BOARD_SIZE + move.c;
+        this.historyTable.set(key, (this.historyTable.get(key) || 0) + depth * depth);
+    }
+
+    vcfSearch(color, maxDepth) { return this._vcf(color, maxDepth, 0); }
+
+    _vcf(color, depth, ply) {
+        if (depth <= 0 || this.checkTime()) return null;
+
+        const opp = color === BLACK ? WHITE : BLACK;
+        const cands = this.evaluator.generateCandidates(color);
+        const fourMoves = [];
+
+        for (let i = 0; i < cands.length; i++) {
+            const move = cands[i];
+            if (this.isIllegal(move.r, move.c, color)) continue;
+            if (!this.board.place(move.r, move.c, color)) continue;
+
+            if (this.board.checkWinAt(move.r, move.c, color)) {
                 this.board.undo();
-                allBlockedWin = false;
-                break;
-              }
-              const sub = this._vcfRecursive(color, depth - 1, ply + 1);
-              this.board.undo();
-              if (this.timedOut) {
-                this.board.undo(); return null;
-              }
-              if (!sub || !sub.winning) {
-                allBlockedWin = false; break;
-              } else anyBlockWin = true;
+                return { r: move.r, c: move.c };
+            }
+
+            let isFour = false;
+            for (let d = 0; d < 4; d++) {
+                const lv = dirPattern(this.board.grid, move.r, move.c, d, color);
+                if (lv === P_LIVE_FOUR || lv === P_RUSH_FOUR) { isFour = true; break; }
             }
             this.board.undo();
-            if (allBlockedWin && anyBlockWin) return {
-              firstMove: fourMove, winning: true
-            };
-          }
-          return null;
+
+            if (isFour) {
+                fourMoves.push({ r: move.r, c: move.c });
+                if (fourMoves.length >= 12) break;
+            }
         }
-        _findVCFBlocks(oppColor, myColor) {
-          const blocks = new Set();
-          const candidates = this.evaluator.generateCandidates(myColor, 2);
-          for (let i = 0; i < candidates.length; i++) {
-            const move = candidates[i];
-            this.board.grid[move.r][move.c] = myColor;
-            if (this.board.checkWin(move.r, move.c, myColor)) blocks.add(move.r * BOARD_SIZE + move.c);
-            this.board.grid[move.r][move.c] = EMPTY;
-          }
-          const result = [];
-          for (const key of blocks) {
-            const r = Math.floor(key / BOARD_SIZE);
-            const c = key % BOARD_SIZE;
-            if (this.board.get(r, c) === EMPTY) result.push({
-                r: r, c: c
-              });
-          }
-          return result;
+
+        for (let fi = 0; fi < fourMoves.length; fi++) {
+            const four = fourMoves[fi];
+            if (this.timedOut) return null;
+            if (!this.board.place(four.r, four.c, color)) continue;
+
+            const oppFives = this.evaluator.findFivePoints(opp);
+            if (oppFives.length > 0) {
+                this.board.undo();
+                continue;
+            }
+
+            const myFives = this.evaluator.findFivePoints(color);
+            if (myFives.length >= 2) {
+                this.board.undo();
+                return { r: four.r, c: four.c };
+            }
+            if (myFives.length === 0) {
+                this.board.undo();
+                continue;
+            }
+
+            const blockPt = myFives[0];
+            if (!this.board.place(blockPt.r, blockPt.c, opp)) {
+                this.board.undo();
+                continue;
+            }
+
+            const sub = this._vcf(color, depth - 1, ply + 1);
+            this.board.undo();
+
+            if (this.timedOut) { this.board.undo(); return null; }
+
+            if (sub) {
+                this.board.undo();
+                return { r: four.r, c: four.c };
+            }
+            this.board.undo();
         }
-        _orderMoves(color, ply, ttBestMove) {
-          const candidates = this.evaluator.generateCandidates(color, SEARCH_CONFIG.candidateRange);
-          let maxCandidates = 18;
-          if (this.currentDepth >= 4) maxCandidates = 14;
-          if (this.currentDepth >= 6) maxCandidates = 12;
-          if (this.currentDepth >= 8) maxCandidates = 9;
-          const self = this;
-          const scored = candidates.map(function (move) {
-              let sortScore = move.score;
-              if (ttBestMove && ttBestMove.r === move.r && ttBestMove.c === move.c) sortScore += 1000000;
-              const killers = self.killerMoves[ply] || [null, null];
-              for (let k = 0; k < killers.length; k++) {
-                if (killers[k] && killers[k].r === move.r && killers[k].c === move.c) {
-                  sortScore += 50000; break;
-                }
-              }
-              const histKey = move.r + ',' + move.c;
-              if (self.historyTable[histKey]) sortScore += Math.min(self.historyTable[histKey], 10000);
-              return {
-                r: move.r, c: move.c, score: move.score, attackScore: move.attackScore, defenseScore: move.defenseScore, sortScore: sortScore
-              };
-            });
-          scored.sort(function (a, b) {
-              return b.sortScore - a.sortScore;
-            });
-          return scored.slice(0, maxCandidates);
-        }
-        _recordKiller(ply, move) {
-          if (!this.killerMoves[ply]) this.killerMoves[ply] = [null, null];
-          if (this.killerMoves[ply][0] && this.killerMoves[ply][0].r === move.r && this.killerMoves[ply][0].c === move.c) return;
-          this.killerMoves[ply][1] = this.killerMoves[ply][0];
-          this.killerMoves[ply][0] = {
-            r: move.r, c: move.c
-          };
-        }
-        _recordHistory(move, depth) {
-          const key = move.r + ',' + move.c;
-          this.historyTable[key] = (this.historyTable[key] || 0) + depth * depth;
-        }
-      }
-    </script>
+        return null;
+    }
+}
+</script>
     <script>
       "use strict";
       var NL = String.fromCharCode(10);
