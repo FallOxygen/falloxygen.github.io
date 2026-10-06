@@ -3132,6 +3132,65 @@
           I18N.zh[k] = D[k][0]; I18N.en[k] = D[k][1]; I18N.ja[k] = D[k][2];
         });
       })();
+      /* 补充i18n：视频合成 / 音频合成 全部文案 */ (function () {
+  var D = {
+    /* —— 视频右侧分析面板标题 —— */
+    "video.mod.winrate": ["胜率条", "Win rate", "勝率バー"],
+    "video.mod.rec": ["锦囊妙计 · 推荐落点", "Recommended moves", "推奨着手"],
+    "video.mod.recMine": ["锦囊妙计 · 我方推荐落点", "Recommended moves (ours)", "推奨着手（我が軍）"],
+    "video.mod.recOpp": ["锦囊妙计 · 对方最佳应对", "Best replies (opponent)", "推奨の応手（相手）"],
+    "video.mod.pred": ["料敌先机 · 对方预测", "Opponent prediction", "相手の予測"],
+    "video.mod.threat": ["烽火警报 · 威胁", "Threat alert", "脅威アラート"],
+    "video.mod.stats": ["细察秋毫 · 详析数据", "Detailed stats", "詳細データ"],
+    "video.mod.profile": ["相敌之术 · 对方棋力", "Opponent strength", "相手の棋力"],
+    "video.mod.kifu": ["棋谱", "Move list", "棋譜"],
+
+    /* —— 威胁模块 —— */
+    "video.threat.doubleFive": ["🚨 敌军双成五点，败局已定", "🚨 Enemy holds two five-points — lost position", "🚨 敵に五連点が二つ、敗勢"],
+    "video.threat.mustBlock": ["🚨 必防：{pts}", "🚨 Must block: {pts}", "🚨 必防：{pts}"],
+    "video.threat.myOpenFour": ["✨ 我军有活四点，一击可定乾坤！", "✨ We hold an open four — one blow decides it!", "✨ 我が軍に活四あり、一撃で決まる！"],
+    "video.threat.calm": ["局势平稳，稳扎稳打。", "The position is calm — play steadily.", "形勢は落ち着いている。堅実に。"],
+    "video.threat.enemy": ["敌方：成五 {five} · 活四 {ofour} · 冲四 {four} · 活三 {othree}", "Enemy: five {five} · open four {ofour} · four {four} · open three {othree}", "敵：五連 {five} · 活四 {ofour} · 四 {four} · 活三 {othree}"],
+    "video.threat.mine": ["我方：成五 {five} · 活四 {ofour} · 冲四 {four} · 活三 {othree}", "Ours: five {five} · open four {ofour} · four {four} · open three {othree}", "我が軍：五連 {five} · 活四 {ofour} · 四 {four} · 活三 {othree}"],
+    "common.sep": ["、", ", ", "・"],
+
+    /* —— 数据模块 —— */
+    "video.stat.opening": ["开局", "Opening", "出だし"],
+    "video.stat.eval": ["评估值", "Eval", "評価値"],
+    "video.stat.blackWhite": ["黑 / 白", "Black / White", "黒 / 白"],
+    "video.stat.forbidden": ["黑禁手点", "Black forbidden", "黒禁じ手"],
+    "video.stat.turn": ["当前轮次", "Turn", "手番"],
+    "video.stat.depth": ["推演深度", "Search depth", "読みの深さ"],
+
+    /* —— 对方棋力模块 —— */
+    "video.profile.overall": ["综合棋力", "Overall", "総合棋力"],
+
+    /* —— 顶栏 & 落子方 —— */
+    "video.headerMove": ["第 {i}/{n} 手 · {color} {c}", "Move {i}/{n} · {color} {c}", "{i}/{n} 手目 · {color} {c}"],
+    "video.blackStone": ["黑", "Black", "黒"],
+    "video.whiteStone": ["白", "White", "白"],
+
+    /* —— 音频合成状态 —— */
+    "video.audioMuxing": ["音频编码中…", "Encoding audio…", "音声をエンコード中…"],
+    "video.audioEncoding": ["音频编码中…", "Encoding audio…", "音声をエンコード中…"],
+    "video.noAudio": ["（未写入背景音乐）", "(no background music)", "（BGM なし）"],
+
+    /* —— 片尾 —— */
+    "video.outroDraw": ["平 分 秋 色", "A  D R A W", "引 き 分 け"],
+    "video.outroWin": ["我 军 大 捷", "V I C T O R Y", "我 が 軍 の 勝 ち"],
+    "video.outroLose": ["敌 军 胜 出", "D E F E A T", "敵 軍 の 勝 ち"],
+    "video.outroInfo": ["共 {n} 手 · {result}{profile}", "{n} moves · {result}{profile}", "全 {n} 手 · {result}{profile}"],
+    "video.outroDrawInfo": ["和局", "Draw", "引き分け"],
+    "video.outroWinnerInfo": ["{color}方胜", "{color} wins", "{color}の勝ち"],
+    "video.outroProfile": [" · 对方棋力 {v}", " · opponent strength {v}", " · 相手の棋力 {v}"],
+    "video.outroFooter": ["—— 五子军师 · 运筹帷幄 ——", "—— Gomoku Strategist ——", "—— 五子軍師 · 運籌帷幄 ——"]
+  };
+  Object.keys(D).forEach(function (k) {
+    I18N.zh[k] = D[k][0];
+    I18N.en[k] = D[k][1];
+    I18N.ja[k] = D[k][2];
+  });
+})();
       var LANG = "zh";
 
       function t(key, vars) {
