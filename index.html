@@ -6360,86 +6360,87 @@
           showToast('已导出图片');
         }
 
-    /* ============================================================
-       竞猜记名：玩家快捷列表 & 玩家猜出曲目查看
-    ============================================================ */
-    function escapeAttr(s){
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    }
+/* ============================================================
+   竞猜记名：玩家快捷列表 & 玩家猜出曲目查看
+============================================================ */
+function escapeAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
-    /* 收集当前局已出现过的玩家名（去重，按首次出现顺序） */
-    function getCurrentGuesserNames(){
-      const names=[];
-      if(state.mode==='letter'){
-        const sheet=cs();
-        const gv=sheet.guesserNames||{};
-        Object.keys(gv).forEach(k=>{
-          const n=gv[k];
-          if(n&&!names.includes(n))names.push(n);
-        });
-      }else if(state.mode==='wordlink'){
-        const sheet=cs();
-        (sheet.placedSongs||[]).forEach(s=>{
-          if(s.guessed&&s.guesserName&&!names.includes(s.guesserName))names.push(s.guesserName);
-        });
-      }
-      return names;
-    }
+/* 收集当前局已出现过的玩家名（去重，按首次出现顺序） */
+function getCurrentGuesserNames(){
+  const names=[];
+  if(state.mode==='letter'){
+    const sheet=cs();
+    const gv=sheet.guesserNames||{};
+    Object.keys(gv).forEach(k=>{
+      const n=gv[k];
+      if(n&&!names.includes(n))names.push(n);
+    });
+  }else if(state.mode==='wordlink'){
+    const sheet=cs();
+    (sheet.placedSongs||[]).forEach(s=>{
+      if(s.guessed&&s.guesserName&&!names.includes(s.guesserName))names.push(s.guesserName);
+    });
+  }
+  return names;
+}
 
-    /* 在记名弹窗里渲染已有玩家快捷按钮 */
-    function renderNameInputPlayerList(){
-      const box=document.getElementById('nameInputPlayerList');
-      if(!box)return;
-      const names=getCurrentGuesserNames();
-      if(names.length===0){box.innerHTML='';box.style.display='none';return}
-      box.style.display='';
-      box.innerHTML=` < div class = "text-xs mb-2" style = "color:var(--muted)" > 点击下方玩家可快速记名（或在输入框输入新玩家）： < / div > < div class = "flex flex-wrap gap-2" > $ {
-          names.map(n => `<button type="button" class="btn btn-ghost btn-sm player-quick-btn" data-name="${escapeAttr(n)}">${escapeHtml(n)}</button>`).join('')
-        }
-        < / div > `;
-      box.querySelectorAll('.player-quick-btn').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          document.getElementById('nameInputField').value=btn.dataset.name;
-          if(state.mode==='letter')confirmNameInputLetter();
-          else if(state.mode==='wordlink')confirmNameInputWL();
-        });
-      });
-    }
+/* 在记名弹窗里渲染已有玩家快捷按钮 */
+function renderNameInputPlayerList(){
+  const box=document.getElementById('nameInputPlayerList');
+  if(!box)return;
+  const names=getCurrentGuesserNames();
+  if(names.length===0){box.innerHTML='';box.style.display='none';return}
+  box.style.display='';
+  let html='<div class="text-xs mb-2" style="color:var(--muted)">点击下方玩家可快速记名（或在输入框输入新玩家）：</div>';
+  html+='<div class="flex flex-wrap gap-2">';
+  html+=names.map(n=>'<button type="button" class="btn btn-ghost btn-sm player-quick-btn" data-name="'+escapeAttr(n)+'">'+escapeHtml(n)+'</button>').join('');
+  html+='</div>';
+  box.innerHTML=html;
+  box.querySelectorAll('.player-quick-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.getElementById('nameInputField').value=btn.dataset.name;
+      if(state.mode==='letter')confirmNameInputLetter();
+      else if(state.mode==='wordlink')confirmNameInputWL();
+    });
+  });
+}
 
-    /* 点击排行榜中的玩家，查看其猜出的具体曲目 */
-    window.showGuesserSongs=function(name){
-      const body=document.getElementById('lookupBody');
-      document.getElementById('lookupTitle').textContent=` $ { name} 猜出的曲目 `;
-      const songs=[];
-      if(state.mode==='letter'){
-        const sheet=cs();
-        const gv=sheet.guesserNames||{};
-        Object.keys(gv).sort((a,b)=>Number(a)-Number(b)).forEach(di=>{
-          if(gv[di]!==name)return;
-          const jg=(sheet.songJoinMap&&sheet.songJoinMap[di])?sheet.songJoinMap[di]:[di];
-          songs.push(jg.map(i=>sheet.songs[i]).join(' / '));
-        });
-      }else if(state.mode==='wordlink'){
-        const sheet=cs();
-        (sheet.placedSongs||[]).forEach(s=>{
-          if(s.guessed&&s.guesserName===name)songs.push(s.original||s.name);
-        });
-      }
-      let html='';
-      if(songs.length===0){
-        html=` < div style = "text-align:center;padding:20px;color:var(--muted)" > 暂无曲目 < / div > `;
-      }else{
-        songs.forEach((s,i)=>{
-          html+=` < div class = "lookup-item" > < span style = "color:var(--muted);margin-right:6px" > $ { i + 1}. < /span><span class="lookup-game mono">${escapeHtml(s)}</span > < / div > `;
-        });
-      }
-      body.innerHTML=html;
-      currentLookupText=songs.length>0
-        ? ` $ { name} 猜出的曲目： \ n `+songs.map((s,i)=>` $ { i + 1}.$ { s} `).join('\n')
-        : ` $ { name} 暂无猜出曲目 `;
-      document.getElementById('lookupModal').classList.add('show');
-    };
+/* 点击排行榜中的玩家，查看其猜出的具体曲目 */
+window.showGuesserSongs=function(name){
+  const body=document.getElementById('lookupBody');
+  document.getElementById('lookupTitle').textContent=name+' 猜出的曲目';
+  const songs=[];
+  if(state.mode==='letter'){
+    const sheet=cs();
+    const gv=sheet.guesserNames||{};
+    Object.keys(gv).sort((a,b)=>Number(a)-Number(b)).forEach(di=>{
+      if(gv[di]!==name)return;
+      const jg=(sheet.songJoinMap&&sheet.songJoinMap[di])?sheet.songJoinMap[di]:[di];
+      songs.push(jg.map(i=>sheet.songs[i]).join(' / '));
+    });
+  }else if(state.mode==='wordlink'){
+    const sheet=cs();
+    (sheet.placedSongs||[]).forEach(s=>{
+      if(s.guessed&&s.guesserName===name)songs.push(s.original||s.name);
+    });
+  }
+  let html='';
+  if(songs.length===0){
+    html='<div style="text-align:center;padding:20px;color:var(--muted)">暂无曲目</div>';
+  }else{
+    songs.forEach((s,i)=>{
+      html+='<div class="lookup-item"><span style="color:var(--muted);margin-right:6px">'+(i+1)+'.</span><span class="lookup-game mono">'+escapeHtml(s)+'</span></div>';
+    });
+  }
+  body.innerHTML=html;
+  currentLookupText=songs.length>0
+    ? (name+' 猜出的曲目：\n'+songs.map((s,i)=>(i+1)+'. '+s).join('\n'))
+    : (name+' 暂无猜出曲目');
+  document.getElementById('lookupModal').classList.add('show');
+};
 
     /* ============================================================
        Lookup 弹窗
