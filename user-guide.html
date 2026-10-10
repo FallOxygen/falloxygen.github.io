@@ -1,598 +1,1984 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>曲名开字母辅助器 - 完整使用指南</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root {
---bg: #0a0c10;
---fg: #e8eaed;
---muted: #7a7d85;
---accent: #f97316;
---accent-dim: rgba(249, 115, 22, 0.15);
---card: #12151c;
---border: #252a36;
---danger: #ef4444;
---warning: #eab308;
---info: #06b6d4;
---success: #10b981;
-}
-* {
-font-family: 'Noto Sans SC', sans-serif;
-box-sizing: border-box;
-scroll-behavior: smooth;
-}
-.mono { font-family: 'JetBrains Mono', monospace; }
-body {
-background: var(--bg);
-color: var(--fg);
-min-height: 100vh;
-overflow-x: hidden;
-line-height: 1.7;
-}
-.bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-.bg-pattern {
-background-image: linear-gradient(rgba(249,115,22,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(249,115,22,0.03) 1px, transparent 1px);
-background-size: 40px 40px;
-}
-.bg-glow {
-background: radial-gradient(ellipse 60% 50% at 20% 0%, rgba(249,115,22,0.12) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6,182,212,0.08) 0%, transparent 50%);
-}
-.container-custom { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 20px; }
-h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.5px; }
-h1 { font-size: 2.5rem; background: linear-gradient(135deg, var(--accent) 0%, #eab308 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
-h2 { font-size: 1.8rem; margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-h3 { font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem; color: var(--accent); }
-p { color: #c1c4cc; margin-bottom: 1rem; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-.code-block {
-background: rgba(0,0,0,0.5);
-border: 1px solid var(--border);
-border-radius: 8px;
-padding: 14px;
-font-size: 13px;
-line-height: 1.7;
-overflow-x: auto;
-margin: 10px 0;
-color: var(--success);
-}
-.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin: 0 2px; }
-.tag-btn { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(249,115,22,0.3); }
-.tag-info { background: rgba(6,182,212,0.12); color: var(--info); border: 1px solid rgba(6,182,212,0.25); }
-.tag-warn { background: rgba(234,179,8,0.12); color: var(--warning); border: 1px solid rgba(234,179,8,0.3); }
-.tag-success { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-.toc { position: sticky; top: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; max-height: calc(100vh - 40px); overflow-y: auto; }
-.toc a { display: block; color: var(--muted); text-decoration: none; padding: 6px 0; font-size: 14px; transition: color 0.2s; }
-.toc a:hover { color: var(--accent); }
-.toc a.sub { padding-left: 20px; font-size: 13px; }
-.alert { padding: 16px 20px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start; }
-.alert-info { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); }
-.alert-warn { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.25); }
-.alert-title { font-weight: 600; margin-bottom: 4px; }
-.alert-info .alert-title { color: var(--info); }
-.alert-warn .alert-title { color: var(--warning); }
-ul { list-style-type: none; padding-left: 0; }
-ul.li-arrow li { position: relative; padding-left: 24px; margin-bottom: 8px; color: #c1c4cc; }
-ul.li-arrow li::before { content: '▶'; position: absolute; left: 0; top: 1px; color: var(--accent); font-size: 12px; }
-@media (max-width: 768px) {
-.toc { display: none; }
-h1 { font-size: 2rem; }
-}
-</style>
-</head>
-<body class="relative">
-<div class="bg-layer bg-pattern"></div>
-<div class="bg-layer bg-glow"></div>
-<div class="container-custom">
-<header class="text-center mt-10 mb-12">
-<h1>曲名开字母辅助器</h1>
-<p class="text-xl" style="color: var(--muted);">完整使用指南与功能详解</p>
-</header>
-<div class="flex gap-8">
-<!-- Table of Contents -->
-<aside class="w-64 flex-shrink-0 hidden md:block">
-<nav class="toc">
-<div class="font-bold text-lg mb-4" style="color: var(--fg);">目录导航</div>
-<a href="#sec1">1. 准备曲库</a>
-<a href="#sec1-1" class="sub">- 在线导入</a>
-<a href="#sec1-2" class="sub">- 本地导入与格式</a>
-<a href="#sec1-3" class="sub">- 曲库管理与编辑</a>
-<a href="#sec1-4" class="sub">- 曲库导出</a>
-<a href="#sec1-5" class="sub">- 从曲库手动选曲</a>
-<a href="#sec2">2. 配置出题序列</a>
-<a href="#sec2-1" class="sub">- 选择范围与高级过滤</a>
-<a href="#sec2-2" class="sub">- 抽取设置</a>
-<a href="#sec2-3" class="sub">- 手动输入与排列</a>
-<a href="#sec2-4" class="sub">- 难度增强（显示变换）</a>
-<a href="#sec3">3. 游戏进行中</a>
-<a href="#sec3-1" class="sub">- 计时器与基础控制</a>
-<a href="#sec3-2" class="sub">- 开启字符与统计</a>
-<a href="#sec3-3" class="sub">- 竞猜记名模式</a>
-<a href="#sec3-4" class="sub">- 曲目交互操作</a>
-<a href="#sec3-5" class="sub">- 各范围未出曲目统计</a>
-<a href="#sec3-6" class="sub">- 撤销与重做</a>
-<a href="#sec4">4. 结算与导出</a>
-<a href="#sec5">5. 全局设置详解</a>
-<a href="#sec6">6. 常见问题与联系</a>
-</nav>
-</aside>
-<!-- Main Content -->
-<main class="flex-1 min-w-0">
-
-<!-- Section 1 -->
-<section id="sec1">
-<h2><span>📚</span> 准备曲库</h2>
-<p>网站启动后默认进入"曲库"选项卡。你可以选择导入内置的在线曲库，或者按照指定格式导入自己的本地曲库。首次访问时会弹出使用指南提示，可选择"前往使用指南"或勾选"不再提示"。</p>
-
-<div id="sec1-1">
-<h3>1.1 导入在线曲库</h3>
-<p>点击橙色的 <span class="tag tag-btn">导入在线曲库</span> 按钮，系统会自动从 GitHub 拉取最新的内置曲库文件。导入流程如下：</p>
-<ul class="li-arrow">
-<li>系统<strong>优先尝试下载 ZIP 格式</strong>的曲库文件（Songs.zip），解析其中的 Songs.txt。</li>
-<li>若 ZIP 获取或解析失败，系统会<strong>自动回退到 TXT 格式</strong>（Songs.txt）进行导入。</li>
-<li>导入成功后，下方会显示曲库包含的游戏范围数量和总曲目数。</li>
-</ul>
-<div class="alert alert-info">
-<div>
-<div class="alert-title">网络要求</div>
-<div style="font-size: 14px; color: var(--muted);">在线导入需要科学上网环境，若导入失败请检查网络连接，或改用本地导入。</div>
-</div>
-</div>
-<div class="alert alert-warn" style="margin-top: 12px;">
-<div>
-<div class="alert-title">在线导入失败？手动下载方案</div>
-<div style="font-size: 14px; color: var(--muted); line-height: 1.8;">
-如果在线导入因网络问题失败，你可以手动下载曲库文件，然后通过"导入本地"功能导入：
-<ol style="margin: 8px 0; padding-left: 20px; color: #c1c4cc;">
-<li>打开 <a href="https://github.com/FallOxygen/falloxygen.github.io/blob/main/library/Songs.txt" target="_blank" style="color: var(--accent); text-decoration: underline;">GitHub 曲库文件</a>，点击右上角的下载按钮下载。</li>
-<li>回到工具页面，点击"导入本地"，选择保存的 <code class="mono">.txt</code> 文件。</li>
-<li>在"允许的范围标签"中填入以下范围名称（一行一个）：</li>
-</ol>
-<div class="code-block mono" style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
-Phigros<br>
-Arcaea<br>
-Orzmic<br>
-Milthm<br>
-Berry Melody<br>
-Lanota<br>
-Rotaeno<br>
-Cytus<br>
-Cytus II<br>
-KALPA<br>
-Muse Dash<br>
-Paradigm:Reboot<br>
-TAKUMI³<br>
-PJSK<br>
-maimai<br>
-CHUNITHM<br>
-オンゲキ<br>
-Notanote<br>
-Rizline<br>
-节奏大师<br>
-DanceRail3<br>
-vivid/stasis<br>
-Bleap<br>
-Groove Coaster<br>
-ChainBeeT<br>
-Liminality<br>
-RYCEAM<br>
-Dynamix<br>
-Deemo<br>
-Deemo II<br>
-WACCA<br>
-OverRapid<br>
-SDVX<br>
-Jubeat<br>
-太鼓の達人<br>
-Circle of Sparks<br>
-Polytone<br>
-SEVEN's CODE<br>
-SHINOBI SLASH<br>
-Sixstar Gate: STARTRAIL<br>
-Simple<br>
-Sparkline<br>
-Siglota<br>
-Twirdora<br>
-Tone Sphere<br>
-WAVEAT<br>
-Beatmania IIDX<br>
-pop'n music<br>
-D4DJ Groovy Mix<br>
-BanG Dream!<br>
-DJMAX<br>
-BOF<br>
-osu!(大杂烩)<br>
-VOEZ<br>
-Piano Tiles 2<br>
-RAVON<br>
-ELLIA<br>
-Hachi Hachi<br>
-Zion<br>
-OverEcho<br>
-东方Project<br>
-米哈游<br>
-术力口<br>
-InFalsus<br>
-曲师大杂烩
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<div id="sec1-2">
-<h3>1.2 导入本地曲库</h3>
-<p>点击 <span class="tag tag-btn">导入本地</span> 按钮，在弹窗中输入曲库名称（可选）、允许的范围标签（必须，一行一个），并选择本地的 .txt 曲库文件。</p>
-<p><strong>TXT 文件格式要求：</strong></p>
-<ul class="li-arrow">
-<li>一行 <code class="mono" style="color:var(--warning)">[游戏名]</code> 作为范围声明。</li>
-<li>下面逐行写曲名，可以不带序号，系统会自动去除前缀序号（如 <code class="mono">1.</code>、<code class="mono">2)</code> 等）。</li>
-</ul>
-<div class="code-block mono">
-[Phigros]<br>
-1.Distorted Fate<br>
-2.DESTRUCTION 3,2,1<br>
-3.Glaciaxion<br>
-[Arcaea]<br>
-1.Sheriruth<br>
-2.Arcahv
-</div>
-<div class="alert alert-warn">
-<div>
-<div class="alert-title">范围标签冲突</div>
-<div style="font-size: 14px; color: var(--muted);">如果你自定义的范围标签与内置标签同名（如也叫 Phigros），会导致数据冲突。导入本地时请务必声明该曲库包含哪些标签，系统只会识别声明的标签。</div>
-</div>
-</div>
-</div>
-
-<div id="sec1-3">
-<h3>1.3 曲库管理与编辑</h3>
-<p>在曲库下拉框旁，有 <span class="tag tag-btn">导入本地</span>、<span class="tag tag-btn">重命名</span> 和 <span class="tag tag-btn" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); border-color: rgba(239,68,68,0.3);">删除</span> 按钮（内置在线曲库不可重命名/删除，只能清空内容）。</p>
-<p><strong>直接编辑曲库：</strong>在游戏范围列表中，每个范围右侧有一个 <span class="tag tag-btn">✎</span> 按钮。点击后会弹出编辑窗口，你可以：</p>
-<ul class="li-arrow">
-<li><strong>搜索：</strong>在顶部搜索框实时过滤曲目，快速定位目标。</li>
-<li><strong>删除：</strong>点击曲目右侧的 X 删除该曲目。</li>
-<li><strong>添加：</strong>在底部输入新曲名并点击"添加"，也可以直接按 <kbd>Enter</kbd> 键快速添加。重复曲目会被自动拦截。</li>
-<li><strong>保存/重置：</strong>点击"保存修改"会将变更持久化存入浏览器本地（IndexedDB）；点击"重置回初始状态"会撤销未保存的修改，恢复到导入时的原始数据。</li>
-</ul>
-<div class="alert alert-info">
-<div>
-<div class="alert-title">数据持久化</div>
-<div style="font-size: 14px; color: var(--muted);">曲库编辑数据保存在浏览器的 IndexedDB 中，清除浏览器数据会导致本地曲库丢失，建议保留原始 TXT 文件备份。</div>
-</div>
-</div>
-</div>
-
-<div id="sec1-4">
-<h3>1.4 曲库导出</h3>
-<p>在设置面板底部有 <span class="tag tag-btn">曲库导出</span> 功能。你可以：</p>
-<ul class="li-arrow">
-<li>在下拉框中选择要导出的游戏范围。</li>
-<li>勾选"仅导出只有这个游戏收录的曲目"，可过滤掉与其他范围共享的曲目，只保留独占曲目。</li>
-<li>点击"导出为 TXT"后，系统会生成标准格式的曲库文件并自动下载。</li>
-</ul>
-<p>此功能方便你将编辑后的曲库或某个范围的独占曲目备份为本地文件。导出的文件格式与导入格式一致，可直接用于备份或分享。</p>
-</div>
-
-<div id="sec1-5">
-<h3>1.5 从曲库手动选曲</h3>
-<p>导入曲库后，在曲库信息栏中点击 <span class="tag tag-btn">从曲库手动选曲...</span>，可以打开手动选曲窗口：</p>
-<ul class="li-arrow">
-<li>支持<strong>正则表达式</strong>搜索，例如输入 <code class="mono" style="color:var(--info)">^A.*</code> 可以搜索所有以 A 开头的歌，输入 <code class="mono" style="color:var(--info)">Phigros</code> 可以按范围筛选。</li>
-<li>搜索结果会显示每首曲目所属的所有范围。</li>
-<li>点击曲目行即可选中/取消选中，选完后点击"导入到出题序列"。</li>
-<li>最多显示 300 条搜索结果，如果结果过多请缩小搜索范围。</li>
-</ul>
-</div>
-</section>
-
-<!-- Section 2 -->
-<section id="sec2">
-<h2><span>⚙️</span> 配置出题序列</h2>
-
-<div id="sec2-1">
-<h3>2.1 选择范围与高级过滤</h3>
-<p>导入曲库后，在"选择游戏范围"卡片中勾选你要参与抽取的游戏（如 Phigros, Arcaea）。可以使用"全选"和"清空"按钮快速操作。</p>
-<p><strong>曲目过滤功能：</strong>你可以对选中的范围进行多维度筛选：</p>
-
-<h4 style="color: var(--info); margin-top: 16px;">字符类型过滤</h4>
-<ul class="li-arrow">
-<li><strong>字符类型：</strong>限制曲名必须包含（或不包含）字母、日文、汉字。未勾选的字符类型将被排除。</li>
-<li><strong>允许其他字符：</strong>勾选后，曲名中可以包含标点、数字等非字母/日文/汉字字符；不勾选则仅允许已选字符类型。</li>
-</ul>
-
-<h4 style="color: var(--info); margin-top: 16px;">字符长度过滤</h4>
-<ul class="li-arrow">
-<li><strong>最少/最多字符长度：</strong>过滤掉名字太短或太长的歌（计算时不含空格）。设为 0 表示不限。</li>
-</ul>
-
-<h4 style="color: var(--info); margin-top: 16px;">结构特征过滤</h4>
-<ul class="li-arrow">
-<li><strong>数字：</strong>不限 / 必须包含数字 / 不得包含数字。</li>
-<li><strong>空格：</strong>不限 / 必须包含空格 / 不得包含空格。</li>
-<li><strong>括号：</strong>不限 / 必须包含括号 / 不得包含括号（支持各类括号：圆括号、方括号、花括号、书名号等）。</li>
-<li><strong>大小写构成：</strong>不限 / 必须含大写字母 / 必须含小写字母 / 须同时含大小写。</li>
-</ul>
-
-<h4 style="color: var(--info); margin-top: 16px;">正则表达式过滤（高级）</h4>
-<ul class="li-arrow">
-<li>输入正则表达式进行高级匹配，例如 <code class="mono" style="color:var(--info)">^A.*\d+$</code> 或 <code class="mono" style="color:var(--info)">(mix|remix)</code>。</li>
-<li>勾选"反选"可排除匹配正则的曲名。</li>
-<li>留空则不启用正则过滤。</li>
-</ul>
-
-<h4 style="color: var(--info); margin-top: 16px;">字符级与关键词级过滤</h4>
-<ul class="li-arrow">
-<li><strong>排除字符：</strong>曲名中不能包含你输入的任何字符（字符级）。</li>
-<li><strong>包含字符：</strong>曲名必须包含你输入的字符（字符级）。勾选"必须同时包含所有"可启用严格模式，该选项同时对包含关键词生效。</li>
-<li><strong>排除关键词：</strong>一行一个，包含这些关键词的曲名将被排除（子串级，不区分大小写）。</li>
-<li><strong>包含关键词：</strong>一行一个，曲名必须包含这些关键词（子串级，不区分大小写）。</li>
-</ul>
-
-<h4 style="color: var(--info); margin-top: 16px;">独占曲目过滤</h4>
-<ul class="li-arrow">
-<li><strong>仅抽取独占曲目：</strong>开启后，只会抽取"仅出现在已选范围中、且只出现在一个已选范围中"的曲目。如果某首歌同时出现在多个已选范围中，或同时出现在已选范围和未选范围中，则会被排除。适合制作"独占猜歌"挑战。</li>
-</ul>
-
-<p>过滤条件会实时显示"符合条件的曲目"数量，方便你调整参数。点击"清除过滤"可一键重置所有过滤条件。</p>
-</div>
-
-<div id="sec2-2">
-<h3>2.2 抽取设置</h3>
-<p>系统提供两种抽取模式：</p>
-<ul class="li-arrow">
-<li><strong>总数量模式：</strong>输入一个总数，系统会从你选中的所有范围里均匀、随机地抽取指定数量的曲目，避免同一范围过度集中。</li>
-<li><strong>定制数量模式：</strong>为每个选中的游戏范围分别指定要抽取的数量，精确控制各范围占比。未勾选的范围输入框会被禁用。</li>
-</ul>
-<p>配置好后点击 <span class="tag tag-btn">生成曲目列表</span>，系统会自动跳转到"手动输入"选项卡，并填入生成的曲目（带序号）。若开启了"自动根据游戏范围填充备注"，备注栏会自动写入"范围：XXX, YYY"。</p>
-</div>
-
-<div id="sec2-3">
-<h3>2.3 手动输入与排列</h3>
-<p>你也可以直接在"手动输入"选项卡的文本框中粘贴曲名（每行一首，无需序号）。</p>
-<p><strong>排列选项：</strong>展开"排列选项"面板，你可以将当前文本框中的曲目进行：</p>
-<ul class="li-arrow">
-<li><strong>随机排列：</strong>将曲目顺序完全打乱。</li>
-<li><strong>按长度排列：</strong>按曲名字符长度从短到长排序。</li>
-</ul>
-<p>两种排列方式互斥，选择后点击"应用排列"生效。</p>
-<p>最后，可以在"备注信息"中填写如"范围：Phigros, Arcaea"等提示信息，点击 <span class="tag tag-btn">解析并开始游戏</span> 正式进入游戏界面。</p>
-</div>
-
-<div id="sec2-4">
-<h3>2.4 难度增强（显示变换）</h3>
-<p>在设置面板中，有"难度增强（显示变换）"板块。在开始游戏前，你可以对曲名进行多种变换处理，大幅提升猜歌难度：</p>
-<ul class="li-arrow">
-<li><strong>英文字母大小写：</strong>可选择"不转换"、"全部小写"或"全部大写"。例如原曲名 <code class="mono">Distorted Fate</code> 在"全部小写"模式下会显示为 <code class="mono">distorted fate</code>。</li>
-<li><strong>字符换位程度：</strong>0% 到 100% 的滑块。系统会随机交换曲名中字符的位置，百分比越高，打乱程度越大。例如 50% 可能会将 <code class="mono">Hello</code> 变为 <code class="mono">eHllo</code>。</li>
-<li><strong>字母替换程度：</strong>0% 到 100% 的滑块。系统会随机将曲名中的英文字母替换为其他随机字母。例如 30% 可能会将 <code class="mono">Arcahv</code> 变为 <code class="mono">Akcahx</code>。</li>
-<li><strong>最大拼合曲数：</strong>设为 1 时不拼合（默认）。设为大于 1 的数字后，系统会将<strong>同一范围</strong>的多个曲名随机拼合成一个长字符串，中间以空格分隔。例如将 <code class="mono">Distorted Fate</code> 和 <code class="mono">Glaciaxion</code> 拼合为 <code class="mono">Distorted Fate Glaciaxion</code>。拼合后的曲目在游戏中作为一个整体进行开字母和猜测。</li>
-</ul>
-<div class="alert alert-warn">
-<div>
-<div class="alert-title">变换顺序说明</div>
-<div style="font-size: 14px; color: var(--muted);">系统实际执行的变换顺序为：先拼合 → 再换位 → 再替换 → 最后大小写转换。这意味着大小写转换会覆盖在其他变换之上。单独提示字符和查询来源功能始终基于变换后的显示文本操作，但查询来源会同时显示原始曲名。</div>
-</div>
-</div>
-<div class="alert alert-info" style="margin-top: 12px;">
-<div>
-<div class="alert-title">空格隐藏</div>
-<div style="font-size: 14px; color: var(--muted);">空格隐藏为遮罩符号的选项位于"功能开关"中（见 5.4 节），开启后曲名中的空格也会显示为遮罩符号，玩家无法通过空格位置判断单词边界。</div>
-</div>
-</div>
-</div>
-</section>
-
-<!-- Section 3 -->
-<section id="sec3">
-<h2><span>🎮</span> 游戏进行中</h2>
-
-<div id="sec3-1">
-<h3>3.1 计时器与基础控制</h3>
-<p>页面顶部显示巨大的计时器，精确到秒。你可以点击 <span class="tag tag-warn">暂停</span> 暂停计时，再次点击可继续。点击 <span class="tag tag-btn" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); border-color: rgba(239,68,68,0.3);">结束游戏</span> 进入结算页面。</p>
-<p>如果上次有未完成的游戏，重新进入页面时会弹出恢复提示，显示曲目数量、已开字符、已用时间和揭示率。你可以选择"继续游戏"（恢复计时器和已开字符，计时器处于暂停状态）或"开始新游戏"。</p>
-</div>
-
-<div id="sec3-2">
-<h3>3.2 开启字符与统计</h3>
-<p>在"开启字符"输入框中，输入你想要公开的字母（如 <code class="mono">aeiou</code>）。输入后，下方所有曲目中对应的字母都会高亮显示（橙色），未开出的字符会变成遮罩符号（默认 <code class="mono">*</code>）。</p>
-<p>系统会自动处理以下等效规则：</p>
-<ul class="li-arrow">
-<li><strong>全角/半角等效：</strong>如开 <code class="mono">(</code> 会同时开出 <code class="mono">（</code>，开 <code class="mono">!</code> 会同时开出 <code class="mono">！</code> 等。</li>
-<li><strong>忽略大小写：</strong>输入 <code class="mono">a</code> 会同时匹配 <code class="mono">A</code>。</li>
-</ul>
-<p>下方有三个统计数据卡片：<strong>曲名数</strong>（剩余可见）、<strong>已开字符</strong>（你输入了几个字符）、<strong>揭示率</strong>（所有非空格字符中被开出的比例）。</p>
-<p>若开启了"开启字符排序"，已开字符会按"数字 → 大写字母 → 小写字母 → 平假名 → 片假名 → 标点 → 汉字 → 其他"的顺序自动排序显示。</p>
-
-<h4 style="color: var(--info); margin-top: 16px;">字符类型占比</h4>
-<p>若在设置中开启了 <span class="tag tag-info">显示字符类型占比</span>，结果区顶部会实时显示各类字符在已开字符中的占比百分比，例如：数字: 20.0% 大写拉丁字母: 30.0% 小写拉丁字母: 50.0%。支持的字符类型包括：数字、大小写拉丁字母、拉丁扩展字母、希腊字母、西里尔字母、谚文、平假名、片假名、汉字、罗马数字、带圈数字、上标/下标、货币符号、数学符号、箭头、几何图形、杂项符号、表情符号、ASCII标点、中日韩标点、其他标点等。</p>
-<p>若同时开启了"复制/导出时带上字符类型占比"，复制结果和导出图片时会附带该统计信息。</p>
-</div>
-
-<div id="sec3-3">
-<h3>3.3 竞猜记名模式</h3>
-<p>在设置中开启 <span class="tag tag-info">竞猜记名模式</span> 后，游戏将进入多人竞猜竞赛模式：</p>
-<ul class="li-arrow">
-<li><strong>猜出流程：</strong>点击曲目显示完整名称时，会弹出输入框要求填写猜出者名字。不填名字则无法确认猜出。</li>
-<li><strong>隐藏限制：</strong>未填写名字的曲目无法通过"隐藏已猜出"按钮移除，系统会提示缺少的数量。</li>
-<li><strong>排行榜：</strong>游戏界面会实时显示"竞猜排行榜"，按猜出曲目个数从高到低排列，前三名分别以金、银、铜色标识。</li>
-<li><strong>结算输出：</strong>结算时会自动生成猜出曲目个数的排行榜。</li>
-</ul>
-</div>
-
-<div id="sec3-4">
-<h3>3.4 曲目交互操作</h3>
-<p>在"解析结果"列表中，每首歌右侧有两个小图标按钮：</p>
-<ul class="li-arrow">
-<li><strong>查询来源 (放大镜图标)：</strong>如果开启了"曲目来源查询"设置，点击此按钮可查看该曲目出现在哪些游戏范围中。如果曲目是拼合的，会分别查询每个原始曲目的来源，并显示共同范围。结果可以一键复制。</li>
-<li><strong>单独提示 (太阳图标)：</strong>点击会弹出一个模态框，展示该曲目的所有字符（已应用显示变换后的字符）。你可以点击任意字符将其<strong>强制单独公开</strong>（显示为黄色高亮），这不会影响全局的已开字符计数和揭示率。适合作为特殊提示或主持人给线索。再次点击可取消单独提示。</li>
-</ul>
-<p><strong>显示全名与隐藏：</strong>直接点击曲目行，会显示完整的曲名（绿色高亮）。当曲目经过拼合变换后，显示的全名会是所有拼合的原始曲名，以 <code class="mono"> / </code> 分隔。当玩家猜对后，你可以点击 <span class="tag tag-warn">隐藏已猜出</span> 按钮，将所有处于"显示全名"状态的曲目从列表中移除（移入隐藏状态）。隐藏的数量会显示在按钮左侧。</p>
-</div>
-
-<div id="sec3-5">
-<h3>3.5 各范围未出曲目统计</h3>
-<p>游戏界面有一个"各范围未出曲目统计"卡片，实时显示当前仍未被猜出的曲目按来源范围的分组统计。例如：</p>
-<div class="code-block mono">
-[Phigros] 3首<br>
-[Arcaea] 1首
-</div>
-<p>点击"复制"按钮可将统计结果一键复制到剪贴板，方便主持人实时掌握各范围的剩余难度。</p>
-</div>
-
-<div id="sec3-6">
-<h3>3.6 撤销与重做</h3>
-<p>在"开启字符"输入框右侧，有 <span class="tag tag-btn">↶</span> 和 <span class="tag tag-btn">↷</span> 按钮。每当你修改了开字符、隐藏了曲目或进行了单独提示操作，系统都会自动存入历史记录（最多保留 50 步）。你可以随时撤销误操作。</p>
-<p>点击 <span class="tag tag-btn">重置</span> 会清空所有开启的字符和单独提示，恢复到初始状态。</p>
-</div>
-</section>
-
-<!-- Section 4 -->
-<section id="sec4">
-<h2><span>🏁</span> 结算与导出</h2>
-<p>点击"结束游戏"后，会进入结算页面。页面包含三个主要部分：</p>
-<ul class="li-arrow">
-<li><strong>结算信息：</strong>包含用时、曲目总数、猜出数量（若全部猜出会显示"全部猜出"）、开启字符数、揭开率等详细数据。若开启了计时功能，还会显示平均用时（秒/首、秒/字符）。若开启了竞猜记名模式，还会显示猜出曲目排行榜。若开启了字符类型占比导出，还会附带占比数据。</li>
-<li><strong>未猜出的曲目：</strong>列出玩家没能猜出来的歌曲全名及序号。如果全部猜出，会显示"太棒了，全部都猜出来了！"</li>
-<li><strong>完整题面：</strong>本局游戏的所有曲目全名及备注，用于复盘和存档。</li>
-</ul>
-<p>每个部分都有 <span class="tag tag-btn">复制</span> 和 <span class="tag tag-btn">导出图片</span> 按钮。导出图片功能会将文本生成为一张 JPEG 图片，自动触发下载，同时弹出预览窗口供长按保存。你可以通过"导出图片颜色设置"自定义图片的背景色和文字颜色，也可以开启"固定导出图片 9:16 比例"来生成适合手机分享的竖屏图片（1080×1920）。</p>
-<p>若开启了"输出中显示开字母限制进度"，导出/复制结果时会在顶部附加当前字符限制和揭开率的进度信息。若开启了"输出中显示各范围未出曲目统计"，还会附加各范围剩余未猜出曲目的统计信息。</p>
-<p>结算完毕后，可以选择"开始新游戏"或"返回编辑"。</p>
-</section>
-
-<!-- Section 5 -->
-<section id="sec5">
-<h2><span>🛠️</span> 全局设置详解</h2>
-<p>点击右上角的齿轮图标打开设置面板。所有设置会自动保存在浏览器本地。顶栏左侧还有日间/夜间模式切换按钮。</p>
-
-<div class="card">
-<h3 style="margin-top: 0;">日间/夜间模式</h3>
-<p>点击顶栏的太阳/月亮图标可切换日间和夜间模式。日间模式使用浅色背景和深色文字，夜间模式使用深色背景和浅色文字。切换后即时生效。</p>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">遮罩符号</h3>
-<p>默认是 <code class="mono">*</code>。你可以改成任意单个字符，如 <code class="mono">?</code> 或 <code class="mono">_</code>。</p>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">开字母限制</h3>
-<ul class="li-arrow">
-<li><strong>最大开字符数：</strong>限制全局最多能开几个字符，防止直接把歌名开完。设为 0 为不限制。当玩家尝试输入超出限制的字符时，输入会被拦截并提示。</li>
-<li><strong>最大揭开率限制：</strong>限制当前所有曲目被揭开的百分比上限。达到上限后无法继续开新字符。设为 0 为不限制。</li>
-</ul>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">功能开关</h3>
-<ul class="li-arrow">
-<li><strong>开启计时功能：</strong>关闭后游戏界面将不显示计时器，结算时也不统计用时。</li>
-<li><strong>开启结算功能：</strong>关闭后点击"结束游戏"会直接返回首页，不生成结算报告。</li>
-<li><strong>空格也隐藏为遮罩符号：</strong>默认情况下空格正常显示，开启后空格也会变成遮罩符号，增加难度。</li>
-<li><strong>自动根据游戏范围填充备注：</strong>生成曲目或开始游戏时，自动在备注栏写入"范围：XXX, YYY"。</li>
-<li><strong>开启字符排序：</strong>将你输入的乱序字符按"数字 → 大写字母 → 小写字母 → 平假名 → 片假名 → 标点 → 汉字 → 其他"的顺序自动排序显示在顶部。</li>
-<li><strong>开启曲目来源查询：</strong>在游戏界面每首歌旁显示放大镜按钮，用于查询来源。</li>
-<li><strong>竞猜记名模式：</strong>开启后，猜出曲目时需填写猜出者名字（不填不可隐藏），结算时输出猜出曲目个数排行榜。</li>
-<li><strong>显示字符类型占比：</strong>在结果区实时显示各类字符（数字/大小写字母/汉字/假名等）在已开字符中的占比百分比。</li>
-<li><strong>复制/导出时带上字符类型占比：</strong>复制结果和导出图片时会附带字符类型占比统计信息。</li>
-</ul>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">难度增强（显示变换）</h3>
-<p>用于在出题阶段对曲名进行多种变换，大幅提升猜歌难度。所有变换在点击"解析并开始游戏"时一次性应用，游戏中不可再修改。</p>
-<ul class="li-arrow">
-<li><strong>英文字母大小写：</strong>可选择"不转换"（保持原样）、"全部小写"（如 <code class="mono">Arcahv → arcahv</code>）或"全部大写"（如 <code class="mono">Arcahv → ARCAHV</code>）。注意：大小写转换是最后一步执行的，会覆盖在其他变换之上。</li>
-<li><strong>字符换位程度（0% ~ 100%）：</strong>随机交换曲名中字符的位置。0% 为不换位，100% 为完全打乱。例如 50% 的 <code class="mono">Hello</code> 可能变为 <code class="mono">eHllo</code>。</li>
-<li><strong>字母替换程度（0% ~ 100%）：</strong>随机将曲名中的英文字母替换为其他随机字母。0% 为不替换，100% 为所有字母都被替换。例如 30% 的 <code class="mono">Arcahv</code> 可能变为 <code class="mono">Akcahx</code>。</li>
-<li><strong>最大拼合曲数（1 为不拼合）：</strong>将同一来源范围的多个曲名随机拼合成一个长字符串显示。例如设为 3 时，可能将 2~3 首同范围的曲名拼在一起。拼合后的曲目作为一个整体进行开字母，点击显示全名时会展示所有拼合的原始曲名。</li>
-</ul>
-<div class="alert alert-info" style="margin-top: 12px;">
-<div>
-<div class="alert-title">变换执行顺序</div>
-<div style="font-size: 14px; color: var(--muted);">系统内部执行顺序为：拼合 → 换位 → 替换 → 大小写转换。这意味着如果你同时开启了多种变换，大小写转换会最后生效，且单独提示字符功能作用于最终变换后的文本。</div>
-</div>
-</div>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">输出附加选项</h3>
-<ul class="li-arrow">
-<li><strong>输出中显示开字母限制进度：</strong>导出/复制结果时，在顶部附加当前字符限制和揭开率的进度信息。</li>
-<li><strong>输出中显示各范围未出曲目统计：</strong>导出/复制结果时，在顶部附加各范围剩余未猜出曲目的统计信息。</li>
-<li><strong>固定导出图片 9:16 比例：</strong>导出图片时强制使用 1080×1920 的竖屏比例，适合手机分享。不勾选则按内容自适应宽高。</li>
-</ul>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">导出图片颜色设置</h3>
-<p>你可以自定义导出图片的背景色和文字颜色，以适应不同的分享平台背景。修改后即时生效。</p>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">使用指南</h3>
-<p>设置面板中的"使用指南"点击后会在新窗口中打开本指南页面，方便随时查阅。</p>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">曲库导出</h3>
-<p>在设置面板底部，你可以选择任意一个已导入的范围，将其曲目导出为 TXT 文件。支持勾选"仅导出只有这个游戏收录的曲目"来过滤独占曲目。导出的文件格式与导入格式一致，可直接用于备份或分享。</p>
-</div>
-</section>
-
-<!-- Section 6 -->
-<section id="sec6">
-<h2><span>❓</span> 常见问题与联系</h2>
-
-<div class="card">
-<h3 style="margin-top: 0;">常见问题</h3>
-<p><strong>Q: 数据会保存在哪里？</strong></p>
-<p>A: 游戏状态保存在浏览器的 localStorage 中，曲库数据保存在 IndexedDB 中。清除浏览器数据会导致丢失，建议保留原始曲库文件备份。</p>
-
-<p><strong>Q: 为什么有些字符开了没反应？</strong></p>
-<p>A: 请检查是否开启了"空格也隐藏为遮罩符号"，以及是否达到了"最大开字符数"或"最大揭开率"的限制。另外，如果曲名经过"字母替换"变换，原始字母可能已被替换，导致无法匹配。</p>
-
-<p><strong>Q: 独占曲目过滤是什么意思？</strong></p>
-<p>A: 开启后，只保留"仅出现在你勾选的范围中、且只出现在一个已选范围中"的曲目。如果一首歌同时出现在多个已选范围中，或同时出现在已选范围和未选范围，则会被过滤掉。</p>
-
-<p><strong>Q: 拼合曲名后怎么算猜对？</strong></p>
-<p>A: 拼合后的曲目作为一个整体条目存在。玩家需要猜出所有拼合的曲名才算猜对这一"条"。点击曲目行显示全名时，会展示所有拼合的原始曲名，以 <code class="mono"> / </code> 分隔。</p>
-
-<p><strong>Q: 竞猜记名模式下如何操作？</strong></p>
-<p>A: 开启后，点击曲目会弹出输入框要求填写猜出者名字。填写后才能确认猜出并隐藏该曲目。未填写名字的曲目无法通过"隐藏已猜出"按钮移除。结算时会自动生成猜出曲目个数的排行榜。</p>
-
-<p><strong>Q: 字符类型占比显示的是什么？</strong></p>
-<p>A: 显示的是你已开启的所有字符中，各类型字符（数字、大小写字母、汉字、假名、标点等）所占的百分比。这可以帮助玩家了解当前已开字符的分布情况。</p>
-
-<p><strong>Q: 导出图片后如何保存？</strong></p>
-<p>A: 导出图片后会自动触发下载（.jpg 文件），同时弹出预览窗口。在手机上可以长按预览图片保存至相册。</p>
-
-<p><strong>Q: 如何切换日间/夜间模式？</strong></p>
-<p>A: 点击页面顶栏右侧的太阳/月亮图标即可切换。日间模式使用浅色背景，夜间模式使用深色背景。</p>
-</div>
-
-<div class="card">
-<h3 style="margin-top: 0;">联系开发者</h3>
-<p>如果在使用过程中遇到问题，或有功能建议，可以通过以下方式联系：</p>
-<ul class="li-arrow">
-<li><strong>QQ：</strong>3962976891</li>
-<li><strong>Email 1：</strong>3962976891@qq.com</li>
-<li><strong>Email 2：</strong>falloxygen.onezeroseven@gmail.com</li>
-<li><strong>Bilibili：</strong>UID: 3546979370010679</li>
-</ul>
-<p style="color: var(--muted); font-size: 14px;">也可以在主页面设置面板底部找到上述联系方式。</p>
-</div>
-</section>
-
-<footer class="text-center mt-12 mb-8" style="color: var(--muted);">
-<p>本指南基于 v18 版本源代码生成。如有疑问，可通过上述联系方式联系开发者。</p>
-</footer>
-</main>
-</div>
-</div>
-</body>
+  <head>
+    <meta charset="UTF-8"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+    <title>曲名游戏工具箱 - 完整使用指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"></link>
+    <style>
+      :root {
+        --bg: #0a0c10;
+        --fg: #e8eaed;
+        --muted: #7a7d85;
+        --accent: #f97316;
+        --accent-dim: rgba(249, 115, 22, 0.15);
+        --card: #12151c;
+        --border: #252a36;
+        --danger: #ef4444;
+        --warning: #eab308;
+        --info: #06b6d4;
+        --success: #10b981;
+      }
+      * {
+        font-family: 'Noto Sans SC', sans-serif;
+        box-sizing: border-box;
+        scroll-behavior: smooth;
+      }
+      .mono {
+        font-family: 'JetBrains Mono', monospace;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+        overflow-x: hidden;
+        line-height: 1.7;
+      }
+      .bg-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .bg-pattern {
+        background-image: linear-gradient(rgba(249,115,22,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(249,115,22,0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+      .bg-glow {
+        background: radial-gradient(ellipse 60% 50% at 20% 0%, rgba(249,115,22,0.12) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6,182,212,0.08) 0%, transparent 50%);
+      }
+      .container-custom {
+        position: relative;
+        z-index: 1;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1, h2, h3, h4 {
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      h1 {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, var(--accent) 0%, #eab308 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+      }
+      h2 {
+        font-size: 1.8rem;
+        margin-top: 3rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      h3 {
+        font-size: 1.25rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: var(--accent);
+      }
+      h4 {
+        font-size: 1.05rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: var(--info);
+      }
+      p {
+        color: #c1c4cc;
+        margin-bottom: 1rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      }
+      .code-block {
+        background: rgba(0,0,0,0.5);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        font-size: 13px;
+        line-height: 1.7;
+        overflow-x: auto;
+        margin: 10px 0;
+        color: var(--success);
+      }
+      .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0 2px;
+      }
+      .tag-btn {
+        background: var(--accent-dim);
+        color: var(--accent);
+        border: 1px solid rgba(249,115,22,0.3);
+      }
+      .tag-info {
+        background: rgba(6,182,212,0.12);
+        color: var(--info);
+        border: 1px solid rgba(6,182,212,0.25);
+      }
+      .tag-warn {
+        background: rgba(234,179,8,0.12);
+        color: var(--warning);
+        border: 1px solid rgba(234,179,8,0.3);
+      }
+      .tag-success {
+        background: rgba(16,185,129,0.12);
+        color: var(--success);
+        border: 1px solid rgba(16,185,129,0.3);
+      }
+      .tag-danger {
+        background: rgba(239,68,68,0.12);
+        color: var(--danger);
+        border: 1px solid rgba(239,68,68,0.3);
+      }
+      .toc {
+        position: sticky;
+        top: 20px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+      }
+      .toc a {
+        display: block;
+        color: var(--muted);
+        text-decoration: none;
+        padding: 6px 0;
+        font-size: 14px;
+        transition: color 0.2s;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+      .toc a.sub {
+        padding-left: 20px;
+        font-size: 13px;
+      }
+      .toc a.sub2 {
+        padding-left: 34px;
+        font-size: 12.5px;
+        color: #565a63;
+      }
+      .toc .toc-group {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--fg);
+        margin-top: 12px;
+        margin-bottom: 4px;
+        padding: 4px 0;
+        border-bottom: 1px dashed var(--border);
+      }
+      .alert {
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .alert-info {
+        background: rgba(6,182,212,0.1);
+        border: 1px solid rgba(6,182,212,0.25);
+      }
+      .alert-warn {
+        background: rgba(234,179,8,0.1);
+        border: 1px solid rgba(234,179,8,0.25);
+      }
+      .alert-danger {
+        background: rgba(239,68,68,0.1);
+        border: 1px solid rgba(239,68,68,0.25);
+      }
+      .alert-success {
+        background: rgba(16,185,129,0.1);
+        border: 1px solid rgba(16,185,129,0.25);
+      }
+      .alert-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .alert-info .alert-title {
+        color: var(--info);
+      }
+      .alert-warn .alert-title {
+        color: var(--warning);
+      }
+      .alert-danger .alert-title {
+        color: var(--danger);
+      }
+      .alert-success .alert-title {
+        color: var(--success);
+      }
+      ul {
+        list-style-type: none;
+        padding-left: 0;
+      }
+      ul.li-arrow li {
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 8px;
+        color: #c1c4cc;
+      }
+      ul.li-arrow li::before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        top: 1px;
+        color: var(--accent);
+        font-size: 12px;
+      }
+      ul.li-dot li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 6px;
+        color: #c1c4cc;
+      }
+      ul.li-dot li::before {
+        content: '•';
+        position: absolute;
+        left: 4px;
+        top: 0;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      ol.ol-number {
+        padding-left: 20px;
+        color: #c1c4cc;
+      }
+      ol.ol-number li {
+        margin-bottom: 6px;
+      }
+      table.desc-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      table.desc-table th, table.desc-table td {
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      table.desc-table th {
+        background: var(--accent-dim);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      table.desc-table tr:nth-child(even) td {
+        background: rgba(255,255,255,0.02);
+      }
+      .func-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+        margin: 12px 0;
+      }
+      .func-item {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+      }
+      .func-item .fi-title {
+        color: var(--accent);
+        font-weight: 600;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+      .func-item .fi-desc {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .badge-mode {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .badge-letter {
+        background: rgba(249,115,22,0.15);
+        color: var(--accent);
+        border: 1px solid rgba(249,115,22,0.3);
+      }
+      .badge-wordlink {
+        background: rgba(6,182,212,0.15);
+        color: var(--info);
+        border: 1px solid rgba(6,182,212,0.3);
+      }
+      .badge-both {
+        background: rgba(234,179,8,0.15);
+        color: var(--warning);
+        border: 1px solid rgba(234,179,8,0.3);
+      }
+      @media (max-width: 1024px) {
+        .toc {
+          display: none;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        .container-custom {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body class="relative">
+    <div class="bg-layer bg-pattern"></div>
+    <div class="bg-layer bg-glow"></div>
+    <div class="container-custom">
+      <header class="text-center mt-8 mb-10">
+        <h1>曲名游戏工具箱</h1>
+        <p class="text-xl" style="color: var(--muted);">
+          完整使用指南与功能详解（v1.0 双模式版）
+        </p>
+        <div class="flex justify-center gap-3 mt-4 flex-wrap">
+          <span class="badge-mode badge-letter">🎯 曲名开字母</span>
+          <span class="badge-mode badge-wordlink">🔗 单词连连看</span>
+          <span class="badge-mode badge-both">⚙️ 共享曲库 / 过滤 / 结算</span>
+        </div>
+      </header>
+      <div class="flex gap-8">
+        <!-- ==================== TOC ==================== -->
+        <aside class="w-72 flex-shrink-0 hidden lg:block">
+          <nav class="toc">
+            <div class="font-bold text-lg mb-3" style="color: var(--fg);">
+              目录导航
+            </div>
+            <div class="toc-group">① 开始使用</div>
+            <a href="#s1">1. 双模式总览</a>
+            <a href="#s1-1" class="sub">1.1 模式选择界面</a>
+            <a href="#s1-2" class="sub">1.2 界面导航</a>
+            <a href="#s1-3" class="sub">1.3 数据持久化</a>
+            <div class="toc-group">② 曲库准备</div>
+            <a href="#s2">2. 导入曲库</a>
+            <a href="#s2-1" class="sub">2.1 导入在线曲库</a>
+            <a href="#s2-2" class="sub">2.2 导入本地曲库</a>
+            <a href="#s2-3" class="sub">2.3 曲库格式说明</a>
+            <a href="#s2-4" class="sub">2.4 管理曲库</a>
+            <a href="#s2-5" class="sub">2.5 从曲库手动选曲</a>
+            <a href="#s2-6" class="sub">2.6 曲库导出</a>
+            <div class="toc-group">③ 配置题目（通用）</div>
+            <a href="#s3">3. 选择游戏范围</a>
+            <a href="#s4">4. 曲目过滤详解</a>
+            <a href="#s4-1" class="sub">4.1 字符类型占比滑条</a>
+            <a href="#s4-2" class="sub">4.2 长度过滤</a>
+            <a href="#s4-3" class="sub">4.3 结构特征</a>
+            <a href="#s4-4" class="sub">4.4 正则表达式</a>
+            <a href="#s4-5" class="sub">4.5 字符与关键词</a>
+            <a href="#s4-6" class="sub">4.6 独占曲目</a>
+            <a href="#s5">5. 手动输入</a>
+            <div class="toc-group">④ 开字母专属</div>
+            <a href="#s6">6. 抽取设置</a>
+            <a href="#s7">7. 开字母游戏界面</a>
+            <a href="#s7-1" class="sub">7.1 计时器</a>
+            <a href="#s7-2" class="sub">7.2 开启字符</a>
+            <a href="#s7-3" class="sub">7.3 曲目交互</a>
+            <a href="#s7-4" class="sub">7.4 单独提示字符</a>
+            <a href="#s7-5" class="sub">7.5 隐藏已猜出</a>
+            <a href="#s7-6" class="sub">7.6 竞猜记名</a>
+            <a href="#s7-7" class="sub">7.7 撤销与重做</a>
+            <a href="#s8">8. 开字母结算</a>
+            <div class="toc-group">⑤ 连连看专属</div>
+            <a href="#s9">9. 生成设置</a>
+            <a href="#s10">10. 额外待猜文本</a>
+            <a href="#s11">11. 网格与玩法设置</a>
+            <a href="#s12">12. 连连看游戏界面</a>
+            <a href="#s12-1" class="sub">12.1 网格与连线</a>
+            <a href="#s12-2" class="sub">12.2 猜词交互</a>
+            <a href="#s12-3" class="sub">12.3 提示一个起点</a>
+            <a href="#s12-4" class="sub">12.4 待猜/已猜列表</a>
+            <a href="#s12-5" class="sub">12.5 跳过确认</a>
+            <a href="#s13">13. 连连看结算</a>
+            <div class="toc-group">⑥ 全局设置</div>
+            <a href="#s14">14. 设置面板</a>
+            <a href="#s14-1" class="sub">14.1 通用功能</a>
+            <a href="#s14-2" class="sub">14.2 开字母专属</a>
+            <a href="#s14-3" class="sub">14.3 难度增强变换</a>
+            <a href="#s14-4" class="sub">14.4 导出设置</a>
+            <div class="toc-group">⑦ 其它</div>
+            <a href="#s15">15. 常见问题</a>
+            <a href="#s16">16. 联系开发者</a>
+          </nav>
+        </aside>
+        <!-- ==================== Main ==================== -->
+        <main class="flex-1 min-w-0">
+          <!-- ========== 1 ========== -->
+          <section id="s1">
+            <h2>
+              <span>🚀</span>
+              1. 双模式总览
+            </h2>
+            <p>
+              本工具包含两种完全独立的游戏模式，共享同一套曲库、过滤系统和基础设置，但游戏流程和规则完全不同。第一次打开页面时会弹出欢迎窗口，可选择"开始使用"或勾选"不再提示"。
+            </p>
+            <div class="card">
+              <h3 style="margin-top:0;">两种模式快速对比</h3>
+              <table class="desc-table">
+                <thead>
+                  <tr>
+                    <th style="width:20%">维度</th>
+                    <th style="width:40%">曲名开字母</th>
+                    <th style="width:40%">单词连连看</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <strong>玩法</strong>
+                    </td>
+                    <td>曲名被遮罩成符号，玩家输入字符逐步揭开</td>
+                    <td>曲名被塞进字符网格，玩家从下方列表点击猜出</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>核心操作</strong>
+                    </td>
+                    <td>输入字符 → 显示完整曲名 → 隐藏已猜</td>
+                    <td>浏览网格 → 找到曲名路径 → 点击列表标记猜出</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>抽取方式</strong>
+                    </td>
+                    <td>总数量模式 / 定制数量模式</td>
+                    <td>按长度均匀抽取到候选池</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>专属设置</strong>
+                    </td>
+                    <td>遮罩符号、开字母限制、难度变换、拼合曲数</td>
+                    <td>网格行/列、密度、进阶拐弯、答案唯一性</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>结算重点</strong>
+                    </td>
+                    <td>用时/揭开率/猜出排行</td>
+                    <td>网格连线总览图、按顺序的猜出列表</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="s1-1">
+              <h3>1.1 模式选择界面</h3>
+              <p>
+                打开网站后首先是
+                <strong>Page 0（模式选择）</strong>
+                。界面展示两张卡片：
+              </p>
+              <ul class="li-arrow">
+                <li>
+                  <strong>曲名开字母卡片</strong>
+                  ：点击后进入开字母模式的设置页。
+                </li>
+                <li>
+                  <strong>单词连连看卡片</strong>
+                  ：点击后进入连连看模式的设置页。
+                </li>
+              </ul>
+              <p>
+                顶栏左上角会显示当前模式徽章，点击"切换模式"按钮可返回本页重新选择。切换模式不会丢失已保存的数据（已设置的过滤器、已生成的题目等会保留）。
+              </p>
+            </div>
+            <div id="s1-2">
+              <h3>1.2 界面导航</h3>
+              <p>整个应用是一个单页应用，由 6 个页面组成：</p>
+              <table class="desc-table">
+                <thead>
+                  <tr>
+                    <th>页面</th>
+                    <th>内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <strong>Page 0</strong>
+                    </td>
+                    <td>模式选择（开字母 / 连连看）</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>Page 1</strong>
+                    </td>
+                    <td>设置页（曲库、过滤、抽取、网格等），两模式共用，但会按模式显示/隐藏专属区块</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>Page 2</strong>
+                    </td>
+                    <td>开字母游戏页</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>Page 3</strong>
+                    </td>
+                    <td>开字母结算页</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>Page 4</strong>
+                    </td>
+                    <td>连连看游戏页</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>Page 5</strong>
+                    </td>
+                    <td>连连看结算页</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                顶栏右侧有：
+                <span class="tag tag-btn">🌗 主题切换</span>
+                （日间/夜间）和
+                <span class="tag tag-btn">⚙️ 设置</span>
+                （打开全局设置面板）。
+              </p>
+            </div>
+            <div id="s1-3">
+              <h3>1.3 数据持久化</h3>
+              <p>本工具使用了两层持久化：</p>
+              <ul class="li-arrow">
+                <li>
+                  <strong>localStorage</strong>
+                  ：存储当前游戏状态（当前模式、页面位置、过滤器设置、游戏进行中的网格/已开字符等）。键名为
+                  <code class="mono">songGameToolbox_v1</code>
+                  。
+                </li>
+                <li>
+                  <strong>IndexedDB</strong>
+                  （
+                  <code class="mono">SongGameToolboxDB</code>
+                  ）：存储曲库数据（在线曲库与本地曲库分别存储）以及一份状态冗余备份。
+                </li>
+              </ul>
+              <p>
+                应用启动时会对比两处的保存时间，选择更新的那份加载。曲库编辑（增删改）需要点击"保存修改"才会写入 IndexedDB。
+              </p>
+              <div class="alert alert-warn">
+                <div>
+                  <div class="alert-title">清除浏览器数据的后果</div>
+                  <div style="font-size:14px;color:var(--muted);">
+                    清除浏览器站点数据会同时清空 localStorage 和 IndexedDB，导致曲库和游戏进度全部丢失。建议保留原始 TXT 文件用于备份。
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- ========== 2 ========== -->
+          <section id="s2">
+            <h2>
+              <span>📚</span>
+              2. 导入曲库
+            </h2>
+            <p>无论哪种模式，都需要先准备曲库。进入 Page 1 后，默认在"曲库"选项卡。</p>
+            <div id="s2-1">
+              <h3>2.1 导入在线曲库</h3>
+              <p>
+                点击橙色的
+                <span class="tag tag-btn">导入在线曲库</span>
+                按钮。系统会按以下顺序尝试：
+              </p>
+              <ol class="ol-number">
+                <li>
+                  从 GitHub 拉取
+                  <code class="mono">Songs.zip</code>
+                  （内置完整曲库的压缩包）。
+                </li>
+                <li>
+                  解压并读取其中
+                  <code class="mono">Songs.txt</code>
+                  。
+                </li>
+                <li>
+                  若 ZIP 失败，则回退到直接拉取
+                  <code class="mono">Songs.txt</code>
+                  。
+                </li>
+                <li>解析成功后会提示"解析 N 个范围、M 首曲目"。</li>
+              </ol>
+              <div class="alert alert-info">
+                <div>
+                  <div class="alert-title">网络要求</div>
+                  <div style="font-size:14px;color:var(--muted);">
+                    在线导入依赖 GitHub Raw 域名，若网络不通会导入失败。此时请参考
+                    <a href="#s2-2" style="color:var(--accent);text-decoration:underline;">
+                      2.2 本地导入
+                    </a>
+                    手动下载文件导入。
+                  </div>
+                </div>
+              </div>
+              <p>
+                完整的在线曲库支持的 65 个范围（即允许的 [标签]）：Phigros、Arcaea、Orzmic、Milthm、Berry Melody、Lanota、Rotaeno、Cytus、Cytus II、KALPA、Muse Dash、Paradigm:Reboot、TAKUMI³、PJSK、maimai、CHUNITHM、オンゲキ、Notanote、Rizline、节奏大师、DanceRail3、vivid/stasis、Bleap、Groove Coaster、ChainBeeT、Liminality、RYCEAM、Dynamix、Deemo、Deemo II、WACCA、OverRapid、SDVX、Jubeat、太鼓の達人、Circle of Sparks、Polytone、SEVEN's CODE、SHINOBI SLASH、Sixstar Gate: STARTRAIL、Simple、Sparkline、Siglota、Twirdora、Tone Sphere、WAVEAT、Beatmania IIDX、pop'n music、D4DJ Groovy Mix、BanG Dream!、DJMAX、BOF、osu!(大杂烩)、VOEZ、Piano Tiles 2、RAVON、ELLIA、Hachi Hachi、Zion、OverEcho、东方Project、米哈游、术力口、InFalsus、曲师大杂烩。
+              </p>
+            </div>
+            <div id="s2-2">
+              <h3>2.2 导入本地曲库</h3>
+              <p>
+                点击
+                <span class="tag tag-btn">导入本地</span>
+                打开对话框。需要填写：
+              </p>
+              <div class="func-grid">
+                <div class="func-item">
+                  <div class="fi-title">曲库名称（可选）</div>
+                  <div class="fi-desc">显示在曲库下拉框中的名字，留空则使用文件名。</div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">允许的范围标签（必填）</div>
+                  <div class="fi-desc">
+                    一行一个。只有这些标签在 TXT 文件中被识别，其它
+                    <code class="mono">[xxx]</code>
+                    段会被忽略。
+                  </div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">选择 .txt 文件</div>
+                  <div class="fi-desc">本地 TXT 格式的曲库文件。导入后自动解析。</div>
+                </div>
+              </div>
+              <div class="alert alert-danger">
+                <div>
+                  <div class="alert-title">范围标签冲突</div>
+                  <div style="font-size:14px;color:var(--muted);">
+                    如果你导入的本地曲库中使用了与内置曲库相同的标签（如 Phigros），两个曲库的数据会互相独立（因为保存在不同的 IndexedDB key 中），但用户界面会显示相同名称，容易混淆。建议使用不同标签命名。
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="s2-3">
+              <h3>2.3 曲库格式说明</h3>
+              <p>曲库文件使用以下标准格式：</p>
+              <div class="code-block mono">
+                [范围名称1]
+                <br></br>
+                曲目1
+                <br></br>
+                曲目2
+                <br></br>
+                ……
+                <br></br>
+                <br></br>
+                [范围名称2]
+                <br></br>
+                曲目1
+                <br></br>
+                曲目2
+                <br></br>
+                ……
+              </div>
+              <ul class="li-arrow">
+                <li>
+                  <strong>[范围名称]</strong>
+                  ：独占一行，用方括号括起。仅当标签在"允许的范围标签"中时才被识别。
+                </li>
+                <li>
+                  <strong>曲目</strong>
+                  ：每行一首。可以带序号前缀（形如
+                  <code class="mono">1.曲名</code>
+                  、
+                  <code class="mono">2)曲名</code>
+                  、
+                  <code class="mono">3：曲名</code>
+                  ），系统会自动去除。
+                </li>
+                <li>同一范围内的重复曲目会被自动去重。</li>
+                <li>空行会被忽略。</li>
+                <li>没有归属任何标签的行会被忽略（因为没有当前范围）。</li>
+              </ul>
+            </div>
+            <div id="s2-4">
+              <h3>2.4 管理曲库</h3>
+              <h4>曲库下拉框</h4>
+              <p>
+                在"曲库"卡片顶部有一个下拉框，列出所有已导入的曲库。切换下拉框会即时切换当前使用的曲库。内置"在线曲库 (内置)"不可重命名/删除。
+              </p>
+              <h4>重命名 / 删除按钮</h4>
+              <ul class="li-arrow">
+                <li>
+                  <span class="tag tag-btn">重命名</span>
+                  ：修改当前本地曲库的显示名。内置曲库不允许重命名。
+                </li>
+                <li>
+                  <span class="tag tag-btn tag-danger">删除</span>
+                  ：删除当前本地曲库。若当前是在线曲库，则仅清空其内容（不删除记录）。
+                </li>
+              </ul>
+              <h4>编辑单个范围</h4>
+              <p>
+                在"选择游戏范围"列表里，每个范围右侧都有
+                <span class="tag tag-btn">✎</span>
+                按钮，点击打开编辑窗口：
+              </p>
+              <ul class="li-arrow">
+                <li>
+                  <strong>搜索框</strong>
+                  ：实时过滤曲目。
+                </li>
+                <li>
+                  <strong>曲目列表</strong>
+                  ：每项右侧 X 按钮删除该曲目。
+                </li>
+                <li>
+                  <strong>添加输入框</strong>
+                  ：输入新曲名后点"添加"或按
+                  <kbd>Enter</kbd>
+                  。重复曲目会被拦截并提示"曲目已存在"。
+                </li>
+                <li>
+                  <strong>保存修改</strong>
+                  ：把当前内存中的曲库数据写入 IndexedDB。
+                </li>
+                <li>
+                  <strong>重置回初始状态</strong>
+                  ：丢弃未保存的修改，恢复到导入时的原始数据。注意此操作
+                  <strong>不会</strong>
+                  自动保存，需要再点"保存修改"。
+                </li>
+              </ul>
+            </div>
+            <div id="s2-5">
+              <h3>2.5 从曲库手动选曲</h3>
+              <p>
+                点击
+                <span class="tag tag-btn">从曲库手动选曲...</span>
+                打开选曲窗口：
+              </p>
+              <ul class="li-arrow">
+                <li>
+                  搜索框支持
+                  <strong>正则表达式</strong>
+                  （对曲名和范围名同时匹配）。例如输入
+                  <code class="mono">^A.*</code>
+                  会找出所有以 A 开头的曲名。
+                </li>
+                <li>若正则语法错误，会自动按普通字符串处理。</li>
+                <li>每项显示曲名及所属范围，可点击行切换勾选状态。</li>
+                <li>最多显示 300 条结果。</li>
+                <li>
+                  点击"加入曲名列表"后，选中的曲目会以"每行一首"的形式追加到"手动输入"标签的曲名序列文本框中，并自动切换到该标签。
+                </li>
+              </ul>
+            </div>
+            <div id="s2-6">
+              <h3>2.6 曲库导出</h3>
+              <p>
+                在
+                <strong>设置面板</strong>
+                底部有"曲库导出"功能：
+              </p>
+              <ol class="ol-number">
+                <li>从下拉框选择要导出的范围。</li>
+                <li>可勾选"仅导出只有这个游戏收录的曲目"，只保留独占曲目。</li>
+                <li>
+                  点"导出为 TXT"，浏览器会下载
+                  <code class="mono">[范围名]_all_TIMESTAMP.txt</code>
+                  或
+                  <code class="mono">
+                    [范围名]_exclusive_TIMESTAMP.txt
+                  </code>
+                  。
+                </li>
+              </ol>
+              <p>导出格式与导入格式完全一致，可直接用于备份或分享。</p>
+            </div>
+          </section>
+          <!-- ========== 3 ========== -->
+          <section id="s3">
+            <h2>
+              <span>🎮</span>
+              3. 选择游戏范围
+            </h2>
+            <p>导入曲库后，"选择游戏范围"卡片会列出所有范围及曲目数量。每个范围前有勾选框：</p>
+            <ul class="li-arrow">
+              <li>
+                只有
+                <strong>已勾选</strong>
+                的范围会参与抽取。
+              </li>
+              <li>
+                <strong>全选</strong>
+                /
+                <strong>清空</strong>
+                按钮可快速操作。
+              </li>
+              <li>
+                范围勾选状态在模式之间是
+                <strong>独立保存</strong>
+                的（开字母模式勾选 Phigros，切到连连看模式可能还没勾选）。
+              </li>
+            </ul>
+            <div class="alert alert-info">
+              <div>
+                <div class="alert-title">勾选会影响过滤统计</div>
+                <div style="font-size:14px;color:var(--muted);">
+                  "符合条件的曲目: N 首"和"独占曲目"过滤都基于当前勾选的范围计算。切换勾选后应立刻查看这个数字，避免抽取失败。
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- ========== 4 ========== -->
+          <section id="s4">
+            <h2>
+              <span>🔎</span>
+              4. 曲目过滤详解
+            </h2>
+            <p>
+              "曲目过滤"卡片包含多个维度的过滤条件，全部条件之间是
+              <strong>AND</strong>
+              （同时满足）关系。条件一旦修改会即时统计"符合条件的曲目"数量并保存到状态。
+            </p>
+            <div id="s4-1">
+              <h3>
+                4.1 字符类型占比滑条
+                <span class="badge-mode badge-both">双模式</span>
+              </h3>
+              <p>勾选需要的字符类型后，下方会展开滑条区域：</p>
+              <div class="func-grid">
+                <div class="func-item">
+                  <div class="fi-title">字母（letter）</div>
+                  <div class="fi-desc">A-Z / a-z。</div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">日文（假名）</div>
+                  <div class="fi-desc">平假名 + 片假名。</div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">汉字</div>
+                  <div class="fi-desc">CJK 统一表意文字。</div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">允许其他字符</div>
+                  <div class="fi-desc">数字、标点等非上述三类字符。</div>
+                </div>
+              </div>
+              <h4>滑条逻辑</h4>
+              <ul class="li-arrow">
+                <li>勾选的类型越多，滑条越多，初始平均分配（如 3 个勾选项各 33.33%）。</li>
+                <li>
+                  拖动任意一根滑条，其它项
+                  <strong>按差额平均分摊</strong>
+                  。例如 A/B/C 三项均为 33%，A 调到 40%（+7%），B、C 各自 -3.5%。
+                </li>
+                <li>所有滑条总和始终 = 100%。</li>
+                <li>
+                  滑条数值仅影响
+                  <strong>抽取</strong>
+                  （尽量凑出符合目标比例的题面字符构成），不直接过滤曲目。
+                </li>
+                <li>
+                  勾选则启用该类字符作为目标；不勾选则
+                  <strong>禁止</strong>
+                  该类字符出现在题面中（同一卡片下的字符类型也是过滤器）。
+                </li>
+              </ul>
+              <div class="alert alert-warn">
+                <div>
+                  <div class="alert-title">注意：过滤 + 占比双重作用</div>
+                  <div style="font-size:14px;color:var(--muted);">
+                    字符类型勾选既是"过滤"（未勾选类型会被排除）也是"抽取占比"（启用滑条）。若你只想过滤不控制占比，请把所有滑条调至平均分配即可。
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="s4-2">
+              <h3>4.2 字符长度过滤</h3>
+              <ul class="li-arrow">
+                <li>
+                  <strong>最少</strong>
+                  ：曲名去掉空格后的长度下限。
+                </li>
+                <li>
+                  <strong>最多</strong>
+                  ：曲名去掉空格后的长度上限。
+                </li>
+                <li>0 表示不限。</li>
+              </ul>
+            </div>
+            <div id="s4-3">
+              <h3>4.3 结构特征过滤</h3>
+              <table class="desc-table">
+                <thead>
+                  <tr>
+                    <th>维度</th>
+                    <th>可选值</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>数字</td>
+                    <td>不限 / 必须包含 / 不得包含</td>
+                    <td>识别 0-9、全角数字和"〇"。</td>
+                  </tr>
+                  <tr>
+                    <td>空格</td>
+                    <td>不限 / 必须包含 / 不得包含</td>
+                    <td>识别半角空格和全角空格。</td>
+                  </tr>
+                  <tr>
+                    <td>括号</td>
+                    <td>不限 / 必须包含 / 不得包含</td>
+                    <td>识别圆括号、方括号、花括号、书名号、方头括号等 30+ 种。</td>
+                  </tr>
+                  <tr>
+                    <td>大小写构成</td>
+                    <td>不限 / 含大写 / 含小写 / 同时含大小写</td>
+                    <td>仅针对拉丁字母。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="s4-4">
+              <h3>4.4 正则表达式过滤</h3>
+              <p>
+                输入 JavaScript 兼容的正则表达式，对曲名进行匹配。支持 PCRE 常见语法，标志为
+                <code class="mono">i</code>
+                （不区分大小写）。
+              </p>
+              <div class="code-block mono">
+                ^A.*\d+$ // 以 A 开头且以数字结尾
+                <br></br>
+                (mix|remix) // 包含 mix 或 remix
+              </div>
+              <ul class="li-arrow">
+                <li>留空则不启用。</li>
+                <li>
+                  勾选"反选"：只保留
+                  <strong>不匹配</strong>
+                  正则的曲名。
+                </li>
+                <li>若正则语法错误，会被忽略（视作不启用）。</li>
+              </ul>
+            </div>
+            <div id="s4-5">
+              <h3>4.5 字符级与关键词级过滤</h3>
+              <table class="desc-table">
+                <thead>
+                  <tr>
+                    <th>项目</th>
+                    <th>语义</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>排除字符</td>
+                    <td>曲名中不能包含输入的任意一个字符。</td>
+                  </tr>
+                  <tr>
+                    <td>包含字符</td>
+                    <td>曲名必须包含输入字符中的至少一个；勾选"必须同时包含所有"后改为必须包含全部。</td>
+                  </tr>
+                  <tr>
+                    <td>排除关键词</td>
+                    <td>一行一个，包含任一关键词的曲名被排除（不区分大小写）。</td>
+                  </tr>
+                  <tr>
+                    <td>包含关键词</td>
+                    <td>一行一个，曲名必须包含其中至少一个；若勾选了"必须同时包含所有"，则需包含全部。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="alert alert-info">
+                <div>
+                  <div class="alert-title">"必须同时包含所有"的作用范围</div>
+                  <div style="font-size:14px;color:var(--muted);">
+                    该复选框
+                    <strong>同时</strong>
+                    对"包含字符"与"包含关键词"生效，一键切换到严格模式。
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="s4-6">
+              <h3>4.6 独占曲目过滤</h3>
+              <p>勾选"只抽取目前只有这个游戏有收录的曲目"后，只保留满足以下条件的曲目：</p>
+              <ul class="li-arrow">
+                <li>
+                  出现在
+                  <strong>已勾选</strong>
+                  的范围里；
+                </li>
+                <li>
+                  且只出现在
+                  <strong>一个</strong>
+                  已勾选范围内；
+                </li>
+                <li>
+                  且
+                  <strong>不</strong>
+                  出现在任何未勾选的范围中。
+                </li>
+              </ul>
+              <p>相当于"该曲目在曲库中为此范围独占"。适合做专属猜歌挑战。</p>
+            </div>
+            <p style="margin-top:20px;">
+              点击卡片底部
+              <span class="tag tag-btn">清除过滤</span>
+              可一键重置所有过滤条件（包括滑条恢复为平均分配）。
+            </p>
+          </section>
+          <!-- ========== 5 ========== -->
+          <section id="s5">
+            <h2>
+              <span>✏️</span>
+              5. 手动输入
+            </h2>
+            <p>设置页顶部的"手动输入"标签可直接粘贴自己的曲名列表，绕过抽取逻辑：</p>
+            <ul class="li-arrow">
+              <li>
+                <strong>曲名序列</strong>
+                ：文本框，每行一首曲名（可以带序号，也可不带）。
+              </li>
+              <li>
+                <strong>清空</strong>
+                ：清空文本框。
+              </li>
+              <li>
+                <strong>排列选项</strong>
+                （
+                <span class="badge-mode badge-letter">开字母</span>
+                专属）：
+                <ul class="li-dot">
+                  <li>
+                    <strong>随机排列</strong>
+                    ：打乱顺序；
+                  </li>
+                  <li>
+                    <strong>按长度排列</strong>
+                    ：按字符数从短到长；
+                  </li>
+                  <li>两种排列互斥，选择后点"应用排列"。</li>
+                </ul>
+              </li>
+              <li>
+                <strong>备注信息</strong>
+                ：任意文本，会显示在结果区末尾，并可包含在导出中。
+              </li>
+            </ul>
+            <p>
+              两个模式的手动输入内容
+              <strong>共享同一个文本框</strong>
+              ，但"额外待猜文本"和"排列选项"是模式专属的。
+            </p>
+          </section>
+          <!-- ========== 6 ========== -->
+          <section id="s6">
+            <h2>
+              <span>🎲</span>
+              6. 抽取设置
+              <span class="badge-mode badge-letter">开字母专属</span>
+            </h2>
+            <p>"抽取设置"卡片仅开字母模式显示，提供两种抽取方式：</p>
+            <h3>6.1 总数量模式</h3>
+            <ul class="li-arrow">
+              <li>输入总抽取数量（默认 10），从所有已勾选范围的曲目中均匀抽取指定数量。</li>
+              <li>抽取时优先保证每个长度档都有代表，避免出现"全是短名"或"全是长名"的偏差。</li>
+              <li>
+                若启用了字符类型占比滑条，抽取算法会在满足总数量的前提下
+                <strong>尽量匹配目标字符构成</strong>
+                （贪心误差最小化）。
+              </li>
+            </ul>
+            <h3>6.2 定制数量模式</h3>
+            <ul class="li-arrow">
+              <li>为每个游戏范围分别指定抽取数量。</li>
+              <li>未勾选的范围其输入框会被禁用。</li>
+              <li>某范围输入 0 表示不抽取该范围的曲目。</li>
+              <li>不同范围之间不会去重（同一首歌若在两个范围都有，可能被各抽一次；如需去重请用"独占曲目"过滤）。</li>
+            </ul>
+            <h3>6.3 生成曲目列表</h3>
+            <p>
+              点击
+              <span class="tag tag-btn">生成曲目列表</span>
+              后：
+            </p>
+            <ol class="ol-number">
+              <li>系统读取已勾选范围与过滤器；</li>
+              <li>按当前模式抽取曲目；</li>
+              <li>抽取结果以带序号的形式写入"手动输入"的曲名序列；</li>
+              <li>自动切换到"手动输入"标签；</li>
+              <li>弹出"已抽取 N 首曲目"的提示。</li>
+            </ol>
+            <div class="alert alert-warn">
+              <div>
+                <div class="alert-title">抽取失败排查</div>
+                <div style="font-size:14px;color:var(--muted);">
+                  若提示"请至少选择一个游戏范围"→ 未勾选范围；若提示"没有符合条件的曲目"→ 过滤条件过严；若提示"曲库为空，请先导入"→ 曲库未导入。以上都会打印
+                  <code class="mono">[GenerateLetter]</code>
+                  日志到控制台便于排查。
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- ========== 7 ========== -->
+          <section id="s7">
+            <h2>
+              <span>🔤</span>
+              7. 开字母游戏界面
+            </h2>
+            <p>
+              点击
+              <span class="tag tag-btn">解析并开始游戏</span>
+              进入 Page 2。页面从上到下依次是：
+            </p>
+            <div id="s7-1">
+              <h3>7.1 计时器</h3>
+              <ul class="li-arrow">
+                <li>
+                  大号数字显示
+                  <code class="mono">HH:MM:SS</code>
+                  ，每秒刷新。
+                </li>
+                <li>
+                  点击
+                  <span class="tag tag-warn">暂停</span>
+                  按钮暂停计时（显示变黄），再次点击继续。
+                </li>
+                <li>若在设置中关闭"开启计时功能"，计时器不显示也不计时。</li>
+                <li>
+                  点击
+                  <span class="tag tag-danger">结束游戏</span>
+                  进入结算页面（若关闭"开启结算功能"则直接返回编辑页）。
+                </li>
+                <li>
+                  刷新页面或有未完成游戏时，会弹出"发现未完成的游戏"，显示曲目数、已猜出、用时。可选"继续游戏"（计时器自动暂停）或"放弃残局"。
+                </li>
+              </ul>
+            </div>
+            <div id="s7-2">
+              <h3>7.2 开启字符</h3>
+              <ul class="li-arrow">
+                <li>
+                  在输入框中输入字符，实时生效。例如输入
+                  <code class="mono">aeiou</code>
+                  ，所有曲名中的 a/e/i/o/u 会被揭示。
+                </li>
+                <li>
+                  <strong>等效规则</strong>
+                  ：
+                  <ul class="li-dot">
+                    <li>
+                      全角半角等效：输入
+                      <code class="mono">(</code>
+                      也会揭开
+                      <code class="mono">（</code>
+                      ，输入
+                      <code class="mono">.</code>
+                      也会揭开
+                      <code class="mono">。</code>
+                      。
+                    </li>
+                    <li>
+                      大小写不敏感：输入
+                      <code class="mono">a</code>
+                      也会揭开
+                      <code class="mono">A</code>
+                      。
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <strong>字符排序显示</strong>
+                  ：开启"开启字符排序"后，输入框下方会按"数字 → 大写字母 → 小写字母 → 平假名 → 片假名 → 标点 → 汉字 → 其他"显示你已开启的字符。
+                </li>
+                <li>
+                  <strong>开字符限制</strong>
+                  ：
+                  <ul class="li-dot">
+                    <li>"最大开字符数"限制输入总长度，超出会被拦截；</li>
+                    <li>"最大揭开率"限制所有非空格字符中已揭示的比例，超出会被拦截。</li>
+                  </ul>
+                </li>
+                <li>
+                  下方三个统计卡片显示：
+                  <strong>曲名数</strong>
+                  （剩余可见）、
+                  <strong>已开字符</strong>
+                  （输入长度）、
+                  <strong>揭示率</strong>
+                  （当前百分比）。
+                </li>
+              </ul>
+            </div>
+            <div id="s7-3">
+              <h3>7.3 曲目交互</h3>
+              <p>在"解析结果"列表中，每一行是一首曲目，包含：</p>
+              <ul class="li-arrow">
+                <li>
+                  <strong>序号</strong>
+                  （灰色）、
+                  <strong>遮罩内容</strong>
+                  （未开字符显示为遮罩符号，已开字符为橙色）。
+                </li>
+                <li>
+                  <strong>🔍 查询来源按钮</strong>
+                  （若开启了"曲目来源查询"）：点击弹出面板显示该曲目在哪些范围出现，以及共同范围。可一键复制。
+                </li>
+                <li>
+                  <strong>☀️ 单独提示按钮</strong>
+                  ：点击弹出"单独提示字符"窗口，展示该曲目的所有字符；点击任意字符可切换其"强制公开"状态（黄色高亮）。这不影响全局已开字符计数，也不影响揭示率。适合主持人在关键时刻给出提示。关闭窗口时自动保存快照。
+                </li>
+                <li>
+                  <strong>点击整行</strong>
+                  ：显示/隐藏完整曲名（绿色高亮）。若曲目是拼合过的，会显示所有拼合的原始曲名，以
+                  <code class="mono">/</code>
+                  分隔。
+                </li>
+                <li>若开启了"竞猜记名模式"，点击显示全名时会弹窗要求输入猜出者名字；取消则不会显示全名。</li>
+              </ul>
+            </div>
+            <div id="s7-4">
+              <h3>7.4 单独提示字符</h3>
+              <p>点击曲目旁的 ☀️ 按钮，弹出窗口显示曲目的每个字符（已应用难度变换后的文本）。</p>
+              <ul class="li-arrow">
+                <li>点击任意字符：切换"强制提示"状态（黄色背景）。</li>
+                <li>强制提示的字符在结果区显示为黄色，不计入"揭示率"。</li>
+                <li>可用于主持人给单个提示，不泄露全局进度。</li>
+                <li>点"完成"关闭，会自动保存一次快照（可撤销）。</li>
+              </ul>
+            </div>
+            <div id="s7-5">
+              <h3>7.5 隐藏已猜出</h3>
+              <p>
+                玩家猜出曲目后，主持人可以点击
+                <span class="tag tag-warn">隐藏已猜出</span>
+                按钮批量隐藏：
+              </p>
+              <ol class="ol-number">
+                <li>所有处于"显示完整曲名"状态的曲目被移入"已隐藏"。</li>
+                <li>"已隐藏"的数量会显示在按钮左侧。</li>
+                <li>隐藏后该曲目不再显示在结果区。</li>
+                <li>
+                  若开启"竞猜记名模式"，未填写猜出者名字的曲目会被跳过（提示"有 N 首未填写名字，无法隐藏"）。
+                </li>
+              </ol>
+            </div>
+            <div id="s7-6">
+              <h3>7.6 竞猜记名模式</h3>
+              <p>若在设置中开启"竞猜记名模式"：</p>
+              <ul class="li-arrow">
+                <li>每次点击显示曲目全名时，弹窗要求输入猜出者名字；不填则取消操作。</li>
+                <li>游戏页顶部会显示"竞猜排行榜"卡片，按猜出数量从高到低排列，前三名分别以金、银、铜色标识。</li>
+                <li>隐藏已猜出时，未填名字的曲目会阻止隐藏。</li>
+                <li>结算时会输出排行榜。</li>
+              </ul>
+            </div>
+            <div id="s7-7">
+              <h3>7.7 撤销与重做</h3>
+              <ul class="li-arrow">
+                <li>
+                  <strong>↶ 撤销</strong>
+                  /
+                  <strong>↷ 重做</strong>
+                  ：回退/重做开字符、隐藏曲目、单独提示等操作，历史记录最多保留 50 步。
+                </li>
+                <li>
+                  <strong>重置</strong>
+                  ：清空所有开启字符与单独提示（可撤销）。
+                </li>
+                <li>撤销/重做按钮在无可撤销操作时自动禁用。</li>
+              </ul>
+            </div>
+            <h3>7.8 结果区底部统计</h3>
+            <ul class="li-arrow">
+              <li>
+                <strong>竞猜排行榜</strong>
+                （若开启）：实时显示排行榜。
+              </li>
+              <li>
+                <strong>各范围未出曲目统计</strong>
+                （若开启）：显示仍未猜出的曲目按范围的统计，例如
+                <code class="mono">[Phigros] 3首</code>
+                。可一键复制。
+              </li>
+              <li>
+                <strong>字符类型占比</strong>
+                （若开启）：显示已开字符中各类字符的百分比。
+              </li>
+              <li>
+                <strong>题面范围</strong>
+                （若开启"在结果区显示题面范围"）：末尾追加当前范围列表。
+              </li>
+              <li>
+                <strong>备注</strong>
+                ：显示在末尾，[] 包裹。
+              </li>
+            </ul>
+            <h3>7.9 导出与复制</h3>
+            <ul class="li-arrow">
+              <li>
+                <span class="tag tag-btn">导出图片</span>
+                ：把当前结果区渲染成 JPEG，直接下载。
+              </li>
+              <li>
+                <span class="tag tag-btn">复制结果</span>
+                ：把结果文本复制到剪贴板（包含
+                <code class="mono">guessed:xxx</code>
+                行、曲目列表、备注等）。
+              </li>
+            </ul>
+          </section>
+          <!-- ========== 8 ========== -->
+          <section id="s8">
+            <h2>
+              <span>🏁</span>
+              8. 开字母结算
+            </h2>
+            <p>结束游戏后进入 Page 3。结算页包含三个卡片，每张卡片都可复制或导出图片：</p>
+            <h3>8.1 结算信息</h3>
+            <ul class="li-arrow">
+              <li>用时（若开启计时）；</li>
+              <li>曲目总数 + 猜出数量（全部猜出会显示"（全部猜出）"）；</li>
+              <li>平均用时（秒/首）；</li>
+              <li>开启字符数 + 平均用时（秒/字符）；</li>
+              <li>揭开字符率 %；</li>
+              <li>猜出曲目排行榜（若开启竞猜记名）；</li>
+              <li>字符类型占比（若开启"复制/导出时带上字符类型占比"）；</li>
+              <li>题面范围（若开启"显示题面范围"）。</li>
+            </ul>
+            <h3>8.2 未猜出的曲目</h3>
+            <p>列出玩家没猜出来的曲目及序号。全部猜出时显示"太棒了，全部都猜出来了！"。</p>
+            <h3>8.3 完整题面</h3>
+            <p>本局游戏的所有曲目及序号，末尾可含备注。用于复盘和存档。</p>
+            <h3>8.4 页脚按钮</h3>
+            <ul class="li-arrow">
+              <li>
+                <span class="tag tag-btn">开始新游戏</span>
+                ：重置状态并返回设置页。
+              </li>
+              <li>
+                <span class="tag tag-btn">返回编辑</span>
+                ：保留曲库和设置，返回设置页。
+              </li>
+            </ul>
+          </section>
+          <!-- ========== 9 ========== -->
+          <section id="s9">
+            <h2>
+              <span>📐</span>
+              9. 生成设置
+              <span class="badge-mode badge-wordlink">连连看专属</span>
+            </h2>
+            <p>"生成设置"卡片仅连连看模式显示：</p>
+            <ul class="li-arrow">
+              <li>
+                <strong>曲名密度</strong>
+                ：10%~100% 滑条，默认 70%。决定曲名要覆盖网格中多少比例的格子；剩余格子用随机字符填充。
+              </li>
+              <li>
+                <strong>抽取曲目到候选池</strong>
+                ：从已勾选范围的曲目中按长度均匀抽取一批到"手动输入"文本框。
+              </li>
+            </ul>
+            <div class="alert alert-info">
+              <div>
+                <div class="alert-title">长度均匀抽取逻辑</div>
+                <div style="font-size:14px;color:var(--muted);">
+                  系统按曲名长度分桶，每个长度档按比例抽取若干首，避免全是 3 字或全是 20+ 字的曲名，让网格布局更均衡。
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- ========== 10 ========== -->
+          <section id="s10">
+            <h2>
+              <span>➕</span>
+              10. 额外待猜文本
+              <span class="badge-mode badge-wordlink">连连看专属</span>
+            </h2>
+            <p>在"手动输入"标签中有一个"额外待猜文本"文本框（仅连连看显示）。</p>
+            <ul class="li-arrow">
+              <li>一行一个文本，可以是任何内容（不一定是曲名，也可以是短语、梗、口号等）。</li>
+              <li>这些文本会与曲名一起被塞入网格，参与猜词。</li>
+              <li>去除空格并统一大写后参与游戏。</li>
+              <li>
+                <strong>优先级高于普通曲名</strong>
+                ：放置时先尝试放额外文本，再放曲名。
+              </li>
+              <li>若额外文本因空间不足被跳过，会弹出确认弹窗提示。</li>
+            </ul>
+          </section>
+          <!-- ========== 11 ========== -->
+          <section id="s11">
+            <h2>
+              <span>🧩</span>
+              11. 网格与玩法设置
+              <span class="badge-mode badge-wordlink">连连看专属</span>
+            </h2>
+            <table class="desc-table">
+              <thead>
+                <tr>
+                  <th>设置项</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>行数 a（纵向）</td>
+                  <td>3-60，默认 12。</td>
+                </tr>
+                <tr>
+                  <td>列数 b（横向）</td>
+                  <td>3-60，默认 12。</td>
+                </tr>
+                <tr>
+                  <td>允许同一格重复使用</td>
+                  <td>默认开启。不同曲名可以共用同一格字符（交叉、重叠）。关闭则每格最多一个字符归属。</td>
+                </tr>
+                <tr>
+                  <td>进阶模式</td>
+                  <td>允许拐弯连线。关闭则曲名只能横/竖/斜直线放置。</td>
+                </tr>
+                <tr>
+                  <td>— 仅横竖拐弯（90°）</td>
+                  <td>进阶模式下允许拐 90° 的弯（不能 45° 斜拐）。</td>
+                </tr>
+                <tr>
+                  <td>— 任意方向拐弯</td>
+                  <td>进阶模式下允许任意方向拐弯（含斜拐）。</td>
+                </tr>
+                <tr>
+                  <td>答案唯一性优先</td>
+                  <td>
+                    默认开启。填充随机字符时尽量不凑出未放置的曲库曲名，避免玩家误猜；关闭则填充速度更快但可能出现"假曲名"。
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="alert alert-info">
+              <div>
+                <div class="alert-title">网格大小推荐</div>
+                <div style="font-size:14px;color:var(--muted);">
+                  默认 12×12 适合 10~20 首曲目。若曲名较长或数量较多，建议 15×15 或更大。行/列上限 60，但超过 30 时单元格会自动缩小以适应屏幕。
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- ========== 12 ========== -->
+          <section id="s12">
+            <h2>
+              <span>🔗</span>
+              12. 连连看游戏界面
+            </h2>
+            <div id="s12-1">
+              <h3>12.1 网格与连线</h3>
+              <ul class="li-arrow">
+                <li>
+                  <strong>网格</strong>
+                  ：所有字符按行×列排列，每格一字符。
+                </li>
+                <li>
+                  <strong>已猜出的曲目</strong>
+                  ：其路径会以彩色连线覆盖在网格上（直线用线段/矩形，拐弯用折线）。每首歌有独立的颜色。
+                </li>
+                <li>
+                  <strong>提示起点</strong>
+                  ：被提示的曲名起点格会用黄色背景+黄色边框高亮。
+                </li>
+                <li>
+                  <strong>未猜出的曲目</strong>
+                  ：不显示任何连线，玩家需自行寻找。
+                </li>
+              </ul>
+            </div>
+            <div id="s12-2">
+              <h3>12.2 猜词交互</h3>
+              <p>
+                本模式
+                <strong>不支持滑动选择</strong>
+                ，玩家猜词的方式是：
+              </p>
+              <ul class="li-arrow">
+                <li>在网格下方的"待猜曲目列表"中，直接点击某一首曲名（即视为猜出）。</li>
+                <li>点击后如果开启了竞猜记名模式，会弹窗要求填写猜出者名字。</li>
+                <li>猜出后该曲目移入"已猜出曲目"列表，网格上显示其彩色连线。</li>
+                <li>已猜出列表可点击"撤销"按钮将某首曲目退回未猜状态（例如误点）。</li>
+              </ul>
+            </div>
+            <div id="s12-3">
+              <h3>12.3 提示一个起点</h3>
+              <p>
+                点击
+                <span class="tag tag-warn">提示一个起点</span>
+                按钮：
+              </p>
+              <ul class="li-arrow">
+                <li>系统从所有未猜出的曲目中随机选一首（若已有提示，则换一首）；</li>
+                <li>
+                  高亮该曲名的
+                  <strong>首字符所在格</strong>
+                  （黄色背景）；
+                </li>
+                <li>按钮右侧显示"提示：从第 X 行、第 Y 列 出发"；</li>
+                <li>再次点击会换一首曲名高亮；</li>
+                <li>猜出该曲名后提示自动清除。</li>
+              </ul>
+            </div>
+            <div id="s12-4">
+              <h3>12.4 待猜/已猜列表</h3>
+              <h4>待猜曲目列表</h4>
+              <ul class="li-arrow">
+                <li>显示所有尚未猜出的曲目，格式为"● 曲名 [来源]"。</li>
+                <li>点击曲名即标记猜出。</li>
+                <li>可点"收起"折叠此列表节省屏幕空间。</li>
+              </ul>
+              <h4>已猜出曲目列表</h4>
+              <ul class="li-arrow">
+                <li>
+                  按
+                  <strong>猜出的先后顺序</strong>
+                  排列，带序号 #1、#2……
+                </li>
+                <li>每项左侧有颜色圆点（对应网格连线的颜色）。</li>
+                <li>可点"撤销"退回未猜状态。</li>
+                <li>若开启了"曲目来源查询"，每项右侧有 🔍 按钮。</li>
+              </ul>
+            </div>
+            <div id="s12-5">
+              <h3>12.5 跳过确认</h3>
+              <p>
+                点击
+                <span class="tag tag-btn">生成连连看题面</span>
+                时，如果存在因空间不足/长度超限而
+                <strong>被跳过</strong>
+                的曲目：
+              </p>
+              <ul class="li-arrow">
+                <li>会弹出"部分曲目未能放入网格"弹窗，列出：</li>
+                <li>— 未能放入的额外待猜文本（红色，最高优先级，会被特别标注）</li>
+                <li>— 未能放入的普通曲名（黄色）</li>
+                <li>— 已放置数量与覆盖率</li>
+                <li>点"返回调整"可返回修改网格/密度；点"仍然继续"则忽略跳过项，进入游戏。</li>
+              </ul>
+            </div>
+            <h3>12.6 导出图片</h3>
+            <p>
+              游戏进行中点击
+              <span class="tag tag-btn">导出图片</span>
+              ：
+            </p>
+            <ul class="li-arrow">
+              <li>渲染当前网格 + 已猜出彩色连线 + 提示高亮；</li>
+              <li>未猜出的曲目不显示任何连线（不泄露答案）；</li>
+              <li>可选在下方附加"题面范围"和"已猜出曲目列表"（由设置中的"在导出图片中显示..."开关控制）。</li>
+            </ul>
+          </section>
+          <!-- ========== 13 ========== -->
+          <section id="s13">
+            <h2>
+              <span>🏆</span>
+              13. 连连看结算
+            </h2>
+            <p>结束游戏后进入 Page 5，包含：</p>
+            <h3>13.1 结算信息</h3>
+            <ul class="li-arrow">
+              <li>用时、曲目总数、猜出数、完成度百分比；</li>
+              <li>平均用时（秒/首，若开启计时）；</li>
+              <li>题面范围（若开启"在结果区显示题面范围"）；</li>
+              <li>竞猜排行榜（若开启竞猜记名）。</li>
+            </ul>
+            <h3>13.2 题面与连线总览</h3>
+            <ul class="li-arrow">
+              <li>以 SVG 展示完整网格，包含：</li>
+              <li>
+                — 已猜出：
+                <strong>彩色实线</strong>
+                路径
+              </li>
+              <li>
+                — 未猜出：
+                <strong>灰色虚线</strong>
+                路径（方便主持人复盘）
+              </li>
+              <li>
+                点"导出图片"可导出为 JPEG，包含：题面范围、已猜出列表（按顺序）、未猜出列表、以及上述完整网格图。
+              </li>
+            </ul>
+            <h3>13.3 完整曲目列表</h3>
+            <p>格式为：</p>
+            <div class="code-block mono">
+              【已猜出（按猜出顺序）】
+              <br></br>
+              1. 曲名A（张三） [Phigros]
+              <br></br>
+              2. 曲名B [Arcaea]
+              <br></br>
+              ...
+              <br></br>
+              <br></br>
+              【未猜出】
+              <br></br>
+              1. 曲名C [Phigros]
+              <br></br>
+              ...
+            </div>
+            <h3>13.4 未猜出的曲目</h3>
+            <p>只列出未猜出的曲名，便于后续分析。</p>
+            <h3>13.5 页脚按钮</h3>
+            <p>
+              同开字母结算：
+              <strong>开始新游戏</strong>
+              /
+              <strong>返回编辑</strong>
+              。
+            </p>
+          </section>
+          <!-- ========== 14 ========== -->
+          <section id="s14">
+            <h2>
+              <span>⚙️</span>
+              14. 设置面板
+            </h2>
+            <p>点击顶栏 ⚙️ 图标打开。设置面板根据当前模式动态显示/隐藏区块。</p>
+            <div id="s14-1">
+              <h3>
+                14.1 通用功能
+                <span class="badge-mode badge-both">双模式</span>
+              </h3>
+              <div class="func-grid">
+                <div class="func-item">
+                  <div class="fi-title">开启计时功能</div>
+                  <div class="fi-desc">关闭后游戏页不显示计时器，结算也不统计用时。</div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">开启结算功能</div>
+                  <div class="fi-desc">关闭后点"结束游戏"直接返回设置页，不生成结算报告。</div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">在结果区/导出图片中显示题面范围</div>
+                  <div class="fi-desc">
+                    与备注独立。开启后结果区末尾、导出图片底部都会附加当前范围列表。
+                  </div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">开启曲目来源查询</div>
+                  <div class="fi-desc">
+                    曲目行旁显示 🔍 按钮，可查看该曲目出现过的所有范围及共同范围。
+                  </div>
+                </div>
+                <div class="func-item">
+                  <div class="fi-title">竞猜记名模式</div>
+                  <div class="fi-desc">猜出时需填名字，会显示排行榜，结算时输出排行榜。</div>
+                </div>
+              </div>
+            </div>
+            <div id="s14-2">
+              <h3>
+                14.2 开字母专属
+                <span class="badge-mode badge-letter">开字母</span>
+              </h3>
+              <table class="desc-table">
+                <thead>
+                  <tr>
+                    <th>设置</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>遮罩符号</td>
+                    <td>
+                      默认
+                      <code class="mono">*</code>
+                      ，可改为任意 1~2 字符。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>空格也隐藏为遮罩符号</td>
+                    <td>默认关闭。开启后曲名中的空格也变成遮罩，玩家无法通过空格位置判断单词边界。</td>
+                  </tr>
+                  <tr>
+                    <td>开启字符排序</td>
+                    <td>默认开启。把已开字符按类型排序后显示。</td>
+                  </tr>
+                  <tr>
+                    <td>最大开字符数</td>
+                    <td>0 为不限制。达到后输入会被拦截。</td>
+                  </tr>
+                  <tr>
+                    <td>最大揭开率</td>
+                    <td>0 为不限制。达到后继续输入会被拦截。</td>
+                  </tr>
+                  <tr>
+                    <td>英文字母大小写</td>
+                    <td>不转换 / 全部小写 / 全部大写。</td>
+                  </tr>
+                  <tr>
+                    <td>字符换位程度</td>
+                    <td>0-100%。随机交换字符位置。</td>
+                  </tr>
+                  <tr>
+                    <td>字母替换程度</td>
+                    <td>0-100%。随机替换英文字母为其他随机字母。</td>
+                  </tr>
+                  <tr>
+                    <td>最大拼合曲数</td>
+                    <td>1 为不拼合；>1 时把同一范围的多个曲名拼成一个条目。</td>
+                  </tr>
+                  <tr>
+                    <td>显示字符类型占比</td>
+                    <td>在结果区顶部实时显示已开字符的各类占比。</td>
+                  </tr>
+                  <tr>
+                    <td>复制/导出时带上字符类型占比</td>
+                    <td>复制结果和导出图片时附上占比数据。</td>
+                  </tr>
+                  <tr>
+                    <td>输出中显示开字母限制进度</td>
+                    <td>导出时附当前字符限制和揭开率的进度。</td>
+                  </tr>
+                  <tr>
+                    <td>输出中显示各范围未出曲目统计</td>
+                    <td>导出时附各范围剩余未猜出的统计。</td>
+                  </tr>
+                  <tr>
+                    <td>固定导出图片 9:16 比例</td>
+                    <td>导出图片固定为 1080×1920 竖屏。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="alert alert-info">
+                <div>
+                  <div class="alert-title">变换执行顺序</div>
+                  <div style="font-size:14px;color:var(--muted);">
+                    内部顺序：拼合 → 换位 → 替换 → 大小写转换。大小写转换最后执行。单独提示和来源查询基于最终变换后的文本；来源查询会同时显示原始曲名。
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="s14-3">
+              <h3>14.3 难度增强（显示变换）说明</h3>
+              <p>
+                用于赛前对曲名进行多种处理，大幅提升难度。所有变换在开始游戏时
+                <strong>一次性</strong>
+                应用，游戏中不可再修改。
+              </p>
+              <ul class="li-arrow">
+                <li>
+                  <strong>字符换位</strong>
+                  ：随机交换字符位置，例如 50% 的
+                  <code class="mono">Hello</code>
+                  可能变为
+                  <code class="mono">eHllo</code>
+                  。
+                </li>
+                <li>
+                  <strong>字母替换</strong>
+                  ：随机替换英文字母为其他字母，例如 30% 的
+                  <code class="mono">Arcahv</code>
+                  可能变为
+                  <code class="mono">Akcahx</code>
+                  。
+                </li>
+                <li>
+                  <strong>最大拼合曲数</strong>
+                  ：把同范围的曲名随机 2~N 首拼成一条，
+                  <code class="mono">
+                  </code>
+                  分隔。玩家需猜出所有拼合曲名。
+                </li>
+              </ul>
+            </div>
+            <div id="s14-4">
+              <h3>14.4 导出设置</h3>
+              <table class="desc-table">
+                <thead>
+                  <tr>
+                    <th>设置</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>图片清晰度</td>
+                    <td>
+                      1x（标准）/ 2x（推荐）/ 3x（高清）/ 4x（超清）。倍数越大图片越清晰但文件越大。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>在导出图片中显示已猜出曲目列表</td>
+                    <td>
+                      <span class="badge-mode badge-wordlink">连连看</span>
+                      专属。开启后在图片底部附加已猜出的曲名列表。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>背景颜色</td>
+                    <td>导出图片的背景色。</td>
+                  </tr>
+                  <tr>
+                    <td>文字颜色</td>
+                    <td>导出图片的文字色。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>14.5 曲库导出</h3>
+            <p>
+              见
+              <a href="#s2-6" style="color:var(--accent);text-decoration:underline;">
+                2.6 曲库导出
+              </a>
+              。
+            </p>
+          </section>
+          <!-- ========== 15 ========== -->
+          <section id="s15">
+            <h2>
+              <span>❓</span>
+              15. 常见问题
+            </h2>
+            <div class="card">
+              <h4 style="margin-top:0;">Q1. 点击"生成曲目列表"没反应怎么办？</h4>
+              <p>请打开浏览器 F12 控制台，查看是否有红色报错。常见原因：</p>
+              <ul class="li-dot">
+                <li>未选择任何范围（会提示"请至少选择一个游戏范围"）；</li>
+                <li>过滤器过严导致无符合曲目（会提示"没有符合条件的曲目"）；</li>
+                <li>曲库未导入（会提示"曲库为空，请先导入"）。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q2. 数据保存在哪里？</h4>
+              <p>
+                游戏状态在 localStorage（键
+                <code class="mono">songGameToolbox_v1</code>
+                ），曲库在 IndexedDB（
+                <code class="mono">SongGameToolboxDB</code>
+                ）。清除浏览器数据会全部丢失，请保留 TXT 备份。
+              </p>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q3. 两个模式的进度会互相影响吗？</h4>
+              <p>
+                不会。每个模式有独立的 sheet 数据（开字母 sheet 和连连看 sheet）。切换模式时各自的进度、过滤器、游戏状态都会保留。但曲库是共享的。
+              </p>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q4. "答案唯一性优先"是什么意思？</h4>
+              <p>
+                连连看模式中，填充随机字符时会
+                <strong>尝试避免</strong>
+                凑出未放置的曲库曲名。开启后玩家在网格里看到的"看似曲名"的组合会大幅减少，避免误猜。关闭会略微提升生成速度，但可能出现"假曲名"。
+              </p>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q5. 为什么提示的起点格有时和答案不完全对应？</h4>
+              <p>
+                提示高亮的是
+                <strong>首字符所在格</strong>
+                。若同一首曲名路径被反向查找（末字符到首字符），提示仍然高亮首字符位置，玩家可以从两端开始寻找。
+              </p>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q6. "额外待猜文本"和普通曲名有什么区别？</h4>
+              <p>
+                额外待猜文本不是曲库里的曲名，可以是任意自定义内容（短语、梗等）。它们会被优先放入网格，并且和曲名一样可以被猜出和结算。若空间不足会弹窗特别提示。
+              </p>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q7. 为什么修改了曲库没保存？</h4>
+              <p>
+                编辑曲库窗口内的增删改是
+                <strong>内存操作</strong>
+                ，需要点击"保存修改"才会写入 IndexedDB。点"重置回初始状态"可以丢弃改动，回到导入时的原始数据。
+              </p>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q8. 残局恢复弹窗如何触发？</h4>
+              <p>当满足以下条件时会自动弹出：</p>
+              <ul class="li-dot">
+                <li>有已保存的模式（state.mode 不为空）；</li>
+                <li>
+                  该模式的 sheet 存在未完成的游戏数据（有 songs/placedSongs 和 grid 等）；
+                </li>
+                <li>上次离开时停留的页面是游戏页（2 或 4）；</li>
+                <li>未被用户勾选"不再提示"（首次访问弹窗的复选框）。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q9. 导出图片为什么没有立即下载？</h4>
+              <p>
+                导出图片（无论开字母还是连连看）应
+                <strong>自动下载</strong>
+                ，不会有弹窗。若未下载：
+              </p>
+              <ul class="li-dot">
+                <li>检查浏览器是否禁用了自动下载；</li>
+                <li>检查是否触发了多条下载拦截提示；</li>
+                <li>检查 F12 控制台是否有报错。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 style="margin-top:0;">Q10. 如何切换日间/夜间模式？</h4>
+              <p>点击顶栏右侧的 🌙 / ☀️ 图标切换。日间模式为浅色，夜间模式为深色。设置项会保存到状态中。</p>
+            </div>
+          </section>
+          <!-- ========== 16 ========== -->
+          <section id="s16">
+            <h2>
+              <span>📮</span>
+              16. 联系开发者
+            </h2>
+            <div class="card">
+              <ul class="li-arrow">
+                <li>
+                  <strong>QQ：</strong>
+                  3962976891
+                </li>
+                <li>
+                  <strong>Email 1：</strong>
+                  3962976891@qq.com
+                </li>
+                <li>
+                  <strong>Email 2：</strong>
+                  falloxygen.onezeroseven@gmail.com
+                </li>
+                <li>
+                  <strong>Bilibili：</strong>
+                  UID 3546979370010679
+                </li>
+              </ul>
+              <p style="color:var(--muted);font-size:14px;margin-top:12px;">
+                也可在应用内设置面板底部找到相同的联系方式。
+              </p>
+            </div>
+          </section>
+          <footer class="text-center mt-12 mb-8" style="color: var(--muted);">
+            <p>本指南基于最新版本源代码（双模式整合版）生成。如有疑问，请联系开发者。</p>
+            <p class="mt-2 text-sm">
+              回到顶部：
+              <a href="#" style="color: var(--accent);">⬆ Top</a>
+            </p>
+          </footer>
+        </main>
+      </div>
+    </div>
+  </body>
 </html>
