@@ -1649,6 +1649,14 @@
             </button>
           </div>
           <div class="mb-4">
+  <div class="text-sm font-semibold mb-3" style="color:var(--accent)">
+    使用指南
+  </div>
+  <button id="openGuideBtn" class="btn btn-primary btn-sm w-full">
+    📖 打开完整使用指南
+  </button>
+</div>
+          <div class="mb-4">
             <div class="text-sm font-semibold mb-3" style="color:var(--accent)">
               联系开发者
             </div>
@@ -1704,6 +1712,9 @@
         <div class="modal-buttons" style="margin-top:16px">
           <button id="closeFirstVisit" class="btn btn-primary">
             开始使用
+          </button>
+          <button id="goToGuide" class="btn btn-primary">
+            前往使用指南
           </button>
         </div>
       </div>
@@ -6810,11 +6821,21 @@
         showToast(`已导出 ${songs.length} 首`);
       });
 
-      document.getElementById('closeFirstVisit').addEventListener('click',()=>{
-        if(document.getElementById('dontShowGuideAgain').checked)localStorage.setItem('sgt_dontShowGuide','true');
-        document.getElementById('firstVisitModal').classList.remove('show');
-        if(window._pendingRestore){window._pendingRestore=false;showRestoreModal()}
-      });
+      const USER_GUIDE_URL='https://falloxygen.github.io/user-guide.html';
+
+document.getElementById('closeFirstVisit').addEventListener('click',()=>{
+  if(document.getElementById('dontShowGuideAgain').checked)localStorage.setItem('sgt_dontShowGuide','true');
+  document.getElementById('firstVisitModal').classList.remove('show');
+  if(window._pendingRestore){window._pendingRestore=false;showRestoreModal()}
+});
+document.getElementById('goToGuide').addEventListener('click',()=>{
+  if(document.getElementById('dontShowGuideAgain').checked)localStorage.setItem('sgt_dontShowGuide','true');
+  document.getElementById('firstVisitModal').classList.remove('show');
+  window.open(USER_GUIDE_URL,'_blank');
+});
+document.getElementById('openGuideBtn').addEventListener('click',()=>{
+  window.open(USER_GUIDE_URL,'_blank');
+});
 
       ['settingsModal','renameModal','lookupModal','customLibModal','exportModal','editLibModal','manualSelectModal','firstVisitModal','nameInputModal','restoreModal','skippedModal','forceRevealModal'].forEach(id=>{
         const el=document.getElementById(id);
