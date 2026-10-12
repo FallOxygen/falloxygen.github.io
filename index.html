@@ -4179,23 +4179,32 @@ updateFilterCount();
 }
 
 function updateCharTypeCheckboxes(){
-// 从 DOM 读取勾选 -> 更新 charRatioState -> 渲染滑条
-const enabled=[];
-document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{if(cb.checked)enabled.push(cb.dataset.chartype)});
-if(document.getElementById('filterAllowOther').checked)enabled.push('other');
-// 移除不再勾选的
-Object.keys(charRatioState).forEach(k=>{
-if(!enabled.includes(k))delete charRatioState[k];
-});
-// 新勾选的平均分配（先按当前剩余总额）
-const newOnes=enabled.filter(k=>charRatioState[k]===undefined);
-if(newOnes.length>0){
-const remain=100-Object.values(charRatioState).reduce((a,b)=>a+b,0);
-const avg=newOnes.length>0?Math.max(0,remain/newOnes.length):0;
-newOnes.forEach(k=>charRatioState[k]=avg);
-}
-normalizeCharRatioState();
-renderCharSliders();
+    const enabled=[];
+    document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{if(cb.checked)enabled.push(cb.dataset.chartype)});
+    if(document.getElementById('filterAllowOther').checked)enabled.push('other');
+    
+    // 移除不再勾选的
+    Object.keys(charRatioState).forEach(k=>{
+        if(!enabled.includes(k))delete charRatioState[k];
+    });
+    
+    const newOnes=enabled.filter(k=>charRatioState[k]===undefined);
+    if(newOnes.length>0){
+        const existingKeys=Object.keys(charRatioState);
+        const currentSum = existingKeys.reduce((a,k)=>a+(charRatioState[k]||0),0);
+        
+        // 【修复】如果现有项已经占满100%或没有现有项，直接平分所有启用的项
+        if(existingKeys.length === 0 || currentSum >= 100) {
+            enabled.forEach(k => charRatioState[k] = 100 / enabled.length);
+        } else {
+            // 否则，将剩余空间平分给新项
+            const remain = 100 - currentSum;
+            const avg = remain / newOnes.length;
+            newOnes.forEach(k => charRatioState[k] = avg);
+        }
+    }
+    normalizeCharRatioState();
+    renderCharSliders();
 }
 
 /* ============================================================
@@ -4577,23 +4586,32 @@ updateFilterCount();
 }
 
 function updateCharTypeCheckboxes(){
-const enabled=[];
-document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{if(cb.checked)enabled.push(cb.dataset.chartype)});
-if(document.getElementById('filterAllowOther').checked)enabled.push('other');
-Object.keys(charRatioState).forEach(k=>{if(!enabled.includes(k))delete charRatioState[k]});
-const newOnes=enabled.filter(k=>charRatioState[k]===undefined);
-if(newOnes.length>0){
-const existingKeys=Object.keys(charRatioState);
-if(existingKeys.length===0){
-newOnes.forEach(k=>charRatioState[k]=100/newOnes.length);
-}else{
-const remain=100-existingKeys.reduce((a,k)=>a+(charRatioState[k]||0),0);
-const avg=Math.max(1,remain/newOnes.length);
-newOnes.forEach(k=>charRatioState[k]=avg);
-}
-}
-normalizeCharRatioState();
-renderCharSliders();
+    const enabled=[];
+    document.querySelectorAll('#filterCharTypes input[data-chartype]').forEach(cb=>{if(cb.checked)enabled.push(cb.dataset.chartype)});
+    if(document.getElementById('filterAllowOther').checked)enabled.push('other');
+    
+    // 移除不再勾选的
+    Object.keys(charRatioState).forEach(k=>{
+        if(!enabled.includes(k))delete charRatioState[k];
+    });
+    
+    const newOnes=enabled.filter(k=>charRatioState[k]===undefined);
+    if(newOnes.length>0){
+        const existingKeys=Object.keys(charRatioState);
+        const currentSum = existingKeys.reduce((a,k)=>a+(charRatioState[k]||0),0);
+        
+        // 【修复】如果现有项已经占满100%或没有现有项，直接平分所有启用的项
+        if(existingKeys.length === 0 || currentSum >= 100) {
+            enabled.forEach(k => charRatioState[k] = 100 / enabled.length);
+        } else {
+            // 否则，将剩余空间平分给新项
+            const remain = 100 - currentSum;
+            const avg = remain / newOnes.length;
+            newOnes.forEach(k => charRatioState[k] = avg);
+        }
+    }
+    normalizeCharRatioState();
+    renderCharSliders();
 }
 
 /* ============================================================
@@ -4708,14 +4726,25 @@ setV('filterIncludeKeywords',f.includeKeywords||'');
 const eo=document.getElementById('filterExclusiveOnly');if(eo)eo.checked=!!f.exclusiveOnly;
 charRatioState={};
 if(f.charRatios){
-Object.assign(charRatioState,f.charRatios);
-const enabled=[...f.charTypes];
-if(f.allowOther)enabled.push('other');
-Object.keys(charRatioState).forEach(k=>{if(!enabled.includes(k))delete charRatioState[k]});
-enabled.forEach(k=>{if(charRatioState[k]===undefined)charRatioState[k]=100/enabled.length});
-normalizeCharRatioState();
+    Object.assign(charRatioState,f.charRatios);
+    const enabled=[...f.charTypes];
+    if(f.allowOther)enabled.push('other');
+    Object.keys(charRatioState).forEach(k=>{if(!enabled.includes(k))delete charRatioState[k]});
+    
+    // 【修复】更健壮的新增项分配逻辑，防止恢复时比例溢出
+    const newOnes = enabled.filter(k => charRatioState[k] === undefined);
+    if(newOnes.length > 0) {
+        const currentSum = Object.values(charRatioState).reduce((a,b)=>a+(b||0),0);
+        if(currentSum >= 100) {
+            enabled.forEach(k => charRatioState[k] = 100 / enabled.length);
+        } else {
+            const remain = 100 - currentSum;
+            newOnes.forEach(k => charRatioState[k] = remain / newOnes.length);
+        }
+    }
+    normalizeCharRatioState();
 }else{
-initCharRatioState();
+    initCharRatioState();
 }
 renderCharSliders();
 updateCustomCounts();
@@ -5526,9 +5555,14 @@ const estCount=Math.max(lens.length*2,Math.min(allSongs.length,Math.round(target
 const perBucket=Math.max(2,Math.ceil(estCount/lens.length));
 const picked=[];
 for(const L of lens){
-const bucket=byLen[L];
-const take=Math.min(bucket.length,perBucket);
-for(let i=0;i<take;i++)picked.push(bucket[i]);
+    const bucket=byLen[L];
+    const take=Math.min(bucket.length,perBucket);
+    
+    // 【修复】使用占比感知抽取，使每个长度桶内也参考字符类型占比
+    const bucketPicked = pickSongsByRatios(bucket, take, sheet.filters.charRatios);
+    for(const s of bucketPicked) {
+        if(!picked.includes(s)) picked.push(s);
+    }
 }
 shuffleArr(picked);
 elements.songInput.value=picked.map((s,i)=>`${i+1}.${s}`).join('\n');
@@ -5674,6 +5708,39 @@ if(ok)return path;
 return null;
 }
 
+/* ============================================================
+连连看：网格构建优化（多次尝试逼近目标覆盖率）
+============================================================ */
+async function optimizeGridBuild(sheet, items, targetCells) {
+    const maxTrials = 500; // 允许的最大尝试次数
+    const timeLimit = 1000; // 最大耗时 1000ms，防止页面卡死
+    const startTime = performance.now();
+    
+    let bestResult = null;
+    let minDiff = Infinity;
+    
+    for (let i = 0; i < maxTrials; i++) {
+        // 每次调用 buildGrid 都会内部打乱顺序，产生不同的放置结果
+        const result = buildGrid(sheet, items, targetCells);
+        const diff = Math.abs(result.totalPlacedChars - targetCells);
+        
+        // 记录误差最小的结果
+        if (diff < minDiff) {
+            minDiff = diff;
+            bestResult = result;
+            if (diff === 0) break; // 完美匹配，提前结束
+        }
+        
+        // 每 20 次检查一次时间并让出主线程，保证 UI 流畅不卡顿
+        if (i % 20 === 0) {
+            if (performance.now() - startTime > timeLimit) break;
+            await new Promise(r => setTimeout(r, 0));
+        }
+    }
+    
+    return bestResult;
+}
+
 function buildGrid(sheet,items,targetCells){
 const R=sheet.gridRows,C=sheet.gridCols;
 const adv=sheet.advancedMode,ortho=sheet.advancedSubmode==='ortho',allowOverlap=sheet.allowOverlap;
@@ -5755,7 +5822,7 @@ placed.forEach((s,i)=>{s.color=SONG_COLORS[i%SONG_COLORS.length]});
 return{grid,placed,skipped,totalPlacedChars:placedChars};
 }
 
-function startWordLinkGame(){
+async function startWordLinkGame(){
 const sheet=cs();
 const songs=parseSongs(elements.songInput.value);
 const extraTexts=parseSongs(document.getElementById('extraText').value);
@@ -5775,9 +5842,12 @@ const items=[
 ...songs.map((s,i)=>({name:s,source:sheet.songSources[i],isExtra:false})),
 ...extraTexts.map(t=>({name:t,source:'额外文本',isExtra:true}))
 ];
-const totalCells=sheet.gridRows*sheet.gridCols;
-const targetCells=Math.max(1,Math.round(totalCells*(sheet.density||70)/100));
-const{grid,placed,skipped,totalPlacedChars}=buildGrid(sheet,items,targetCells);
+const totalCells = sheet.gridRows * sheet.gridCols;
+const targetCells = Math.max(1, Math.round(totalCells * (sheet.density || 70) / 100));
+
+// 【优化】多次尝试构建网格，寻找最接近目标覆盖率的方案
+showToast('正在优化网格布局，请稍候...', 'info');
+const { grid, placed, skipped, totalPlacedChars } = await optimizeGridBuild(sheet, items, targetCells);
 if(placed.length===0){showToast('无法放置任何内容，请增大网格或调整密度','error');return}
 const placedExtraNames=new Set(placed.filter(p=>p.isExtra).map(p=>p.name.toUpperCase().replace(/[\s\u3000]/g,'')));
 const extraNorm=extraTexts.map(t=>t.toUpperCase().replace(/[\s\u3000]/g,''));
