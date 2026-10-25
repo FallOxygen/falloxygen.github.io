@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rhythm Space | 节奏空格谱可视化分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #090b0f;
+  --surface: #11151c;
+  --surface2: #181d27;
+  --border: #262c3a;
+  --border-light: #353d50;
+  --text: #e4e7ec;
+  --text2: #8b94a5;
+  --text3: #5c6373;
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0, 229, 255, 0.12);
+  --amber: #ff9f1c;
+  --amber-dim: rgba(255, 159, 28, 0.12);
+  --green: #22c55e;
+  --red: #ef4444;
+  --purple: #a855f7;
+  --font-ui: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+.app {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  grid-template-rows: auto 1fr;
+  gap: 20px;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; color: #000; font-size: 18px;
+}
+.brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+.brand p { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+
+.controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.examples-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+}
+.examples-select:focus { border-color: var(--cyan); }
+
+.algo-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--cyan-dim);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: var(--cyan);
+  font-weight: 500;
+}
+.algo-badge::before {
+  content: "";
+  width: 6px; height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+/* Panels */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.panel-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+}
+.panel-actions { display: flex; gap: 8px; }
+
+.btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { border-color: var(--border-light); color: var(--text); background: var(--surface2); }
+.btn.primary {
+  background: var(--cyan);
+  color: #000;
+  border-color: var(--cyan);
+  font-weight: 600;
+}
+.btn.primary:hover { background: #33eaff; box-shadow: 0 0 15px var(--cyan-dim); }
+
+/* Main Content */
+.main { display: flex; flex-direction: column; gap: 20px; }
+
+.editor-area { flex: 1; display: flex; min-height: 180px; }
+#inputArea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  padding: 16px;
+  resize: none;
+  outline: none;
+}
+#inputArea::placeholder { color: var(--text3); }
+
+/* 修复：允许自动换行，防止无限向右延伸 */
+.output-area {
+  flex: 1;
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 2.2;
+  color: var(--text);
+  white-space: pre-wrap; 
+  overflow-wrap: break-word;
+  word-break: break-all; /* 确保连续空格也能在边界处被折行 */
+  overflow-y: auto;
+  min-height: 180px;
+  background: rgba(0,0,0,0.2);
+  letter-spacing: 0.5px;
+}
+.output-area:empty::before {
+  content: "转换结果将显示在这里...";
+  color: var(--text3);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+.output-area .note-x { color: var(--cyan); font-weight: 700; }
+.output-area .note-dot { color: var(--amber); font-weight: 700; }
+.output-area .note-err { color: var(--red); font-size: 0.8em; }
+
+.hint {
+  padding: 10px 16px;
+  font-size: 0.75rem;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+}
+.hint code {
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+}
+
+/* Sidebar */
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+}
+.stat-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.stat-label { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.stat-value { font-size: 1.4rem; font-weight: 700; font-family: var(--font-mono); color: var(--text); }
+.stat-value.cyan { color: var(--cyan); }
+.stat-value.amber { color: var(--amber); }
+
+/* Detail Table */
+.detail-wrap { padding: 16px; overflow-x: auto; }
+.detail-table {
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr 50px 45px 45px;
+  gap: 8px 10px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  min-width: 320px;
+  align-items: center;
+}
+.detail-table .th {
+  color: var(--text3);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+.detail-table .td {
+  padding: 6px 0;
+  color: var(--text2);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.detail-table .td.note { color: var(--cyan); font-weight: 700; }
+.detail-table .td.space { color: var(--amber); font-weight: 600; }
+
+/* Distribution */
+.dist-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.dist-item { display: flex; flex-direction: column; gap: 4px; }
+.dist-header { display: flex; justify-content: space-between; font-size: 0.8rem; }
+.dist-name { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
+.dist-val { color: var(--text2); }
+.dist-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.dist-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface2);
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 100;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .app {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .header { flex-direction: column; align-items: flex-start; }
+}
+
+.empty-state {
+  color: var(--text3);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 20px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="brand">
+      <div class="brand-icon">R</div>
+      <div>
+        <h1>Rhythm Space</h1>
+        <p>节奏序列 → 空格谱可视化分析工具</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="algo-badge">排名递增算法 · 互不相同</div>
+      <select class="examples-select" id="examples">
+        <option value="">-- 加载预设示例 --</option>
+        <option value="ex1">基础流行 (4/8/16)</option>
+        <option value="ex2">附点与切分 (4./8/8.)</option>
+        <option value="ex3">三连音混合 (8/12/4)</option>
+        <option value="ex4">复杂多连音 (5/7/10/12)</option>
+        <option value="ex5">极端时值对比</option>
+      </select>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="panel" style="flex: 1;">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot"></span> 输入序列</div>
+        <div class="panel-actions">
+          <button class="btn" id="btnClear">清空</button>
+        </div>
+      </div>
+      <div class="editor-area">
+        <textarea id="inputArea" spellcheck="false" placeholder="输入节奏时值，如：4, 8, 16, 8., 12...&#10;支持逗号或空格分隔，每行独立。"></textarea>
+      </div>
+      <div class="hint">
+        语法：<code>4</code> 四分 | <code>8.</code> 附点八分 | <code>4..</code> 双附点 | <code>12</code> 八分三连音 | <code>96/7</code> 连音
+      </div>
+    </div>
+
+    <div class="panel" style="flex: 1.2;">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot" style="background: var(--amber)"></span> 空格谱输出</div>
+        <div class="panel-actions">
+          <button class="btn primary" id="btnCopy">复制结果</button>
+        </div>
+      </div>
+      <div class="output-area" id="outputArea"></div>
+    </div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot" style="background: var(--green)"></span> 基础统计</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">总音符数</div>
+          <div class="stat-value cyan" id="statNotes">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">总拍数</div>
+          <div class="stat-value amber" id="statBeats">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">预估小节 (4/4)</div>
+          <div class="stat-value" id="statBars">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">节奏密度</div>
+          <div class="stat-value" id="statDensity">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot" style="background: var(--purple)"></span> 时值明细分析</div>
+      </div>
+      <div class="detail-wrap">
+        <div class="detail-table" id="detailTable">
+          <div class="empty-state">暂无数据</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot" style="background: var(--red)"></span> 时值分布</div>
+      </div>
+      <div class="dist-list" id="distList">
+        <div class="empty-state">暂无数据</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast">已复制到剪贴板</div>
+
+<script>
+// ================= 核心逻辑 =================
+
+function parseNote(token) {
+  token = token.trim();
+  if (!token) return null;
+  
+  const match = token.match(/^(\d+)(\.*)((?:\/\d+)?)$/);
+  if (!match) return null;
+
+  const base = parseInt(match[1]);
+  if (base < 1) return null;
+  
+  const dots = match[2].length;
+  const mult = match[3] ? parseInt(match[3].slice(1)) : 1;
+  
+  const baseBeats = 4 * mult / base;
+  const dotMult = dots > 0 ? 2 - Math.pow(2, -dots) : 1;
+  const actualBeats = baseBeats * dotMult;
+  
+  const baseKey = `${base}/${mult}`;
+  
+  let isCompound = false;
+  let temp = base;
+  while (temp > 1 && temp % 2 === 0) temp /= 2;
+  if (temp !== 1) isCompound = true;
+  if (mult > 1) isCompound = true;
+
+  return {
+    raw: token,
+    base, dots, mult,
+    baseBeats, actualBeats,
+    baseKey, isCompound,
+    label: 'x' + '.'.repeat(dots)
+  };
+}
+
+function calculateSpaces(notes) {
+  if (!notes.length) return [];
+
+  const baseMap = new Map(); 
+  notes.forEach(n => {
+    if (!baseMap.has(n.baseKey)) {
+      baseMap.set(n.baseKey, n.baseBeats);
+    }
+  });
+  
+  // 按基础拍数从小到大排序
+  const sortedBases = Array.from(baseMap.entries())
+    .sort((a, b) => a[1] - b[1]);
+    
+  // 排名递增分配空格：最短=0，第二短=1，依次递增
+  const spaceMap = new Map();
+  sortedBases.forEach(([key], index) => {
+    spaceMap.set(key, index); 
+  });
+  
+  return notes.map(n => spaceMap.get(n.baseKey));
+}
+
+// ================= UI 与渲染 =================
+
+const inputArea = document.getElementById('inputArea');
+const outputArea = document.getElementById('outputArea');
+const examplesSelect = document.getElementById('examples');
+const btnCopy = document.getElementById('btnCopy');
+const btnClear = document.getElementById('btnClear');
+const toast = document.getElementById('toast');
+
+let debounceTimer;
+
+const EXAMPLES = {
+  ex1: "4, 8, 8, 4\n16, 16, 8, 8, 4",
+  ex2: "4., 8, 8, 4\n8., 16, 16, 8.",
+  ex3: "8, 12, 12, 12, 8\n4, 12, 12, 12, 4",
+  ex4: "5, 5, 5, 5, 4\n7, 7, 7, 7, 7, 7, 7\n10, 10, 12, 12, 16, 16",
+  ex5: "4, 16, 64, 8., 12\n5, 5, 5, 5, 4"
+};
+
+inputArea.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(render, 150);
+});
+
+examplesSelect.addEventListener('change', (e) => {
+  if (e.target.value && EXAMPLES[e.target.value]) {
+    inputArea.value = EXAMPLES[e.target.value];
+    render();
+  }
+  e.target.value = '';
+});
+
+btnCopy.addEventListener('click', async () => {
+  const text = outputArea.dataset.plain || '';
+  if (!text.trim()) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('✓ 已复制纯文本结果');
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✓ 已复制');
+  }
+});
+
+btnClear.addEventListener('click', () => {
+  inputArea.value = '';
+  render();
+});
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function render() {
+  const raw = inputArea.value;
+  const lines = raw.split('\n');
+  
+  let allNotes = [];
+  
+  lines.forEach((line, idx) => {
+    const tokens = line.split(/[,\s]+/).filter(Boolean);
+    tokens.forEach(tok => {
+      const note = parseNote(tok);
+      if (note) {
+        note.line = idx;
+        allNotes.push(note);
+      } else if (tok) {
+        allNotes.push({ raw: tok, line: idx, isError: true });
+      }
+    });
+  });
+
+  const validNotes = allNotes.filter(n => !n.isError);
+  const spaces = calculateSpaces(validNotes);
+  
+  // 找出每行最后一个有效音符的索引，确保行尾无空格
+  const lastNoteInLine = new Map();
+  allNotes.forEach((note, i) => {
+    if (!note.isError) {
+      lastNoteInLine.set(note.line, i);
+    }
+  });
+
+  let html = '';
+  let plainText = '';
+  let currentLine = -1;
+  let validIndex = 0;
+  
+  allNotes.forEach((note, i) => {
+    if (note.line !== currentLine) {
+      if (currentLine !== -1) {
+        html += '\n';
+        plainText += '\n';
+      }
+      currentLine = note.line;
+    }
+    
+    if (note.isError) {
+      html += `<span class="note-err">[?]</span> `;
+      plainText += '[?] ';
+    } else {
+      // 如果是该行最后一个音符，则不分配空格
+      const isLastInLine = (lastNoteInLine.get(note.line) === i);
+      const sp = isLastInLine ? 0 : spaces[validIndex];
+      const spaceStr = ' '.repeat(sp);
+      
+      html += `<span class="note-x">x</span>${note.dots > 0 ? `<span class="note-dot">${'.'.repeat(note.dots)}</span>` : ''}<span class="note-space">${spaceStr}</span>`;
+      plainText += note.label + spaceStr;
+      validIndex++;
+    }
+  });
+  
+  outputArea.innerHTML = html;
+  outputArea.dataset.plain = plainText;
+
+  updateStats(validNotes);
+  updateDetails(validNotes, spaces);
+  updateDistribution(validNotes);
+}
+
+function updateStats(notes) {
+  const totalNotes = notes.length;
+  const totalBeats = notes.reduce((sum, n) => sum + n.actualBeats, 0);
+  const bars = (totalBeats / 4).toFixed(1);
+  const density = totalBeats > 0 ? (totalNotes / totalBeats).toFixed(2) : 0;
+
+  document.getElementById('statNotes').textContent = totalNotes;
+  document.getElementById('statBeats').textContent = totalBeats.toFixed(1);
+  document.getElementById('statBars').textContent = bars;
+  document.getElementById('statDensity').textContent = density;
+}
+
+function updateDetails(notes, spaces) {
+  const table = document.getElementById('detailTable');
+  if (!notes.length) {
+    table.innerHTML = '<div class="empty-state">暂无数据</div>';
+    return;
+  }
+
+  const detailMap = new Map();
+  notes.forEach((n, i) => {
+    const key = n.raw;
+    if (!detailMap.has(key)) {
+      detailMap.set(key, {
+        raw: n.raw,
+        baseBeats: n.baseBeats,
+        actualBeats: n.actualBeats,
+        dots: n.dots,
+        space: spaces[i],
+        count: 0,
+        isCompound: n.isCompound
+      });
+    }
+    detailMap.get(key).count++;
+  });
+
+  const entries = Array.from(detailMap.values()).sort((a, b) => a.actualBeats - b.actualBeats);
+
+  let html = `
+    <div class="th">音符</div>
+    <div class="th">基础拍</div>
+    <div class="th">实际拍</div>
+    <div class="th">附点</div>
+    <div class="th">空格</div>
+    <div class="th">次数</div>
+  `;
+
+  entries.forEach(e => {
+    const dotText = e.dots === 0 ? '-' : (e.dots === 1 ? '单' : (e.dots === 2 ? '双' : e.dots));
+    html += `
+      <div class="td note">${e.raw}</div>
+      <div class="td">${e.baseBeats.toFixed(3)}</div>
+      <div class="td">${e.actualBeats.toFixed(3)}</div>
+      <div class="td">${dotText}</div>
+      <div class="td space">${e.space}</div>
+      <div class="td">${e.count}</div>
+    `;
+  });
+
+  table.innerHTML = html;
+}
+
+function updateDistribution(notes) {
+  const distList = document.getElementById('distList');
+  if (!notes.length) {
+    distList.innerHTML = '<div class="empty-state">暂无数据</div>';
+    return;
+  }
+
+  const distMap = {};
+  notes.forEach(n => {
+    const key = n.raw;
+    if (!distMap[key]) distMap[key] = { count: 0, beats: n.actualBeats };
+    distMap[key].count++;
+  });
+
+  const entries = Object.entries(distMap).sort((a, b) => a[1].beats - b[1].beats);
+  const maxCount = Math.max(...entries.map(e => e[1].count), 1);
+  const totalNotes = notes.length;
+
+  distList.innerHTML = entries.map(([key, val]) => `
+    <div class="dist-item">
+      <div class="dist-header">
+        <span class="dist-name">${key}</span>
+        <span class="dist-val">${val.count} 个 (${((val.count / totalNotes) * 100).toFixed(0)}%)</span>
+      </div>
+      <div class="dist-bar">
+        <div class="dist-fill" style="width: ${(val.count / maxCount) * 100}%"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 初始化
+inputArea.value = EXAMPLES.ex1;
+render();
+</script>
+</body>
+</html>
