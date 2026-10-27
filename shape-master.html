@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>几何绘制挑战 · Shape Master</title>
+<style>
+:root {
+  --bg-0: #070b18;
+  --glow-1: rgba(109, 139, 255, 0.16);
+  --glow-2: rgba(176, 108, 255, 0.12);
+  --card: rgba(255, 255, 255, 0.045);
+  --card-brd: rgba(255, 255, 255, 0.09);
+  --card-hover: rgba(255, 255, 255, 0.07);
+  --txt: #eef2ff;
+  --txt-dim: #8b96b8;
+  --txt-faint: #5d6684;
+  --accent: #6d8bff;
+  --accent-2: #b06cff;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #fb7185;
+  --stroke: #7c9bff;
+  --glow: rgba(109, 139, 255, 0.55);
+  --canvas-bg: #080c18;
+  --guide-color: rgba(124, 155, 255, 0.18);
+  --shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.9);
+}
+[data-theme="light"] {
+  --bg-0: #eef2fb;
+  --glow-1: rgba(109, 139, 255, 0.20);
+  --glow-2: rgba(176, 108, 255, 0.14);
+  --card: rgba(255, 255, 255, 0.85);
+  --card-brd: rgba(20, 30, 60, 0.08);
+  --card-hover: rgba(255, 255, 255, 0.95);
+  --txt: #16203a;
+  --txt-dim: #64708c;
+  --txt-faint: #93a0b8;
+  --accent: #4763ff;
+  --accent-2: #8b4dff;
+  --good: #10b981;
+  --warn: #d97706;
+  --bad: #e11d48;
+  --stroke: #4763ff;
+  --glow: rgba(71, 99, 255, 0.35);
+  --canvas-bg: #f7f9ff;
+  --guide-color: rgba(71, 99, 255, 0.18);
+  --shadow: 0 20px 50px -25px rgba(30, 50, 100, 0.35);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  background: var(--bg-0);
+  color: var(--txt);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background .35s ease, color .35s ease;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(900px 600px at 12% -8%, var(--glow-1), transparent 65%),
+    radial-gradient(800px 600px at 92% 8%, var(--glow-2), transparent 60%),
+    radial-gradient(1000px 800px at 50% 115%, var(--glow-1), transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+.app { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 24px 20px 56px; }
+
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.logo {
+  width: 52px; height: 52px; border-radius: 16px;
+  display: grid; place-items: center; font-size: 1.6rem;
+  background: linear-gradient(145deg, var(--accent), var(--accent-2));
+  box-shadow: 0 10px 28px -10px var(--glow); flex-shrink: 0;
+}
+.brand h1 {
+  font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15;
+  background: linear-gradient(100deg, var(--txt), var(--accent));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.brand p { font-size: .8rem; color: var(--txt-dim); margin-top: 3px; }
+.header-actions { display: flex; gap: 10px; }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 13px;
+  border: 1px solid var(--card-brd); background: var(--card); color: var(--txt);
+  font-size: 1.05rem; cursor: pointer; display: grid; place-items: center;
+  transition: all .2s ease; backdrop-filter: blur(12px);
+}
+.icon-btn:hover { background: var(--card-hover); transform: translateY(-2px); }
+.icon-btn:active { transform: translateY(0) scale(.96); }
+
+/* 形状 tabs */
+.shape-tabs {
+  display: flex; gap: 6px;
+  background: var(--card); border: 1px solid var(--card-brd);
+  border-radius: 16px; padding: 6px; margin-bottom: 18px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.shape-tabs::-webkit-scrollbar { display: none; }
+.shape-tab {
+  flex: 1; min-width: 74px; padding: 10px 12px; border-radius: 11px;
+  border: none; background: transparent; color: var(--txt-dim);
+  font-family: inherit; font-size: .88rem; font-weight: 600; cursor: pointer;
+  transition: all .2s ease; display: flex; align-items: center; justify-content: center;
+  gap: 5px; white-space: nowrap;
+}
+.shape-tab:hover { background: var(--card-hover); color: var(--txt); }
+.shape-tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff; box-shadow: 0 6px 18px -6px var(--glow);
+}
+.shape-tab .tab-icon { font-size: 1.05rem; }
+
+/* 布局 */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 20px; align-items: start; }
+.card {
+  background: var(--card); border: 1px solid var(--card-brd);
+  border-radius: 22px; padding: 18px; backdrop-filter: blur(18px);
+  box-shadow: var(--shadow); transition: background .3s ease, border-color .3s ease;
+}
+
+/* 画布区 */
+.stage { display: flex; flex-direction: column; gap: 14px; }
+.stage-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px; }
+.stage-title {
+  font-size: .9rem; font-weight: 700; color: var(--txt-dim);
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.timer {
+  font-variant-numeric: tabular-nums; font-size: .85rem; font-weight: 700;
+  padding: 5px 12px; border-radius: 999px;
+  background: rgba(109, 139, 255, .12); color: var(--accent); transition: all .2s;
+}
+.timer.danger { background: rgba(251, 113, 133, .16); color: var(--bad); }
+
+.canvas-wrap {
+  position: relative; width: 100%; aspect-ratio: 1 / 1;
+  max-width: 620px; margin: 0 auto; border-radius: 18px; overflow: hidden;
+  background: var(--canvas-bg); border: 1px solid var(--card-brd);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, .35); transition: background .35s ease;
+}
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+
+.canvas-hint {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font-size: .92rem; color: var(--txt-faint); pointer-events: none;
+  text-align: center; width: 80%; transition: opacity .3s; font-weight: 500;
+}
+.canvas-hint.hidden { opacity: 0; }
+
+.countdown {
+  position: absolute; left: 0; top: 0; height: 4px; width: 100%;
+  background: rgba(255, 255, 255, .06); opacity: 0; transition: opacity .2s; z-index: 3;
+}
+.countdown.active { opacity: 1; }
+.countdown-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, var(--good), var(--warn));
+  transition: width .06s linear;
+}
+
+.stage-foot { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  flex: 1; min-width: 80px; padding: 11px 12px; border-radius: 13px;
+  border: 1px solid var(--card-brd); background: var(--card); color: var(--txt);
+  font-size: .86rem; font-weight: 600; font-family: inherit; cursor: pointer;
+  transition: all .18s ease; display: inline-flex; align-items: center;
+  justify-content: center; gap: 5px; white-space: nowrap;
+}
+.btn:hover { background: var(--card-hover); transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(.98); }
+.btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent; color: #fff; box-shadow: 0 8px 24px -10px var(--glow);
+}
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* 侧栏 */
+.sidebar { display: flex; flex-direction: column; gap: 18px; }
+.result-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.score-wrap { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.score-num {
+  font-size: 4.2rem; font-weight: 900; letter-spacing: -0.045em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(160deg, var(--txt) 25%, var(--accent));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  transition: background .3s;
+}
+.score-num.s-tier { background: linear-gradient(160deg, #ffd76e, #ff9d3d); -webkit-background-clip: text; background-clip: text; }
+.score-num.a-tier { background: linear-gradient(160deg, #6ee7f0, #3b82f6); -webkit-background-clip: text; background-clip: text; }
+.score-num.b-tier { background: linear-gradient(160deg, #6ee7b7, #10b981); -webkit-background-clip: text; background-clip: text; }
+.score-num.c-tier { background: linear-gradient(160deg, #fde68a, #f59e0b); -webkit-background-clip: text; background-clip: text; }
+.score-num.d-tier { background: linear-gradient(160deg, #fca5a5, #ef4444); -webkit-background-clip: text; background-clip: text; }
+.score-num.e-tier { background: linear-gradient(160deg, #cbd5e1, #94a3b8); -webkit-background-clip: text; background-clip: text; }
+.score-unit { font-size: .95rem; color: var(--txt-faint); font-weight: 600; }
+
+.grade-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; border-radius: 999px; font-size: .86rem; font-weight: 700;
+  background: rgba(139, 150, 184, .14); color: var(--txt-dim);
+  margin-bottom: 14px; transition: all .3s ease;
+}
+.grade-badge.s { background: rgba(255, 199, 72, .16); color: #ffc748; }
+.grade-badge.a { background: rgba(56, 189, 248, .16); color: #38bdf8; }
+.grade-badge.b { background: rgba(52, 211, 153, .16); color: var(--good); }
+.grade-badge.c { background: rgba(251, 191, 36, .16); color: var(--warn); }
+.grade-badge.d { background: rgba(251, 113, 133, .16); color: var(--bad); }
+.grade-badge.e { background: rgba(148, 163, 184, .16); color: #94a3b8; }
+
+.score-bar {
+  width: 100%; height: 8px; border-radius: 999px;
+  background: rgba(139, 150, 184, .16); overflow: hidden; margin-bottom: 12px;
+}
+.score-bar-fill {
+  height: 100%; width: 0%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width .7s cubic-bezier(.22, 1, .36, 1), background .3s;
+}
+.score-hint { font-size: .84rem; color: var(--txt-dim); line-height: 1.6; min-height: 2.6em; }
+
+.card-title {
+  font-size: .86rem; font-weight: 700; color: var(--txt-dim);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.title-sub {
+  font-size: .72rem; font-weight: 700; color: var(--accent);
+  text-transform: none; letter-spacing: 0; margin-left: 8px;
+  padding: 2px 8px; border-radius: 6px; background: rgba(109, 139, 255, .12);
+}
+
+.metric { margin-bottom: 13px; }
+.metric:last-child { margin-bottom: 0; }
+.metric-head { display: flex; justify-content: space-between; align-items: center; font-size: .82rem; margin-bottom: 6px; }
+.metric-name { color: var(--txt-dim); font-weight: 500; }
+.metric-val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--txt); }
+.metric-bar { height: 6px; border-radius: 999px; background: rgba(139, 150, 184, .14); overflow: hidden; }
+.metric-fill {
+  height: 100%; width: 0%; border-radius: 999px;
+  transition: width .7s cubic-bezier(.22, 1, .36, 1), background .3s;
+}
+.metric-fill.high { background: linear-gradient(90deg, #34d399, #10b981); }
+.metric-fill.mid  { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+.metric-fill.low  { background: linear-gradient(90deg, #fb7185, #ef4444); }
+
+.meta-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--card-brd);
+}
+.meta-item { text-align: center; }
+.meta-item .k { font-size: .7rem; color: var(--txt-faint); margin-bottom: 3px; }
+.meta-item .v { font-size: .92rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* 新增：统计卡片 */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.stat-cell {
+  text-align: center; padding: 10px 4px;
+  background: rgba(139, 150, 184, .06); border-radius: 10px;
+}
+.stat-cell .k { font-size: .68rem; color: var(--txt-faint); margin-bottom: 4px; }
+.stat-cell .v { font-size: 1.02rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.stat-cell .v.up { color: var(--good); }
+.stat-cell .v.down { color: var(--bad); }
+.stat-cell .v.flat { color: var(--txt-dim); }
+
+.dist-block {
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--card-brd);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.dist-row { display: flex; align-items: center; gap: 8px; font-size: .76rem; }
+.dist-label { width: 18px; font-weight: 800; text-align: center; font-size: .74rem; }
+.dist-label.s { color: #ffc748; }
+.dist-label.a { color: #38bdf8; }
+.dist-label.b { color: var(--good); }
+.dist-label.c { color: var(--warn); }
+.dist-label.d { color: var(--bad); }
+.dist-label.e { color: #94a3b8; }
+.dist-bar {
+  flex: 1; height: 8px; border-radius: 4px;
+  background: rgba(139, 150, 184, .12); overflow: hidden;
+}
+.dist-fill {
+  height: 100%; width: 0%; border-radius: 4px;
+  transition: width .5s cubic-bezier(.22, 1, .36, 1);
+}
+.dist-fill.s { background: #ffc748; }
+.dist-fill.a { background: #38bdf8; }
+.dist-fill.b { background: var(--good); }
+.dist-fill.c { background: var(--warn); }
+.dist-fill.d { background: var(--bad); }
+.dist-fill.e { background: #94a3b8; }
+.dist-count {
+  width: 22px; text-align: right; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--txt-dim);
+}
+
+.history { display: flex; flex-direction: column; gap: 7px; max-height: 260px; overflow-y: auto; padding-right: 4px; }
+.history-empty { font-size: .82rem; color: var(--txt-faint); text-align: center; padding: 16px 0; }
+.history-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-radius: 11px;
+  background: rgba(139, 150, 184, .07); font-size: .82rem;
+  animation: slideIn .32s cubic-bezier(.22, 1, .36, 1);
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.history-idx { width: 18px; color: var(--txt-faint); font-size: .72rem; font-weight: 700; }
+.history-mode { flex: 1; color: var(--txt-dim); font-size: .76rem; }
+.history-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.history::-webkit-scrollbar { width: 5px; }
+.history::-webkit-scrollbar-track { background: transparent; }
+.history::-webkit-scrollbar-thumb { background: rgba(139, 150, 184, .3); border-radius: 3px; }
+
+.stat-row {
+  display: flex; justify-content: space-between; gap: 8px;
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--card-brd);
+}
+.stat-box { flex: 1; text-align: center; }
+.stat-box .k { font-size: .7rem; color: var(--txt-faint); margin-bottom: 3px; }
+.stat-box .v { font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 24px);
+  background: rgba(20, 26, 46, .95); color: #fff;
+  padding: 11px 22px; border-radius: 999px; font-size: .85rem; font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, .7);
+  opacity: 0; pointer-events: none;
+  transition: all .3s cubic-bezier(.22, 1, .36, 1); z-index: 999;
+  max-width: 90vw; text-align: center;
+}
+[data-theme="light"] .toast { background: rgba(22, 32, 58, .95); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 940px) {
+  .layout { grid-template-columns: 1fr; }
+  .canvas-wrap { max-width: 100%; }
+  .score-num { font-size: 3.4rem; }
+}
+@media (max-width: 520px) {
+  .app { padding: 16px 12px 40px; }
+  .brand h1 { font-size: 1.2rem; }
+  .brand p { font-size: .74rem; }
+  .logo { width: 44px; height: 44px; font-size: 1.3rem; border-radius: 13px; }
+  .card { padding: 14px; border-radius: 18px; }
+  .btn { font-size: .8rem; padding: 10px 8px; min-width: 66px; }
+  .score-num { font-size: 3rem; }
+  .shape-tab { font-size: .78rem; padding: 8px 10px; min-width: 60px; }
+  .shape-tab .tab-icon { font-size: .9rem; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="brand">
+      <div class="logo">✦</div>
+      <div>
+        <h1>几何绘制挑战</h1>
+        <p>多形状 · 科学评分 · 统计报告</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeBtn" title="切换主题">🌙</button>
+    </div>
+  </header>
+
+  <nav class="shape-tabs" id="shapeTabs">
+    <button class="shape-tab active" data-shape="circle"><span class="tab-icon">⭕</span>圆形</button>
+    <button class="shape-tab" data-shape="square"><span class="tab-icon">⬜</span>正方形</button>
+    <button class="shape-tab" data-shape="triangle"><span class="tab-icon">🔺</span>三角形</button>
+    <button class="shape-tab" data-shape="line"><span class="tab-icon">📏</span>直线</button>
+  </nav>
+
+  <main class="layout">
+    <section class="card stage">
+      <div class="stage-head">
+        <span class="stage-title" id="stageTitle">圆形 · 画布</span>
+        <span class="timer" id="timerDisplay">0.00s</span>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="drawCanvas"></canvas>
+        <div class="canvas-hint" id="canvasHint">按住并拖动，画一个圆</div>
+        <div class="countdown" id="countdown"><div class="countdown-fill" id="countdownFill"></div></div>
+      </div>
+
+      <div class="stage-foot">
+        <button class="btn" id="clearBtn">🗑️ 清空</button>
+        <button class="btn" id="guideBtn">👁️ 辅助</button>
+        <button class="btn" id="blindBtn">🙈 盲画</button>
+        <button class="btn" id="timedBtn">⏱️ 限时</button>
+        <button class="btn" id="exportBtn">📤 导出报告</button>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="card result-card">
+        <div class="score-wrap">
+          <div class="score-num" id="scoreNum">--</div>
+          <div class="score-unit">/ 100</div>
+        </div>
+        <div class="grade-badge" id="gradeBadge">等待挑战</div>
+        <div class="score-bar"><div class="score-bar-fill" id="scoreBarFill"></div></div>
+        <p class="score-hint" id="scoreHint">在左侧画布上绘制，松手即自动评分</p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">本次指标</h2>
+
+        <div class="metric">
+          <div class="metric-head">
+            <span class="metric-name" id="name0">径向一致性</span>
+            <span class="metric-val" id="val0">--</span>
+          </div>
+          <div class="metric-bar"><div class="metric-fill" id="bar0"></div></div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-head">
+            <span class="metric-name" id="name1">闭合完整度</span>
+            <span class="metric-val" id="val1">--</span>
+          </div>
+          <div class="metric-bar"><div class="metric-fill" id="bar1"></div></div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-head">
+            <span class="metric-name" id="name2">线条平滑度</span>
+            <span class="metric-val" id="val2">--</span>
+          </div>
+          <div class="metric-bar"><div class="metric-fill" id="bar2"></div></div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-item"><div class="k" id="metaK0">半径</div><div class="v" id="metaV0">--</div></div>
+          <div class="meta-item"><div class="k" id="metaK1">平均偏差</div><div class="v" id="metaV1">--</div></div>
+          <div class="meta-item"><div class="k" id="metaK2">采样点</div><div class="v" id="metaV2">--</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">
+          历史统计
+          <span class="title-sub" id="statsShapeLabel">圆形</span>
+        </h2>
+
+        <div class="stats-grid">
+          <div class="stat-cell"><div class="k">总次数</div><div class="v" id="stTotal">0</div></div>
+          <div class="stat-cell"><div class="k">中位数</div><div class="v" id="stMedian">--</div></div>
+          <div class="stat-cell"><div class="k">标准差</div><div class="v" id="stStd">--</div></div>
+          <div class="stat-cell"><div class="k">最高分</div><div class="v" id="stBest">--</div></div>
+          <div class="stat-cell"><div class="k">最低分</div><div class="v" id="stWorst">--</div></div>
+          <div class="stat-cell"><div class="k">最近趋势</div><div class="v" id="stTrend">--</div></div>
+        </div>
+
+        <div class="dist-block" id="distBlock">
+          <div class="dist-row">
+            <span class="dist-label s">S</span>
+            <div class="dist-bar"><div class="dist-fill s" id="distBarS"></div></div>
+            <span class="dist-count" id="distCntS">0</span>
+          </div>
+          <div class="dist-row">
+            <span class="dist-label a">A</span>
+            <div class="dist-bar"><div class="dist-fill a" id="distBarA"></div></div>
+            <span class="dist-count" id="distCntA">0</span>
+          </div>
+          <div class="dist-row">
+            <span class="dist-label b">B</span>
+            <div class="dist-bar"><div class="dist-fill b" id="distBarB"></div></div>
+            <span class="dist-count" id="distCntB">0</span>
+          </div>
+          <div class="dist-row">
+            <span class="dist-label c">C</span>
+            <div class="dist-bar"><div class="dist-fill c" id="distBarC"></div></div>
+            <span class="dist-count" id="distCntC">0</span>
+          </div>
+          <div class="dist-row">
+            <span class="dist-label d">D</span>
+            <div class="dist-bar"><div class="dist-fill d" id="distBarD"></div></div>
+            <span class="dist-count" id="distCntD">0</span>
+          </div>
+          <div class="dist-row">
+            <span class="dist-label e">E</span>
+            <div class="dist-bar"><div class="dist-fill e" id="distBarE"></div></div>
+            <span class="dist-count" id="distCntE">0</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">历史记录</h2>
+        <div class="history" id="historyList">
+          <div class="history-empty">还没有记录，快画一个吧 ✏️</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="k">最佳</div><div class="v" id="statBest">--</div></div>
+          <div class="stat-box"><div class="k">平均</div><div class="v" id="statAvg">--</div></div>
+          <div class="stat-box"><div class="k">次数</div><div class="v" id="statCount">0</div></div>
+        </div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ============================================================
+     配置
+     ============================================================ */
+  const CFG = {
+    minPoints: 12,
+    minRadius: 24,
+    maxFitRadius: 460,
+    resampleN: 240,
+    minDist: 2,
+    timedTimeLimit: 2800,
+    storageKey: 'shapeMaster_history_v3',
+  };
+
+  /* ============================================================
+     元素引用
+     ============================================================ */
+  const $ = (id) => document.getElementById(id);
+
+  const canvas       = $('drawCanvas');
+  const ctx          = canvas.getContext('2d');
+  const wrap         = $('canvasWrap');
+  const canvasHint   = $('canvasHint');
+  const timerDisplay = $('timerDisplay');
+  const countdown    = $('countdown');
+  const countdownFill= $('countdownFill');
+  const stageTitle   = $('stageTitle');
+  const shapeTabs    = $('shapeTabs');
+
+  const scoreNum     = $('scoreNum');
+  const gradeBadge   = $('gradeBadge');
+  const scoreBarFill = $('scoreBarFill');
+  const scoreHint    = $('scoreHint');
+
+  const valEls  = [$('val0'),  $('val1'),  $('val2')];
+  const barEls  = [$('bar0'),  $('bar1'),  $('bar2')];
+  const nameEls = [$('name0'), $('name1'), $('name2')];
+  const metaK   = [$('metaK0'), $('metaK1'), $('metaK2')];
+  const metaV   = [$('metaV0'), $('metaV1'), $('metaV2')];
+
+  // 统计卡片元素
+  const statsShapeLabel = $('statsShapeLabel');
+  const stTotal = $('stTotal');
+  const stMedian = $('stMedian');
+  const stStd = $('stStd');
+  const stBest = $('stBest');
+  const stWorst = $('stWorst');
+  const stTrend = $('stTrend');
+  const distBars = {
+    s: $('distBarS'), a: $('distBarA'), b: $('distBarB'),
+    c: $('distBarC'), d: $('distBarD'), e: $('distBarE'),
+  };
+  const distCnts = {
+    s: $('distCntS'), a: $('distCntA'), b: $('distCntB'),
+    c: $('distCntC'), d: $('distCntD'), e: $('distCntE'),
+  };
+
+  const historyList  = $('historyList');
+  const statBest     = $('statBest');
+  const statAvg      = $('statAvg');
+  const statCount    = $('statCount');
+  const toastEl      = $('toast');
+
+  /* ============================================================
+     形状定义
+     ============================================================ */
+  const SHAPES = {
+    circle: {
+      name: '圆形', icon: '⭕', stageLabel: '圆形 · 画布',
+      metrics: ['径向一致性', '闭合完整度', '线条平滑度'],
+      meta: ['半径', '平均偏差', '采样点'],
+      hint: '按住并拖动，画一个圆',
+    },
+    square: {
+      name: '正方形', icon: '⬜', stageLabel: '正方形 · 画布',
+      metrics: ['边长一致性', '角度规整度', '边线笔直度'],
+      meta: ['边长', '角度偏差', '采样点'],
+      hint: '按住并拖动，画一个正方形',
+    },
+    triangle: {
+      name: '三角形', icon: '🔺', stageLabel: '三角形 · 画布',
+      metrics: ['边长一致性', '角度规整度', '边线笔直度'],
+      meta: ['边长', '角度偏差', '采样点'],
+      hint: '按住并拖动，画一个三角形',
+    },
+    line: {
+      name: '直线', icon: '📏', stageLabel: '直线 · 画布',
+      metrics: ['线条笔直度', '方向稳定度', '长度达标度'],
+      meta: ['长度', '最大偏移', '采样点'],
+      hint: '按住并拖动，画一条直线',
+    },
+  };
+
+  const TIER_COLORS = {
+    s: { bg: 'rgba(255,199,72,0.16)', fg: '#ffc748' },
+    a: { bg: 'rgba(56,189,248,0.16)', fg: '#38bdf8' },
+    b: { bg: 'rgba(52,211,153,0.16)', fg: '#34d399' },
+    c: { bg: 'rgba(251,191,36,0.16)', fg: '#fbbf24' },
+    d: { bg: 'rgba(251,113,133,0.16)', fg: '#fb7185' },
+    e: { bg: 'rgba(148,163,184,0.16)', fg: '#94a3b8' },
+  };
+
+  /* ============================================================
+     状态
+     ============================================================ */
+  let points       = [];
+  let drawing      = false;
+  let drawStart    = 0;
+  let lastFit      = null;
+  let currentResult= null;
+  let logicalSize  = 500;
+  let strokeColor  = '#7c9bff';
+  let glowColor    = 'rgba(109,139,255,.55)';
+  let guideColor   = 'rgba(124,155,255,.18)';
+
+  let currentShape = 'circle';
+  let showGuide    = false;
+  let blindMode    = false;
+  let timedMode    = false;
+
+  let rafTimer     = null;
+  let timeoutId    = null;
+  let animFrame    = null;
+
+  let history      = [];
+
+  /* ============================================================
+     数学工具
+     ============================================================ */
+  const clamp01 = (v) => v < 0 ? 0 : (v > 1 ? 1 : v);
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  function pathLength(pts) {
+    let L = 0;
+    for (let i = 1; i < pts.length; i++) L += dist(pts[i], pts[i - 1]);
+    return L;
+  }
+
+  function solve3(M, v) {
+    const det = (m) =>
+      m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+      m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+      m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+    const D = det(M);
+    if (!isFinite(D) || Math.abs(D) < 1e-10) return null;
+    const build = (col) => M.map((row, i) => row.map((val, j) => (j === col ? v[i] : val)));
+    return [det(build(0)) / D, det(build(1)) / D, det(build(2)) / D];
+  }
+
+  function resample(pts, N) {
+    const n = pts.length;
+    if (n < 2) return pts.slice();
+    const cum = new Float64Array(n);
+    for (let i = 1; i < n; i++) cum[i] = cum[i - 1] + dist(pts[i], pts[i - 1]);
+    const total = cum[n - 1];
+    if (total <= 1e-9) return pts.slice();
+    const out = new Array(N);
+    let j = 0;
+    for (let i = 0; i < N; i++) {
+      const target = (total * i) / (N - 1);
+      while (j < n - 2 && cum[j + 1] < target) j++;
+      const seg = cum[j + 1] - cum[j];
+      const f = seg > 1e-9 ? (target - cum[j]) / seg : 0;
+      out[i] = {
+        x: pts[j].x + (pts[j + 1].x - pts[j].x) * f,
+        y: pts[j].y + (pts[j + 1].y - pts[j].y) * f,
+      };
+    }
+    return out;
+  }
+
+  function fitCircle(pts) {
+    const n = pts.length;
+    if (n < 3) return null;
+    let Sx = 0, Sy = 0, Sxx = 0, Syy = 0, Sxy = 0, Sxz = 0, Syz = 0, Sz = 0;
+    for (let i = 0; i < n; i++) {
+      const x = pts[i].x, y = pts[i].y;
+      const z = x * x + y * y;
+      Sx += x; Sy += y;
+      Sxx += x * x; Syy += y * y; Sxy += x * y;
+      Sxz += x * z; Syz += y * z; Sz += z;
+    }
+    const M = [[Sxx, Sxy, Sx], [Sxy, Syy, Sy], [Sx, Sy, n]];
+    const sol = solve3(M, [-Sxz, -Syz, -Sz]);
+    if (!sol) return null;
+    const [D, E, F] = sol;
+    const cx = -D / 2, cy = -E / 2;
+    const r2 = cx * cx + cy * cy - F;
+    if (!isFinite(r2) || r2 <= 0) return null;
+    return { cx, cy, r: Math.sqrt(r2) };
+  }
+
+  function findPolygonCorners(pts, N) {
+    const n = pts.length;
+    if (n < N * 8) return [];
+    const win = 3;
+    const smoothed = new Array(n);
+    for (let i = 0; i < n; i++) {
+      let sx = 0, sy = 0, cnt = 0;
+      for (let j = -win; j <= win; j++) {
+        const k = (i + j + n) % n;
+        sx += pts[k].x; sy += pts[k].y; cnt++;
+      }
+      smoothed[i] = { x: sx / cnt, y: sy / cnt, idx: i };
+    }
+    const step = Math.max(4, Math.floor(n / 30));
+    const turns = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const prev = smoothed[(i - step + n) % n];
+      const cur = smoothed[i];
+      const next = smoothed[(i + step) % n];
+      const v1x = cur.x - prev.x, v1y = cur.y - prev.y;
+      const v2x = next.x - cur.x, v2y = next.y - cur.y;
+      const cross = v1x * v2y - v1y * v2x;
+      const dot = v1x * v2x + v1y * v2y;
+      turns[i] = Math.abs(Math.atan2(cross, dot));
+    }
+    const peaks = [];
+    for (let i = 0; i < n; i++) {
+      const prev = turns[(i - 1 + n) % n];
+      const next = turns[(i + 1) % n];
+      if (turns[i] >= prev && turns[i] >= next && turns[i] > 0.2) {
+        peaks.push({ idx: i, val: turns[i] });
+      }
+    }
+    if (peaks.length < N) return [];
+    peaks.sort((a, b) => b.val - a.val);
+    const minSep = Math.floor(n / (N * 1.8));
+    const chosen = [];
+    for (const p of peaks) {
+      if (chosen.every(c => {
+        const d = Math.abs(c.idx - p.idx);
+        return Math.min(d, n - d) >= minSep;
+      })) {
+        chosen.push(p);
+        if (chosen.length === N) break;
+      }
+    }
+    if (chosen.length < N) return [];
+    chosen.sort((a, b) => a.idx - b.idx);
+    return chosen.map(c => smoothed[c.idx]);
+  }
+
+  /* ============================================================
+     形状评分器
+     ============================================================ */
+  function evaluateCircle(pts) {
+    if (pts.length < CFG.minPoints) return { ok: false, reason: '画得太短了，请画完整的圆形' };
+    const fit = fitCircle(pts);
+    if (!fit || !isFinite(fit.r)) return { ok: false, reason: '无法分析形状，请重试' };
+    if (fit.r < CFG.minRadius) return { ok: false, reason: '画得太小了，请画大一些' };
+    if (fit.r > CFG.maxFitRadius) return { ok: false, reason: '形状太不规则了' };
+
+    const { cx, cy, r: R } = fit;
+    const rs = resample(pts, CFG.resampleN);
+    const radii = rs.map(p => Math.hypot(p.x - cx, p.y - cy));
+
+    let sumDev = 0;
+    for (const r of radii) sumDev += Math.abs(r - R);
+    const meanDev = sumDev / radii.length;
+    const relDev = meanDev / R;
+    const sRadial = clamp01(1 - relDev / 0.22);
+
+    const gap = dist(pts[pts.length - 1], pts[0]);
+    const circumference = 2 * Math.PI * R;
+    const gapNorm = gap / circumference;
+    const sGap = clamp01(1 - gapNorm / 0.08);
+
+    let sweep = 0;
+    for (let i = 1; i < rs.length; i++) {
+      const a0 = Math.atan2(rs[i - 1].y - cy, rs[i - 1].x - cx);
+      const a1 = Math.atan2(rs[i].y - cy, rs[i].x - cx);
+      let d = a1 - a0;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      sweep += d;
+    }
+    sweep = Math.abs(sweep);
+    const sweepErr = Math.abs(sweep - Math.PI * 2) / (Math.PI * 2);
+    const sSweep = clamp01(1 - sweepErr / 0.12);
+    const sClosure = 0.5 * sGap + 0.5 * sSweep;
+
+    let d2sum = 0;
+    for (let i = 1; i < radii.length - 1; i++) {
+      const d2 = radii[i - 1] - 2 * radii[i] + radii[i + 1];
+      d2sum += d2 * d2;
+    }
+    const rough = Math.sqrt(d2sum / Math.max(radii.length - 2, 1)) / R;
+    const sSmooth = clamp01(1 - rough / 0.04);
+
+    const score = 100 * (0.5 * sRadial + 0.25 * sClosure + 0.25 * sSmooth);
+    const pathLen = pathLength(pts);
+    const efficiency = pathLen > 0 ? Math.min(circumference / pathLen, 1.5) : 0;
+
+    return {
+      ok: true, score,
+      sRadial, sClosure, sSmooth,
+      fit: { type: 'circle', cx, cy, r: R },
+      meta: [R.toFixed(1) + 'px', (relDev * 100).toFixed(1) + '%', pts.length],
+      efficiency,
+    };
+  }
+
+  function makePolygonEvaluator(N) {
+    return function (pts) {
+      if (pts.length < CFG.minPoints) return { ok: false, reason: '画得太短了' };
+
+      let rs = resample(pts, CFG.resampleN);
+      const gap0 = dist(rs[rs.length - 1], rs[0]);
+      const perim0 = pathLength(rs);
+      if (perim0 > 0 && gap0 / perim0 > 0.03) {
+        const segCount = Math.max(2, Math.ceil(gap0 / (perim0 / CFG.resampleN)));
+        const extended = rs.slice();
+        for (let i = 1; i <= segCount; i++) {
+          const f = i / (segCount + 1);
+          extended.push({
+            x: rs[rs.length - 1].x + (rs[0].x - rs[rs.length - 1].x) * f,
+            y: rs[rs.length - 1].y + (rs[0].y - rs[rs.length - 1].y) * f,
+          });
+        }
+        extended.push(rs[0]);
+        rs = resample(extended, CFG.resampleN);
+      }
+
+      const corners = findPolygonCorners(rs, N);
+      if (corners.length !== N) {
+        return { ok: false, reason: `没能识别出 ${N} 个角点，请画得更规整` };
+      }
+
+      const sides = [];
+      for (let i = 0; i < N; i++) {
+        const a = corners[i], b = corners[(i + 1) % N];
+        sides.push(Math.hypot(b.x - a.x, b.y - a.y));
+      }
+      const avgSide = sides.reduce((s, x) => s + x, 0) / N;
+      if (avgSide < 40) return { ok: false, reason: '画得太小了，请画大一些' };
+
+      const sideStd = Math.sqrt(sides.reduce((s, x) => s + (x - avgSide) ** 2, 0) / N);
+      const sideCV = sideStd / avgSide;
+      const sSide = clamp01(1 - sideCV / 0.20);
+
+      const angles = [];
+      for (let i = 0; i < N; i++) {
+        const a = corners[(i - 1 + N) % N];
+        const b = corners[i];
+        const c = corners[(i + 1) % N];
+        const v1x = a.x - b.x, v1y = a.y - b.y;
+        const v2x = c.x - b.x, v2y = c.y - b.y;
+        const dot = v1x * v2x + v1y * v2y;
+        const mag = Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y);
+        angles.push(Math.acos(Math.max(-1, Math.min(1, dot / mag))) * 180 / Math.PI);
+      }
+      const idealAngle = (N - 2) * 180 / N;
+      const angleErr = angles.reduce((s, x) => s + Math.abs(x - idealAngle), 0) / N;
+      const sAngle = clamp01(1 - angleErr / 25);
+
+      let straightSum = 0;
+      for (let i = 0; i < N; i++) {
+        const a = corners[i], b = corners[(i + 1) % N];
+        const len = Math.hypot(b.x - a.x, b.y - a.y);
+        let maxDev = 0;
+        let j = a.idx;
+        let safety = 0;
+        while (j !== b.idx && safety++ < rs.length + 1) {
+          j = (j + 1) % rs.length;
+          if (j === b.idx) break;
+          const dev = Math.abs((b.x - a.x) * (a.y - rs[j].y) - (a.x - rs[j].x) * (b.y - a.y)) / len;
+          if (dev > maxDev) maxDev = dev;
+        }
+        straightSum += (maxDev / len);
+      }
+      const avgStraightErr = straightSum / N;
+      const sStraight = clamp01(1 - avgStraightErr / 0.10);
+
+      const rawGap = dist(pts[pts.length - 1], pts[0]);
+      const rawPerim = pathLength(pts);
+      const sClosure = clamp01(1 - (rawGap / Math.max(rawPerim, 1)) / 0.08);
+
+      const score = 100 * (0.28 * sSide + 0.28 * sAngle + 0.28 * sStraight + 0.16 * sClosure);
+      const idealPerim = N * avgSide;
+      const efficiency = rawPerim > 0 ? Math.min(idealPerim / rawPerim, 1.5) : 0;
+
+      return {
+        ok: true, score,
+        sSide, sAngle, sStraight, sClosure,
+        fit: { type: 'polygon', corners, N },
+        meta: [avgSide.toFixed(1) + 'px', angleErr.toFixed(1) + '°', pts.length],
+        efficiency,
+      };
+    };
+  }
+
+  function evaluateLine(pts) {
+    if (pts.length < 6) return { ok: false, reason: '画得太短了' };
+
+    const n = pts.length;
+    let mx = 0, my = 0;
+    for (const p of pts) { mx += p.x; my += p.y; }
+    mx /= n; my /= n;
+
+    let sxx = 0, sxy = 0, syy = 0;
+    for (const p of pts) {
+      const dx = p.x - mx, dy = p.y - my;
+      sxx += dx * dx; sxy += dx * dy; syy += dy * dy;
+    }
+
+    const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+    const cos = Math.cos(theta), sin = Math.sin(theta);
+
+    let sumSq = 0, maxPerp = 0;
+    for (const p of pts) {
+      const dx = p.x - mx, dy = p.y - my;
+      const perp = -sin * dx + cos * dy;
+      sumSq += perp * perp;
+      if (Math.abs(perp) > maxPerp) maxPerp = Math.abs(perp);
+    }
+    const rmsPerp = Math.sqrt(sumSq / n);
+
+    let minT = Infinity, maxT = -Infinity;
+    for (const p of pts) {
+      const t = cos * (p.x - mx) + sin * (p.y - my);
+      if (t < minT) minT = t;
+      if (t > maxT) maxT = t;
+    }
+    const length = maxT - minT;
+    if (length < 80) return { ok: false, reason: '太短了，请画长一些' };
+
+    const sStraight = clamp01(1 - rmsPerp / Math.max(length * 0.04, 4));
+
+    const segCount = 5;
+    const absDiffs = [];
+    for (let s = 0; s < segCount; s++) {
+      const a = Math.floor(s * n / segCount);
+      const b = Math.floor((s + 1) * n / segCount);
+      if (b - a < 2) continue;
+      const sa = pts[a], sb = pts[b - 1];
+      const angle = Math.atan2(sb.y - sa.y, sb.x - sa.x);
+      let d = angle - theta;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      absDiffs.push(Math.abs(d));
+    }
+    const meanDiff = absDiffs.reduce((s, x) => s + x, 0) / Math.max(absDiffs.length, 1);
+    const sStability = clamp01(1 - meanDiff / 0.30);
+    const sLength = clamp01(length / 300);
+
+    const score = 100 * (0.5 * sStraight + 0.3 * sStability + 0.2 * sLength);
+
+    const pathLen = pathLength(pts);
+    const efficiency = pathLen > 0 ? Math.min(length / pathLen, 1.5) : 0;
+
+    return {
+      ok: true, score,
+      sStraight, sStability, sLength,
+      fit: { type: 'line', cx: mx, cy: my, theta, length },
+      meta: [length.toFixed(1) + 'px', maxPerp.toFixed(1) + 'px', pts.length],
+      efficiency,
+    };
+  }
+
+  const EVALUATORS = {
+    circle:   evaluateCircle,
+    square:   makePolygonEvaluator(4),
+    triangle: makePolygonEvaluator(3),
+    line:     evaluateLine,
+  };
+
+  const METRIC_KEYS = {
+    circle:   ['sRadial', 'sClosure', 'sSmooth'],
+    square:   ['sSide', 'sAngle', 'sStraight'],
+    triangle: ['sSide', 'sAngle', 'sStraight'],
+    line:     ['sStraight', 'sStability', 'sLength'],
+  };
+
+  /* ============================================================
+     评级
+     ============================================================ */
+  function getGrade(score) {
+    if (score >= 95) return { label: '完美', tier: 's', icon: '🏆', hint: '不可思议！这几乎是完美的几何图形。' };
+    if (score >= 88) return { label: '优秀', tier: 'a', icon: '✨', hint: '非常棒！各项指标都很出色。' };
+    if (score >= 78) return { label: '良好', tier: 'b', icon: '👍', hint: '不错的表现，再稳定一点就更好了。' };
+    if (score >= 65) return { label: '一般', tier: 'c', icon: '😐', hint: '形状有些变形，注意保持均匀和闭合。' };
+    if (score >= 50) return { label: '及格', tier: 'd', icon: '🙂', hint: '继续练习，慢慢画会更稳。' };
+    return { label: '再练练', tier: 'e', icon: '💪', hint: '还不太像哦，放松手腕，一笔画完。' };
+  }
+
+  /* ============================================================
+     主题与画布
+     ============================================================ */
+  function refreshThemeColors() {
+    const cs = getComputedStyle(document.documentElement);
+    strokeColor = cs.getPropertyValue('--stroke').trim() || '#7c9bff';
+    glowColor = cs.getPropertyValue('--glow').trim() || 'rgba(109,139,255,.55)';
+    guideColor = cs.getPropertyValue('--guide-color').trim() || 'rgba(124,155,255,.18)';
+  }
+
+  function resizeCanvas() {
+    const rect = wrap.getBoundingClientRect();
+    const size = Math.round(rect.width);
+    if (size <= 0) return;
+    logicalSize = size;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    render();
+  }
+
+  /* ============================================================
+     渲染
+     ============================================================ */
+  function render() {
+    const s = logicalSize;
+    ctx.clearRect(0, 0, s, s);
+    if (showGuide) drawGuide();
+
+    const hideStroke = blindMode && drawing;
+    if (points.length >= 2 && !hideStroke) drawStroke();
+    if (lastFit && !drawing) drawFitOverlay(lastFit);
+
+    if (drawing && blindMode && points.length) {
+      const p = points[points.length - 1];
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = strokeColor;
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = glowColor;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawGuide() {
+    const S = logicalSize;
+    const cx = S / 2, cy = S / 2;
+    const R = S * 0.30;
+    ctx.save();
+    ctx.strokeStyle = guideColor;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    switch (currentShape) {
+      case 'circle':
+        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        break;
+      case 'square': {
+        const side = R * Math.sqrt(2);
+        ctx.rect(cx - side / 2, cy - side / 2, side, side);
+        break;
+      }
+      case 'triangle': {
+        for (let i = 0; i < 3; i++) {
+          const a = -Math.PI / 2 + i * Math.PI * 2 / 3;
+          const x = cx + R * Math.cos(a);
+          const y = cy + R * Math.sin(a);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        break;
+      }
+      case 'line':
+        ctx.moveTo(S * 0.15, cy);
+        ctx.lineTo(S * 0.85, cy);
+        break;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawStroke() {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = Math.max(2.5, logicalSize * 0.007);
+    ctx.shadowBlur = logicalSize * 0.022;
+    ctx.shadowColor = glowColor;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    if (points.length === 1) ctx.lineTo(points[0].x + 0.1, points[0].y + 0.1);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFitOverlay(fit) {
+    if (!fit) return;
+    ctx.save();
+    if (fit.type === 'circle') {
+      ctx.setLineDash([7, 9]);
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(52, 211, 153, .8)';
+      ctx.beginPath();
+      ctx.arc(fit.cx, fit.cy, fit.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(52, 211, 153, .9)';
+      ctx.beginPath();
+      ctx.arc(fit.cx, fit.cy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(52, 211, 153, .55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(fit.cx - 9, fit.cy);
+      ctx.lineTo(fit.cx + 9, fit.cy);
+      ctx.moveTo(fit.cx, fit.cy - 9);
+      ctx.lineTo(fit.cx, fit.cy + 9);
+      ctx.stroke();
+    } else if (fit.type === 'polygon') {
+      for (const c of fit.corners) {
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(52, 211, 153, .8)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(52, 211, 153, .9)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      for (let i = 0; i < fit.corners.length; i++) {
+        const c = fit.corners[i];
+        if (i === 0) ctx.moveTo(c.x, c.y);
+        else ctx.lineTo(c.x, c.y);
+      }
+      ctx.closePath();
+      ctx.setLineDash([6, 8]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(52, 211, 153, .6)';
+      ctx.stroke();
+    } else if (fit.type === 'line') {
+      const { cx, cy, theta, length } = fit;
+      const cos = Math.cos(theta), sin = Math.sin(theta);
+      const x0 = cx - cos * length / 2;
+      const y0 = cy - sin * length / 2;
+      const x1 = cx + cos * length / 2;
+      const y1 = cy + sin * length / 2;
+      ctx.setLineDash([6, 8]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(52, 211, 153, .7)';
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* ============================================================
+     指针事件
+     ============================================================ */
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function onPointerDown(e) {
+    if (drawing) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+
+    drawing = true;
+    points = [];
+    lastFit = null;
+    const p = getPos(e);
+    points.push(p);
+    drawStart = performance.now();
+    canvasHint.classList.add('hidden');
+
+    startTimer();
+    if (timedMode) {
+      countdown.classList.add('active');
+      timeoutId = setTimeout(() => { if (drawing) finishDraw(); }, CFG.timedTimeLimit);
+      startCountdownBar();
+    }
+    render();
+  }
+
+  function onPointerMove(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    const last = points[points.length - 1];
+    if (dist(p, last) < CFG.minDist) return;
+    points.push(p);
+    render();
+  }
+
+  function onPointerUp() {
+    if (!drawing) return;
+    finishDraw();
+  }
+
+  function finishDraw() {
+    drawing = false;
+    const duration = drawStart ? (performance.now() - drawStart) / 1000 : 0;
+
+    if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+    if (rafTimer) { cancelAnimationFrame(rafTimer); rafTimer = null; }
+    countdown.classList.remove('active');
+    stopTimer();
+    render();
+
+    if (points.length < CFG.minPoints) {
+      showToast('笔画太短啦，请重新绘制');
+      resetPanel();
+      return;
+    }
+
+    const evaluator = EVALUATORS[currentShape];
+    const result = evaluator(points);
+
+    if (!result.ok) {
+      showToast(result.reason || '无法分析，请重试');
+      resetPanel();
+      lastFit = null;
+      render();
+      return;
+    }
+
+    result.duration = duration;
+    result.pathLen = pathLength(points);
+    result.speed = result.pathLen / Math.max(duration, 0.001);
+
+    currentResult = result;
+    lastFit = result.fit;
+    render();
+    applyResult(result);
+    pushHistory(result);
+    hapticSuccess(result.score);
+  }
+
+  /* ============================================================
+     计时
+     ============================================================ */
+  function startTimer() {
+    stopTimer();
+    const tick = () => {
+      if (!drawing) return;
+      const elapsed = performance.now() - drawStart;
+      timerDisplay.textContent = (elapsed / 1000).toFixed(2) + 's';
+      if (timedMode && elapsed > CFG.timedTimeLimit * 0.6) {
+        timerDisplay.classList.add('danger');
+      }
+      rafTimer = requestAnimationFrame(tick);
+    };
+    rafTimer = requestAnimationFrame(tick);
+  }
+
+  function stopTimer() {
+    if (rafTimer) { cancelAnimationFrame(rafTimer); rafTimer = null; }
+    timerDisplay.classList.remove('danger');
+    if (drawStart) {
+      const elapsed = performance.now() - drawStart;
+      timerDisplay.textContent = (elapsed / 1000).toFixed(2) + 's';
+    }
+  }
+
+  function startCountdownBar() {
+    const t0 = performance.now();
+    const tick = (t) => {
+      if (!drawing) { countdownFill.style.width = '0%'; return; }
+      const p = Math.max(0, 1 - (t - t0) / CFG.timedTimeLimit);
+      countdownFill.style.width = (p * 100) + '%';
+      if (p > 0) rafTimer = requestAnimationFrame(tick);
+    };
+    countdownFill.style.width = '100%';
+    rafTimer = requestAnimationFrame(tick);
+  }
+
+  function hapticSuccess(score) {
+    if (!navigator.vibrate) return;
+    try {
+      if (score >= 88) navigator.vibrate([20, 40, 20]);
+      else if (score < 50) navigator.vibrate(30);
+      else navigator.vibrate(12);
+    } catch (_) {}
+  }
+
+  /* ============================================================
+     UI 更新
+     ============================================================ */
+  function animateScore(target, tier) {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    scoreNum.className = 'score-num ' + tier + '-tier';
+    const duration = 650;
+    const t0 = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      scoreNum.textContent = (target * eased).toFixed(1);
+      if (p < 1) animFrame = requestAnimationFrame(step);
+      else scoreNum.textContent = target.toFixed(1);
+    };
+    animFrame = requestAnimationFrame(step);
+  }
+
+  function setMetric(idx, value) {
+    const pct = clamp01(value) * 100;
+    barEls[idx].style.width = pct + '%';
+    barEls[idx].className = 'metric-fill ' + (pct >= 78 ? 'high' : pct >= 50 ? 'mid' : 'low');
+    valEls[idx].textContent = pct.toFixed(1) + '%';
+  }
+
+  function applyResult(res) {
+    const grade = getGrade(res.score);
+    animateScore(res.score, grade.tier);
+    gradeBadge.textContent = grade.icon + ' ' + grade.label;
+    gradeBadge.className = 'grade-badge ' + grade.tier;
+    scoreBarFill.style.width = clamp01(res.score / 100) * 100 + '%';
+    scoreBarFill.style.background =
+      res.score >= 88 ? 'linear-gradient(90deg,#34d399,#06b6d4)' :
+      res.score >= 65 ? 'linear-gradient(90deg,#fbbf24,#f59e0b)' :
+                        'linear-gradient(90deg,#fb7185,#ef4444)';
+    scoreHint.textContent = grade.hint;
+
+    const keys = METRIC_KEYS[currentShape];
+    for (let i = 0; i < 3; i++) setMetric(i, res[keys[i]] || 0);
+    for (let i = 0; i < 3; i++) metaV[i].textContent = res.meta[i];
+
+    updateStatsCard();
+  }
+
+  function resetPanel() {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    scoreNum.textContent = '--';
+    scoreNum.className = 'score-num';
+    gradeBadge.textContent = '等待挑战';
+    gradeBadge.className = 'grade-badge';
+    scoreBarFill.style.width = '0%';
+    scoreHint.textContent = '在左侧画布上绘制，松手即自动评分';
+    for (let i = 0; i < 3; i++) {
+      barEls[i].style.width = '0%';
+      barEls[i].className = 'metric-fill';
+      valEls[i].textContent = '--';
+      metaV[i].textContent = '--';
+    }
+  }
+
+  function updateShapeUI() {
+    const def = SHAPES[currentShape];
+    stageTitle.textContent = def.stageLabel;
+    for (let i = 0; i < 3; i++) {
+      nameEls[i].textContent = def.metrics[i];
+      metaK[i].textContent = def.meta[i];
+    }
+    canvasHint.textContent = def.hint;
+    statsShapeLabel.textContent = def.name;
+    shapeTabs.querySelectorAll('.shape-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.shape === currentShape);
+    });
+    renderHistory();
+    updateStatsCard();
+  }
+
+  /* ============================================================
+     历史统计
+     ============================================================ */
+  function computeStats(shape) {
+    const filtered = history.filter(h => h.shape === shape);
+    const n = filtered.length;
+    if (n === 0) return null;
+
+    const scores = filtered.map(h => h.score);
+    const sorted = [...scores].sort((a, b) => a - b);
+    const mean = scores.reduce((a, b) => a + b, 0) / n;
+    const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+    const variance = scores.reduce((s, x) => s + (x - mean) ** 2, 0) / n;
+    const std = Math.sqrt(variance);
+    const best = sorted[n - 1];
+    const worst = sorted[0];
+
+    const dist = { s: 0, a: 0, b: 0, c: 0, d: 0, e: 0 };
+    for (const sc of scores) dist[getGrade(sc).tier]++;
+
+    // 趋势：最近5次平均 vs 之前5次平均
+    let trend = 0;
+    const recent = scores.slice(0, Math.min(5, n));
+    const prev = scores.slice(5, 10);
+    if (prev.length > 0) {
+      const ra = recent.reduce((a, b) => a + b, 0) / recent.length;
+      const pa = prev.reduce((a, b) => a + b, 0) / prev.length;
+      trend = ra - pa;
+    }
+
+    return { n, mean, median, std, best, worst, dist, trend };
+  }
+
+  function updateStatsCard() {
+    const stats = computeStats(currentShape);
+
+    if (!stats) {
+      stTotal.textContent = '0';
+      stMedian.textContent = '--';
+      stStd.textContent = '--';
+      stBest.textContent = '--';
+      stWorst.textContent = '--';
+      stTrend.textContent = '--';
+      stTrend.className = 'v flat';
+      for (const t of ['s', 'a', 'b', 'c', 'd', 'e']) {
+        distBars[t].style.width = '0%';
+        distCnts[t].textContent = '0';
+      }
+      return;
+    }
+
+    stTotal.textContent = stats.n;
+    stMedian.textContent = stats.median.toFixed(1);
+    stStd.textContent = stats.std.toFixed(2);
+    stBest.textContent = stats.best.toFixed(1);
+    stWorst.textContent = stats.worst.toFixed(1);
+
+    if (stats.trend > 0.5) {
+      stTrend.textContent = '↑ ' + stats.trend.toFixed(1);
+      stTrend.className = 'v up';
+    } else if (stats.trend < -0.5) {
+      stTrend.textContent = '↓ ' + Math.abs(stats.trend).toFixed(1);
+      stTrend.className = 'v down';
+    } else {
+      stTrend.textContent = '—';
+      stTrend.className = 'v flat';
+    }
+
+    const maxCount = Math.max(1, ...Object.values(stats.dist));
+    for (const t of ['s', 'a', 'b', 'c', 'd', 'e']) {
+      const cnt = stats.dist[t];
+      distBars[t].style.width = (cnt / maxCount) * 100 + '%';
+      distCnts[t].textContent = cnt;
+    }
+  }
+
+  /* ============================================================
+     历史记录
+     ============================================================ */
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(CFG.storageKey);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr;
+    } catch (_) {}
+    return [];
+  }
+
+  function saveHistory() {
+    try {
+      localStorage.setItem(CFG.storageKey, JSON.stringify(history.slice(0, 80)));
+    } catch (_) {}
+  }
+
+  function pushHistory(res) {
+    const modeLabel = blindMode ? '盲画' : timedMode ? '限时' : '自由';
+    history.unshift({
+      score: res.score,
+      shape: currentShape,
+      mode: modeLabel,
+      time: Date.now(),
+      duration: res.duration,
+      pathLen: res.pathLen,
+      speed: res.speed,
+    });
+    if (history.length > 80) history.pop();
+    saveHistory();
+    renderHistory();
+    updateStatsCard();
+  }
+
+  function renderHistory() {
+    const filtered = history.filter(h => h.shape === currentShape).slice(0, 20);
+    if (filtered.length === 0) {
+      historyList.innerHTML = '<div class="history-empty">还没有记录，快画一个吧 ✏️</div>';
+    } else {
+      historyList.innerHTML = filtered.map((h, i) => {
+        const tier = getGrade(h.score).tier;
+        const color = TIER_COLORS[tier].fg;
+        const timeStr = new Date(h.time).toLocaleTimeString('zh-CN', { hour12: false });
+        return `<div class="history-item">
+          <span class="history-idx">${filtered.length - i}</span>
+          <span class="history-mode">${h.mode} · ${timeStr}</span>
+          <span class="history-score" style="color:${color}">${h.score.toFixed(1)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    if (filtered.length > 0) {
+      const scores = filtered.map(h => h.score);
+      statBest.textContent = Math.max(...scores).toFixed(1);
+      statAvg.textContent = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+      statCount.textContent = filtered.length;
+    } else {
+      statBest.textContent = '--';
+      statAvg.textContent = '--';
+      statCount.textContent = '0';
+    }
+  }
+
+  /* ============================================================
+     Toast
+     ============================================================ */
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  /* ============================================================
+     操作
+     ============================================================ */
+  function clearCanvas(silent = false) {
+    points = [];
+    lastFit = null;
+    currentResult = null;
+    drawing = false;
+    if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+    if (rafTimer) { cancelAnimationFrame(rafTimer); rafTimer = null; }
+    countdown.classList.remove('active');
+    timerDisplay.textContent = '0.00s';
+    timerDisplay.classList.remove('danger');
+    canvasHint.classList.remove('hidden');
+    render();
+    resetPanel();
+    if (!silent) showToast('画布已清空');
+  }
+
+  function toggleGuide() {
+    showGuide = !showGuide;
+    $('guideBtn').classList.toggle('active', showGuide);
+    showToast(showGuide ? '辅助线已显示' : '辅助线已隐藏');
+    render();
+  }
+
+  function toggleBlind() {
+    blindMode = !blindMode;
+    if (blindMode && timedMode) {
+      timedMode = false;
+      $('timedBtn').classList.remove('active');
+    }
+    $('blindBtn').classList.toggle('active', blindMode);
+    showToast(blindMode ? '盲画模式：绘制时不显示笔画' : '已退出盲画模式');
+    render();
+  }
+
+  function toggleTimed() {
+    timedMode = !timedMode;
+    if (timedMode && blindMode) {
+      blindMode = false;
+      $('blindBtn').classList.remove('active');
+    }
+    $('timedBtn').classList.toggle('active', timedMode);
+    showToast(timedMode ? `限时模式：${(CFG.timedTimeLimit / 1000).toFixed(1)} 秒内完成` : '已退出限时模式');
+  }
+
+  function switchShape(shape) {
+    if (!SHAPES[shape] || shape === currentShape) return;
+    currentShape = shape;
+    clearCanvas(true);
+    updateShapeUI();
+    render();
+    showToast(`切换为：${SHAPES[shape].name}`);
+  }
+
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    $('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
+    setTimeout(() => {
+      refreshThemeColors();
+      render();
+    }, 20);
+  }
+
+  /* ============================================================
+     报告导出
+     ============================================================ */
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+
+  function drawSectionHeader(g, title, x, y) {
+    g.fillStyle = 'rgba(139,150,184,0.95)';
+    g.font = 'bold 14px "PingFang SC","Microsoft YaHei",sans-serif';
+    g.textAlign = 'left';
+    g.textBaseline = 'alphabetic';
+    g.fillText(title, x, y);
+  }
+
+  function drawDataGrid(g, items, x, y, totalW) {
+    const cols = 3;
+    const cellW = totalW / cols;
+    const cellH = 58;
+    items.forEach((item, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = x + col * cellW;
+      const cy = y + row * cellH;
+      g.fillStyle = 'rgba(139,150,184,0.7)';
+      g.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+      g.textAlign = 'left';
+      g.fillText(item.k, cx, cy + 12);
+      g.fillStyle = '#eef2ff';
+      g.font = 'bold 19px "Inter","PingFang SC",sans-serif';
+      g.fillText(String(item.v), cx, cy + 40);
+    });
+  }
+
+  function buildReportCanvas() {
+    const W = 900;
+    const H = 1200;
+    const dpr = 2;
+    const c = document.createElement('canvas');
+    c.width = W * dpr;
+    c.height = H * dpr;
+    const g = c.getContext('2d');
+    g.scale(dpr, dpr);
+
+    // 背景
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#0a1020');
+    bg.addColorStop(0.5, '#080d1a');
+    bg.addColorStop(1, '#060a16');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, W, H);
+
+    // 装饰光晕
+    const g1 = g.createRadialGradient(W * 0.05, 0, 0, W * 0.05, 0, W * 0.8);
+    g1.addColorStop(0, 'rgba(109,139,255,0.16)');
+    g1.addColorStop(1, 'rgba(109,139,255,0)');
+    g.fillStyle = g1;
+    g.fillRect(0, 0, W, H);
+
+    const g2 = g.createRadialGradient(W * 0.95, H * 0.4, 0, W * 0.95, H * 0.4, W * 0.7);
+    g2.addColorStop(0, 'rgba(176,108,255,0.14)');
+    g2.addColorStop(1, 'rgba(176,108,255,0)');
+    g.fillStyle = g2;
+    g.fillRect(0, 0, W, H);
+
+    // ===== Header =====
+    const accentGrad = g.createLinearGradient(40, 0, 260, 0);
+    accentGrad.addColorStop(0, '#6d8bff');
+    accentGrad.addColorStop(1, '#b06cff');
+    g.fillStyle = accentGrad;
+    roundRect(g, 40, 32, 44, 44, 12);
+    g.fill();
+    g.fillStyle = '#fff';
+    g.font = 'bold 22px sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(SHAPES[currentShape].icon, 62, 54);
+
+    g.textAlign = 'left';
+    g.textBaseline = 'alphabetic';
+    g.fillStyle = '#fff';
+    g.font = 'bold 24px "PingFang SC","Microsoft YaHei",sans-serif';
+    g.fillText('几何绘制挑战', 100, 58);
+    g.fillStyle = 'rgba(139,150,184,0.9)';
+    g.font = '13px "PingFang SC","Microsoft YaHei",sans-serif';
+    g.fillText(`${SHAPES[currentShape].name} · ${new Date().toLocaleString('zh-CN')}`, 100, 78);
+
+    g.strokeStyle = 'rgba(255,255,255,0.06)';
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(40, 108);
+    g.lineTo(W - 40, 108);
+    g.stroke();
+
+    // ===== 本次成绩 =====
+    const thumbX = 40, thumbY = 140, thumbSize = 340;
+    g.save();
+    roundRect(g, thumbX, thumbY, thumbSize, thumbSize, 16);
+    g.clip();
+    g.fillStyle = '#080c18';
+    g.fillRect(thumbX, thumbY, thumbSize, thumbSize);
+    g.drawImage(canvas, thumbX, thumbY, thumbSize, thumbSize);
+    g.restore();
+    g.strokeStyle = 'rgba(255,255,255,0.08)';
+    g.lineWidth = 1;
+    roundRect(g, thumbX, thumbY, thumbSize, thumbSize, 16);
+    g.stroke();
+
+    const sx = 420;
+    const sy = 150;
+
+    g.fillStyle = 'rgba(139,150,184,0.9)';
+    g.font = '13px "PingFang SC","Microsoft YaHei",sans-serif';
+    g.textAlign = 'left';
+    g.fillText('本次评分', sx, sy + 16);
+
+    // 分数渐变
+    let scoreGrad;
+    if (currentResult.score >= 88) {
+      scoreGrad = g.createLinearGradient(sx, 0, sx + 220, 0);
+      scoreGrad.addColorStop(0, '#6ee7f0');
+      scoreGrad.addColorStop(1, '#3b82f6');
+    } else if (currentResult.score >= 65) {
+      scoreGrad = g.createLinearGradient(sx, 0, sx + 220, 0);
+      scoreGrad.addColorStop(0, '#fde68a');
+      scoreGrad.addColorStop(1, '#f59e0b');
+    } else {
+      scoreGrad = g.createLinearGradient(sx, 0, sx + 220, 0);
+      scoreGrad.addColorStop(0, '#fca5a5');
+      scoreGrad.addColorStop(1, '#ef4444');
+    }
+
+    const scoreText = currentResult.score.toFixed(1);
+    g.font = 'bold 72px "Inter","PingFang SC",sans-serif';
+    const scoreW = g.measureText(scoreText).width;
+    g.fillStyle = scoreGrad;
+    g.fillText(scoreText, sx, sy + 90);
+
+    g.fillStyle = 'rgba(139,150,184,0.6)';
+    g.font = '18px "PingFang SC",sans-serif';
+    g.fillText('/ 100', sx + scoreW + 10, sy + 90);
+
+    // 评级徽章
+    const grade = getGrade(currentResult.score);
+    const tc = TIER_COLORS[grade.tier];
+    const badgeY = sy + 110;
+    g.fillStyle = tc.bg;
+    roundRect(g, sx, badgeY, 140, 32, 16);
+    g.fill();
+    g.fillStyle = tc.fg;
+    g.font = 'bold 15px "PingFang SC",sans-serif';
+    g.textBaseline = 'middle';
+    g.fillText(`${grade.icon} ${grade.label}`, sx + 18, badgeY + 16);
+    g.textBaseline = 'alphabetic';
+
+    // 进度条
+    const barY = badgeY + 52;
+    const barW = 440;
+    g.fillStyle = 'rgba(139,150,184,0.14)';
+    roundRect(g, sx, barY, barW, 8, 4);
+    g.fill();
+    g.fillStyle = scoreGrad;
+    roundRect(g, sx, barY, Math.max(8, currentResult.score / 100 * barW), 8, 4);
+    g.fill();
+
+    // 提示
+    g.fillStyle = 'rgba(139,150,184,0.85)';
+    g.font = '13px "PingFang SC","Microsoft YaHei",sans-serif';
+    g.fillText(grade.hint, sx, barY + 32);
+
+    // 三项指标
+    const keys = METRIC_KEYS[currentShape];
+    const metricNames = SHAPES[currentShape].metrics;
+    const metricY = barY + 58;
+    for (let i = 0; i < 3; i++) {
+      const my = metricY + i * 28;
+      g.fillStyle = 'rgba(139,150,184,0.85)';
+      g.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+      g.fillText(metricNames[i], sx, my);
+
+      const pct = clamp01(currentResult[keys[i]]) * 100;
+      const mbW = 170;
+      g.fillStyle = 'rgba(139,150,184,0.14)';
+      roundRect(g, sx + 100, my - 8, mbW, 7, 3.5);
+      g.fill();
+      g.fillStyle = pct >= 78 ? '#34d399' : pct >= 50 ? '#fbbf24' : '#fb7185';
+      roundRect(g, sx + 100, my - 8, Math.max(4, pct / 100 * mbW), 7, 3.5);
+      g.fill();
+
+      g.fillStyle = '#fff';
+      g.font = 'bold 12px "PingFang SC",sans-serif';
+      g.textAlign = 'right';
+      g.fillText(pct.toFixed(1) + '%', sx + 320, my + 1);
+      g.textAlign = 'left';
+    }
+
+    // ===== 本次详细数据 =====
+    const dataY = thumbY + thumbSize + 40;
+    drawSectionHeader(g, '📊 本次详细数据', 40, dataY);
+
+    const dataItems = [
+      { k: '用时', v: (currentResult.duration || 0).toFixed(2) + 's' },
+      { k: '绘制速度', v: (currentResult.speed || 0).toFixed(0) + ' px/s' },
+      { k: '路径长度', v: (currentResult.pathLen || 0).toFixed(0) + ' px' },
+      { k: '采样点数', v: currentResult.meta[2] },
+      { k: SHAPES[currentShape].meta[0], v: currentResult.meta[0] },
+      { k: SHAPES[currentShape].meta[1], v: currentResult.meta[1] },
+    ];
+    drawDataGrid(g, dataItems, 40, dataY + 28, W - 80);
+
+    // ===== 历史统计 =====
+    const histY = dataY + 28 + 120;
+    drawSectionHeader(g, '📈 历史统计（' + SHAPES[currentShape].name + '）', 40, histY);
+
+    const stats = computeStats(currentShape);
+    if (stats && stats.n > 0) {
+      const statItems = [
+        { k: '总次数', v: stats.n },
+        { k: '最佳', v: stats.best.toFixed(1) },
+        { k: '平均', v: stats.mean.toFixed(1) },
+        { k: '中位数', v: stats.median.toFixed(1) },
+        { k: '标准差', v: stats.std.toFixed(2) },
+        { k: '最低', v: stats.worst.toFixed(1) },
+      ];
+      drawDataGrid(g, statItems, 40, histY + 28, W - 80);
+    } else {
+      g.fillStyle = 'rgba(139,150,184,0.7)';
+      g.font = '14px "PingFang SC","Microsoft YaHei",sans-serif';
+      g.fillText('暂无历史数据', 40, histY + 55);
+    }
+
+    // ===== 评级分布 =====
+    const distY = histY + 28 + 120;
+    drawSectionHeader(g, '🏆 评级分布', 40, distY);
+
+    if (stats && stats.n > 0) {
+      const tiers = ['s', 'a', 'b', 'c', 'd', 'e'];
+      const labels = { s: 'S 完美', a: 'A 优秀', b: 'B 良好', c: 'C 一般', d: 'D 及格', e: 'E 加油' };
+      const maxCount = Math.max(1, ...tiers.map(t => stats.dist[t]));
+
+      tiers.forEach((t, i) => {
+        const rowY = distY + 36 + i * 26;
+        g.fillStyle = TIER_COLORS[t].fg;
+        g.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+        g.textAlign = 'left';
+        g.fillText(labels[t], 40, rowY + 4);
+
+        g.fillStyle = 'rgba(139,150,184,0.14)';
+        roundRect(g, 130, rowY - 6, 680, 12, 6);
+        g.fill();
+
+        const cnt = stats.dist[t];
+        if (cnt > 0) {
+          g.fillStyle = TIER_COLORS[t].fg;
+          roundRect(g, 130, rowY - 6, Math.max(12, cnt / maxCount * 680), 12, 6);
+          g.fill();
+        }
+
+        g.fillStyle = TIER_COLORS[t].fg;
+        g.font = 'bold 13px "Inter",sans-serif';
+        g.textAlign = 'right';
+        g.fillText(String(cnt), 880, rowY + 4);
+        g.textAlign = 'left';
+      });
+    }
+
+    // ===== Footer =====
+    const footerY = distY + 36 + 6 * 26 + 30;
+    g.strokeStyle = 'rgba(255,255,255,0.06)';
+    g.beginPath();
+    g.moveTo(40, footerY);
+    g.lineTo(W - 40, footerY);
+    g.stroke();
+
+    g.fillStyle = 'rgba(139,150,184,0.5)';
+    g.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+    g.textAlign = 'center';
+    g.fillText('几何绘制挑战 · Shape Master', W / 2, footerY + 26);
+    g.fillText('用鼠标或手指绘制，系统自动评分', W / 2, footerY + 46);
+    g.textAlign = 'left';
+
+    return c;
+  }
+
+  function exportReport() {
+    if (!currentResult) {
+      showToast('请先完成一次绘制再导出');
+      return;
+    }
+    try {
+      const reportCanvas = buildReportCanvas();
+      reportCanvas.toBlob((blob) => {
+        if (!blob) { showToast('导出失败'); return; }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        a.href = url;
+        a.download = `${currentShape}-report-${ts}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('报告已导出 📸');
+      }, 'image/png');
+    } catch (_) {
+      showToast('导出失败，请重试');
+    }
+  }
+
+  /* ============================================================
+     事件绑定
+     ============================================================ */
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  $('clearBtn').addEventListener('click', () => clearCanvas());
+  $('guideBtn').addEventListener('click', toggleGuide);
+  $('blindBtn').addEventListener('click', toggleBlind);
+  $('timedBtn').addEventListener('click', toggleTimed);
+  $('exportBtn').addEventListener('click', exportReport);
+  $('themeBtn').addEventListener('click', toggleTheme);
+
+  shapeTabs.addEventListener('click', (e) => {
+    const tab = e.target.closest('.shape-tab');
+    if (tab) switchShape(tab.dataset.shape);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea')) return;
+    switch (e.key.toLowerCase()) {
+      case 'r': case 'escape': clearCanvas(); break;
+      case 'g': toggleGuide(); break;
+      case 'b': toggleBlind(); break;
+      case 't': toggleTimed(); break;
+      case 'e': exportReport(); break;
+      case '1': switchShape('circle'); break;
+      case '2': switchShape('square'); break;
+      case '3': switchShape('triangle'); break;
+      case '4': switchShape('line'); break;
+      case 'd': toggleTheme(); break;
+    }
+  });
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => resizeCanvas()).observe(wrap);
+  } else {
+    window.addEventListener('resize', resizeCanvas);
+  }
+
+  /* ============================================================
+     初始化
+     ============================================================ */
+  refreshThemeColors();
+  history = loadHistory();
+  resizeCanvas();
+  updateShapeUI();
+  resetPanel();
+  updateStatsCard();
+})();
+</script>
+</body>
+</html>
