@@ -489,7 +489,7 @@ input[type=range]:disabled{opacity:.35}
       </section>
     </div>
     <section class="card" style="margin-top:16px">
-      <div class="card-h"><div><h2>✨ 智能推荐</h2><div class="sub">按目标时长，或按目标难度等级反推关卡参数</div></div></div>
+      <div class="card-h"><div><h2>✨ 智能推荐</h2><div class="sub">按目标时长或难度等级反推参数，并以真实生成的关卡反复校准</div></div></div>
       <div class="rec-mode"><b>① 按目标时长</b><span>用你的真实速度反推网格与色数</span></div>
       <div class="row" style="align-items:flex-end">
         <div class="field" style="flex:1;min-width:130px"><div class="field-label"><span>想玩多久（分钟）</span></div><input class="inp" id="recMin" type="number" min="1" max="180" value="12"></div>
@@ -508,7 +508,7 @@ input[type=range]:disabled{opacity:.35}
         <button class="chip-btn" data-d="12">硬核 12</button><button class="chip-btn" data-d="16">专家 16</button>
         <button class="chip-btn" data-d="19">极限 19</button><button class="chip-btn" data-d="20.5">突破 20+</button>
       </div>
-      <div class="note"><span>💡</span><span id="recExplain">两种模式：按目标时长反推速度，或按目标难度等级反推网格与色数；都按当前素材比例估算，应用后自动跳回工坊。</span></div>
+      <div class="note"><span>💡</span><span id="recExplain">两种模式都会真实生成关卡、实测数值并自动试算校准，直到贴近目标；不再用估算值冒充结果，完成后自动跳回工坊。</span></div>
     </section>
   </main>
 
@@ -660,7 +660,7 @@ const safeDB = {
 const S = {
   theme: LS.get('theme','dark'), muted: LS.get('muted',false),
   source:null, sourceKind:'', sourceMeta:'',
-  design:null, buildToken:0, building:false, lockAspect:true,
+  design:null, buildToken:0, building:false, calibrating:false, recRun:0, lockAspect:true,
   model:null, stats:LS.get('stats',{sessions:[]}),
   settings:LS.get('settings',{}), libCache:[],
   game:null, gameActive:false, uiTab:'studio', pane:'src'
@@ -1163,10 +1163,10 @@ async function runBuild(){
     const lv=await buildLevel(opts,token);
     if(token!==S.buildToken)return;
     S.design=lv;
-    drawPreview();renderDesignStats();
+    drawPreview();if(!S.calibrating)renderDesignStats();
     $('previewCanvas').classList.remove('hidden');$('previewEmpty').classList.add('hidden');
     $('previewSub').textContent=`${lv.cols}×${lv.rows} · ${fmtNum(lv.palette.length)} 色 · ${S.source.name}`;
-    $('procBadge').textContent='就绪';$('procBadge').className='tag ok';
+    if(!S.calibrating){$('procBadge').textContent='就绪';$('procBadge').className='tag ok';}
     $('startBtn').disabled=false;
     ['exportPngBtn','exportJsonBtn','saveLevelBtn'].forEach(id=>$(id).disabled=false);
   }catch(e){console.error(e);toast('生成失败：'+e.message);}
@@ -1340,11 +1340,11 @@ function bindDesign(){
   $('doGenBtn').onclick=doGenerate;
   $('randomBtn').onclick=randomInspiration;
   $('diceBtn').onclick=()=>{$('seedInput').value=Math.floor(Math.random()*99999999);doGenerate();};
-  // 智能推荐：应用参数后自动回到工坊
-  $('applyRecBtn').onclick=()=>{applyRecommend(false);switchTab('studio');toast('✨ 参数已应用，已回到工坊');};
+  // 智能推荐：按真实生成结果闭环校准，完成后自动回到工坊
+  $('applyRecBtn').onclick=()=>applyRecommend().catch(e=>toast('推荐失败：'+e.message));
   $('recDiff').addEventListener('input',syncDiffWord);
   $$('#diffPresetRow .chip-btn').forEach(b=>b.onclick=()=>{$('recDiff').value=b.dataset.d;syncDiffWord();sfx.sel();});
-  $('applyDiffBtn').onclick=applyDiffRecommend;
+  $('applyDiffBtn').onclick=()=>applyDiffRecommend().catch(e=>toast('推荐失败：'+e.message));
   syncDiffWord();
   const startNow=()=>{if(S.design&&!S.building)startGame(S.design,S.design.meta?.name||'未命名',null);};
   $('startBtn').onclick=startNow;
@@ -2042,11 +2042,13 @@ function bindOthers(){
   $('clearStatsBtn').onclick=()=>{if(!confirm('清空全部战绩统计？学习模型不会被清除。'))return;S.stats={sessions:[]};LS.set('stats',S.stats);renderInsights();toast('战绩已清空');};
   $('exportModelBtn').onclick=()=>{downloadText('像素染坊Pro_模型.json',JSON.stringify(S.model,null,2));toast('模型已导出');};
 }
-/* 推荐用的关卡结构估算：与真实 difficultyOf / modelPredict 读同一套字段 */
-function recEstimateFor(w,style,ratio){
+/* ---------- 智能推荐：以「真实生成的关卡」为准做闭环校准 ---------- */
+/* 粗估只用于给搜索一个起点；最终数值一律取 S.design 实测，不再用假设结构冒充结果 */
+function recRatio(){const el=S.source?.el;return el&&el.width?el.height/el.width:1;}
+function recEstimateFor(w,style,ratio,kMul){
   const h=Math.max(1,Math.round(w*ratio)),n=w*h;
   const kDiv=style==='chill'?110:style==='hard'?22:52;
-  const K=clamp(Math.round(n/kDiv),6,20000);
+  const K=clamp(Math.round(n/kDiv*(kMul||1)),6,20000);
   return {w,h,n,K,
     clusters:Math.max(1,Math.round(n*(style==='hard'?.22:.11))),
     spread:style==='hard'?.6:.38,
@@ -2056,11 +2058,10 @@ function recEstimateFor(w,style,ratio){
     rareRatio:clamp(K/Math.max(1,n)*7,.02,.9),
     extra:n*.02*Math.log2(2+Math.max(w,h)/20)};
 }
-function recRatio(){const el=S.source?.el;return el&&el.width?el.height/el.width:1;}
-function recWriteParams(e){
+function recSetParams(e,build){
   $('wInput').value=e.w;$('hInput').value=e.h;$('targetInput').value=e.K;
   $('extremeChk').checked=false;$('mergeSlider').disabled=false;$('targetInput').disabled=false;
-  syncLabels();refreshPreview();
+  syncLabels();if(build)refreshPreview();
 }
 function diffWordShort(d){
   if(d<4)return '入门 · 色少块大，随手可涂';
@@ -2074,35 +2075,159 @@ function syncDiffWord(){
   const raw=parseFloat($('recDiff').value),d=clamp(isNaN(raw)?10:raw,0,30);
   $('recDiffWord').textContent=`${Number(d.toFixed(2))} 级 · ${diffWordShort(d)}`;
 }
-function applyRecommend(switchBack){
+/* 直接构建一次并等待完成，返回真实关卡 */
+async function recBuildNow(){
+  clearTimeout(pvTimer);
+  const want=+$('wInput').value;
+  await runBuild();
+  return S.design&&S.design.cols===want?S.design:null;
+}
+/* 粗估二分：只用来选起始 w，不参与最终结论 */
+function recInitialGuess(estFn,target,minW,maxW){
+  let lo=minW,hi=maxW,best=minW,bestErr=Infinity;
+  while(lo<=hi){const mid=(lo+hi)>>1,v=estFn(mid),err=Math.abs(v-target);
+    if(err<bestErr){bestErr=err;best=mid;}
+    if(v<target)lo=mid+1;else hi=mid-1;}
+  return best;
+}
+/* 用最近两个真实样本拟合曲线，预测下一个 w（难度≈对数、用时≈幂律） */
+function recPredictW(samples,target,fit){
+  const n=samples.length;if(n<2)return NaN;
+  const a=samples[n-2],b=samples[n-1];
+  if(a.w===b.w||a.v===b.v)return NaN;
+  if(fit==='log'){
+    const A=(b.v-a.v)/(Math.log(b.w)-Math.log(a.w));
+    if(!isFinite(A)||Math.abs(A)<1e-9)return NaN;
+    return Math.exp((target-(a.v-A*Math.log(a.w)))/A);
+  }
+  if(a.v<=0||b.v<=0)return NaN;
+  let p=Math.log(b.v/a.v)/Math.log(b.w/a.w);
+  if(!isFinite(p)||Math.abs(p)<1e-6)return NaN;
+  p=clamp(p,.2,6);
+  return Math.pow(target/(a.v/Math.pow(a.w,p)),1/p);
+}
+/* 闭环：写参数 → 真实生成 → 实测 → 修正 → 直到贴合目标
+   注意：真实难度对 w 并非严格单调（颜色数会跳变），所以不用假设单调的二分括号 */
+async function calibrateRecommend(cfg){
+  const run=++S.recRun,ratio=recRatio(),badge=$('procBadge');
+  clearTimeout(pvTimer);
+  const minW=cfg.minW||4,maxW=cfg.maxW||1200;
+  let w=Math.round(clamp(recInitialGuess(cfg.estFn,cfg.target,minW,maxW),minW,maxW));
+  const samples=[],tried=new Set();
+  let best=null,lastKey='';
+  const setBadge=t=>{badge.textContent=t;badge.className='tag busy';};
+  const probe=async(cw,kMul)=>{
+    const e=recEstimateFor(cw,cfg.style,ratio,kMul||1);
+    recSetParams(e,false);
+    lastKey=cw+':'+(kMul||1);
+    const lv=await recBuildNow();
+    if(run!==S.recRun||!lv)return null;
+    const v=cfg.measure(lv),pt={w:cw,kMul:kMul||1,v};
+    samples.push(pt);
+    if(!best||Math.abs(v-cfg.target)<Math.abs(best.v-cfg.target))best=pt;
+    return pt;
+  };
+  S.calibrating=true;
+  try{
+    for(let it=0;it<cfg.maxIter;it++){
+      if(run!==S.recRun)return {cancelled:true};
+      w=Math.round(clamp(w,minW,maxW));
+      if(tried.has(w)){
+        let alt=-1;
+        for(let d=1;d<=6&&alt<0;d++)for(const c of [w-d,w+d])
+          if(c>=minW&&c<=maxW&&!tried.has(c)){alt=c;break;}
+        if(alt<0)break;
+        w=alt;
+      }
+      tried.add(w);
+      setBadge(`校准中 ${it+1}/${cfg.maxIter}`);
+      $('recExplain').textContent=`正在按真实生成的关卡校准… 第 ${it+1}/${cfg.maxIter} 次试算 ${w}×${Math.max(1,Math.round(w*ratio))}`;
+      const pt=await probe(w,1);
+      if(!pt)break;
+      const err=pt.v-cfg.target;
+      if(Math.abs(err)<=cfg.tol)break;
+      let nw=recPredictW(samples,cfg.target,cfg.fit);
+      if(!isFinite(nw)||nw<=0){
+        nw=err<0?w*1.6:w/1.6;                       // 无样本可拟合时按比例扩张/收缩，不跳到全局上界
+      }else{
+        const anchor=Math.max(1,...samples.map(s=>s.w));
+        nw=clamp(nw,minW,Math.min(maxW,anchor*3));  // 拟合结果也钳制在已知量级附近
+      }
+      w=Math.round(clamp(nw,minW,maxW));
+    }
+    /* 局部精修：整数 w 在难点附近可能跳变，试相邻 4 个点取最接近的（仅小图，避免大图反复重建） */
+    if(best&&best.w<=300&&Math.abs(best.v-cfg.target)>cfg.tol){
+      for(const d of [1,-1,2,-2]){
+        const c=best.w+d;if(c<minW||c>maxW||tried.has(c))continue;
+        if(run!==S.recRun)return {cancelled:true};
+        tried.add(c);setBadge('精修中');
+        const pt=await probe(c,1);
+        if(!pt)break;
+        if(Math.abs(pt.v-cfg.target)<=cfg.tol)break;
+      }
+    }
+    /* 第二维微调：固定网格，按误差方向调目标颜色数，填补整数 w 造成的空隙（仅小图） */
+    if(best&&best.w<=300&&Math.abs(best.v-cfg.target)>cfg.tol){
+      const baseW=best.w,baseK=recEstimateFor(baseW,cfg.style,ratio,1).K,seenK=new Set([baseK]);
+      const muls=best.v>cfg.target?[.85,.7,.55]:[1.2,1.5,2];
+      for(const mul of muls){
+        const K=recEstimateFor(baseW,cfg.style,ratio,mul).K;
+        if(seenK.has(K))continue;                 // 色数没变化，构建结果必然相同，跳过
+        seenK.add(K);
+        if(run!==S.recRun)return {cancelled:true};
+        setBadge('微调色数中');
+        const pt=await probe(baseW,mul);
+        if(!pt)break;
+        if(Math.abs(pt.v-cfg.target)<=cfg.tol)break;
+      }
+    }
+  }finally{if(run===S.recRun)S.calibrating=false;}
+  if(!best)return {failed:true};
+  // 让最终 S.design 与最优样本（含色数乘数）一致
+  if(!S.design||lastKey!==best.w+':'+best.kMul){
+    recSetParams(recEstimateFor(best.w,cfg.style,ratio,best.kMul),false);
+    await recBuildNow();
+  }
+  if(run!==S.recRun)return {cancelled:true};
+  const lv=S.design;
+  renderDesignStats();
+  badge.textContent='就绪';badge.className='tag ok';
+  $('startBtn').disabled=false;
+  ['exportPngBtn','exportJsonBtn','saveLevelBtn'].forEach(id=>$(id).disabled=false);
+  const atEdge=best.w<=minW+1||best.w>=maxW-1;
+  return {lv,real:cfg.measure(lv),best,samples,target:cfg.target,
+    capped:atEdge&&Math.abs(cfg.measure(lv)-cfg.target)>cfg.tol};
+}
+function recFinalText(r,head,isDiff){
+  const lv=r.lv,err=r.real-r.target;
+  const show=isDiff?fmtDifficulty(r.real).text:fmtDur(r.real);
+  const dev=isDiff?(err>=0?'+':'')+err.toFixed(2)+' 级':(err>=0?'+':'')+Math.round(err)+' 秒';
+  const tail=r.capped?' · 已到尺寸搜索边界，受素材颜色数限制':'';
+  return `${head} ${lv.cols}×${lv.rows}（${fmtNum(lv.cells.length)} 格）· ${fmtNum(lv.palette.length)} 色 · 实测 ${show}（偏差 ${dev}）· 已按真实生成结果校准${tail}。`;
+}
+/* ① 按目标时长 */
+async function applyRecommend(){
   const min=clamp(parseInt($('recMin').value,10)||12,1,180),target=min*60;
   const style=$('recStyle').value,ratio=recRatio();
-  const predFor=w=>modelPredict({estimate:recEstimateFor(w,style,ratio)});
-  let lo=6,hi=1200,best=28,bestErr=Infinity;
-  while(lo<=hi){const mid=(lo+hi)>>1,sec=predFor(mid),err=Math.abs(sec-target);
-    if(err<bestErr){bestErr=err;best=mid;}
-    if(sec<target)lo=mid+1;else hi=mid-1;}
-  const e=recEstimateFor(best,style,ratio);
-  recWriteParams(e);
-  const sec=predFor(best);
-  $('recExplain').textContent=`按 ${min} 分钟推荐 ${e.w}×${e.h}（${fmtNum(e.n)} 格）· ${e.K} 色 · 预计 ${fmtDur(sec)} · 难度 ${fmtDifficulty(difficultyOf({estimate:e})).text}。参数已写入工坊。`;
-  if(switchBack)switchTab('studio');
+  const estFn=w=>modelPredict({estimate:recEstimateFor(w,style,ratio)});
+  const r=await calibrateRecommend({target,measure:lv=>modelPredict(lv),estFn,style,ratio,
+    fit:'power',tol:Math.max(5,target*.035),maxIter:9,minW:4,maxW:1200});
+  if(r.failed){toast('校准失败：请先载入素材');return;}
+  if(r.cancelled)return;
+  $('recExplain').textContent=recFinalText(r,`按 ${min} 分钟推荐`,false)+` 难度 ${fmtDifficulty(difficultyOf(r.lv)).text}。`;
+  switchTab('studio');toast(`✨ 已按 ${min} 分钟校准完成`);
 }
-/* 输入目标难度等级 → 反推网格尺寸与颜色数 */
-function applyDiffRecommend(){
+/* ② 按目标难度等级 */
+async function applyDiffRecommend(){
   const raw=parseFloat($('recDiff').value),target=clamp(isNaN(raw)?10:raw,0,30);
   const style=$('recStyle').value,ratio=recRatio();
-  const diffFor=w=>difficultyOf({estimate:recEstimateFor(w,style,ratio)});
-  let lo=6,hi=2400,best=6,bestErr=Infinity;
-  while(lo<=hi){const mid=(lo+hi)>>1,d=diffFor(mid),err=Math.abs(d-target);
-    if(err<bestErr){bestErr=err;best=mid;}
-    if(d<target)lo=mid+1;else hi=mid-1;}
-  const e=recEstimateFor(best,style,ratio),d=diffFor(best),capped=best>=2400&&d<target-.3;
-  recWriteParams(e);
-  const sec=modelPredict({estimate:e});
-  $('recExplain').textContent=`按目标 ${Number(target.toFixed(2))} 级推荐 ${e.w}×${e.h}（${fmtNum(e.n)} 格）· ${e.K} 色 · 预计难度 ${fmtDifficulty(d).text} · 预计用时 ${fmtDur(sec)}${capped?' · 已达尺寸搜索上限，难度略低于目标':''}${e.n>500000?' · 网格较大，生成需稍等':''}。实际难度以工坊预览卡片为准，参数已写入工坊。`;
-  switchTab('studio');
-  toast(`✨ 已按目标难度 ${Number(target.toFixed(2))} 级推荐参数`);
+  const estFn=w=>difficultyOf({estimate:recEstimateFor(w,style,ratio)});
+  const r=await calibrateRecommend({target,measure:lv=>difficultyOf(lv),estFn,style,ratio,
+    fit:'log',tol:.06,maxIter:9,minW:4,maxW:2400});
+  if(r.failed){toast('校准失败：请先载入素材');return;}
+  if(r.cancelled)return;
+  $('recExplain').textContent=recFinalText(r,`按目标 ${Number(target.toFixed(2))} 级推荐`,true)+` 预计用时 ${fmtDur(modelPredict(r.lv))}。`;
+  switchTab('studio');toast(`✨ 已按目标难度 ${Number(target.toFixed(2))} 级校准完成`);
 }
 function renderAll(){
   if(S.design)renderDesignStats();
