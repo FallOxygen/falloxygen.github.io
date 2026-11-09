@@ -1239,6 +1239,299 @@
           width:100%;
         }
       }
+      /* ===== 词库文件夹树 v6 ===== */
+      .lib-current-bar .label {
+        white-space:nowrap;
+      }
+      .lib-current-bar > div {
+        display:flex;
+        gap:6px;
+        flex-wrap:wrap;
+      }
+      .lib-crumb-bar {
+        display:flex;
+        flex-wrap:wrap;
+        align-items:center;
+        gap:4px;
+        padding:7px 12px;
+        background:var(--bg-input);
+        border:1px solid var(--border);
+        border-radius:var(--radius-sm);
+        font-size:12px;
+        margin-bottom:8px;
+      }
+      .lib-crumb-bar .crumb-label {
+        font-weight:700;
+        color:var(--text-secondary);
+        margin-right:6px;
+        white-space:nowrap;
+      }
+      .lib-crumb-bar .crumb-sep {
+        color:var(--text-muted);
+      }
+      .lib-crumb-bar .crumb-btn {
+        background:none;
+        border:none;
+        padding:2px 6px;
+        min-height:auto;
+        color:var(--accent);
+        font-size:12px;
+        font-weight:600;
+        border-radius:4px;
+      }
+      .lib-crumb-bar .crumb-btn:hover:not(:disabled) {
+        background:var(--accent-light);
+      }
+      .lib-crumb-bar .crumb-btn.current {
+        color:var(--text-primary);
+        background:var(--bg-card);
+      }
+      .lib-crumb-bar .browse-hint {
+        margin-left:auto;
+        color:var(--text-muted);
+        font-size:11px;
+      }
+      .lib-toolbar {
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        align-items:center;
+        margin-bottom:8px;
+      }
+      .lib-toolbar .grow {
+        flex:1 1 160px;
+        min-width:120px;
+      }
+      .lib-toolbar .filter-label {
+        font-size:13px;
+        font-weight:600;
+        color:var(--text-secondary);
+        white-space:nowrap;
+      }
+      .lib-toolbar select {
+        flex:0 1 140px;
+        min-width:110px;
+        font-size:14px;
+      }
+      .lib-toolbar .lib-filter-stats {
+        font-size:12px;
+        color:var(--text-muted);
+        margin-left:auto;
+        white-space:nowrap;
+      }
+      .lib-tree-container {
+        max-height:420px;
+        overflow-y:auto;
+        border:1px solid var(--border);
+        border-radius:var(--radius-sm);
+        padding:8px;
+        background:var(--bg-input);
+        margin-bottom:10px;
+      }
+      .lib-children {
+        margin-left:14px;
+        padding-left:8px;
+        border-left:2px dashed var(--border);
+      }
+      .lib-row {
+        display:flex;
+        flex-wrap:wrap;
+        align-items:center;
+        justify-content:space-between;
+        gap:6px;
+        padding:7px 10px;
+        margin-bottom:5px;
+        border-radius:6px;
+        background:var(--bg-card);
+        border:1px solid transparent;
+        transition:border-color .15s,background .15s;
+      }
+      .lib-row:hover {
+        border-color:var(--accent);
+      }
+      .lib-row.lib-scope {
+        border-color:var(--accent);
+        background:var(--accent-light);
+      }
+      .lib-row.lib-browse-here {
+        box-shadow:inset 3px 0 0 var(--primary);
+      }
+      .lib-row.dragging {
+        opacity:.45;
+      }
+      .lib-row.drag-over {
+        outline:2px dashed var(--accent);
+        outline-offset:-2px;
+        background:var(--accent-light);
+      }
+      .lib-row-main {
+        display:flex;
+        align-items:center;
+        gap:6px;
+        flex:1 1 180px;
+        min-width:0;
+      }
+      .lib-row .lib-info {
+        flex:1;
+        min-width:0;
+      }
+      .lib-row .lib-name {
+        font-weight:600;
+        font-size:14px;
+        color:var(--text-primary);
+        word-break:break-all;
+      }
+      .lib-row .lib-meta {
+        font-size:12px;
+        color:var(--text-muted);
+        margin-top:2px;
+        display:flex;
+        flex-wrap:wrap;
+        gap:6px;
+        align-items:center;
+      }
+      .lib-row .lib-meta .lang {
+        background:var(--bg-input);
+        padding:0 6px;
+        border-radius:4px;
+      }
+      .lib-row .lib-meta .lib-path {
+        opacity:.85;
+      }
+      .lib-row .lib-actions {
+        display:flex;
+        flex-wrap:wrap;
+        gap:4px;
+        flex-shrink:0;
+      }
+      .lib-row .lib-actions button {
+        min-height:26px;
+        padding:2px 8px;
+        font-size:12px;
+      }
+      .lib-twisty {
+        width:22px;
+        min-width:22px;
+        height:26px;
+        min-height:26px;
+        padding:0;
+        background:transparent;
+        color:var(--text-secondary);
+        border:none;
+        font-size:14px;
+      }
+      .lib-twisty:hover:not(:disabled) {
+        background:var(--bg-input);
+      }
+      .lib-twisty.placeholder {
+        visibility:hidden;
+      }
+      .lib-icon {
+        font-size:15px;
+        flex-shrink:0;
+      }
+      .lib-scope-tag {
+        font-size:11px;
+        color:var(--accent);
+        background:var(--bg-card);
+        border:1px solid var(--accent);
+        padding:0 6px;
+        border-radius:8px;
+        margin-left:4px;
+        font-weight:600;
+        white-space:nowrap;
+      }
+      .lib-empty-hint {
+        text-align:center;
+        color:var(--text-muted);
+        padding:16px 10px;
+        font-size:13px;
+      }
+      .lib-file-btn {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        font-size:13px;
+        font-weight:600;
+        white-space:nowrap;
+      }
+      .lib-file-btn:hover {
+        background:var(--bg-input);
+      }
+      .lib-file-btn input {
+        display:none;
+      }
+      .lib-modal {
+        display:none;
+        position:fixed;
+        inset:0;
+        z-index:300;
+        background:rgba(0,0,0,.5);
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+      }
+      .lib-modal.active {
+        display:flex;
+      }
+      .lib-modal-card {
+        background:var(--bg-card);
+        border:1px solid var(--border);
+        border-radius:var(--radius);
+        box-shadow:var(--shadow-lg);
+        padding:18px 20px;
+        width:100%;
+        max-width:420px;
+      }
+      .lib-modal-title {
+        font-size:16px;
+        font-weight:700;
+        margin-bottom:12px;
+        color:var(--text-primary);
+      }
+      .lib-modal-card .form-group {
+        margin-bottom:10px;
+      }
+      .lib-modal-card label {
+        display:block;
+        font-size:13px;
+        font-weight:600;
+        color:var(--text-secondary);
+        margin-bottom:4px;
+      }
+      .lib-modal-card input,.lib-modal-card select {
+        width:100%;
+      }
+      .lib-modal-actions {
+        display:flex;
+        justify-content:flex-end;
+        gap:8px;
+        margin-top:14px;
+      }
+      @media (max-width:480px) {
+        .lib-row .lib-actions {
+          width:100%;
+          justify-content:flex-end;
+        }
+        .lib-tree-container {
+          max-height:340px;
+        }
+        .lib-children {
+          margin-left:8px;
+          padding-left:5px;
+        }
+        .lib-toolbar .lib-filter-stats {
+          margin-left:0;
+          width:100%;
+          text-align:center;
+        }
+        .lib-crumb-bar .browse-hint {
+          margin-left:0;
+          width:100%;
+        }
+      }
+
     </style>
   </head>
   <body>
@@ -1247,7 +1540,7 @@
         🎯 猜词游戏
         <small>Wordle + 1A2B + AI 查词</small>
       </h1>
-      <p>两种玩法共用一套词库 · 四档难度 · 一键学习</p>
+      <p>文件夹式词库 · 范围自由细分 · 四档难度 · 一键学习</p>
       <div class="mode-tabs">
         <div class="mode-tab active" id="tab-simulator" onclick="switchPage('simulator')">
           🎮 模拟器
@@ -1752,25 +2045,33 @@
             <div class="note-box">
               难度越高，可推断的线索越少，越考验推理。难度切换后看板会按新规则重新显示，历史各次猜测同步更新。
             </div>
-            <h4>📚 多词库管理</h4>
+            <h4>📚 文件夹式词库（可无限嵌套）</h4>
             <ul>
               <li>
-                <strong>导入</strong>
-                ：输入词库名（可选）、选语言，上传
-                <code>.txt</code>
-                （一行一个单词），支持多选批量导入。
+                <strong>建结构</strong>
+                ：点「🆕 新建文件夹」可层层嵌套；拖拽某一行到别的文件夹，或点「↪️ 移动」选择目标，按「语言 → 主题 → 难度」把词库细分到不同范围。
               </li>
               <li>
-                <strong>切换</strong>
-                ：点词库右侧「使用」。
-                <strong>重命名/删除</strong>
-                ：点 ✏️ / 🗑️。
-                <strong>导出</strong>
-                ：当前词库导出为 .txt。
+                <strong>导入</strong>
+                ：普通多选
+                <code>.txt</code>
+                导入到「当前位置」；「📂 导入文件夹」按电脑目录层级自动生成嵌套文件夹，一次搬进整套词库（支持无限层级）。
+              </li>
+              <li>
+                <strong>选范围</strong>
+                ：词库行点「使用」只抽这一个库；文件夹行点「🎯 用此范围」会把该文件夹下<strong>所有子文件夹</strong>的词库合并成一个抽词范围，这就是范围细分的核心用法。
+              </li>
+              <li>
+                <strong>管理</strong>
+                ：✏️ 重命名（可写备注）、🗑️ 删除（含子内容）、📤 导出范围 .txt、📦 备份 / 📥 恢复整棵词库树（JSON）。
+              </li>
+              <li>
+                <strong>大量词库</strong>
+                ：数据优先存浏览器 IndexedDB（localStorage 兜底），文件夹默认折叠，可用顶部搜索按名称 / 路径 / 语言快速定位。
               </li>
               <li>
                 <strong>过滤</strong>
-                ：按「字符数」或「正则」过滤当前词库；模拟器/开始游戏抽取时只从过滤后的词中抽。
+                ：字符数 / 正则过滤作用于「当前范围」合并后的词，随范围一起保存；开始游戏时只从过滤结果中抽取。
               </li>
             </ul>
             <h4>🎮 三个页面</h4>
@@ -1940,7 +2241,8 @@
     const GAME_STATE_KEY = 'guessgame_state_v5';
     const SETTINGS_KEY = 'guessgame_settings_v5';
     const CONFIG_KEY = 'guessgame_ai_config_v5';
-    const LIBRARY_KEY = 'guessgame_libraries_v5';
+    const LIBRARY_KEY = 'guessgame_libraries_v6';
+    const LIBRARY_KEY_OLD = 'guessgame_libraries_v5';
     const BOX_SIZE = 50, BOX_GAP = 8, PADDING = 18;
     const COLORS = {
       correct: '#799a60', present: '#c4b057', absent: '#6e6e73', text: '#ffffff', emptyBorder: '#8e8e93'
@@ -1954,7 +2256,11 @@
       mode: 'simulator', gameType: 'wordle', difficulty: 'normal'
     };
 
+    let libraryTree = null;
     let wordLibraries = [], currentLibraryId = null, filteredWords = [];
+    let currentScope = null, browseFolderId = 'root', libTreeVersion = 0;
+    let expandedIds = new Set(['root']), dragNodeId = null, libModalConfirm = null;
+    let scopeCache = { key: '', words: [] };
     let libraryFilterLang = '全部', libraryFilterName = '';
     let activePage = 'simulator', isNavigatingHistory = false;
 
@@ -2010,10 +2316,10 @@
         }
       }
     };
-    function loadLibrariesLS() {
+    function loadLibrariesLS(key) {
       try {
-        const r = localStorage.getItem(LIBRARY_KEY);
-        return r ? JSON.parse(r): null;
+        const r = localStorage.getItem(key);
+        return r ? JSON.parse(r) : null;
       } catch (e) {
         return null;
       }
@@ -2026,30 +2332,109 @@
         return false;
       }
     }
+    function makeId(prefix) {
+      return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    }
+    function emptyFolder(id, name) {
+      return {
+        id: id, type: 'folder', name: name, note: '', children: [],
+        filterLen: '', filterRegex: '', createdAt: Date.now()
+      };
+    }
+    function normalizeTree(raw) {
+      const seen = new Set();
+      function fix(node, isRoot) {
+        if ( !node || typeof node !== 'object') return null;
+        const n = Object.assign({}, node);
+        if (isRoot) n.id = 'root';
+        else if ( !n.id || typeof n.id !== 'string' || seen.has(n.id)) n.id = makeId(n.type === 'folder' ? 'fld': 'lib');
+        seen.add(n.id);
+        n.type = n.type === 'folder' ? 'folder': 'lib';
+        n.name = (typeof n.name === 'string' && n.name.trim()) ? n.name: (n.type === 'folder' ? '未命名文件夹': '未命名词库');
+        n.createdAt = n.createdAt || Date.now();
+        n.filterLen = n.filterLen || '';
+        n.filterRegex = n.filterRegex || '';
+        if (n.type === 'folder') {
+          n.note = n.note || '';
+          const kids = Array.isArray(n.children) ? n.children: [];
+          n.children = kids.map( (c) => fix(c, false)).filter(Boolean);
+          delete n.words;
+          delete n.language;
+        } else {
+          n.language = n.language || '其他';
+          n.words = Array.isArray(n.words) ? n.words.filter( (w) => typeof w === 'string'): [];
+          delete n.children;
+        }
+        return n;
+      }
+      return fix(raw, true);
+    }
+    function migrateLegacy(data) {
+      const root = emptyFolder('root', '全部词库');
+      const folder = emptyFolder(makeId('fld'), '未归档词库');
+      (data.libraries || []).forEach( (l) => {
+        folder.children.push({
+          id: l.id || makeId('lib'), type: 'lib', name: l.name || '未命名词库',
+          language: l.language || '其他', words: Array.isArray(l.words) ? l.words.slice(): [],
+          filterLen: l.filterLen || '', filterRegex: l.filterRegex || '', createdAt: l.createdAt || Date.now()
+        });
+      });
+      root.children.push(folder);
+      return {
+        tree: root, currentScope: data.currentId ? {
+          type: 'lib', id: data.currentId
+        }
+        : null, expanded: [ 'root', folder.id], browse: 'root'
+      };
+    }
     async function loadLibraries() {
-      let data = null;
+      let raw = null;
       try {
         const idb = await libDB.loadData();
-        if (idb && Array.isArray(idb.libraries)) data = idb;
-      } catch (e) {} if ( !data) {
-        const ls = loadLibrariesLS();
-        if (ls && Array.isArray(ls.libraries)) {
-          data = ls;
-          libDB.saveData(data).catch ( () => {});
-        }
+        if (idb && (idb.tree || Array.isArray(idb.libraries))) raw = idb;
+      } catch (e) {} if ( !raw) raw = loadLibrariesLS(LIBRARY_KEY) || loadLibrariesLS(LIBRARY_KEY_OLD);
+      if ( !raw) return false;
+      let parsed;
+      if (raw.version === 6 && raw.tree) {
+        parsed = {
+          tree: normalizeTree(raw.tree),
+          currentScope: raw.currentScope || (raw.currentId ? {
+            type: 'lib', id: raw.currentId
+          }
+          : null),
+          expanded: Array.isArray(raw.expanded) ? raw.expanded: [ 'root'], browse: raw.browse || 'root'
+        };
+      } else if (Array.isArray(raw.libraries)) {
+        parsed = migrateLegacy(raw);
+      } else return false;
+      libraryTree = parsed.tree;
+      libraryTree.id = 'root';
+      libraryTree.type = 'folder';
+      expandedIds = new Set(parsed.expanded || [ 'root']);
+      expandedIds.add('root');
+      rebuildFlatIndex();
+      browseFolderId = findNode(parsed.browse) ? parsed.browse: 'root';
+      currentScope = null;
+      if (parsed.currentScope) {
+        const hit = findNode(parsed.currentScope.id);
+        if (hit) currentScope = {
+          type: hit.node.type, id: hit.node.id
+        };
       }
-      if (data) {
-        wordLibraries = data.libraries || [];
-        currentLibraryId = data.currentId || null;
-        if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id: null;
-        filteredWords = [];
-        return true;
-      }
-      return false;
+      if ( !currentScope && wordLibraries.length) currentScope = {
+        type: 'lib', id: wordLibraries[0].id
+      };
+      currentLibraryId = currentScope && currentScope.type === 'lib' ? currentScope.id: null;
+      filteredWords = [];
+      libTreeVersion++;
+      invalidateScopeCache();
+      saveLibraries();
+      return true;
     }
     async function saveLibraries() {
       const d = {
-        libraries: wordLibraries, currentId: currentLibraryId
+        version: 6, tree: libraryTree, currentScope: currentScope,
+        currentId: currentLibraryId, expanded: Array.from(expandedIds), browse: browseFolderId
       };
       const ok = await libDB.saveData(d);
       if ( !ok) saveLibrariesLS(d);
@@ -2269,34 +2654,671 @@
       if (page === 'play') updatePlayButtonState();
     }
 
+    /* ===== 文件夹式词库：树结构工具 ===== */
+    function findNode(id, node, parent, path) {
+      node = node || libraryTree;
+      parent = parent || null;
+      path = path || [];
+      if ( !node || !id) return null;
+      const p = path.concat([node]);
+      if (node.id === id) return {
+        node: node, parent: parent, path: p
+      };
+      if (node.type === 'folder' && Array.isArray(node.children)) {
+        for (let i = 0; i < node.children.length; i++) {
+          const r = findNode(id, node.children[i], node, p);
+          if (r) return r;
+        }
+      }
+      return null;
+    }
+    function walkTree(node, cb) {
+      if ( !node) return;
+      cb(node);
+      if (node.type === 'folder' && Array.isArray(node.children)) node.children.forEach( (c) => walkTree(c, cb));
+    }
+    let libPathIndex = new Map(), folderStats = new Map(), totalFolderCount = 0;
+    function rebuildFlatIndex() {
+      wordLibraries = [];
+      libPathIndex = new Map();
+      folderStats = new Map();
+      totalFolderCount = 0;
+      const walk = (node, path) => {
+        const p = path.concat([node.name]);
+        if (node.type === 'lib') {
+          wordLibraries.push(node);
+          libPathIndex.set(node.id, p.slice(0, -1));
+          return {
+            folders: 0, libs: 1, words: (node.words || []).length
+          };
+        }
+        if (node.id !== 'root') totalFolderCount++;
+        const acc = {
+          folders: 0, libs: 0, words: 0
+        };
+        (node.children || []).forEach( (c) => {
+          const r = walk(c, p);
+          acc.folders += r.folders + (c.type === 'folder' ? 1: 0);
+          acc.libs += r.libs;
+          acc.words += r.words;
+        });
+        folderStats.set(node.id, acc);
+        return acc;
+      };
+      walk(libraryTree, []);
+    }
+    function getNodePathNames(id) {
+      const f = findNode(id);
+      return f ? f.path.map( (n) => n.name): [];
+    }
+    function getNodePathIds(id) {
+      const f = findNode(id);
+      return f ? f.path.map( (n) => n.id): [];
+    }
+    function folderChildCount(node) {
+      return folderStats.get(node.id) || {
+        folders: 0, libs: 0, words: 0
+      };
+    }
+    function collectLibs(node, out) {
+      out = out || [];
+      walkTree(node, (n) => {
+        if (n.type === 'lib') out.push(n);
+      });
+      return out;
+    }
+    function countFolders() {
+      return totalFolderCount;
+    }
+    function isDescendantOrSelf(ancestorId, nodeId) {
+      const a = findNode(ancestorId);
+      if ( !a) return false;
+      let hit = false;
+      walkTree(a.node, (n) => {
+        if (n.id === nodeId) hit = true;
+      });
+      return hit;
+    }
+    function invalidateScopeCache() {
+      scopeCache = {
+        key: '', words: []
+      };
+    }
+    function createSampleTree() {
+      const root = emptyFolder('root', '全部词库');
+      const en = emptyFolder('fld_sample_en', '英语');
+      const zh = emptyFolder('fld_sample_zh', '中文');
+      const basic = emptyFolder('fld_sample_basic', '基础词');
+      en.note = '按语言细分';
+      basic.note = '入门级短词';
+      basic.children.push({
+        id: 'lib_example_en', type: 'lib', name: '英语示例词库', language: '英语',
+        words: [ 'HELLO', 'WORLD', 'APPLE', 'BANANA', 'CHERRY', 'DANCE', 'EAGLE', 'FLOWER', 'GRACE', 'HAPPY', 'MAPLE', 'CRANE', 'STONE', 'LIGHT'],
+        filterLen: '', filterRegex: '', createdAt: Date.now()
+      });
+      en.children.push(basic);
+      zh.children.push({
+        id: 'lib_example_zh', type: 'lib', name: '中文示例词库', language: '中文',
+        words: [ '你好', '世界', '苹果', '香蕉', '樱桃', '舞蹈', '老鹰', '花朵', '优雅', '快乐'],
+        filterLen: '', filterRegex: '', createdAt: Date.now() + 1
+      });
+      root.children.push(en, zh);
+      return root;
+    }
+
+    /* ===== 当前抽词范围：可以是单个词库，也可以是整个文件夹 ===== */
+    function getCurrentScopeNode() {
+      if ( !currentScope) return null;
+      const f = findNode(currentScope.id);
+      return f ? f.node: null;
+    }
     function getCurrentLibrary() {
-      if ( !currentLibraryId) return null;
-      return wordLibraries.find(l => l.id === currentLibraryId) || null;
+      const n = getCurrentScopeNode();
+      if ( !n) return null;
+      if (n.type === 'lib') return n;
+      return {
+        id: n.id, type: 'folder', name: n.name, language: '文件夹范围',
+        words: getCurrentWords(), filterLen: n.filterLen || '', filterRegex: n.filterRegex || '',
+        isFolderScope: true, children: n.children
+      };
     }
     function getCurrentWords() {
-      const l = getCurrentLibrary();
-      return l ? l.words: [];
+      const n = getCurrentScopeNode();
+      if ( !n) return [];
+      const key = n.id + ':' + libTreeVersion;
+      if (scopeCache.key === key) return scopeCache.words;
+      let words;
+      if (n.type === 'lib') words = (n.words || []).slice();
+      else {
+        const seen = new Set(), merged = [];
+        collectLibs(n).forEach( (l) => {
+          (l.words || []).forEach( (w) => {
+            if ( !seen.has(w)) {
+              seen.add(w);
+              merged.push(w);
+            }
+          });
+        });
+        words = merged;
+      }
+      scopeCache = {
+        key: key, words: words
+      };
+      return words;
     }
     function getFilteredWords() {
       return filteredWords.length > 0 ? filteredWords: getCurrentWords();
     }
     function getValidLibrary() {
-      return getFilteredWords().filter(w => {
-        const n = normalizeInput(w); if (n.length === 0) return false; if ( !settings.allowSpaces && /\s/.test(n)) return false; if ( !settings.unicodeSupport && !/^[A-Z]+$/.test(n)) return false; return true;
+      return getFilteredWords().filter( (w) => {
+        const n = normalizeInput(w);
+        if (n.length === 0) return false;
+        if ( !settings.allowSpaces && /\s/.test(n)) return false;
+        if ( !settings.unicodeSupport && !/^[A-Z]+$/.test(n)) return false;
+        return true;
       });
     }
     function getAllLanguages() {
       const s = new Set();
-      wordLibraries.forEach(l => { if (l.language) s.add(l.language);});
+      wordLibraries.forEach( (l) => {
+        if (l.language) s.add(l.language);
+      });
       return Array.from(s).sort();
     }
+    function setCurrentScope(type, id, silent) {
+      const f = findNode(id);
+      if ( !f || f.node.type !== type) {
+        showToast('范围不存在或已被移动', 'error');
+        return;
+      }
+      currentScope = {
+        type: type, id: id
+      };
+      currentLibraryId = type === 'lib' ? id: null;
+      filteredWords = [];
+      invalidateScopeCache();
+      const n = f.node, lenEl = $('lib-filter-len'), rxEl = $('lib-filter-regex');
+      if (lenEl) lenEl.value = n.filterLen || '';
+      if (rxEl) rxEl.value = n.filterRegex || '';
+      if (n.filterLen || n.filterRegex) applyLibraryFilter(false, true);
+      f.path.forEach( (p) => {
+        if (p.type === 'folder') expandedIds.add(p.id);
+      });
+      browseFolderId = type === 'folder' ? id: (f.parent ? f.parent.id: 'root');
+      saveLibraries();
+      renderLibraryListUI();
+      if (activePage === 'play') updatePlayButtonState();
+      if ( !silent) showToast(`已设为抽词范围：${n.name}${type==='folder'?'（含所有子文件夹）':''}`, 'success');
+    }
+    function setCurrentLibrary(id) {
+      setCurrentScope('lib', id);
+    }
+    function setCurrentFolderScope(id) {
+      setCurrentScope('folder', id);
+    }
+
+    /* ===== 节点增删改 ===== */
+    function uniqueNameIn(folder, base) {
+      const names = new Set(folder.children.map( (c) => c.name));
+      if ( !names.has(base)) return base;
+      let i = 1, n = base + '_' + i;
+      while (names.has(n)) {
+        i++;
+        n = base + '_' + i;
+      }
+      return n;
+    }
+    function addLibNodesToFolder(folderId, items) {
+      const f = findNode(folderId);
+      const target = f && f.node.type === 'folder' ? f.node: libraryTree;
+      items.forEach( (it) => {
+        target.children.push({
+          id: makeId('lib'), type: 'lib', name: uniqueNameIn(target, it.name),
+          language: it.language || '其他', words: it.words || [],
+          filterLen: '', filterRegex: '', createdAt: Date.now() + target.children.length
+        });
+      });
+      expandedIds.add(target.id);
+      libTreeVersion++;
+      invalidateScopeCache();
+      rebuildFlatIndex();
+      return target;
+    }
+    function newFolder(parentId) {
+      const pid = parentId || browseFolderId || 'root';
+      const f = findNode(pid);
+      const target = f && f.node.type === 'folder' ? f.node: libraryTree;
+      openLibModal({
+        title: '🆕 新建文件夹',
+        label: '文件夹名称（可继续在里面建子文件夹）',
+        value: '',
+        note: '',
+        onConfirm: (val, note) => {
+          const t = val.trim();
+          if ( !t) {
+            showToast('文件夹名称不能为空', 'error');
+            return false;
+          }
+          if (target.children.some( (c) => c.name === t)) {
+            showToast('同级下已存在同名项目', 'error');
+            return false;
+          }
+          const node = emptyFolder(makeId('fld'), t);
+          node.note = note || '';
+          target.children.push(node);
+          expandedIds.add(target.id);
+          expandedIds.add(node.id);
+          browseFolderId = node.id;
+          libTreeVersion++;
+          invalidateScopeCache();
+          rebuildFlatIndex();
+          saveLibraries();
+          renderLibraryListUI();
+          showToast(`已创建文件夹：${t}`, 'success');
+          return true;
+        }
+      });
+    }
+    function renameNode(id) {
+      const f = findNode(id);
+      if ( !f || id === 'root') return;
+      const isFolder = f.node.type === 'folder';
+      openLibModal({
+        title: isFolder ? '✏️ 重命名文件夹': '✏️ 重命名词库',
+        label: '名称',
+        value: f.node.name,
+        note: isFolder ? (f.node.note || ''): null,
+        onConfirm: (val, note) => {
+          const t = val.trim();
+          if ( !t) {
+            showToast('名称不能为空', 'error');
+            return false;
+          }
+          const parent = f.parent || libraryTree;
+          if (parent.children.some( (c) => c.id !== id && c.name === t)) {
+            showToast('同级下已存在同名项目', 'error');
+            return false;
+          }
+          f.node.name = t;
+          if (isFolder) f.node.note = note || '';
+          rebuildFlatIndex();
+          libTreeVersion++;
+          invalidateScopeCache();
+          saveLibraries();
+          renderLibraryListUI();
+          showToast(`已重命名为：${t}`, 'success');
+          return true;
+        }
+      });
+    }
+    function renameLibrary(id) {
+      renameNode(id);
+    }
+    function moveNode(id, targetId) {
+      if ( !id || id === 'root' || !targetId) return false;
+      const src = findNode(id), dst = findNode(targetId);
+      if ( !src || !dst || dst.node.type !== 'folder') {
+        showToast('目标不是文件夹', 'error');
+        return false;
+      }
+      if ( !src.parent) {
+        showToast('根目录不能移动', 'error');
+        return false;
+      }
+      if (isDescendantOrSelf(id, targetId)) {
+        showToast('不能移动到自身或自己的子文件夹中', 'error');
+        return false;
+      }
+      if (src.parent.id === targetId) {
+        showToast('已经在这个文件夹里了', 'info');
+        return true;
+      }
+      src.node.name = uniqueNameIn(dst.node, src.node.name);
+      src.parent.children = src.parent.children.filter( (c) => c.id !== id);
+      dst.node.children.push(src.node);
+      expandedIds.add(targetId);
+      libTreeVersion++;
+      invalidateScopeCache();
+      rebuildFlatIndex();
+      saveLibraries();
+      renderLibraryListUI();
+      showToast(`已移动到：${getNodePathNames(targetId).join(' / ')}`, 'success');
+      return true;
+    }
+    async function deleteNode(id) {
+      if ( !id || id === 'root') return;
+      const f = findNode(id);
+      if ( !f) return;
+      const isFolder = f.node.type === 'folder';
+      const cnt = isFolder ? folderChildCount(f.node): null;
+      const msg = isFolder
+        ? `确定删除文件夹「${f.node.name}」吗？\n其中 ${cnt.folders} 个子文件夹、${cnt.libs} 个词库、${cnt.words} 个单词会一并删除，且不可撤销。`
+        : `确定删除词库「${f.node.name}」吗？此操作不可撤销。`;
+      if ( !confirm(msg)) return;
+      const scopeAffected = !!currentScope && (currentScope.id === id || (isFolder && isDescendantOrSelf(id, currentScope.id)));
+      const browseAffected = browseFolderId === id || (isFolder && isDescendantOrSelf(id, browseFolderId));
+      const gone = new Set();
+      walkTree(f.node, (n) => gone.add(n.id));
+      f.parent.children = f.parent.children.filter( (c) => c.id !== id);
+      gone.forEach( (x) => expandedIds.delete(x));
+      libTreeVersion++;
+      invalidateScopeCache();
+      rebuildFlatIndex();
+      if (scopeAffected) {
+        currentScope = wordLibraries.length ? {
+          type: 'lib', id: wordLibraries[0].id
+        }
+        : null;
+        currentLibraryId = currentScope ? currentScope.id: null;
+        filteredWords = [];
+        const le = $('lib-filter-len'), re = $('lib-filter-regex');
+        if (le) le.value = '';
+        if (re) re.value = '';
+      }
+      if (browseAffected) browseFolderId = 'root';
+      await saveLibraries();
+      renderLibraryListUI();
+      updatePlayButtonState();
+      showToast(`已删除：${f.node.name}`, 'info');
+    }
+    function deleteLibrary(id) {
+      return deleteNode(id);
+    }
+    function deleteCurrentLibrary() {
+      if ( !currentScope) {
+        showToast('当前没有可删除的范围', 'error');
+        return;
+      }
+      deleteNode(currentScope.id);
+    }
+
+    /* ===== 导入 / 导出 ===== */
+    function downloadBlob(content, filename, type) {
+      const blob = new Blob( [content], {
+        type: type || 'text/plain'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = filename;
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout( () => URL.revokeObjectURL(url), 5000);
+    }
+    function dateStamp() {
+      const d = new Date(), p = (x) => String(x).padStart(2, '0');
+      return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes());
+    }
+    function safeFileName(s) {
+      return (s || '词库').replace(/[\\/:*?"<>|]/g, '_');
+    }
+    async function addLibrary() {
+      const nameInput = $('lib-add-name'), langSelect = $('lib-add-lang'), fileInput = $('lib-add-file'), errEl = $('lib-add-error');
+      const lang = langSelect.value, files = fileInput.files;
+      if ( !files || files.length === 0) {
+        errEl.textContent = '❌ 请至少选择一个 .txt 文件。';
+        return;
+      }
+      errEl.textContent = '';
+      const failedFiles = [], filePromises = [];
+      const useCustomName = nameInput.value.trim() !== '';
+      const targetId = findNode(browseFolderId) ? browseFolderId: 'root';
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if ( !file.name.toLowerCase().endsWith('.txt')) {
+          failedFiles.push(file.name + ' (不是 .txt 文件)');
+          continue;
+        }
+        filePromises.push(new Promise( (res, rej) => {
+          const rd = new FileReader();
+          rd.onload = e => {
+            const lines = e.target.result.split(/\r?\n/).map( (l) => l.trim()).filter( (l) => l.length > 0);
+            if (lines.length === 0) {
+              rej(file.name + ' (文件为空)');
+              return;
+            }
+            res({
+              file: file, lines: lines
+            });
+          };
+          rd.onerror = () => rej(file.name + ' (读取失败)');
+          rd.readAsText(file);
+        }));
+      }
+      const results = await Promise.allSettled(filePromises);
+      const items = [];
+      results.forEach( (r, idx) => {
+        if (r.status === 'fulfilled') {
+          const file = r.value.file, lines = r.value.lines;
+          let libName;
+          if (useCustomName) {
+            const base = nameInput.value.trim();
+            libName = files.length > 1 ? base + '_' + (idx + 1): base;
+          } else libName = file.name.replace(/\.txt$/i, '').trim() || `未命名词库_${idx+1}`;
+          items.push({
+            name: libName, language: lang, words: lines
+          });
+        } else failedFiles.push(r.reason);
+      });
+      if (items.length > 0) {
+        addLibNodesToFolder(targetId, items);
+        if ( !currentScope && wordLibraries.length) setCurrentScope('lib', wordLibraries[wordLibraries.length - 1].id, true);
+        await saveLibraries();
+        renderLibraryListUI();
+        nameInput.value = '';
+        fileInput.value = '';
+        showToast(`✅ 已导入 ${items.length} 个词库到「${getNodePathNames(targetId).slice(-1)[0] || '全部词库'}」${failedFiles.length>0?`，${failedFiles.length} 个失败`:''}`, 'success');
+        if (failedFiles.length > 0) errEl.textContent = '⚠️ 部分文件导入失败: ' + failedFiles.join('; ');
+        if (activePage === 'play') updatePlayButtonState();
+      } else errEl.textContent = '❌ 所有文件导入失败，请检查文件格式。';
+    }
+    async function importDirectory(event) {
+      const files = Array.from(event.target.files || []);
+      const errEl = $('lib-add-error');
+      const txts = files.filter( (f) => f.name.toLowerCase().endsWith('.txt'));
+      if ( !txts.length) {
+        showToast('所选文件夹里没有 .txt 词库文件', 'error');
+        event.target.value = '';
+        return;
+      }
+      const lang = $('lib-add-lang').value;
+      const reads = await Promise.allSettled(txts.map( (f) => new Promise( (res, rej) => {
+        const rd = new FileReader();
+        rd.onload = e => {
+          const words = e.target.result.split(/\r?\n/).map( (s) => s.trim()).filter(Boolean);
+          res({
+            parts: (f.webkitRelativePath || f.name).split('/').filter(Boolean), words: words
+          });
+        };
+        rd.onerror = () => rej(f.name);
+        rd.readAsText(f);
+      })));
+      let createdFolders = 0, createdLibs = 0, failed = 0;
+      reads.forEach( (r) => {
+        if (r.status !== 'fulfilled') {
+          failed++;
+          return;
+        }
+        const parts = r.value.parts.slice();
+        if ( !parts.length) {
+          failed++;
+          return;
+        }
+        const fileName = parts.pop().replace(/\.txt$/i, '') || '未命名词库';
+        let cur = libraryTree;
+        parts.forEach( (seg) => {
+          let child = cur.children.find( (c) => c.type === 'folder' && c.name === seg);
+          if ( !child) {
+            child = emptyFolder(makeId('fld'), seg);
+            cur.children.push(child);
+            createdFolders++;
+          }
+          expandedIds.add(child.id);
+          cur = child;
+        });
+        if ( !r.value.words.length) {
+          failed++;
+          return;
+        }
+        cur.children.push({
+          id: makeId('lib'), type: 'lib', name: uniqueNameIn(cur, fileName), language: lang,
+          words: r.value.words, filterLen: '', filterRegex: '', createdAt: Date.now()
+        });
+        createdLibs++;
+      });
+      libTreeVersion++;
+      invalidateScopeCache();
+      rebuildFlatIndex();
+      if ( !currentScope && wordLibraries.length) setCurrentScope('lib', wordLibraries[0].id, true);
+      await saveLibraries();
+      renderLibraryListUI();
+      event.target.value = '';
+      errEl.textContent = '';
+      showToast(`📂 导入完成：新建 ${createdFolders} 个文件夹、${createdLibs} 个词库${failed?`，跳过 ${failed} 个文件`:''}`, 'success');
+    }
+    function exportBackup() {
+      const d = {
+        version: 6, tree: libraryTree, currentScope: currentScope, currentId: currentLibraryId,
+        expanded: Array.from(expandedIds), browse: browseFolderId, exportedAt: new Date().toISOString()
+      };
+      downloadBlob(JSON.stringify(d), `词库备份_${dateStamp()}.json`, 'application/json');
+      showToast('📦 整棵词库树已导出为 JSON 备份', 'success');
+    }
+    function importBackup(event) {
+      const file = event.target.files && event.target.files[0];
+      if ( !file) return;
+      const rd = new FileReader();
+      rd.onload = e => {
+        try {
+          const d = JSON.parse(e.target.result);
+          let tree = null, scope = null, expanded = null;
+          if (d.version === 6 && d.tree) {
+            tree = normalizeTree(d.tree);
+            scope = d.currentScope;
+            expanded = d.expanded;
+          } else if (Array.isArray(d.libraries)) {
+            const m = migrateLegacy(d);
+            tree = m.tree;
+            scope = m.currentScope;
+            expanded = m.expanded;
+          } else throw new Error('不是有效的词库备份文件');
+          if ( !confirm('导入备份会覆盖当前所有词库与文件夹，确定继续吗？\n建议先点「📦 备份全部」导出当前数据。')) {
+            event.target.value = '';
+            return;
+          }
+          libraryTree = tree;
+          libraryTree.id = 'root';
+          libraryTree.type = 'folder';
+          expandedIds = new Set(expanded || [ 'root']);
+          expandedIds.add('root');
+          browseFolderId = 'root';
+          rebuildFlatIndex();
+          libTreeVersion++;
+          invalidateScopeCache();
+          currentScope = null;
+          if (scope) {
+            const hit = findNode(scope.id);
+            if (hit) currentScope = {
+              type: hit.node.type, id: hit.node.id
+            };
+          }
+          if ( !currentScope && wordLibraries.length) currentScope = {
+            type: 'lib', id: wordLibraries[0].id
+          };
+          currentLibraryId = currentScope && currentScope.type === 'lib' ? currentScope.id: null;
+          filteredWords = [];
+          const le = $('lib-filter-len'), re = $('lib-filter-regex');
+          if (le) le.value = '';
+          if (re) re.value = '';
+          saveLibraries();
+          renderLibraryListUI();
+          showToast(`📥 备份已导入：${wordLibraries.length} 个词库、${countFolders()} 个文件夹`, 'success');
+        } catch (err) {
+          showToast('❌ 备份导入失败：' + err.message, 'error');
+        }
+        event.target.value = '';
+      };
+      rd.readAsText(file);
+    }
+    function exportCurrentLibrary() {
+      const node = getCurrentScopeNode();
+      if ( !node) {
+        showToast('没有可导出的范围', 'error');
+        return;
+      }
+      const words = getCurrentWords();
+      if ( !words.length) {
+        showToast('当前范围为空，无法导出', 'error');
+        return;
+      }
+      downloadBlob(words.join('\n'), `${safeFileName(node.name)}_${dateStamp()}.txt`, 'text/plain');
+      showToast(`✅ 已导出「${node.name}」共 ${words.length} 词`, 'success');
+    }
+
+    /* ===== 过滤 ===== */
+    function applyLibraryFilter(save = true, silent = false) {
+      const lenVal = $('lib-filter-len').value.trim(), regexVal = $('lib-filter-regex').value.trim();
+      const words = getCurrentWords();
+      $('library-error').textContent = '';
+      if (words.length === 0) {
+        $('library-error').textContent = '当前范围为空，无法过滤。';
+        filteredWords = [];
+        updateLibraryStats();
+        return;
+      }
+      let result = words.slice();
+      if (lenVal) {
+        const n = parseInt(lenVal);
+        if ( !isNaN(n) && n > 0) result = result.filter( (w) => normalizeInput(w).length === n);
+      }
+      if (regexVal) {
+        try {
+          const re = new RegExp(regexVal);
+          result = result.filter( (w) => re.test(w));
+        } catch (e) {
+          $('library-error').textContent = '❌ 正则表达式无效: ' + e.message;
+          return;
+        }
+      }
+      filteredWords = result;
+      const node = getCurrentScopeNode();
+      if (node) {
+        node.filterLen = lenVal;
+        node.filterRegex = regexVal;
+        if (save) saveLibraries();
+      }
+      updateLibraryStats();
+      if ( !silent) showToast(`过滤完成，剩余 ${filteredWords.length} 个单词`, 'success');
+      if ($('library-list').classList.contains('active')) renderLibraryWordList();
+    }
+    function resetLibraryFilter() {
+      $('lib-filter-len').value = '';
+      $('lib-filter-regex').value = '';
+      filteredWords = [];
+      $('library-error').textContent = '';
+      const node = getCurrentScopeNode();
+      if (node) {
+        node.filterLen = '';
+        node.filterRegex = '';
+        saveLibraries();
+      }
+      updateLibraryStats();
+      if ($('library-list').classList.contains('active')) renderLibraryWordList();
+      showToast('过滤已重置', 'info');
+    }
+
+    /* ===== 筛选 / 树渲染 ===== */
     function updateLanguageFilterOptions() {
       const sel = $('lib-filter-lang');
       if ( !sel) return;
       const cur = sel.value, langs = getAllLanguages();
       sel.innerHTML = `<option value="全部">🌐 全部语言</option>`;
-      langs.forEach(l => {
-        const o = document.createElement('option'); o.value = l; o.textContent = l; sel.appendChild(o);
+      langs.forEach( (l) => {
+        const o = document.createElement('option');
+        o.value = l;
+        o.textContent = l;
+        sel.appendChild(o);
       });
       sel.value = langs.includes(cur) ? cur: '全部';
       libraryFilterLang = sel.value;
@@ -2317,63 +3339,139 @@
       renderLibraryListUI();
       showToast('筛选已清除', 'info');
     }
-    function renderLibraryListUI() {
-      const c = $('lib-list-items'), empty = $('lib-list-empty'), cur = getCurrentLibrary();
-      let f = wordLibraries;
-      if (libraryFilterLang !== '全部') f = f.filter(l => l.language === libraryFilterLang);
-      if (libraryFilterName.trim() !== '') {
-        const k = libraryFilterName.trim().toLowerCase();
-        f = f.filter(l => l.name.toLowerCase().includes(k));
-      }
-      const fs = $('lib-filter-stats');
-      if (fs) fs.textContent = `显示 ${f.length} / ${wordLibraries.length} 个词库`;
-      if (wordLibraries.length === 0) {
-        c.innerHTML = '';
-        empty.style.display = 'block';
-        $('lib-current-info').textContent = '未选择任何词库';
-        $('lib-current-badge').textContent = '未选择';
-        $('lib-export-btn').disabled = true;
-        $('lib-delete-btn').disabled = true;
-        updateLibraryStats();
-        updateLanguageFilterOptions();
-        return;
-      }
-      empty.style.display = 'none';
-      if (f.length === 0) {
-        c.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">没有匹配的词库，请调整筛选条件。</div>`;
-        if (cur) {
-          $('lib-current-info').innerHTML = `<strong>${escapeHtml(cur.name)}</strong> · ${escapeHtml(cur.language||'未分类')} · ${cur.words?cur.words.length:0} 词`;
-          $('lib-current-badge').textContent = cur.name;
-          $('lib-export-btn').disabled = false;
-          $('lib-delete-btn').disabled = false;
-        }
-        updateLibraryStats();
-        updateLanguageFilterOptions();
-        return;
-      }
-      let html = '';
-      f.forEach(lib => {
-        const act = lib.id === currentLibraryId, wc = lib.words ? lib.words.length: 0, lang = lib.language || '未分类'; html += `<div class="lib-item ${act?'active':''}"><div class="lib-info"><div class="lib-name">${escapeHtml(lib.name)}</div>
-          <div class="lib-meta"><span class="lang">${escapeHtml(lang)}</span><span class="lib-count">${wc} 词</span>${act?' ✅ 当前使用':''}</div></div>
-          <div class="lib-actions">${!act?`<button class="btn-sm btn-success" onclick="setCurrentLibrary('${lib.id}')">使用</button>`:''}
-          <button class="btn-sm btn-outline" onclick="renameLibrary('${lib.id}')">✏️</button>
-          <button class="btn-sm btn-danger" onclick="deleteLibrary('${lib.id}')">🗑️</button></div></div>`;
+    function renderCrumbs(container, label, id, fn) {
+      if ( !container) return;
+      const ids = getNodePathIds(id), names = getNodePathNames(id);
+      let html = `<span class="crumb-label">${escapeHtml(label)}</span>`;
+      names.forEach( (n, i) => {
+        html += (i ? '<span class="crumb-sep">/</span>': '') +
+          `<button class="crumb-btn ${i===names.length-1?'current':''}" onclick="${fn}('${ids[i]}')">${escapeHtml(n)}</button>`;
       });
-      c.innerHTML = html;
-      if (cur) {
-        const cnt = cur.words ? cur.words.length: 0;
-        $('lib-current-info').innerHTML = `<strong>${escapeHtml(cur.name)}</strong> · ${escapeHtml(cur.language||'未分类')} · ${cnt} 词`;
-        $('lib-current-badge').textContent = cur.name;
+      container.innerHTML = html;
+    }
+    function renderLibRow(n) {
+      const active = !!currentScope && currentScope.id === n.id;
+      const path = (libPathIndex.get(n.id) || []).join(' / ');
+      let html = `<div class="lib-row lib-lib ${active?'lib-scope':''}" draggable="true" data-node-id="${n.id}"` +
+        ` ondragstart="onLibDragStart(event,'${n.id}')" ondragover="onLibDragOver(event,'${n.id}')"` +
+        ` ondragleave="onLibDragLeave(event)" ondrop="onLibDrop(event,'${n.id}')" ondragend="onLibDragEnd(event)">` +
+        `<div class="lib-row-main"><span class="lib-twisty placeholder"></span><span class="lib-icon">📄</span>` +
+        `<div class="lib-info"><div class="lib-name">${escapeHtml(n.name)}${active?'<span class="lib-scope-tag">🎯 当前范围</span>':''}</div>` +
+        `<div class="lib-meta"><span class="lang">${escapeHtml(n.language||'未分类')}</span>` +
+        `<span class="lib-count">${(n.words||[]).length} 词</span>` +
+        (path ? `<span class="lib-path">📁 ${escapeHtml(path)}</span>`: '') +
+        `</div></div></div><div class="lib-actions">` +
+        (active ? '': `<button class="btn-sm btn-success" onclick="setCurrentLibrary('${n.id}')">使用</button>`) +
+        `<button class="btn-sm btn-outline" onclick="openMoveDialog('${n.id}')">↪️ 移动</button>` +
+        `<button class="btn-sm btn-outline" onclick="renameNode('${n.id}')">✏️</button>` +
+        `<button class="btn-sm btn-danger" onclick="deleteNode('${n.id}')">🗑️</button>` +
+        `</div></div>`;
+      return html;
+    }
+    function renderFolderRow(n, cnt, open) {
+      const active = !!currentScope && currentScope.id === n.id;
+      const here = browseFolderId === n.id;
+      const isRoot = n.id === 'root';
+      const dragAttr = isRoot ? '': ` ondragstart="onLibDragStart(event,'${n.id}')" ondragover="onLibDragOver(event,'${n.id}')" ondragleave="onLibDragLeave(event)" ondrop="onLibDrop(event,'${n.id}')" ondragend="onLibDragEnd(event)"`;
+      let html = `<div class="lib-row lib-folder ${active?'lib-scope ':''}${here?'lib-browse-here':''}" draggable="${isRoot?'false':'true'}" data-node-id="${n.id}"${dragAttr}>` +
+        `<div class="lib-row-main">` +
+        `<button class="lib-twisty" onclick="toggleFolder('${n.id}')" title="展开 / 折叠">${open?'▾':'▸'}</button>` +
+        `<span class="lib-icon">${open?'📂':'📁'}</span>` +
+        `<div class="lib-info"><div class="lib-name">${escapeHtml(n.name)}` +
+        (active ? '<span class="lib-scope-tag">🎯 当前范围</span>': '') +
+        (isRoot ? '<span class="lib-scope-tag">🏠 根</span>': '') +
+        `</div><div class="lib-meta"><span>${cnt.folders} 子文件夹 · ${cnt.libs} 词库 · ${cnt.words} 词</span>` +
+        (n.note ? `<span class="lib-path">📝 ${escapeHtml(n.note)}</span>`: '') +
+        `</div></div></div><div class="lib-actions">` +
+        (isRoot
+          ? `<button class="btn-sm btn-success" onclick="setCurrentFolderScope('root')">🎯 全库范围</button>`
+          : `<button class="btn-sm btn-success" onclick="setCurrentFolderScope('${n.id}')" title="把该文件夹（含所有子文件夹）设为抽词范围">🎯 用此范围</button>`) +
+        `<button class="btn-sm btn-outline" onclick="enterFolder('${n.id}')">进入</button>` +
+        `<button class="btn-sm btn-outline" onclick="newFolder('${n.id}')">＋子文件夹</button>` +
+        (isRoot ? '': `<button class="btn-sm btn-outline" onclick="openMoveDialog('${n.id}')">↪️ 移动</button>` +
+          `<button class="btn-sm btn-outline" onclick="renameNode('${n.id}')">✏️</button>` +
+          `<button class="btn-sm btn-danger" onclick="deleteNode('${n.id}')">🗑️</button>`) +
+        `</div></div>`;
+      return html;
+    }
+    function renderFolderChildren(folder, depth) {
+      const kids = folder.children || [];
+      if ( !kids.length) return `<div class="lib-empty-hint">${folder.id==='root'?'还没有词库，新建文件夹或导入 .txt 文件开始吧。':'这个文件夹是空的，可在里面新建子文件夹或导入词库。'}</div>`;
+      let html = '';
+      kids.forEach( (n) => {
+        if (n.type === 'folder') {
+          const open = expandedIds.has(n.id);
+          html += renderFolderRow(n, folderChildCount(n), open);
+          if (open) html += `<div class="lib-children">${renderFolderChildren(n, depth + 1)}</div>`;
+        } else html += renderLibRow(n);
+      });
+      return html;
+    }
+    function renderLibraryListUI() {
+      const c = $('lib-list-items'), empty = $('lib-list-empty');
+      if ( !c) return;
+      updateLanguageFilterOptions();
+      const scopeNode = getCurrentScopeNode();
+      if (scopeNode) {
+        const isFolder = scopeNode.type === 'folder';
+        const cnt = isFolder ? folderChildCount(scopeNode): null;
+        $('lib-current-info').innerHTML = `<strong>${escapeHtml(scopeNode.name)}</strong> · ` + (isFolder
+          ? `📁 文件夹范围 · ${cnt.libs} 个词库 / ${cnt.folders} 个子文件夹 / ${cnt.words} 词`
+          : `📄 ${escapeHtml(scopeNode.language||'未分类')} · ${(scopeNode.words||[]).length} 词`);
+        $('lib-current-badge').textContent = scopeNode.name;
         $('lib-export-btn').disabled = false;
         $('lib-delete-btn').disabled = false;
+        renderCrumbs($('lib-scope-crumb'), '🎯 抽词范围', scopeNode.id, 'enterFolder');
       } else {
-        $('lib-current-info').textContent = '未选择任何词库';
+        $('lib-current-info').textContent = '未选择任何范围（词库或文件夹）';
         $('lib-current-badge').textContent = '未选择';
         $('lib-export-btn').disabled = true;
         $('lib-delete-btn').disabled = true;
+        $('lib-scope-crumb').innerHTML = '<span class="crumb-label">🎯 抽词范围</span><span class="crumb-sep">未选择</span>';
       }
+      const bf = findNode(browseFolderId);
+      browseFolderId = bf ? bf.node.id: 'root';
+      renderCrumbs($('lib-browse-bar'), '📂 当前位置', browseFolderId, 'enterFolder');
+      const hint = document.createElement('span');
+      hint.className = 'browse-hint';
+      hint.textContent = '导入 / 新建将放在这里';
+      $('lib-browse-bar').appendChild(hint);
+      const kw = libraryFilterName.trim().toLowerCase(), lang = libraryFilterLang;
+      let html = '', stats = '';
+      if (kw || lang !== '全部') {
+        const hits = [];
+        wordLibraries.forEach( (l) => {
+          if (lang !== '全部' && (l.language || '未分类') !== lang) return;
+          if ( !kw) {
+            hits.push(l);
+            return;
+          }
+          if (l.name.toLowerCase().includes(kw) || (libPathIndex.get(l.id) || []).join('/').toLowerCase().includes(kw)) hits.push(l);
+        });
+        if (kw) {
+          walkTree(libraryTree, (n) => {
+            if (n.type === 'folder' && n.id !== 'root' && n.name.toLowerCase().includes(kw)) {
+              collectLibs(n).forEach( (l) => {
+                if (hits.indexOf(l) === -1) hits.push(l);
+              });
+            }
+          });
+        }
+        stats = `匹配 ${hits.length} / ${wordLibraries.length} 个词库`;
+        html = hits.length ? hits.map(renderLibRow).join(''): '<div class="lib-empty-hint">🔍 没有匹配的词库，换个关键词或清除语言筛选试试。</div>';
+      } else {
+        stats = `共 ${wordLibraries.length} 个词库 · ${countFolders()} 个文件夹`;
+        const rootOpen = expandedIds.has('root');
+        html = renderFolderRow(libraryTree, folderChildCount(libraryTree), rootOpen);
+        if (rootOpen) html += `<div class="lib-children">${renderFolderChildren(libraryTree, 1)}</div>`;
+      }
+      const fs = $('lib-filter-stats');
+      if (fs) fs.textContent = stats;
+      c.innerHTML = html;
+      const noNode = libraryTree.children.length === 0;
+      empty.style.display = noNode ? 'block': 'none';
+      if (noNode) empty.textContent = '还没有词库，新建文件夹或导入 .txt 文件开始吧。';
       updateLibraryStats();
-      updateLanguageFilterOptions();
       updatePlayButtonState();
       if ($('library-list').classList.contains('active')) renderLibraryWordList();
     }
@@ -2381,204 +3479,164 @@
       $('lib-total').textContent = getCurrentWords().length;
       $('lib-filtered').textContent = getFilteredWords().length;
       $('lib-valid').textContent = getValidLibrary().length;
-    }
-    function setCurrentLibrary(id) {
-      const lib = wordLibraries.find(l => l.id === id);
-      if ( !lib) {
-        showToast('词库不存在', 'error');
-        return;
+      const meta = $('lib-scope-meta');
+      if (meta) {
+        const n = getCurrentScopeNode();
+        meta.textContent = n && n.type === 'folder'
+          ? `范围含 ${(folderStats.get(n.id)||{}).libs||0} 个词库（递归合并子文件夹）`
+          : `全库共 ${wordLibraries.length} 个词库 · ${countFolders()} 个文件夹`;
       }
-      currentLibraryId = id;
-      $('lib-filter-len').value = lib.filterLen || '';
-      $('lib-filter-regex').value = lib.filterRegex || '';
-      if (lib.filterLen || lib.filterRegex) applyLibraryFilter(false, true);
-      else filteredWords = [];
+    }
+    function toggleFolder(id) {
+      if (expandedIds.has(id)) expandedIds.delete(id);
+      else expandedIds.add(id);
       saveLibraries();
       renderLibraryListUI();
-      showToast(`已切换到词库: ${lib.name}`, 'success');
-      if (activePage === 'play') updatePlayButtonState();
     }
-    async function addLibrary() {
-      const nameInput = $('lib-add-name'), langSelect = $('lib-add-lang'), fileInput = $('lib-add-file'),
-      errEl = $('lib-add-error');
-      const lang = langSelect.value, files = fileInput.files;
-      if ( !files || files.length === 0) {
-        errEl.textContent = '❌ 请至少选择一个 .txt 文件。';
-        return;
-      }
-      errEl.textContent = '';
-      let successCount = 0;
-      const failedFiles = [];
-      const useCustomName = nameInput.value.trim() !== '';
-      const filePromises = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if ( !file.name.toLowerCase().endsWith('.txt')) {
-          failedFiles.push(file.name + ' (不是 .txt 文件)');
-          continue;
-        }
-        filePromises.push(new Promise( (res, rej) => {
-          const rd = new FileReader(); rd.onload = e => {
-            const lines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0); if (lines.length === 0) {
-              rej(file.name + ' (文件为空)'); return;
-            }
-            res({ file, lines});
-          }; rd.onerror = () => rej(file.name + ' (读取失败)'); rd.readAsText(file);
-        }));
-      }
-      const results = await Promise.allSettled(filePromises);
-      results.forEach( (r, idx) => {
-        if (r.status === 'fulfilled') {
-          const { file, lines} = r.value; let libName; if (useCustomName) {
-            const base = nameInput.value.trim(); libName = files.length > 1 ? base + `_${idx+1}`: base;
-          } else libName = file.name.replace(/\.txt$/i, '').trim() || `未命名词库_${idx+1}`; let finalName = libName,
-          ct = 1; while (wordLibraries.some(l => l.name === finalName)) {
-            finalName = libName + `_${ct}`; ct++;
-          }
-          wordLibraries.push({
-            id: 'lib_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '_' + idx, name: finalName,
-            language: lang, words: lines, createdAt: Date.now() + idx, filterLen: '', filterRegex: ''
-          }); successCount++;
-        } else failedFiles.push(r.reason);
+    function expandAllFolders() {
+      walkTree(libraryTree, (n) => {
+        if (n.type === 'folder') expandedIds.add(n.id);
       });
-      if (successCount > 0) {
-        if ( !currentLibraryId) currentLibraryId = wordLibraries[wordLibraries.length - 1].id;
-        filteredWords = [];
-        await saveLibraries();
-        renderLibraryListUI();
-        nameInput.value = '';
-        fileInput.value = '';
-        showToast(`✅ 成功导入 ${successCount} 个词库${failedFiles.length>0?`，${failedFiles.length} 个失败`:''}`, 'success');
-        if (failedFiles.length > 0) errEl.textContent = '⚠️ 部分文件导入失败: ' + failedFiles.join('; ');
-        if (activePage === 'play') updatePlayButtonState();
-      } else errEl.textContent = '❌ 所有文件导入失败，请检查文件格式。';
-    }
-    async function deleteLibrary(id) {
-      if (wordLibraries.length <= 1) {
-        if ( !confirm('删除最后一个词库后将没有可用词库，确定删除吗？')) return;
-      } else {
-        if ( !confirm('确定要删除这个词库吗？此操作不可撤销。')) return;
-      }
-      const lib = wordLibraries.find(l => l.id === id);
-      wordLibraries = wordLibraries.filter(l => l.id !== id);
-      if (currentLibraryId === id) {
-        currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id: null;
-        filteredWords = [];
-      }
-      await saveLibraries();
+      saveLibraries();
       renderLibraryListUI();
-      showToast(`已删除词库: ${lib?lib.name:''}`, 'info');
-      if (activePage === 'play') updatePlayButtonState();
     }
-    function deleteCurrentLibrary() {
-      const lib = getCurrentLibrary();
-      if ( !lib) {
-        showToast('没有当前词库可删除', 'error');
-        return;
-      }
-      deleteLibrary(lib.id);
-    }
-    async function renameLibrary(id) {
-      const lib = wordLibraries.find(l => l.id === id);
-      if ( !lib) return;
-      const nn = prompt('请输入新的词库名称：', lib.name);
-      if (nn === null) return;
-      const t = nn.trim();
-      if ( !t) {
-        showToast('名称不能为空', 'error');
-        return;
-      }
-      if (wordLibraries.some(l => l.id !== id && l.name === t)) {
-        showToast('已存在同名词库', 'error');
-        return;
-      }
-      lib.name = t;
-      await saveLibraries();
+    function collapseAllFolders() {
+      expandedIds = new Set([ 'root']);
+      saveLibraries();
       renderLibraryListUI();
-      showToast(`已重命名为: ${t}`, 'success');
     }
-    function exportCurrentLibrary() {
-      const lib = getCurrentLibrary();
-      if ( !lib || !lib.words || lib.words.length === 0) {
-        showToast('没有可导出的词库', 'error');
+    function enterFolder(id) {
+      const f = findNode(id);
+      if ( !f || f.node.type !== 'folder') return;
+      browseFolderId = id;
+      f.path.forEach( (p) => {
+        if (p.type === 'folder') expandedIds.add(p.id);
+      });
+      expandedIds.add(id);
+      saveLibraries();
+      renderLibraryListUI();
+      showToast(`📂 已进入：${getNodePathNames(id).join(' / ')}`, 'info');
+    }
+
+    /* ===== 拖拽移动 ===== */
+    function onLibDragStart(e, id) {
+      if (id === 'root') {
+        e.preventDefault();
         return;
       }
-      const blob = new Blob( [lib.words.join('\n')], { type: 'text/plain'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.download = `${lib.name}_${Date.now()}.txt`;
-      a.href = url;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout( () => URL.revokeObjectURL(url), 5000);
-      showToast(`✅ 词库「${lib.name}」已导出`, 'success');
+      dragNodeId = id;
+      e.dataTransfer.effectAllowed = 'move';
+      try {
+        e.dataTransfer.setData('text/plain', id);
+      } catch (err) {} if (e.currentTarget) e.currentTarget.classList.add('dragging');
     }
-    function applyLibraryFilter(save = true, silent = false) {
-      const lenVal = $('lib-filter-len').value.trim(), regexVal = $('lib-filter-regex').value.trim();
-      const words = getCurrentWords();
-      if (words.length === 0) {
-        $('library-error').textContent = '当前词库为空，无法过滤。';
-        filteredWords = [];
-        updateLibraryStats();
-        return;
-      }
-      let result = [ ...words];
-      if (lenVal) {
-        const n = parseInt(lenVal);
-        if ( !isNaN(n) && n > 0) result = result.filter(w => normalizeInput(w).length === n);
-      }
-      if (regexVal) {
+    function onLibDragOver(e, id) {
+      if ( !dragNodeId || dragNodeId === id) return;
+      const f = findNode(id);
+      if ( !f || f.node.type !== 'folder') return;
+      if (isDescendantOrSelf(dragNodeId, id)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (e.currentTarget) e.currentTarget.classList.add('drag-over');
+    }
+    function onLibDragLeave(e) {
+      if (e.currentTarget) e.currentTarget.classList.remove('drag-over');
+    }
+    function onLibDrop(e, id) {
+      e.preventDefault();
+      if (e.currentTarget) e.currentTarget.classList.remove('drag-over');
+      let src = dragNodeId;
+      if ( !src) {
         try {
-          const re = new RegExp(regexVal);
-          result = result.filter(w => re.test(w));
-        } catch (e) {
-          $('library-error').textContent = '❌ 正则表达式无效: ' + e.message;
-          return;
-        }
+          src = e.dataTransfer.getData('text/plain');
+        } catch (err) {}
       }
-      filteredWords = result;
-      $('library-error').textContent = '';
-      if (save) {
-        const lib = getCurrentLibrary();
-        if (lib) {
-          lib.filterLen = lenVal;
-          lib.filterRegex = regexVal;
-          saveLibraries();
-        }
-      }
-      updateLibraryStats();
-      if ( !silent) showToast(`过滤完成，剩余 ${filteredWords.length} 个单词`, 'success');
-      if ($('library-list').classList.contains('active')) renderLibraryWordList();
+      dragNodeId = null;
+      if (src) moveNode(src, id);
     }
-    function resetLibraryFilter() {
-      $('lib-filter-len').value = '';
-      $('lib-filter-regex').value = '';
-      filteredWords = [];
-      $('library-error').textContent = '';
-      const lib = getCurrentLibrary();
-      if (lib) {
-        lib.filterLen = '';
-        lib.filterRegex = '';
-        saveLibraries();
-      }
-      updateLibraryStats();
-      if ($('library-list').classList.contains('active')) renderLibraryWordList();
-      showToast('过滤已重置', 'info');
+    function onLibDragEnd(e) {
+      dragNodeId = null;
+      document.querySelectorAll('.lib-row.dragging,.lib-row.drag-over').forEach( (n) => n.classList.remove('dragging', 'drag-over'));
     }
+
+    /* ===== 弹窗：新建 / 重命名 / 移动 ===== */
+    function openLibModal(opts) {
+      const overlay = $('lib-modal');
+      $('lib-modal-title').textContent = opts.title || '';
+      const inputWrap = $('lib-modal-input-wrap'), input = $('lib-modal-input');
+      inputWrap.style.display = opts.hideInput ? 'none': 'block';
+      input.value = opts.value || '';
+      $('lib-modal-label').textContent = opts.label || '名称';
+      const noteWrap = $('lib-modal-note-wrap');
+      noteWrap.style.display = (opts.note === undefined || opts.note === null) ? 'none': 'block';
+      $('lib-modal-note').value = opts.note || '';
+      const selWrap = $('lib-modal-select-wrap'), sel = $('lib-modal-select');
+      if (opts.options && opts.options.length) {
+        selWrap.style.display = 'block';
+        $('lib-modal-select-label').textContent = opts.selectLabel || '选择';
+        sel.innerHTML = opts.options.map( (o) => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.label)}</option>`).join('');
+        sel.value = opts.value && opts.options.some( (o) => o.id === opts.value) ? opts.value: opts.options[0].id;
+      } else {
+        selWrap.style.display = 'none';
+        sel.innerHTML = '';
+      }
+      libModalConfirm = () => {
+        const v = opts.hideInput ? sel.value: input.value;
+        const noteVal = $('lib-modal-note').value;
+        const r = opts.onConfirm ? opts.onConfirm(v, noteVal): true;
+        if (r !== false) closeLibModal();
+      };
+      overlay.classList.add('active');
+      setTimeout( () => {
+        if ( !opts.hideInput) input.focus();
+      }, 30);
+    }
+    function closeLibModal() {
+      const overlay = $('lib-modal');
+      if (overlay) overlay.classList.remove('active');
+      libModalConfirm = null;
+    }
+    function confirmLibModal() {
+      if (libModalConfirm) libModalConfirm();
+    }
+    function openMoveDialog(id) {
+      const f = findNode(id);
+      if ( !f || id === 'root') return;
+      const options = [];
+      const collect = (node, depth) => {
+        if (node.type !== 'folder') return;
+        if ( !isDescendantOrSelf(id, node.id)) options.push({
+          id: node.id,
+          label: '　'.repeat(depth) + (node.id === 'root' ? '🏠 全部词库（根目录）': '📁 ' + node.name)
+        });
+        (node.children || []).forEach( (c) => collect(c, depth + 1));
+      };
+      collect(libraryTree, 0);
+      openLibModal({
+        title: `↪️ 移动「${f.node.name}」`,
+        label: '目标文件夹',
+        selectLabel: '移动到',
+        options: options,
+        value: f.parent ? f.parent.id: 'root',
+        hideInput: true,
+        onConfirm: (val) => moveNode(id, val)
+      });
+    }
+
+    /* ===== 词表 / 抽取 ===== */
     function toggleLibraryList() {
       const list = $('library-list'), searchRow = $('lib-search-row');
       if (list.classList.contains('active')) {
         list.classList.remove('active');
         searchRow.style.display = 'none';
       } else {
-        const lib = getCurrentLibrary();
-        if ( !lib) {
-          showToast('请先选择或导入一个词库', 'error');
+        const node = getCurrentScopeNode();
+        if ( !node) {
+          showToast('请先选择一个词库或文件夹范围', 'error');
           return;
         }
-        if (lib.words.length === 0) {
-          showToast('当前词库为空', 'error');
+        if (getCurrentWords().length === 0) {
+          showToast('当前范围为空', 'error');
           return;
         }
         list.classList.add('active');
@@ -2591,13 +3649,18 @@
       const search = $('lib-search-input').value.trim().toLowerCase();
       list.innerHTML = '';
       const words = getFilteredWords();
-      const toShow = words.filter(w => w.toLowerCase().includes(search));
+      const toShow = words.filter( (w) => w.toLowerCase().includes(search));
       if (toShow.length === 0) {
         list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:10px;">无匹配单词</div>';
         return;
       }
-      toShow.slice(0, 200).forEach(word => {
-        const item = document.createElement('div'); item.className = 'library-item'; const norm = normalizeInput(word); item.innerHTML = `<span>${escapeHtml(word)}</span><span class="len">${norm.length} 字符</span>`; item.onclick = () => selectLibraryWord(word); list.appendChild(item);
+      toShow.slice(0, 200).forEach( (word) => {
+        const item = document.createElement('div');
+        item.className = 'library-item';
+        const norm = normalizeInput(word);
+        item.innerHTML = `<span>${escapeHtml(word)}</span><span class="len">${norm.length} 字符</span>`;
+        item.onclick = () => selectLibraryWord(word);
+        list.appendChild(item);
       });
       if (toShow.length > 200) {
         const m = document.createElement('div');
@@ -2627,7 +3690,7 @@
     function pickRandomFromLibrary() {
       const valid = getValidLibrary();
       if (valid.length === 0) {
-        showToast('当前词库没有符合条件的单词', 'error');
+        showToast('当前范围没有符合条件的单词', 'error');
         return;
       }
       const word = valid[Math.floor(Math.random() * valid.length)];
@@ -2646,9 +3709,9 @@
       }
     }
     function updatePlayButtonState() {
-      const lib = getCurrentLibrary();
-      const has = lib && lib.words && lib.words.length > 0;
-      $('play-badge').textContent = has ? `词库: ${lib.name}`: '需导入词库';
+      const n = getCurrentScopeNode(), words = getCurrentWords();
+      const has = n && words.length > 0;
+      $('play-badge').textContent = has ? `范围: ${n.name} (${words.length} 词)`: '需导入词库';
       $('start-btn-play').disabled = !has;
     }
 
@@ -3522,7 +4585,94 @@
       const s = document.createElement('div');
       s.id = 'library-section';
       s.className = 'section';
-      s.innerHTML = '' + '<div class="section-title">📚 词库管理 <span class="badge" id="lib-current-badge">未选择</span></div>' + '<div class="lib-current-bar">' + '<span class="label">📁 当前词库</span>' + '<span class="info" id="lib-current-info">未选择任何词库</span>' + '<div>' + '<button class="btn-sm btn-outline" onclick="exportCurrentLibrary()" id="lib-export-btn" disabled>📤 导出</button>' + '<button class="btn-sm btn-danger" onclick="deleteCurrentLibrary()" id="lib-delete-btn" disabled>🗑️ 删除</button>' + '</div>' + '</div>' + '<div class="lib-filter-bar">' + '<span class="filter-label">🔍</span>' + '<select id="lib-filter-lang" onchange="onFilterLangChange()"><option value="全部">🌐 全部语言</option></select>' + '<input type="text" id="lib-filter-name" placeholder="搜索词库名称..." oninput="onFilterNameInput()" />' + '<button class="filter-clear" onclick="clearLibraryFilters()" title="清除筛选">✕</button>' + '<span class="lib-filter-stats" id="lib-filter-stats">显示 0 / 0 个词库</span>' + '</div>' + '<div class="lib-list-container">' + '<div id="lib-list-empty" style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">暂无词库，请导入一个词库文件开始。</div>' + '<div id="lib-list-items"></div>' + '</div>' + '<div class="lib-add-area">' + '<input type="text" id="lib-add-name" placeholder="词库名称（可选）" style="flex:1;min-width:100px;" />' + '<select id="lib-add-lang">' + '<option value="英语">英语</option><option value="中文">中文</option><option value="日语">日语</option>' + '<option value="韩语">韩语</option><option value="法语">法语</option><option value="德语">德语</option>' + '<option value="西班牙语">西班牙语</option><option value="俄语">俄语</option><option value="阿拉伯语">阿拉伯语</option>' + '<option value="其他">其他</option>' + '</select>' + '<input type="file" id="lib-add-file" accept=".txt" multiple style="flex:1;min-width:140px;" />' + '<button onclick="addLibrary()" class="btn-success">➕ 导入词库</button>' + '<span class="multi-import-hint">支持多选 .txt 文件</span>' + '</div>' + '<div id="lib-add-error" class="error-msg"></div>' + '<div class="library-stats" style="margin-top:10px;">' + '<span>📦 总词数: <strong id="lib-total">0</strong></span>' + '<span>🔍 过滤后: <strong id="lib-filtered">0</strong></span>' + '<span>📝 可用: <strong id="lib-valid">0</strong></span>' + '</div>' + '<div class="row" style="margin-top:6px;">' + '<span class="row-label">字符数过滤</span>' + '<input type="number" id="lib-filter-len" placeholder="全部" min="1" max="50" style="flex:0 1 80px;" />' + '<span class="row-label" style="min-width:50px;">正则</span>' + '<input type="text" id="lib-filter-regex" placeholder="例如 ^[A-Z]+$" style="flex:1;min-width:100px;" />' + '<button class="btn-sm btn-outline" onclick="applyLibraryFilter()">🔍 应用</button>' + '<button class="btn-sm btn-outline" onclick="resetLibraryFilter()">↺ 重置</button>' + '</div>' + '<div class="row" style="margin-top:6px;">' + '<button class="btn-sm" onclick="pickRandomFromLibrary()">🎲 从当前词库随机抽取</button>' + '<button class="btn-sm btn-outline" onclick="toggleLibraryList()">📂 打开词库选择器</button>' + '</div>' + '<div class="library-search row" id="lib-search-row" style="display:none;margin-top:6px;">' + '<input type="text" id="lib-search-input" placeholder="在当前词库中搜索..." oninput="searchLibrary()" />' + '</div>' + '<div class="library-list" id="library-list"></div>' + '<div id="library-error" class="error-msg"></div>';
+      s.innerHTML = `
+<div class="section-title">📚 词库管理 <span class="badge" id="lib-current-badge">未选择</span> <span class="badge">v6 · 文件夹版</span></div>
+<div class="lib-current-bar">
+  <span class="label">🎯 当前抽词范围</span>
+  <span class="info" id="lib-current-info">未选择任何范围</span>
+  <div>
+    <button class="btn-sm btn-outline" onclick="exportCurrentLibrary()" id="lib-export-btn" disabled>📤 导出范围</button>
+    <button class="btn-sm btn-danger" onclick="deleteCurrentLibrary()" id="lib-delete-btn" disabled>🗑️ 删除范围</button>
+  </div>
+</div>
+<div class="lib-crumb-bar" id="lib-scope-crumb"></div>
+<div class="lib-crumb-bar" id="lib-browse-bar"></div>
+<div class="lib-toolbar">
+  <span class="filter-label">🔍 搜索</span>
+  <input type="text" class="grow" id="lib-filter-name" placeholder="搜词库 / 文件夹名 / 路径..." oninput="onFilterNameInput()" />
+  <select id="lib-filter-lang" onchange="onFilterLangChange()"><option value="全部">🌐 全部语言</option></select>
+  <button class="btn-sm btn-outline" onclick="clearLibraryFilters()" title="清除筛选">✕ 清除</button>
+  <span class="lib-filter-stats" id="lib-filter-stats"></span>
+</div>
+<div class="lib-toolbar">
+  <button class="btn-sm" onclick="newFolder()">🆕 新建文件夹</button>
+  <button class="btn-sm btn-outline" onclick="expandAllFolders()">🌲 展开全部</button>
+  <button class="btn-sm btn-outline" onclick="collapseAllFolders()">🌳 折叠全部</button>
+  <button class="btn-sm btn-outline" onclick="exportBackup()">📦 备份全部</button>
+  <label class="btn-sm btn-outline lib-file-btn">📥 恢复备份<input type="file" id="lib-backup-file" accept=".json,application/json" style="display:none;" onchange="importBackup(event)" /></label>
+</div>
+<div class="lib-tree-container">
+  <div id="lib-list-empty" style="text-align:center;color:var(--text-muted);padding:16px;font-size:14px;">暂无词库</div>
+  <div id="lib-list-items"></div>
+</div>
+<div class="lib-add-area">
+  <input type="text" id="lib-add-name" placeholder="词库名称（可选，按文件名导入）" />
+  <select id="lib-add-lang">
+    <option value="英语">英语</option><option value="中文">中文</option><option value="日语">日语</option>
+    <option value="韩语">韩语</option><option value="法语">法语</option><option value="德语">德语</option>
+    <option value="西班牙语">西班牙语</option><option value="俄语">俄语</option><option value="阿拉伯语">阿拉伯语</option>
+    <option value="其他">其他</option>
+  </select>
+  <input type="file" id="lib-add-file" accept=".txt" multiple />
+  <button onclick="addLibrary()" class="btn-success">➕ 导入词库</button>
+  <label class="btn-sm btn-outline lib-file-btn">📂 导入文件夹（自动建嵌套）<input type="file" id="lib-add-dir" webkitdirectory directory multiple accept=".txt" style="display:none;" onchange="importDirectory(event)" /></label>
+</div>
+<div class="hint-text">普通导入放在「当前位置」；「导入文件夹」按电脑目录层级自动生成嵌套文件夹。可拖拽行或点「↪️ 移动」调整结构。</div>
+<div id="lib-add-error" class="error-msg"></div>
+<div class="library-stats" style="margin-top:10px;">
+  <span>📦 范围总词数: <strong id="lib-total">0</strong></span>
+  <span>🔍 过滤后: <strong id="lib-filtered">0</strong></span>
+  <span>📝 可用: <strong id="lib-valid">0</strong></span>
+  <span id="lib-scope-meta"></span>
+</div>
+<div class="row" style="margin-top:6px;">
+  <span class="row-label">字符数过滤</span>
+  <input type="number" id="lib-filter-len" placeholder="全部" min="1" max="50" style="flex:0 1 80px;" />
+  <span class="row-label" style="min-width:50px;">正则</span>
+  <input type="text" id="lib-filter-regex" placeholder="例如 ^[A-Z]+$" style="flex:1;min-width:100px;" />
+  <button class="btn-sm btn-outline" onclick="applyLibraryFilter()">🔍 应用</button>
+  <button class="btn-sm btn-outline" onclick="resetLibraryFilter()">↺ 重置</button>
+</div>
+<div class="row" style="margin-top:6px;">
+  <button class="btn-sm" onclick="pickRandomFromLibrary()">🎲 从当前范围随机抽取</button>
+  <button class="btn-sm btn-outline" onclick="toggleLibraryList()">📂 打开范围词表</button>
+</div>
+<div class="library-search row" id="lib-search-row" style="display:none;margin-top:6px;">
+  <input type="text" id="lib-search-input" placeholder="在当前范围中搜索单词..." oninput="searchLibrary()" />
+</div>
+<div class="library-list" id="library-list"></div>
+<div id="library-error" class="error-msg"></div>
+<div class="lib-modal" id="lib-modal">
+  <div class="lib-modal-card">
+    <div class="lib-modal-title" id="lib-modal-title"></div>
+    <div class="form-group" id="lib-modal-input-wrap">
+      <label id="lib-modal-label">名称</label>
+      <input type="text" id="lib-modal-input" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmLibModal();}if(event.key==='Escape')closeLibModal();" />
+    </div>
+    <div class="form-group" id="lib-modal-select-wrap" style="display:none;">
+      <label id="lib-modal-select-label">目标文件夹</label>
+      <select id="lib-modal-select"></select>
+    </div>
+    <div class="form-group" id="lib-modal-note-wrap" style="display:none;">
+      <label>备注（可选）</label>
+      <input type="text" id="lib-modal-note" placeholder="写一句说明，方便细分范围" />
+    </div>
+    <div class="lib-modal-actions">
+      <button class="btn-sm btn-outline" onclick="closeLibModal()">取消</button>
+      <button class="btn-sm" onclick="confirmLibModal()">确定</button>
+    </div>
+  </div>
+</div>`;
       return s;
     }
     function initLibrarySection() {
@@ -3545,29 +4695,34 @@
       loadSettings();
       loadConfig();
       const loaded = await loadLibraries();
-      if ( !loaded || wordLibraries.length === 0) {
-        wordLibraries = [{
-          id: 'lib_example_en', name: '英语示例词库', language: '英语', words: ['HELLO', 'WORLD', 'APPLE', 'BANANA',
-          'CHERRY', 'DANCE', 'EAGLE', 'FLOWER', 'GRACE', 'HAPPY', 'MAPLE', 'CRANE', 'STONE', 'LIGHT'], createdAt: Date.now(),
-          filterLen: '', filterRegex: ''
-        },
-        {
-          id: 'lib_example_zh', name: '中文示例词库', language: '中文', words: ['你好', '世界', '苹果', '香蕉', '樱桃', '舞蹈',
-          '老鹰', '花朵', '优雅', '快乐'], createdAt: Date.now() + 1, filterLen: '', filterRegex: ''
-        }];
-        currentLibraryId = wordLibraries[0].id;
-        filteredWords = [];
+      if ( !loaded) {
+        libraryTree = createSampleTree();
+        expandedIds = new Set([ 'root', 'fld_sample_en', 'fld_sample_basic', 'fld_sample_zh']);
+        browseFolderId = 'root';
+        rebuildFlatIndex();
+        currentScope = {
+          type: 'lib', id: wordLibraries[0].id
+        };
+        currentLibraryId = currentScope.id;
+        libTreeVersion++;
+        invalidateScopeCache();
         await saveLibraries();
       }
-      if (currentLibraryId && !wordLibraries.find(l => l.id === currentLibraryId)) currentLibraryId = wordLibraries.length > 0 ? wordLibraries[0].id: null;
+      if (currentScope && !findNode(currentScope.id)) {
+        currentScope = wordLibraries.length ? {
+          type: 'lib', id: wordLibraries[0].id
+        }
+        : null;
+        currentLibraryId = currentScope ? currentScope.id: null;
+      }
       initLibrarySection();
-      renderLibraryListUI();
-      const curLib = getCurrentLibrary();
-      if (curLib && (curLib.filterLen || curLib.filterRegex)) {
-        $('lib-filter-len').value = curLib.filterLen || '';
-        $('lib-filter-regex').value = curLib.filterRegex || '';
+      const scopeNode = getCurrentScopeNode();
+      if (scopeNode && (scopeNode.filterLen || scopeNode.filterRegex)) {
+        $('lib-filter-len').value = scopeNode.filterLen || '';
+        $('lib-filter-regex').value = scopeNode.filterRegex || '';
         applyLibraryFilter(false, true);
       }
+
       $('dict-lang-select').addEventListener('change', function () {
         $('dict-custom-lang-group').style.display = this.value === 'other' ? 'block': 'none';
       });
@@ -3631,6 +4786,27 @@
     window.onFilterLangChange = onFilterLangChange;
     window.onFilterNameInput = onFilterNameInput;
     window.clearLibraryFilters = clearLibraryFilters;
+    window.newFolder = newFolder;
+    window.toggleFolder = toggleFolder;
+    window.enterFolder = enterFolder;
+    window.expandAllFolders = expandAllFolders;
+    window.collapseAllFolders = collapseAllFolders;
+    window.setCurrentFolderScope = setCurrentFolderScope;
+    window.renameNode = renameNode;
+    window.deleteNode = deleteNode;
+    window.openMoveDialog = openMoveDialog;
+    window.onLibDragStart = onLibDragStart;
+    window.onLibDragOver = onLibDragOver;
+    window.onLibDragLeave = onLibDragLeave;
+    window.onLibDrop = onLibDrop;
+    window.onLibDragEnd = onLibDragEnd;
+    window.openLibModal = openLibModal;
+    window.closeLibModal = closeLibModal;
+    window.confirmLibModal = confirmLibModal;
+    window.importDirectory = importDirectory;
+    window.exportBackup = exportBackup;
+    window.importBackup = importBackup;
+
     </script>
   </body>
 </html>
