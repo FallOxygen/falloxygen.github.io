@@ -309,6 +309,15 @@ textarea.inp{resize:vertical;min-height:70px;line-height:1.6}
 .snap-item .si small{display:block;font-size:10.5px;color:var(--a-faint);margin-top:3px}
 .snap-item button{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.06);color:var(--a-dim);font-size:13px;flex:none}
 .empty-note{text-align:center;color:var(--a-faint);font-size:12px;padding:26px 10px;line-height:1.8}
+/* 隐藏文本识别面板 */
+.rv-row{cursor:pointer;user-select:none}
+.rv-row:active{background:rgba(124,92,255,.1)}
+.rv-row.unused{opacity:.48}
+.rv-count{
+  font-style:normal;font-size:10px;font-weight:700;margin-left:7px;padding:1px 7px;
+  border-radius:6px;color:#cbbcff;background:rgba(124,92,255,.16);vertical-align:1px;
+}
+.rv-row.unused .rv-count{color:var(--a-faint);background:rgba(255,255,255,.07)}
 .find-res{font-size:11.5px;color:var(--a-dim);margin:8px 3px 0}
 
 /* Toast */
@@ -655,6 +664,65 @@ body[data-lineno="off"] .line-no{display:none}
 .mermaid-card svg{max-width:100%;height:auto}
 .mermaid-card .m-err{font-family:ui-monospace,monospace;font-size:11px;color:var(--pv-mute);white-space:pre-wrap;text-align:left}
 
+/* ============ 思维导图（自研 SVG 引擎） ============ */
+.mermaid-card.mm-card{padding:0;overflow:hidden;text-align:left;position:relative}
+.mm-canvas{
+  padding:16px 12px 18px;overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;text-align:center;
+}
+.mermaid-card.mm-card .mm-canvas svg{max-width:none;display:block;margin:0 auto;height:auto}
+.mm-node{cursor:pointer}
+.mm-node .mm-shape{transition:filter .16s,stroke-width .16s}
+.mm-node:hover .mm-shape{filter:brightness(.95)}
+.mm-node.on .mm-shape{stroke-width:3!important}
+.mm-node text{pointer-events:none;dominant-baseline:middle}
+.mm-edge{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.mm-badge text{font-size:9px;font-weight:800;fill:#fff}
+.mm-fold-hint{font-size:9.5px;font-weight:700;opacity:.75}
+.mm-layout-grid .btn{font-size:11.5px;padding:8px 6px}
+.mm-tools{display:flex;align-items:center;gap:4px;margin-right:6px;flex-wrap:wrap;justify-content:flex-end}
+.mm-tools .mm-btn{padding:3px 6px;font-size:10.5px}
+.mm-btn{
+  font-size:11px;color:var(--pv-accent);background:transparent;
+  border:1px solid var(--pv-line);border-radius:6px;padding:3px 9px;
+  cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap;
+}
+.mm-btn:hover{background:var(--pv-tint);border-color:var(--pv-accent)}
+.mm-btn.on{background:var(--grad2);color:#fff;border-color:transparent;font-weight:700}
+.mm-menu{
+  display:none;margin:0 12px 10px;padding:6px;
+  background:var(--pv-bg);border:1px solid var(--pv-line);border-radius:12px;
+  box-shadow:var(--pv-shadow);
+}
+.mm-menu.show{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.mm-menu button{
+  display:flex;align-items:center;justify-content:center;gap:5px;width:100%;text-align:center;
+  padding:8px 4px;border:0;background:transparent;color:var(--pv-fg);
+  font-size:11px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;
+}
+.mm-menu button:hover{background:var(--pv-tint)}
+.mm-menu button.on{background:var(--grad2);color:#fff;font-weight:700}
+.mm-menu button i{font-style:normal;width:16px;text-align:center;opacity:.85}
+.mm-cap{
+  padding:0 14px 12px;font-size:10.5px;color:var(--pv-mute);line-height:1.6;
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+}
+.mm-cap b{color:var(--pv-accent);font-weight:700}
+.mm-cap .mm-dot{width:5px;height:5px;border-radius:50%;background:var(--pv-accent);opacity:.5}
+/* 独立 HTML 里也能切换布局（预渲染 6 份视图，无需加载引擎） */
+.mm-export-bar{
+  display:flex;flex-wrap:wrap;gap:5px;justify-content:center;
+  padding:10px 12px 2px;
+}
+.mm-export-bar button{
+  font-size:11px;color:var(--pv-accent);background:var(--pv-card);
+  border:1px solid var(--pv-line);border-radius:7px;padding:5px 9px;
+  cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;
+}
+.mm-export-bar button:hover{border-color:var(--pv-accent)}
+.mm-export-bar button.on{background:var(--grad2);color:#fff;border-color:transparent;font-weight:700}
+.mm-view svg{width:100%!important;height:auto!important;max-width:none!important}
+
 /* 公式 */
 .preview-body mjx-container{display:inline-block;max-width:100%;color:var(--pv-fg)}
 .math-block{
@@ -665,9 +733,12 @@ body[data-lineno="off"] .line-no{display:none}
 }
 .math-block::before{content:'';display:block;position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--grad2)}
 .math-label{
-  display:inline-block;font-size:10px;letter-spacing:1px;color:var(--pv-accent);
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  white-space:nowrap;word-break:keep-all;line-height:1.5;max-width:100%;
+  font-size:10px;letter-spacing:.6px;color:var(--pv-accent);
   background:var(--pv-bg);border:1px solid var(--pv-line);border-radius:999px;
-  padding:2px 9px;margin-bottom:8px;font-weight:700;opacity:.85;
+  padding:2px 10px;margin:0 0 8px;font-weight:700;opacity:.85;
+  vertical-align:top;
 }
 .math-block mjx-container[display="true"]{display:block;margin:0!important;padding:2px 0!important;overflow:visible!important}
 
@@ -734,9 +805,23 @@ body[data-lineno="off"] .line-no{display:none}
   font-size:.68em;letter-spacing:.5px;color:#b9b0d8;pointer-events:none}
 .preview-body .spoiler.revealed{background:var(--pv-tint);color:var(--pv-fg);box-shadow:none;user-select:auto}
 .preview-body .spoiler.revealed::after{display:none}
-.preview-body abbr{
-  text-decoration:none;border-bottom:1px dotted var(--pv-accent);cursor:help;font-weight:600;
+.preview-body abbr.pv-abbr{
+  text-decoration:none;border:0;cursor:pointer;position:relative;font-weight:650;
+  color:var(--pv-accent);padding:0 .08em;border-radius:4px;
+  background:linear-gradient(180deg,transparent 70%,rgba(124,92,255,.3) 70%);
 }
+.preview-body abbr.pv-abbr::before{
+  content:'?';font-size:.6em;vertical-align:super;opacity:.65;margin-left:1px;font-weight:700;
+}
+.preview-body abbr.pv-abbr::after{
+  content:attr(data-def);display:none;position:absolute;left:50%;top:calc(100% + 10px);
+  transform:translateX(-50%);z-index:6;min-width:150px;max-width:240px;width:max-content;
+  padding:10px 13px;border-radius:12px;font-size:11.5px;font-weight:500;line-height:1.65;
+  color:#fff;background:#242a42;border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 12px 30px rgba(0,0,0,.34);white-space:normal;letter-spacing:0;text-align:left;
+}
+.preview-body abbr.pv-abbr.open::after,.preview-body abbr.pv-abbr:focus-visible::after{display:block}
+.preview-body abbr.pv-abbr:focus-visible{outline:2px solid var(--pv-accent);outline-offset:2px}
 .preview-body .pv-emoji{font-size:1.08em;line-height:1;display:inline-block;vertical-align:-.08em}
 .preview-body sub,.preview-body sup{font-size:.7em;color:var(--pv-accent);font-weight:650;line-height:0}
 .preview-body .h-anchor{display:none}
@@ -821,11 +906,39 @@ body[data-lineno="off"] .line-no{display:none}
 .export-compact .admonition::before{display:none!important}
 .export-compact .admonition{background:#fafbff!important}
 .export-compact .math-block{background:#f8f7ff!important}
-.export-compact .spoiler{background:#f3efff!important;color:#4a3d70!important;box-shadow:none!important}
-.export-compact .spoiler::after{display:none!important}
+.export-compact .math-label{display:none!important}
+.export-compact .mermaid-card.mm-card,.export-compact .mm-canvas{overflow:visible!important}
+.export-compact .mm-btn,.export-compact .mm-tools,.export-compact .mm-menu{display:none!important}
+.export-compact abbr.pv-abbr::after,.export-compact abbr.pv-abbr::before{display:none!important}
+/* 缩写释义：导出时直接印成可见小标签，不依赖点击气泡 */
+.preview-body .rv-abbr{display:inline;white-space:normal}
+.preview-body .rv-abbr b{
+  color:#6b37d6;font-weight:700;background:var(--pv-inline-bg);
+  border-bottom:1px dotted var(--pv-accent);border-radius:4px;padding:0 .12em;
+}
+.preview-body .rv-def{
+  display:inline-block;margin:0 .15em .1em .35em;padding:.1em .5em;
+  font-size:.76em;line-height:1.55;color:var(--pv-soft);font-weight:500;
+  background:var(--pv-tint);border:1px solid var(--pv-line);border-radius:7px;
+  vertical-align:baseline;white-space:normal;letter-spacing:0;
+}
+/* 剧透：仅在 .revealed 时露出文字，未开启时保留遮罩 */
+.export-compact .spoiler.revealed{background:#f3efff!important;color:#4a3d70!important;box-shadow:none!important}
+.export-compact .spoiler.revealed::after{display:none!important}
+.export-compact .spoiler:not(.revealed){
+  background:linear-gradient(135deg,#3a3550,#2a3142)!important;
+  color:transparent!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)!important;
+}
+.export-compact .spoiler:not(.revealed)::after{
+  content:'已隐藏';display:grid!important;place-items:center;color:#c9c2e6!important;
+  font-size:.68em;letter-spacing:.5px;
+}
+.export-compact .rv-fold-note{
+  padding:7px 14px;background:#f6f7fb;color:#8a92a8;font-size:11px;text-align:center;
+  border-top:1px solid #e7eaf3;
+}
 .export-compact .toc-flash{animation:none!important}
 .export-compact .code-copy,.export-compact .code-expand,.export-compact .table-hint,.export-compact .code-fade{display:none!important}
-.export-compact .code-block-wrapper.collapsed pre{max-height:none!important;overflow:visible!important}
 .export-compact .table-wrap{overflow:visible}
 .export-compact .math-block{box-shadow:none}
 .export-watermark{
@@ -1029,6 +1142,41 @@ flowchart LR
   F --> G[PNG / HTML / PDF]
 ```
 
+### 思维导图 · 六种布局
+
+同一个 `mindmap` 源码，点右上角「布局」即可切换 **右向树 / 左向树 / 向下树 / 向上树 / 双侧对称 / 中心放射**。中文、任意形状、图标、注释、带不带 id 都能识别：
+
+```mermaid
+mindmap
+  root((墨笺 · 排版引擎))
+    文字排版(圆角节点)
+      中英混排
+      标点挤压
+      荧光高亮 :sparkles:
+      脚注与缩写
+    块级元素[[方形节点]]
+      表格卡片
+      代码块与行号
+      提示块嵌套
+    公式与图表{{六边形}}
+      MathJax SVG
+      Mermaid 流程图
+      ::icon(star)
+    导出能力))爆炸形((
+      高清长图
+      独立 HTML
+      打印 PDF
+    交互增强)云朵形(
+      目录精准跳转
+      折叠与缩放
+      主题切换
+    更多可能{菱形}
+      自定义锚点
+      双语缩写
+```
+
+> 首行写 `mindmap radial` 或 `mindmap split` 可直接指定布局；也可用 `%%{init:{"mindmap":{"layout":"radial"}}}%%`。点击有子节点的节点可折叠分支，`＋ / −` 缩放，`↺` 复原。
+
 <details>
 <summary>点击展开：更多细节</summary>
 <p>折叠区块内的 <strong>Markdown</strong> 与 <code>行内代码</code> 同样会被完整解析。</p>
@@ -1063,7 +1211,7 @@ Emoji 短码 :rocket: :sparkles: :bulb: :check: :warning: 直接渲染；按键 
 *[GFM]: GitHub Flavored Markdown
 *[SVG]: Scalable Vector Graphics
 
-首次出现的 GFM、SVG 会自动带上缩写释义（悬停可看）。剧透内容：||这里藏着一句悄悄话，点一下就能看见||。
+首次出现的 GFM、SVG 会自动变成可点击的缩写（带渐变下划线与 `?` 角标），**点一下即可查看释义**，桌面悬停也能看到。剧透内容：||这里藏着一句悄悄话，点一下就能看见||。
 
 ### 定义列表
 
@@ -1146,7 +1294,49 @@ Table: 扩展语法支持一览
 
 ---
 
-## 八、更多
+## 八、交互隐藏文本与导出 {#reveal-demo}
+
+*[API]: Application Programming Interface
+
+下面这些词需要**点一下**才看得到释义：API、SVG；这句是剧透：||导出长图时会被直接印出来||。
+
+<details>
+<summary>点击展开：默认藏起来的一段</summary>
+这一段在预览里默认折叠，导出长图时可以按开关直接展开印在图上。
+</details>
+
+??? 另一个折叠容器
+同样属于「折叠区块」类别，工具会自动识别。
+:::
+
+下面这个代码块超过 16 行，会被自动收起：
+
+```javascript
+// 导出长图时，把「需交互才可见」的内容直接印在图上
+const REVEAL_KINDS = [
+  { key: 'abbr',    label: '缩写释义' },
+  { key: 'spoiler', label: '剧透文本' },
+  { key: 'details', label: '折叠区块' },
+  { key: 'code',    label: '长代码折叠' },
+  { key: 'mindmap', label: '导图折叠分支' }
+];
+function exportWithReveal(doc, switches) {
+  const enabled = REVEAL_KINDS.filter(k => switches[k.key]);
+  return enabled.map(kind => {
+    const nodes = doc.querySelectorAll(kind.selector);
+    const count = nodes.length;
+    console.log(kind.label, count);
+    return { kind: kind.label, count };
+  });
+}
+// 开关关闭的类别，图片里保持隐藏或折叠状态
+```
+
+> 打开 **工具箱 → 隐藏文本与导出**，可看到本文档识别出的 5 类隐藏文本与对应开关；导出长图时开启的类别会把隐藏内容直接印在图上，缩写会以「释：全称」小标签紧跟词后。
+
+---
+
+## 九、更多
 
 ![墨笺 · 渐变示意图](data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc2MDAnIGhlaWdodD0nMTUwJz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9J2cnPjxzdG9wIHN0b3AtY29sb3I9JyM3YzVjZmYnLz48c3RvcCBvZmZzZXQ9JzEnIHN0b3AtY29sb3I9JyMzOGJkZjgnLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0nNjAwJyBoZWlnaHQ9JzE1MCcgcng9JzE0JyBmaWxsPSd1cmwoI2cpJy8+PGNpcmNsZSBjeD0nNTIwJyBjeT0nMjAnIHI9JzkwJyBmaWxsPSd3aGl0ZScgZmlsbC1vcGFjaXR5PScuMDgnLz48dGV4dCB4PScyOCcgeT0nOTAnIGZpbGw9J3doaXRlJyBmb250LXNpemU9JzMwJyBmb250LWZhbWlseT0nc2Fucy1zZXJpZic+TWFya2Rvd24gw5cgTGFUZVg8L3RleHQ+PC9zdmc+)
 
@@ -1170,10 +1360,21 @@ const SAMPLE = $('sampleSrc').textContent.trim();
 const K = {
   doc:'mojian:v3:doc', set:'mojian:v3:settings', snaps:'mojian:v3:snaps', view:'mojian:v3:view'
 };
+/* 可交互显示隐藏文本的语法类别（导出长图时按开关决定是否直接印出） */
+const REVEAL_KINDS = [
+  {k:'abbr',    n:'缩写释义',     i:'Ⓐ', d:'*[X]: 全称 定义的词，点击查看释义'},
+  {k:'spoiler', n:'剧透文本',     i:'◐', d:'||文字|| 点击揭示'},
+  {k:'details', n:'折叠区块',     i:'▤', d:'&lt;details&gt; 与 ??? 折叠容器'},
+  {k:'code',    n:'长代码折叠',   i:'≡', d:'超过 16 行自动收起的代码块'},
+  {k:'mindmap', n:'导图折叠分支', i:'✺', d:'思维导图中点击收起的节点'}
+];
+const DEF_REVEAL = { abbr:true, spoiler:true, details:true, code:true, mindmap:true };
+
 const DEF = {
   theme:'white', font:'sans', size:15.5, lh:1.85,
   live:true, lineno:true, math:true, mermaid:true, autosave:true,
-  collapse:true, haptic:true,
+  collapse:true, haptic:true, mmLayout:'right',
+  reveal:Object.assign({}, DEF_REVEAL),
   exportWidth:720, exportSize:15, exportRatio:2, watermark:'墨笺 · Markdown Studio'
 };
 let S = Object.assign({}, DEF);
@@ -1226,6 +1427,8 @@ function docTitle(){
 /* ---------- 设置持久化 ---------- */
 function loadAll(){
   try{ Object.assign(S, JSON.parse(localStorage.getItem(K.set)||'{}')); }catch(e){}
+  S.mmLayout = mmNormLayout(S.mmLayout) || 'right';
+  S.reveal = Object.assign({}, DEF_REVEAL, S.reveal || {});
   try{ snaps = JSON.parse(localStorage.getItem(K.snaps)||'[]'); }catch(e){ snaps=[]; }
   const saved = localStorage.getItem(K.doc);
   if(saved !== null){ editor.value = saved; isSample = false; }
@@ -1250,6 +1453,7 @@ function applySettings(){
   document.body.dataset.lineno = S.lineno ? 'on' : 'off';
   document.querySelectorAll('#themeBar .theme-pill').forEach(b=>b.classList.toggle('on', b.dataset.theme===S.theme));
   saveSettings();
+  redrawMindmaps();
 }
 
 /* ---------- 视图 ---------- */
@@ -1329,7 +1533,9 @@ function inlineExt(t, abbrs){
   // 缩写 *[X]: 全称
   (abbrs||[]).forEach(pair=>{
     const re=new RegExp('(^|[^\\w])('+escRe(pair[0])+')(?=$|[^\\w])','g');
-    t=t.replace(re,(m,pre,w)=>pre+'<abbr title="'+esc(pair[1])+'">'+w+'</abbr>');
+    t=t.replace(re,(m,pre,w)=>pre+
+      '<abbr class="pv-abbr" data-def="'+esc(pair[1])+'" title="'+esc(pair[1])+
+      '" tabindex="0" role="button">'+w+'</abbr>');
   });
   return t;
 }
@@ -1458,14 +1664,28 @@ function extractFootnotes(src, st){
   return src+'\n\n'+tk('R',idx)+'\n\n';
 }
 
-/* ---------- 缩写定义 ---------- */
-function extractAbbrs(src, st){
-  const list=[];
-  src=src.replace(/^[ \t]*\*\[([^\]]+)\]:[ \t]*(.+)$/gm,(m,k,v)=>{
-    list.push([k.trim(),v.trim()]); return '';
-  });
-  if(list.length) st.abbrs=(st.abbrs||[]).concat(list);
-  return src;
+/* ---------- 缩写定义 ----------
+   定义可能写在文末、容器内或引用里，因此在最外层 compile 之前
+   先对整篇原文做一次全局收集，再逐层移除定义行，保证任何位置都生效。 */
+const ABBR_DEF_RE=/^[ \t]*(?:>[ \t]*)*\*\[([^\]]+)\]:[ \t]*(.+)$/gm;
+function collectAbbrs(src, st){
+  st.abbrs = st.abbrs || [];
+  const list=[]; let m;
+  const re=new RegExp(ABBR_DEF_RE.source,'gm');
+  while((m=re.exec(src))){
+    const k=m[1].trim(), v=m[2].trim();
+    if(k && v) list.push([k,v]);
+  }
+  if(list.length){
+    const seen=new Set(st.abbrs.map(x=>x[0].toLowerCase()));
+    list.forEach(x=>{
+      const key=x[0].toLowerCase();
+      if(!seen.has(key)){ st.abbrs.push(x); seen.add(key); }
+    });
+  }
+}
+function extractAbbrs(src){
+  return src.replace(ABBR_DEF_RE,'');
 }
 
 /* ---------- 图片尺寸 ![alt](url =200x80) ---------- */
@@ -1505,10 +1725,13 @@ const INLINE_MATH=[/\\\(([\s\S]+?)\\\)/g, /\$([^$\n]+?)\$/g];
 function compile(src, st, depth){
   depth=depth||0;
   src=extractFences(src,st);
+  // 在围栏抽取之后、容器递归之前全局收集：文末 / 容器内 / 引用内定义都生效，
+  // 且代码块里演示用的 *[X]: 不会被误当成真实定义。
+  if(depth===0) collectAbbrs(src, st);
   src=extractContainers(src,st,depth);
   src=extractDefLists(src,st);
   src=extractFootnotes(src,st);
-  src=extractAbbrs(src,st);
+  src=extractAbbrs(src);
   src=extractImgSizes(src,st);
   src=extractLineBlocks(src,st);
 
@@ -1586,7 +1809,18 @@ function buildCodeBlock(blk){
   if(isMer){
     const card = document.createElement('div'); card.className='mermaid-card';
     const m = document.createElement('div'); m.className='mermaid'; m.textContent=blk.code;
-    card.appendChild(m); wrap.appendChild(card); return wrap;
+    card.appendChild(m); wrap.appendChild(card);
+    let parsed=null; try{ parsed=mmParse(blk.code); }catch(e){}
+    if(parsed && parsed.root){
+      const box=document.createElement('span'); box.className='mm-tools';
+      box.innerHTML='<button type="button" class="mm-btn mm-layout-btn">⇆ 布局 ▾</button>'+
+        '<button type="button" class="mm-btn mm-fitb" title="适应视口宽度">⤢</button>'+
+        '<button type="button" class="mm-btn mm-zoomout" title="缩小">−</button>'+
+        '<button type="button" class="mm-btn mm-zoomin" title="放大">＋</button>'+
+        '<button type="button" class="mm-btn mm-resetb" title="重置">↺</button>';
+      tools.insertBefore(box,cp);
+    }
+    return wrap;
   }
 
   const ex = document.createElement('button'); ex.className='code-expand'; ex.textContent='展开全部';
@@ -1652,6 +1886,471 @@ function enhanceCodeBlocks(root){
   });
 }
 
+/* =========================================================
+   思维导图引擎 v2
+   宽容解析 Mermaid mindmap 语法（中文 / 任意形状 / 图标 / 注释 /
+   任意缩进 / 带不带 id 都行），自研纯 SVG 渲染 6 种布局：
+   右向树 / 左向树 / 向下树 / 向上树 / 双侧对称 / 中心放射。
+   官方 Mermaid 只负责 flowchart、sequence 等其它图。
+   ========================================================= */
+let mmInited = false, mmUid = 0;
+/* 实时渲染会重建整块 DOM，这里按源码指纹记住每张图的布局 / 缩放 / 折叠状态 */
+let mmPersist = {};
+function mmSrcKey(src){
+  let h=5381; const s=String(src||'');
+  for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0;
+  return 'k'+h.toString(36)+'_'+s.length;
+}
+function captureMindmapStates(){
+  const old={};
+  output.querySelectorAll('.mermaid-card.mm-card').forEach(card=>{
+    const src=card._mmSrc; if(!src) return;
+    old[mmSrcKey(src)]={
+      layout:card.dataset.mmLayout||'right',
+      scale:card.dataset.mmScale||'1',
+      collapsed:Array.from(card._mmCollapsed||[])
+    };
+  });
+  if(Object.keys(old).length) mmPersist=Object.assign(mmPersist,old);
+}
+const MM_LAYOUTS = [
+  {k:'right',  n:'右向树',   i:'→'},
+  {k:'left',   n:'左向树',   i:'←'},
+  {k:'down',   n:'向下树',   i:'↓'},
+  {k:'up',     n:'向上树',   i:'↑'},
+  {k:'split',  n:'双侧对称', i:'⇆'},
+  {k:'radial', n:'中心放射', i:'✺'}
+];
+const MM_ALIAS = {
+  lr:'right', r:'right', right:'right', '右':'right', '右向':'right', '向右':'right', '横向':'right',
+  rl:'left', l:'left', left:'left', '左':'left', '左向':'left', '向左':'left',
+  tb:'down', td:'down', d:'down', down:'down', '下':'down', '向下':'down', '竖向':'down', '树状':'down',
+  bt:'up', u:'up', up:'up', '上':'up', '向上':'up',
+  split:'split', bilateral:'split', symmetric:'split', fishbone:'split',
+  '双侧':'split', '对称':'split', '鱼骨':'split', '左右':'split',
+  radial:'radial', orbit:'radial', circle:'radial', sun:'radial',
+  '放射':'radial', '辐射':'radial', '环形':'radial', '中心':'radial', '圆形':'radial', '圆环':'radial'
+};
+const MM_PAL_LIGHT = [
+  ['#7c5cff','#a855f7'], ['#2f7cf6','#38bdf8'], ['#0e9f8a','#34d399'],
+  ['#e2761b','#f59e0b'], ['#dc3f7a','#f472b6'], ['#5b6ee1','#818cf8']
+];
+const MM_PAL_NIGHT = [
+  ['#a78bfa','#c084fc'], ['#60a5fa','#38bdf8'], ['#34d399','#6ee7b7'],
+  ['#fbbf24','#f59e0b'], ['#f472b6','#fb7185'], ['#818cf8','#a5b4fc']
+];
+function mmNormLayout(v){
+  if(!v) return null;
+  const k=String(v).trim().toLowerCase();
+  return MM_ALIAS[k] || (MM_LAYOUTS.some(x=>x.k===k) ? k : null);
+}
+function mmLayoutName(k){ const x=MM_LAYOUTS.find(y=>y.k===k); return x?x.n:'右向树'; }
+function mmColor(branch,theme){
+  const pal=theme==='night'?MM_PAL_NIGHT:MM_PAL_LIGHT;
+  return pal[(Math.max(1,branch)-1)%pal.length];
+}
+function mmHexA(hex,a){
+  const h=String(hex).replace('#','');
+  const s=h.length===3?h.split('').map(c=>c+c).join(''):h;
+  const n=parseInt(s,16)||0;
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+function mmCleanText(t){
+  return String(t||'')
+    .replace(/<br\s*\/?>/gi,'\n').replace(/\\n/g,'\n')
+    .replace(/\*\*([\s\S]+?)\*\*/g,'$1').replace(/\*([^*\n]+)\*/g,'$1')
+    .replace(/::icon\([^)]*\)/gi,'').replace(/:::\S+/g,'')
+    .replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<')
+    .replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#39;/gi,"'")
+    .replace(/^["'「『]|["'」』]$/g,'')
+    .replace(/:([a-z0-9_+\-]{1,24}):/gi,(m,k)=>{
+      const v=EMOJI[k.toLowerCase()]; return v||m;
+    })
+    .replace(/[ \t]+/g,' ').trim();
+}
+/* 节点行：支持全部 Mermaid 形状 + 裸文本，前缀 id 可有可无 */
+function mmParseLabel(raw){
+  let s=String(raw||'').trim();
+  let icon='', cls='';
+  const im=s.match(/::icon\(([^)]*)\)/i); if(im) icon=im[1].trim();
+  const cm=s.match(/:::([A-Za-z0-9_\-]+)\s*$/); if(cm) cls=cm[1];
+  s=s.replace(/\s*::icon\([^)]*\)\s*/gi,' ').replace(/\s*:::[A-Za-z0-9_\-]+\s*$/,'').trim();
+  const tries=[
+    [/^([^\s()]*)\)\)([\s\S]+)\(\($/, 'bang'],
+    [/^([^\s{}]*)\{\{([\s\S]+)\}\}$/,   'hexagon'],
+    [/^([^\s\[\]]*)\[\[([\s\S]+)\]\]$/,'rect'],
+    [/^([^\s\[\]]*)\[([\s\S]+)\]$/,    'rect'],
+    [/^([^\s()]*)\(\(([\s\S]+)\)\)$/,  'circle'],
+    [/^([^\s()]*)\(([\s\S]+)\)$/,      'rounded'],
+    [/^([^\s()]*)\)([\s\S]+)\($/,      'cloud'],
+    [/^([^\s>\]]*)>([\s\S]+)\]$/,      'banner'],
+    [/^([^\s{}]*)\{([\s\S]+)\}$/,      'diamond']
+  ];
+  let id='', text='', shape='default';
+  for(const [re,k] of tries){
+    const m=s.match(re);
+    if(m){ id=(m[1]||'').trim(); text=(m[2]||'').trim(); shape=k; break; }
+  }
+  if(shape==='default'){ text=s; id=''; }
+  text=mmCleanText(text);
+  if(!text) text=mmCleanText(id)||'节点';
+  return {text, shape, id, icon, cls};
+}
+/* 主解析：返回 {root, layout, count}；非 mindmap 返回 null */
+function mmParse(src){
+  let text=String(src||'').replace(/\r/g,''), layout=null;
+  // %%{init: {"mindmap":{"layout":"radial"}}}%%
+  text=text.replace(/%%\{\s*init\s*:\s*([\s\S]*?)\s*\}%%/gi,(m,json)=>{
+    try{
+      const o=JSON.parse(json.replace(/,\s*([}\]])/g,'$1'));
+      const c=(o&&o.mindmap)||o||{};
+      layout=mmNormLayout(c.layout||c.mindmapLayout||c.direction||o.layout)||layout;
+    }catch(e){}
+    return '';
+  });
+  // %% layout: radial
+  text=text.replace(/^[ \t]*%%[ \t]*(?:layout|布局|方向)[ \t]*[:：][ \t]*(\S+)[ \t]*$/gim,(m,v)=>{
+    layout=mmNormLayout(v)||layout; return '';
+  });
+  const lines=text.split('\n');
+  let start=-1;
+  for(let i=0;i<lines.length;i++){
+    const t=lines[i].trim();
+    if(!t || t.indexOf('%%')===0) continue;
+    const m=t.match(/^(?:mindmap|思维导图)(?:[-:：\s]+([\w\u4e00-\u9fa5]+))?\s*$/i);
+    if(m){ layout=mmNormLayout(m[1])||layout; start=i+1; }
+    else if(/^mindmap/i.test(t)){ start=i+1; }
+    break;
+  }
+  if(start<0) return null;   // 不是 mindmap，交给官方 Mermaid
+
+  const stack=[]; let root=null, uid=0, last=null;
+  for(let i=start;i<lines.length;i++){
+    const line=lines[i].replace(/\t/g,'  ');
+    if(!line.trim()) continue;
+    const t=line.trim();
+    if(t.indexOf('%%')===0) continue;
+    if(/^(classDef|class|style|click|linkStyle)\b/i.test(t)) continue;
+    // 纯指令行：图标 / 类，挂在最近创建的节点上，不生成新节点
+    if(/^::icon\(/i.test(t)){ if(last) last.icon=t.replace(/^::icon\(/i,'').replace(/\)$/,'').trim(); continue; }
+    if(/^:::/.test(t)){ if(last) last.cls=t.slice(3).trim(); continue; }
+    const indent=(line.match(/^[ \t]*/)||[''])[0].length;
+    while(stack.length && indent<=stack[stack.length-1].indent) stack.pop();
+    let parent=stack.length?stack[stack.length-1].node:null;
+    if(!parent && root) parent=root;   // 完全不缩进时也能成树
+    const p=mmParseLabel(t);
+    const node={ id:'mm'+(++uid), label:p.text, shape:p.shape, icon:p.icon, cls:p.cls,
+                 depth:parent?parent.depth+1:0, children:[], hidden:0, branch:0 };
+    if(parent) parent.children.push(node); else root=node;
+    stack.push({indent,node}); last=node;
+  }
+  if(!root) return null;
+  let count=0; (function w(n){ count++; n.children.forEach(w); })(root);
+  const assign=(n,d)=>{ n.children.forEach((c,i)=>{ c.branch=d===0?i+1:n.branch; assign(c,d+1); }); };
+  assign(root,0);
+  return {root, layout, count};
+}
+
+/* ---------- 尺寸测量 ---------- */
+function mmMeasure(n){
+  const fs=n.depth===0?15.5:(n.depth===1?13.5:12.5);
+  const cu=c=>/[\u2e80-\u9fff\u3000-\u303f\uff00-\uffef]/.test(c)?1:0.56;
+  const cw=s=>Array.from(s).reduce((a,c)=>a+cu(c),0);
+  // 长文本按字符宽度自动折行，避免被硬截断（中文 1 单位 / 西文 .56）
+  const lines=[];
+  n.label.split('\n').forEach(seg=>{
+    let cur='', units=0;
+    Array.from(seg).forEach(c=>{
+      const u=cu(c);
+      if(units+u>14 && cur){ lines.push(cur.trim()); cur=''; units=0; }
+      cur+=c; units+=u;
+    });
+    lines.push(cur.trim());
+  });
+  while(lines.length>1 && !lines[lines.length-1]) lines.pop();
+  if(!lines.length) lines.push('节点');
+  let maxW=0; lines.forEach(l=>{ maxW=Math.max(maxW,cw(l)*fs); });
+  const padX=(n.shape==='circle'||n.shape==='bang'||n.shape==='cloud')?19:16;
+  let w=Math.max(48,maxW+padX*2);
+  let h=Math.max(32,lines.length*fs*1.5+20);
+  if(n.shape==='circle'||n.shape==='bang'||n.shape==='cloud'){
+    const d=Math.max(w,h*1.18); w=d; h=Math.max(36,d*.78);
+  }
+  if(n.shape==='hexagon'||n.shape==='diamond'||n.shape==='banner') w+=18;
+  return {w,h,fs,lines};
+}
+function mmVisible(root,collapsed){
+  const cp=(n,d)=>{
+    const o={id:n.id,label:n.label,shape:n.shape,icon:n.icon,cls:n.cls,
+             branch:n.branch,depth:d,children:[],hidden:0};
+    if(collapsed.has(n.id)) o.hidden=n.children.length;
+    else n.children.forEach(c=>o.children.push(cp(c,d+1)));
+    return o;
+  };
+  return cp(root,0);
+}
+
+/* ---------- 六种布局 ---------- */
+function mmCompute(root,layout,theme){
+  const all=[]; (function w(n){ all.push(n); n.children.forEach(w); })(root);
+  all.forEach(n=>{ n.m=mmMeasure(n); });
+  const maxD=all.reduce((a,n)=>Math.max(a,n.depth),0);
+  const lw=[],lh=[];
+  all.forEach(n=>{ lw[n.depth]=Math.max(lw[n.depth]||0,n.m.w); lh[n.depth]=Math.max(lh[n.depth]||0,n.m.h); });
+  const GX=72, GY=16;
+  const xs=[], ys=[]; let cx=0, cy=0;
+  for(let d=0;d<=maxD;d++){ xs[d]=cx; cx+=(lw[d]||60)+GX; }
+  for(let d=0;d<=maxD;d++){ ys[d]=cy; cy+=(lh[d]||34)+GX; }
+
+  if(layout==='right'||layout==='left'){
+    let cur=0;
+    const place=n=>{
+      n.x=xs[n.depth]+n.m.w/2;
+      if(!n.children.length){ n.y=cur+n.m.h/2; cur+=n.m.h+GY; }
+      else{ n.children.forEach(place); n.y=(n.children[0].y+n.children[n.children.length-1].y)/2; }
+    };
+    place(root);
+    if(layout==='left'){
+      const total=cx-GX;
+      all.forEach(n=>{ n.x=total-n.x; });
+    }
+  }
+  else if(layout==='down'||layout==='up'){
+    let cur=0;
+    const place=n=>{
+      n.y=ys[n.depth]+n.m.h/2;
+      if(!n.children.length){ n.x=cur+n.m.w/2; cur+=n.m.w+GY; }
+      else{ n.children.forEach(place); n.x=(n.children[0].x+n.children[n.children.length-1].x)/2; }
+    };
+    place(root);
+    if(layout==='up'){
+      const total=cy-GX;
+      all.forEach(n=>{ n.y=total-n.y; });
+    }
+  }
+  else if(layout==='split'){
+    const kids=root.children.slice();
+    const half=Math.ceil(kids.length/2);
+    const L=kids.slice(0,half), R=kids.slice(half);
+    const off=[]; let o=0;
+    for(let d=1;d<=maxD;d++){ off[d]=o; o+=(lw[d]||60)+GX; }
+    const base=root.m.w/2+62;
+    root.x=0; root.y=0;
+    const placeSide=(list,sign)=>{
+      let cur=0;
+      const place=(n,d)=>{
+        n.x=sign*(base+(off[d]||0)+n.m.w/2);
+        if(!n.children.length){ n.y=cur+n.m.h/2; cur+=n.m.h+GY; }
+        else{ n.children.forEach(c=>place(c,d+1)); n.y=(n.children[0].y+n.children[n.children.length-1].y)/2; }
+      };
+      list.forEach(n=>place(n,1));
+      const shift=-cur/2;
+      const move=n=>{ n.y+=shift; n.children.forEach(move); };
+      list.forEach(move);
+    };
+    placeSide(L,-1); placeSide(R,1);
+  }
+  else{ // radial 中心放射
+    const radii=[]; let r=root.m.w/2+94;
+    for(let d=1;d<=maxD;d++){ radii[d]=r; r+=Math.max(lw[d]||60,lh[d]||34)*.82+92; }
+    root.x=0; root.y=0;
+    const kids=root.children, nk=kids.length||1, step=2*Math.PI/nk;
+    const place=(n,a0,a1,d)=>{
+      const a=(a0+a1)/2;
+      n.x=radii[d]*Math.cos(a); n.y=radii[d]*Math.sin(a);
+      const ch=n.children;
+      if(ch.length){
+        const sub=(a1-a0)/ch.length;
+        ch.forEach((c,i)=>place(c,a0+i*sub,a0+(i+1)*sub,d+1));
+      }
+    };
+    kids.forEach((c,i)=>{
+      const a=-Math.PI/2+step*i;
+      place(c,a-step/2,a+step/2,1);
+    });
+  }
+
+  // bounds
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  all.forEach(n=>{
+    minX=Math.min(minX,n.x-n.m.w/2); maxX=Math.max(maxX,n.x+n.m.w/2);
+    minY=Math.min(minY,n.y-n.m.h/2); maxY=Math.max(maxY,n.y+n.m.h/2);
+  });
+  const PAD=30;
+  minX-=PAD; minY-=PAD; maxX+=PAD; maxY+=PAD;
+  const W=Math.max(120,maxX-minX), H=Math.max(90,maxY-minY);
+
+  // edges
+  const edges=[];
+  const addEdge=(p,c)=>{
+    const dx=c.x-p.x, dy=c.y-p.y;
+    let d;
+    if(layout==='radial'){
+      const L=Math.hypot(dx,dy)||1;
+      const qx=(p.x+c.x)/2-dy/L*12, qy=(p.y+c.y)/2+dx/L*12;
+      d='M '+p.x.toFixed(1)+' '+p.y.toFixed(1)+' Q '+qx.toFixed(1)+' '+qy.toFixed(1)+' '+c.x.toFixed(1)+' '+c.y.toFixed(1);
+    }else if(layout==='down'||layout==='up'){
+      const sg=Math.sign(dy)||1;
+      const sy=p.y+sg*p.m.h/2, ey=c.y-sg*c.m.h/2, mid=(sy+ey)/2;
+      d='M '+p.x.toFixed(1)+' '+sy.toFixed(1)+' C '+p.x.toFixed(1)+' '+mid.toFixed(1)+', '+
+        c.x.toFixed(1)+' '+mid.toFixed(1)+', '+c.x.toFixed(1)+' '+ey.toFixed(1);
+    }else{
+      const sg=Math.sign(dx)||1;
+      const sx=p.x+sg*p.m.w/2, ex=c.x-sg*c.m.w/2, mid=(sx+ex)/2;
+      d='M '+sx.toFixed(1)+' '+p.y.toFixed(1)+' C '+mid.toFixed(1)+' '+p.y.toFixed(1)+', '+
+        mid.toFixed(1)+' '+c.y.toFixed(1)+', '+ex.toFixed(1)+' '+c.y.toFixed(1);
+    }
+    edges.push({d, branch:c.branch||p.branch||1, w:c.depth<=1?2.4:1.7});
+  };
+  (function w(n){ n.children.forEach(c=>{ addEdge(n,c); w(c); }); })(root);
+  return {nodes:all,edges,W,H,minX,minY,layout,theme};
+}
+
+/* ---------- 形状路径 ---------- */
+function mmShape(shape,x,y,w,h){
+  const l=x-w/2,r=x+w/2,t=y-h/2,b=y+h/2, f=v=>v.toFixed(1);
+  switch(shape){
+    case 'rect':    return '<rect class="mm-shape" x="'+f(l)+'" y="'+f(t)+'" width="'+f(w)+'" height="'+f(h)+'" rx="9"/>';
+    case 'rounded': return '<rect class="mm-shape" x="'+f(l)+'" y="'+f(t)+'" width="'+f(w)+'" height="'+f(h)+'" rx="'+f(h/2)+'"/>';
+    case 'circle':  return '<ellipse class="mm-shape" cx="'+f(x)+'" cy="'+f(y)+'" rx="'+f(w/2)+'" ry="'+f(h/2)+'"/>';
+    case 'hexagon': return '<polygon class="mm-shape" points="'+
+      [ [l+w*.16,t],[r-w*.16,t],[r,y],[r-w*.16,b],[l+w*.16,b],[l,y] ].map(p=>f(p[0])+','+f(p[1])).join(' ')+'"/>';
+    case 'diamond': return '<polygon class="mm-shape" points="'+
+      [[x,t],[r,y],[x,b],[l,y]].map(p=>f(p[0])+','+f(p[1])).join(' ')+'"/>';
+    case 'bang': {
+      const pts=[]; for(let i=0;i<16;i++){
+        const a=-Math.PI/2+i*Math.PI/8, k=i%2?0.72:1;
+        pts.push(f(x+Math.cos(a)*w/2*k)+','+f(y+Math.sin(a)*h/2*k));
+      }
+      return '<polygon class="mm-shape" points="'+pts.join(' ')+'"/>';
+    }
+    case 'cloud': return '<path class="mm-shape" d="M '+f(l+w*.17)+' '+f(b)+
+      ' Q '+f(l)+' '+f(b)+' '+f(l)+' '+f(y+h*.12)+
+      ' Q '+f(l)+' '+f(t)+' '+f(x-w*.2)+' '+f(t)+
+      ' Q '+f(x)+' '+f(t-h*.22)+' '+f(x+w*.2)+' '+f(t)+
+      ' Q '+f(r)+' '+f(t)+' '+f(r)+' '+f(y+h*.12)+
+      ' Q '+f(r)+' '+f(b)+' '+f(r-w*.17)+' '+f(b)+' Z"/>';
+    case 'banner': return '<path class="mm-shape" d="M '+f(l)+' '+f(t)+' H '+f(r-w*.14)+
+      ' L '+f(r)+' '+f(y)+' L '+f(r-w*.14)+' '+f(b)+' H '+f(l)+' Z"/>';
+    default: return '<rect class="mm-shape" x="'+f(l)+'" y="'+f(t)+'" width="'+f(w)+
+      '" height="'+f(h)+'" rx="'+f(Math.min(12,h/2))+'"/>';
+  }
+}
+
+/* ---------- SVG 组装 ---------- */
+function mmSVG(L){
+  const dark=L.theme==='night';
+  const uid='mmg'+(++mmUid);
+  const rc1=dark?'#a78bfa':'#7c5cff', rc2=dark?'#c084fc':'#a855f7';
+  const fg=dark?'#e8ecf8':'#242a3d';
+  let defs='<defs><linearGradient id="'+uid+'root" x1="0" y1="0" x2="1" y2="1">'+
+    '<stop offset="0" stop-color="'+rc1+'"/><stop offset="1" stop-color="'+rc2+'"/></linearGradient></defs>';
+  let ep='';
+  L.edges.forEach(e=>{
+    const c=mmColor(e.branch,L.theme)[0];
+    ep+='<path class="mm-edge" d="'+e.d+'" stroke="'+c+'" stroke-opacity="'+(dark?'.5':'.42')+
+      '" stroke-width="'+e.w+'"/>';
+  });
+  let np='';
+  L.nodes.forEach(o=>{
+    const isRoot=o.depth===0, col=isRoot?[rc1,rc2]:mmColor(o.branch,L.theme);
+    const fill=isRoot?'url(#'+uid+'root)':mmHexA(col[0],o.depth===1?.19:.10);
+    const stroke=isRoot?'none':col[0];
+    const sw=isRoot?0:(o.depth===1?2:1.4);
+    const m=o.m, lh=m.fs*1.45, y0=o.y-(m.lines.length-1)*lh/2;
+    const tspans=m.lines.map((l,i)=>'<tspan x="'+o.x.toFixed(1)+'" y="'+(y0+i*lh).toFixed(1)+'">'+
+      esc(l)+'</tspan>').join('');
+    const hasKids=o.children.length>0||o.hidden>0;
+    let badge='';
+    if(o.hidden>0){
+      const bx=o.x+m.w/2-3, by=o.y-m.h/2+3;
+      badge='<circle cx="'+bx.toFixed(1)+'" cy="'+by.toFixed(1)+'" r="9" fill="'+col[0]+'" stroke="none"/>'+
+        '<text x="'+bx.toFixed(1)+'" y="'+(by+.5).toFixed(1)+'" fill="#fff" font-size="9" '+
+        'font-weight="800" stroke="none">+'+o.hidden+'</text>';
+    }else if(o.icon){
+      const bx=o.x+m.w/2-2, by=o.y-m.h/2+2;
+      badge='<circle cx="'+bx.toFixed(1)+'" cy="'+by.toFixed(1)+'" r="7" fill="'+col[0]+'" stroke="none"/>'+
+        '<text x="'+bx.toFixed(1)+'" y="'+(by+.5).toFixed(1)+'" fill="#fff" font-size="8" '+
+        'stroke="none">✦</text>';
+    }
+    np+='<g class="mm-node" data-mm-id="'+o.id+'" data-mm-haskids="'+(hasKids?1:0)+
+      '" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'">'+
+      mmShape(o.shape,o.x,o.y,m.w,m.h)+
+      '<text fill="'+(isRoot?'#fff':fg)+'" stroke="none" font-size="'+m.fs+
+      '" font-weight="'+(isRoot?750:(o.depth===1?650:500))+'" text-anchor="middle" '+
+      'dominant-baseline="middle">'+tspans+'</text>'+badge+'</g>';
+  });
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+L.minX.toFixed(1)+' '+L.minY.toFixed(1)+' '+
+    L.W.toFixed(1)+' '+L.H.toFixed(1)+'" width="'+Math.round(L.W)+'" height="'+Math.round(L.H)+
+    '" class="mm-svg" font-family="-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,\'PingFang SC\',\'Microsoft YaHei\',sans-serif">'+
+    defs+'<g>'+ep+'</g><g>'+np+'</g></svg>';
+}
+
+/* ---------- 卡片绘制与交互 ---------- */
+function drawMindmapCard(card){
+  const src=card._mmSrc||'';
+  const parsed=mmParse(src);
+  if(!parsed||!parsed.root) return;
+  const layout=card.dataset.mmLayout||parsed.layout||S.mmLayout||'right';
+  const collapsed=card._mmCollapsed||(card._mmCollapsed=new Set());
+  const vis=mmVisible(parsed.root,collapsed);
+  const theme=(output&&output.dataset.theme)||S.theme||'white';
+  const L=mmCompute(vis,layout,theme);
+  const canvas=card.querySelector('.mm-canvas'); if(!canvas) return;
+  canvas.innerHTML=mmSVG(L);
+  const svg=canvas.querySelector('svg');
+  let sc=Number(card.dataset.mmScale);
+  // 默认适应容器宽度，保证首屏看到完整结构；点「＋」可放大到 1:1 看细节
+  if(!sc || !isFinite(sc)){
+    const avail=(canvas && canvas.clientWidth) || (output && output.clientWidth) || 340;
+    sc=Math.min(1,Math.max(.42,(avail-10)/Math.max(1,L.W)));
+    card.dataset.mmScale=sc.toFixed(3);
+  }
+  if(svg){
+    svg.style.width=Math.round(L.W*sc)+'px';
+    svg.style.height='auto'; svg.removeAttribute('height');
+  }
+  const wrap=card.parentElement||card;
+  const lb=wrap.querySelector('.mm-layout-btn');
+  if(lb) lb.textContent=MM_LAYOUTS.find(x=>x.k===layout).i+' '+mmLayoutName(layout)+' ▾';
+  const menu=card.querySelector('.mm-menu');
+  if(menu) menu.querySelectorAll('[data-mm-layout]').forEach(b=>b.classList.toggle('on',b.dataset.mmLayout===layout));
+  const cap=card.querySelector('.mm-cap');
+  if(cap) cap.innerHTML='<span class="mm-dot"></span>思维导图 · <b>'+mmLayoutName(layout)+
+    '</b> · '+parsed.count+' 个节点<span class="mm-dot"></span>可左右滑动 / 缩放<span class="mm-dot"></span>点击节点折叠';
+  // 记住当前状态，供下一次实时渲染恢复
+  if(src) mmPersist[mmSrcKey(src)]={
+    layout, scale:String(sc), collapsed:Array.from(collapsed)
+  };
+}
+function renderMindmapCard(card,src,parsed){
+  card.classList.add('mm-card');
+  const old=card.querySelector('.mermaid'); if(old) old.remove();
+  const saved=mmPersist[mmSrcKey(src)];
+  card._mmSrc=src;
+  card._mmCollapsed=new Set(saved&&saved.collapsed?saved.collapsed:[]);
+  card.dataset.mmLayout=(saved&&saved.layout)||parsed.layout||S.mmLayout||'right';
+  if(saved&&saved.scale) card.dataset.mmScale=saved.scale;
+  let canvas=card.querySelector('.mm-canvas');
+  if(!canvas){ canvas=document.createElement('div'); canvas.className='mm-canvas'; card.appendChild(canvas); }
+  let cap=card.querySelector('.mm-cap');
+  if(!cap){ cap=document.createElement('div'); cap.className='mm-cap'; card.appendChild(cap); }
+  let menu=card.querySelector('.mm-menu');
+  if(!menu){
+    menu=document.createElement('div'); menu.className='mm-menu';
+    menu.innerHTML=MM_LAYOUTS.map(x=>'<button type="button" data-mm-layout="'+x.k+
+      '"><i>'+x.i+'</i>'+x.n+'</button>').join('');
+    card.appendChild(menu);
+  }
+  drawMindmapCard(card);
+}
+function redrawMindmaps(newLayout){
+  output.querySelectorAll('.mermaid-card.mm-card').forEach(card=>{
+    if(newLayout){ card.dataset.mmLayout=newLayout; delete card.dataset.mmScale; }
+    drawMindmapCard(card);
+  });
+}
+
 /* ---------- Mermaid 按需加载 ---------- */
 function loadMermaid(){
   if(window.mermaid) return Promise.resolve(window.mermaid);
@@ -1664,23 +2363,60 @@ function loadMermaid(){
   });
   return mermaidLoading;
 }
+function mmShowSource(card,src,reason){
+  card.classList.remove('mm-card');
+  card.innerHTML='<pre class="m-err">'+esc(src)+'</pre>'+
+    (reason?'<div class="mm-cap">'+esc(reason)+'</div>':'');
+  const tools=card.parentElement && card.parentElement.querySelector('.mm-tools');
+  if(tools) tools.remove();
+}
 async function enhanceMermaid(root){
-  const nodes = Array.from(root.querySelectorAll('.mermaid'));
-  if(!nodes.length) return;
-  const sources = nodes.map(n=>n.textContent);
+  const cards=Array.from(root.querySelectorAll('.mermaid-card'));
+  if(!cards.length) return;
   if(!S.mermaid){
-    nodes.forEach(n=>{ n.className='m-err'; n.textContent='Mermaid 图表已在设置中关闭\n\n'+n.textContent; });
+    cards.forEach(card=>{
+      const n=card.querySelector('.mermaid'); const src=n?n.textContent:'';
+      mmShowSource(card,src,'图表渲染已在设置中关闭');
+    });
     return;
   }
+  const official=[];
+  cards.forEach(card=>{
+    const node=card.querySelector('.mermaid');
+    if(!node) return;
+    const src=node.textContent;
+    let parsed=null;
+    try{ parsed=mmParse(src); }catch(e){ parsed=null; }
+    if(parsed && parsed.root){
+      try{ renderMindmapCard(card,src,parsed); }
+      catch(e){ mmShowSource(card,src,'思维导图渲染失败：'+e.message); }
+    }else{
+      official.push({card,node,src});
+    }
+  });
+  if(!official.length) return;
   try{
-    const mm = await loadMermaid();
-    mm.initialize({ startOnLoad:false, theme:'base', securityLevel:'loose',
-      themeVariables:{ primaryColor:'#f3f0ff', primaryTextColor:'#2b2f45', primaryBorderColor:'#7c5cff',
-        lineColor:'#8b7bd8', secondaryColor:'#e8f6ff', tertiaryColor:'#ffffff', fontSize:'14px' } });
-    nodes.forEach((n,i)=>{ n.textContent=sources[i]; n.removeAttribute('data-processed'); });
-    await mm.run({ nodes });
+    const mm=await loadMermaid();
+    if(!mmInited){
+      mm.initialize({ startOnLoad:false, theme:'base', securityLevel:'loose',
+        themeVariables:{ primaryColor:'#f3f0ff', primaryTextColor:'#2b2f45', primaryBorderColor:'#7c5cff',
+          lineColor:'#8b7bd8', secondaryColor:'#e8f6ff', tertiaryColor:'#ffffff', fontSize:'14px' } });
+      mmInited=true;
+    }
+    // 逐张渲染：任何一张语法出错都不会拖垮其它图
+    for(const o of official){
+      try{
+        o.node.textContent=o.src;
+        o.node.className='mermaid';
+        o.node.removeAttribute('data-processed');
+        await mm.run({ nodes:[o.node] });
+        if(!o.node.querySelector('svg')) throw new Error('未生成图形');
+      }catch(err){
+        mmShowSource(o.card,o.src,'该图无法解析，已显示源码（其它图不受影响）');
+      }
+    }
   }catch(e){
-    nodes.forEach((n,i)=>{ n.innerHTML='<pre class="m-err">'+esc(sources[i])+'</pre>'; });
+    official.forEach(o=>mmShowSource(o.card,o.src,'图表组件加载失败，已显示源码'));
     toast('图表组件加载失败，已显示源码', true);
   }
 }
@@ -1738,6 +2474,17 @@ function enhanceDOM(root, st){
   root.querySelectorAll('.spoiler').forEach(sp=>{
     sp.addEventListener('click',()=>{ sp.classList.add('revealed'); buzz(); });
   });
+  // 缩写：手机无 hover，点击弹出释义气泡
+  root.querySelectorAll('abbr.pv-abbr').forEach(a=>{
+    const toggle=e=>{
+      e.preventDefault(); e.stopPropagation();
+      const was=a.classList.contains('open');
+      root.querySelectorAll('abbr.pv-abbr.open').forEach(x=>x.classList.remove('open'));
+      if(!was){ a.classList.add('open'); buzz(); }
+    };
+    a.addEventListener('click',toggle);
+    a.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ toggle(e); } });
+  });
   // 标题：自定义 id / 稳定 id + 目录数据
   tocData=[];
   root.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((h,i)=>{
@@ -1782,7 +2529,8 @@ function gotoHeading(id){
 function buildMathNode(m){
   if(m.display){
     const box=document.createElement('div'); box.className='math-block';
-    const lab=document.createElement('span'); lab.className='math-label'; lab.textContent='∑ 公式';
+    const lab=document.createElement('span'); lab.className='math-label';
+    lab.textContent='∑\u00A0公式';   // 不换行空格，导出时也不会被拆成两行
     const src=document.createElement('div'); src.className='math-src'; src.textContent='\\['+m.body+'\\]';
     box.appendChild(lab); box.appendChild(src); return box;
   }
@@ -1816,6 +2564,7 @@ async function render(){
     }
     const st = { code:[], icode:[], math:[], raw:[], abbrs:[], imgSizes:[], tocCount:0 };
     const html = compile(src, st);
+    captureMindmapStates();          // 先记下每张图当前的布局 / 折叠 / 缩放
     output.innerHTML = marked.parse(html);
     lastRenderedSrc = src;
 
@@ -1933,11 +2682,14 @@ const SNIPS = [
   {k:'fold', t:'折叠容器', s:'??? 点击展开\n', e:'\n:::', ph:'这里写内容'},
   {k:'admo2', t:'警告块', s:'!!! warning 注意\n', e:'\n:::', ph:'内容'},
   {k:'task2', t:'进行中', s:'- [?] ', e:'', ph:'任务'},
-  {k:'task3', t:'已取消', s:'- [-] ', e:'', ph:'任务'}
+  {k:'task3', t:'已取消', s:'- [-] ', e:'', ph:'任务'},
+  {k:'mindmap', t:'思维导图', s:'```mermaid\nmindmap\n  root((', e:'))\n    分支一\n      子节点\n    分支二\n      子节点\n```', ph:'中心主题'},
+  {k:'mindmapR', t:'放射导图', s:'```mermaid\nmindmap radial\n  root((', e:'))\n    分支一\n    分支二\n    分支三\n    分支四\n```', ph:'中心主题'},
+  {k:'mindmapS', t:'双侧导图', s:'```mermaid\nmindmap:split\n  root((', e:'))\n    左侧一\n    左侧二\n    右侧一\n    右侧二\n```', ph:'中心主题'}
 ];
 const HOT_SNIPS=['h1','h2','bold','italic','strike','mark','icode','quote','ul','ol',
   'task','task2','link','table','code','filecode','imath','math','admo','fold',
-  'emoji','sup','sub','ins','spoiler','kbd','toc','anchor'];
+  'mindmap','mindmapR','mermaid','emoji','sup','sub','ins','spoiler','kbd','toc','anchor'];
 function insertSnippet(key){
   const d = SNIPS.find(x=>x.k===key); if(!d) return;
   if(document.body.dataset.view==='preview') setView('edit');
@@ -2017,21 +2769,79 @@ $('fileInput').addEventListener('change', e=>{
   rd.readAsText(f,'utf-8'); e.target.value='';
 });
 function exportMd(){ download(new Blob([editor.value],{type:'text/markdown;charset=utf-8'}), docTitle().replace(/[\\/:*?"<>|]/g,'_')+'_'+stamp()+'.md'); toast('Markdown 已导出'); }
+/* 独立 HTML 不含渲染引擎，因此预先把 6 种布局的 SVG 全部内嵌，
+   用一个轻量脚本切换显示，导出后照样能换样式。超大图只保留当前布局。 */
+function buildExportMindmaps(bodyHTML){
+  const tmp=document.createElement('div'); tmp.innerHTML=bodyHTML;
+  const live=Array.from(output.querySelectorAll('.mermaid-card.mm-card'));
+  const cards=Array.from(tmp.querySelectorAll('.mermaid-card.mm-card'));
+  cards.forEach((card,i)=>{
+    const l=live[i]; if(!l || !l._mmSrc) return;
+    let parsed=null; try{ parsed=mmParse(l._mmSrc); }catch(e){}
+    if(!parsed || !parsed.root) return;
+    const cur=l.dataset.mmLayout||parsed.layout||S.mmLayout||'right';
+    // 静态快照里没有节点折叠交互：默认给完整树，除非用户关掉了导图分支开关
+    const collapsed=S.reveal.mindmap ? new Set() : (l._mmCollapsed||new Set());
+    const theme=(output&&output.dataset.theme)||S.theme||'white';
+    const layouts=parsed.count>60 ? [cur] : MM_LAYOUTS.map(x=>x.k);
+    let views='';
+    layouts.forEach(k=>{
+      const vis=mmVisible(parsed.root,collapsed);
+      const L=mmCompute(vis,k,theme);
+      views+='<div class="mm-view" data-l="'+k+'" style="display:'+(k===cur?'block':'none')+'">'+
+        mmSVG(L)+'</div>';
+    });
+    const canvas=card.querySelector('.mm-canvas');
+    if(canvas) canvas.innerHTML=views;
+    const menu=card.querySelector('.mm-menu'); if(menu) menu.remove();
+    if(layouts.length>1){
+      const bar=document.createElement('div'); bar.className='mm-export-bar';
+      bar.innerHTML=MM_LAYOUTS.map(x=>'<button type="button" data-mmswitch="'+x.k+'"'+
+        (x.k===cur?' class="on"':'')+'>'+x.i+' '+x.n+'</button>').join('');
+      if(canvas) card.insertBefore(bar,canvas); else card.appendChild(bar);
+    }
+    const cap=card.querySelector('.mm-cap');
+    if(cap) cap.innerHTML='<span class="mm-dot"></span>思维导图 · <b>'+mmLayoutName(cur)+
+      '</b> · '+parsed.count+' 个节点'+
+      (layouts.length>1?'<span class="mm-dot"></span>点上方按钮切换布局':'');
+  });
+  return tmp;
+}
 function exportHtml(){
   const css = $('previewStyles').textContent;
-  const body = output.innerHTML
-    .replace(/class="code-copy[^"]*"/g,'class="code-copy no-export"');
+  const frag = buildExportMindmaps(output.innerHTML
+    .replace(/class="code-copy[^"]*"/g,'class="code-copy no-export"')
+    .replace(/(\s+open)(?=")/g,''));
+  // 独立 HTML 也按开关预先展开隐藏文本（缩写印出释义），其余仍保留点击交互
+  applyRevealBasics(frag, false);
+  const body = frag.innerHTML;
   const html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">'+
     '<meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(docTitle())+'</title>'+
     '<style>'+css+'\nbody{margin:0;background:var(--pv-bg);padding:0}'+
     '#output.preview-body{max-width:860px;margin:0 auto;padding:36px 24px 70px}'+
-    '.code-copy,.code-expand,.table-hint,.code-fade{display:none!important}'+
+    '.code-copy,.code-expand,.table-hint,.code-fade,.mm-btn,.mm-tools,.mm-menu{display:none!important}'+
+    '.mermaid-card.mm-card,.mm-canvas{overflow:visible!important}'+
+    '.mm-svg{width:100%!important;height:auto!important;max-width:none!important}'+
     '.code-block-wrapper.collapsed pre{max-height:none!important;overflow:visible!important}'+
     '.table-wrap{overflow:visible}'+
     '.inline-toc h1,.inline-toc h2{scroll-margin-top:20px}'+
     '</style></head><body><div id="output" class="preview-body" data-theme="'+S.theme+'" data-font="'+S.font+'">'+body+'</div>'+
     '<script>'+
     'document.querySelectorAll(".spoiler").forEach(function(s){s.addEventListener("click",function(){s.classList.add("revealed")})});'+
+    'document.querySelectorAll("abbr.pv-abbr").forEach(function(a){a.addEventListener("click",function(e){'+
+    'e.stopPropagation();var was=a.classList.contains("open");'+
+    'document.querySelectorAll("abbr.pv-abbr.open").forEach(function(x){x.classList.remove("open")});'+
+    'if(!was)a.classList.add("open")});});'+
+    'document.addEventListener("click",function(e){if(!e.target.closest("abbr.pv-abbr"))'+
+    'document.querySelectorAll("abbr.pv-abbr.open").forEach(function(x){x.classList.remove("open")})});'+
+    'var mmsw=document.querySelectorAll("[data-mmswitch]");'+
+    'for(var mi=0;mi<mmsw.length;mi++){mmsw[mi].addEventListener("click",function(){'+
+    'var k=this.getAttribute("data-mmswitch");var card=this.closest(".mermaid-card.mm-card");if(!card)return;'+
+    'var vs=card.querySelectorAll(".mm-view");for(var vj=0;vj<vs.length;vj++)'+
+    'vs[vj].style.display=(vs[vj].getAttribute("data-l")===k?"block":"none");'+
+    'var bs=card.querySelectorAll("[data-mmswitch]");for(var bj=0;bj<bs.length;bj++)bs[bj].classList.toggle("on",bs[bj]===this);'+
+    'var cap=card.querySelector(".mm-cap b");if(cap)cap.textContent=this.textContent.replace(/^\\S+\\s/,"");'+
+    '});}'+
     'document.querySelectorAll("[data-toc]").forEach(function(b){b.addEventListener("click",function(){'+
     'var el=document.getElementById(b.getAttribute("data-toc"));if(el)el.scrollIntoView({behavior:"smooth",block:"start"})});});'+
     'document.querySelectorAll("a[href^=\'#\']").forEach(function(a){a.addEventListener("click",function(e){'+
@@ -2061,7 +2871,25 @@ async function exportImage(preferShare){
   status('正在生成图片…','#38bdf8');
   let stage=null;
   try{
-    const W = Math.min(1600, Math.max(400, Number(S.exportWidth)||720));
+    const R=S.reveal||DEF_REVEAL;
+    let W = Math.min(1600, Math.max(400, Number(S.exportWidth)||720));
+    // 超宽布局（向下树 / 双侧 / 放射）适度加宽画布，避免 SVG 等比缩小后文字过小
+    let mmMax=0;
+    output.querySelectorAll('.mm-svg').forEach(s=>{
+      const vb=(s.getAttribute('viewBox')||'').split(/\s+/).map(Number);
+      if(vb.length===4 && isFinite(vb[2]) && vb[2]>mmMax) mmMax=vb[2];
+    });
+    // 若导出时展开全部导图层级，按完整树重新估算宽度，避免文字被压小
+    if(R.mindmap){
+      output.querySelectorAll('.mermaid-card.mm-card').forEach(card=>{
+        if(!card._mmSrc) return;
+        let p=null; try{ p=mmParse(card._mmSrc); }catch(e){}
+        if(!p||!p.root) return;
+        const L=mmCompute(mmVisible(p.root,new Set()),card.dataset.mmLayout||p.layout||S.mmLayout||'right','white');
+        if(L.W>mmMax) mmMax=L.W;
+      });
+    }
+    if(mmMax>0) W=Math.min(1600,Math.max(W,Math.round(mmMax+(W>=900?128:80))));
     const FS = Math.min(40, Math.max(9, Number(S.exportSize)||15));
     const want = Math.min(6, Math.max(1, Number(S.exportRatio)||2));
     stage=document.createElement('div');
@@ -2077,9 +2905,36 @@ async function exportImage(preferShare){
     clone.removeAttribute('id');
     clone.setAttribute('data-theme','white');
     clone.style.cssText='padding:0;margin:0;overflow:visible;min-height:0;flex:none;background:transparent;';
-    clone.querySelectorAll('details').forEach(d=>d.setAttribute('open',''));
     clone.querySelectorAll('script').forEach(s=>s.remove());
-    clone.querySelectorAll('.code-block-wrapper.collapsed').forEach(w=>w.classList.remove('collapsed'));
+    // 「∑ 公式」是纯装饰角标，长图里移除，避免不同字号/宽度下折行溢出
+    clone.querySelectorAll('.math-label').forEach(n=>n.remove());
+    clone.querySelectorAll('.mm-btn,.mm-tools,.mm-menu').forEach(n=>n.remove());
+    // 按开关把交互隐藏文本直接印出来：缩写释义 / 剧透 / 折叠区块 / 长代码
+    applyRevealBasics(clone, true);
+    // 思维导图：开启时用完整树重绘，关闭时保留当前折叠状态
+    if(R.mindmap){
+      const live=Array.from(output.querySelectorAll('.mermaid-card.mm-card'));
+      Array.from(clone.querySelectorAll('.mermaid-card.mm-card')).forEach((c,i)=>{
+        const l=live[i]; if(!l||!l._mmSrc) return;
+        let parsed=null; try{ parsed=mmParse(l._mmSrc); }catch(e){}
+        if(!parsed||!parsed.root) return;
+        const layout=l.dataset.mmLayout||parsed.layout||S.mmLayout||'right';
+        const L=mmCompute(mmVisible(parsed.root,new Set()),layout,'white');
+        const canvas=c.querySelector('.mm-canvas');
+        if(canvas) canvas.innerHTML=mmSVG(L);
+      });
+    }
+    // 静态图片里没有交互，说明文字同步改为静态描述
+    clone.querySelectorAll('.mermaid-card.mm-card').forEach((c,i)=>{
+      const live=output.querySelectorAll('.mermaid-card.mm-card')[i];
+      const cap=c.querySelector('.mm-cap'); if(!cap||!live) return;
+      const name=mmLayoutName(live.dataset.mmLayout||'right');
+      const n=c.querySelectorAll('.mm-node').length;
+      cap.innerHTML='<span class="mm-dot"></span>思维导图 · <b>'+name+'</b> · '+n+' 个节点'+
+        (R.mindmap?'':'<span class="mm-dot"></span>含折叠分支');
+    });
+    // 手机端为适配视口缩放过，导出时按容器宽度铺满（SVG 有 viewBox，等比缩放）
+    clone.querySelectorAll('.mm-svg').forEach(s=>{ s.style.width='100%'; s.style.height='auto'; });
     clone.querySelectorAll('.code-expand,.code-copy,.code-fade,.table-hint,.empty').forEach(n=>n.remove());
     // 外链图片转 dataURL
     for(const img of Array.from(clone.querySelectorAll('img'))){
@@ -2101,7 +2956,8 @@ async function exportImage(preferShare){
     await new Promise(r=>setTimeout(r,180));
     const w=cap.offsetWidth, h=cap.offsetHeight;
     let ratio=want;
-    const capMax=Math.min(30000/Math.max(w,h,1), Math.sqrt(120000000/Math.max(w*h,1)));
+    // 浏览器 canvas 单边上限约 16384，显式降倍率，保证长图完整且提示的尺寸准确
+    const capMax=Math.min(16300/Math.max(w,h,1), Math.sqrt(120000000/Math.max(w*h,1)));
     if(ratio>capMax){
       ratio=Math.floor(capMax*10)/10;
       if(ratio<0.5) throw new Error('内容过长，请降低清晰度或缩小导出字号');
@@ -2109,7 +2965,9 @@ async function exportImage(preferShare){
     }
     const canvas=await htmlToImage.toCanvas(cap,{
       pixelRatio:ratio, backgroundColor:'#ffffff', skipFonts:true,
-      filter:n=>!(n.classList && (n.classList.contains('code-copy')||n.classList.contains('code-expand')||n.classList.contains('table-hint')))
+      filter:n=>!(n.classList && (n.classList.contains('code-copy')||n.classList.contains('code-expand')||
+        n.classList.contains('table-hint')||n.classList.contains('mm-btn')||
+        n.classList.contains('mm-tools')||n.classList.contains('mm-menu')))
     });
     const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('PNG 编码失败，请降低清晰度')),'image/png'));
     const name='墨笺_'+stamp()+'.png';
@@ -2139,6 +2997,93 @@ function swRow(key, icon, title, sub){
     '<span class="rt"><b>'+title+'</b><small>'+sub+'</small></span>'+
     '<span class="sw'+(S[key]?' on':'')+'"></span></div>';
 }
+
+/* =========================================================
+   隐藏文本识别与导出开关
+   扫描预览 DOM（必要时回退到源码），统计每类"需交互才可见"的内容，
+   让用户决定导出长图时哪些类别直接把隐藏文本印出来。
+   ========================================================= */
+function detectReveal(){
+  const src=editor.value||'';
+  const q=s=>output.querySelectorAll(s).length;
+  const counts={
+    abbr:q('abbr.pv-abbr') || (/^[ \t]*\*\[[^\]]+\]:[ \t]*\S+/m.test(src)?1:0),
+    spoiler:q('.spoiler') || (/\|\|[^|\n]+\|\|/.test(src)?1:0),
+    details:q('details') || (/<details\b/i.test(src)||/^[ \t]*(?:>[ \t]*)*(?:\?\?\?|>>>|:::details)/im.test(src)?1:0),
+    code:(()=>{
+      let n=0;
+      output.querySelectorAll('.code-block-wrapper').forEach(w=>{
+        if(w.classList.contains('can-collapse') || w.querySelectorAll('.code-line').length>16) n++;
+      });
+      if(!n && /(?:^|\n)[ \t]*(?:`{3,}|~{3,})[^\n]*\n(?:[^\n]*\n){16,}/.test(src)) n=1;
+      return n;
+    })(),
+    mindmap:q('.mermaid-card.mm-card') || (/^[ \t]*mindmap\b/im.test(src)?1:0)
+  };
+  return REVEAL_KINDS.map(k=>({k:k.k,n:k.n,i:k.i,d:k.d,count:counts[k.k]||0}));
+}
+function revealRow(k){
+  const on=!!S.reveal[k.k], unused=!k.count;
+  return '<div class="row rv-row'+(unused?' unused':'')+'" data-reveal="'+k.k+'">'+
+    '<span class="ri">'+k.i+'</span>'+
+    '<span class="rt"><b>'+k.n+'<em class="rv-count">'+(k.count?k.count+' 处':'未使用')+'</em></b>'+
+    '<small>'+k.d+'</small></span>'+
+    '<span class="sw'+(on?' on':'')+'"></span></div>';
+}
+function revealPanelHTML(compact){
+  const found=detectReveal();
+  const rows=compact ? found.filter(x=>x.count>0) : found;
+  let h='';
+  if(!rows.length){
+    h='<div class="empty-note">当前文档没有检测到交互隐藏文本<br>试试 <b>||剧透||</b>、<b>*[API]: 全称</b> 或 <b>&lt;details&gt;</b></div>';
+  }else{
+    h='<div class="card">'+rows.map(revealRow).join('')+'</div>';
+    if(!compact){
+      h+='<div class="btn-grid" style="margin-top:10px">'+
+        '<button class="btn" data-reveal-all="1">全部显示</button>'+
+        '<button class="btn ghost" data-reveal-all="0">全部隐藏</button></div>';
+    }
+  }
+  h+='<p style="font-size:11px;color:var(--a-faint);line-height:1.75;margin:10px 3px 0">'+
+    '开启：导出长图时把这类隐藏内容直接印在图上（缩写会以「释：全称」小标签紧跟词后）。'+
+    '关闭：图片里保持隐藏 / 折叠状态。独立 HTML 仍可点击交互。'+
+    (compact?' <b data-act="reveal" style="color:var(--a-accent,#a78bfa);cursor:pointer">更多设置 →</b>':'')+
+    '</p>';
+  return h;
+}
+function applyRevealBasics(root, forImage){
+  const R=S.reveal||DEF_REVEAL;
+  // 缩写：把释义变成真实 DOM 文本，不依赖伪元素气泡（图片导出更可靠）
+  if(R.abbr){
+    root.querySelectorAll('abbr.pv-abbr').forEach(a=>{
+      const def=String(a.getAttribute('data-def')||a.getAttribute('title')||'').trim();
+      const word=a.textContent.trim();
+      if(!def) return;
+      const sp=document.createElement('span');
+      sp.className='rv-abbr';
+      sp.innerHTML='<b>'+esc(word)+'</b><span class="rv-def">释：'+esc(def)+'</span>';
+      a.replaceWith(sp);
+    });
+  }else if(forImage){
+    root.querySelectorAll('abbr.pv-abbr.open').forEach(a=>a.classList.remove('open'));
+  }
+  // 剧透
+  root.querySelectorAll('.spoiler').forEach(sp=>sp.classList.toggle('revealed',!!R.spoiler));
+  // 折叠区块
+  root.querySelectorAll('details').forEach(d=>{
+    if(R.details) d.setAttribute('open','');
+    else if(forImage) d.removeAttribute('open');
+  });
+  // 长代码折叠
+  root.querySelectorAll('.code-block-wrapper.collapsed').forEach(w=>{
+    if(R.code) w.classList.remove('collapsed');
+    else if(forImage && !w.querySelector('.rv-fold-note')){
+      const note=document.createElement('div'); note.className='rv-fold-note';
+      note.textContent='… 已折叠（导出时未展开长代码）';
+      w.appendChild(note);
+    }
+  });
+}
 function segRow(label, key, opts){
   return '<div class="sec-t" style="margin-top:12px">'+label+'</div><div class="seg" data-seg="'+key+'">'+
     opts.map(([v,t])=>'<button data-val="'+v+'" class="'+(S[key]===v||S[key]===Number(v)?'on':'')+'">'+t+'</button>').join('')+'</div>';
@@ -2160,16 +3105,23 @@ function renderSheet(){
     html += sec('渲染选项', '<div class="card">'+
       swRow('live','⚡','实时渲染','停止输入 0.45 秒后自动刷新')+
       swRow('math','∑','公式渲染','MathJax 矢量 SVG 输出')+
-      swRow('mermaid','◇','Mermaid 图表','按需加载流程图组件')+
+      swRow('mermaid','◇','Mermaid 图表','流程图 + 六种思维导图布局')+
       swRow('lineno','#','代码行号','代码块左侧显示行号')+
       swRow('collapse','↕','长代码折叠','超过 16 行自动收起')+
       swRow('autosave','☁','自动保存','内容保存在本机浏览器')+
       swRow('haptic','◉','轻触反馈','支持的设备提供轻微震动')+'</div>');
+    html += sec('思维导图布局', '<div class="btn-grid mm-layout-grid">'+
+      MM_LAYOUTS.map(x=>'<button class="btn'+(S.mmLayout===x.k?' pri':'')+'" data-mmlayout="'+x.k+'">'+
+        x.i+' '+x.n+'</button>').join('')+'</div>'+
+      '<p style="font-size:11px;color:var(--a-faint);line-height:1.7;margin-top:10px">'+
+      '每张图右上角的「布局」按钮可单独切换；源码首行写 <b>mindmap radial</b>，'+
+      '或用 <b>%%{init:{"mindmap":{"layout":"split"}}}%%</b> 指定。支持中文、任意形状、图标与不缩进写法。</p>');
     html += sec('导出图片', '<div class="card">'+
       rangeRow('图片宽度','exportWidth',500,1200,20,'px',v=>v+' px')+
       rangeRow('导出字号','exportSize',10,26,1,'px',v=>v+' px')+'</div>'+
       segRow('像素倍率','exportRatio',[['1','1x 轻巧'],['2','2x 高清'],['3','3x 极清'],['4','4x 超清']])+
       '<div style="margin-top:12px"><div class="sec-t">图片角标文字</div><input class="inp" id="wmInput" value="'+esc(S.watermark)+'" placeholder="留空则不显示"></div>');
+    html += sec('导出图片时显示隐藏文本', revealPanelHTML(false));
     html += '<button class="btn full ghost" data-act="reset">恢复默认设置</button>';
   }
   else if(sheetPage==='tools'){
@@ -2189,6 +3141,7 @@ function renderSheet(){
       row('✦','载入示例文档','覆盖当前内容','sample')+
       row('◌','新建空白文档','清空并保存快照','newdoc')+
       row('▤','保存历史快照','最多保留 10 份','snapshot')+
+      row('◉','隐藏文本与导出','识别并控制长图导出时显示哪些隐藏内容','reveal')+
       row('◎','专注模式','隐藏全部界面专心写作','focus')+
       row('⛶','全屏预览','沉浸式查看排版','fullscreen')+'</div>');
     html += sec('快捷键', '<div class="card" style="padding:12px 14px;font-size:11.5px;line-height:2;color:var(--a-dim)">'+
@@ -2211,7 +3164,26 @@ function renderSheet(){
       rangeRow('图片宽度','exportWidth',500,1200,20,'px',v=>v+' px')+
       rangeRow('导出字号','exportSize',10,26,1,'px',v=>v+' px')+'</div>'+
       segRow('像素倍率','exportRatio',[['1','1x 轻巧'],['2','2x 高清'],['3','3x 极清'],['4','4x 超清']])+
-      '<p style="font-size:11px;color:var(--a-faint);line-height:1.7;margin:12px 3px 0">长图会自动展开折叠内容、移除操作按钮，并把公式与图表以内联 SVG 保留；超长内容会自动降低倍率以适配浏览器画布上限。</p>');
+      '<p style="font-size:11px;color:var(--a-faint);line-height:1.7;margin:12px 3px 0">长图会移除操作按钮，公式与图表以内联 SVG 保留；超长内容会自动降低倍率以适配浏览器画布上限。</p>');
+    html += sec('隐藏文本 · 导出时显示', revealPanelHTML(true));
+  }
+  else if(sheetPage==='reveal'){
+    T.textContent='隐藏文本与导出';
+    const found=detectReveal().filter(x=>x.count>0);
+    const total=found.reduce((a,x)=>a+x.count,0);
+    html += '<div class="card" style="padding:14px;font-size:12px;line-height:1.9;color:var(--a-dim)">'+
+      '已识别 <b style="color:#cdbcff">'+found.length+'</b> 类可交互隐藏文本、共 <b style="color:#cdbcff">'+total+'</b> 处。'+
+      '<br>下面的开关只影响<b>导出长图</b>：开启的类别会把隐藏内容直接印在图上，关闭则保持隐藏 / 折叠。'+
+      '独立 HTML 仍保留点击交互。</div>';
+    html += sec('识别结果与开关', revealPanelHTML(false));
+    html += sec('语法对照', '<div class="card" style="padding:12px 14px;font-size:11.5px;line-height:2.05;color:var(--a-dim)">'+
+      '<b style="color:#cdbcff">缩写释义</b>　<code>*[API]: Application Programming Interface</code><br>'+
+      '　→ 图片里显示「<b>API</b> 释：Application Programming Interface」<br>'+
+      '<b style="color:#cdbcff">剧透</b>　<code>||悄悄话||</code> → 图片里直接露出文字<br>'+
+      '<b style="color:#cdbcff">折叠区块</b>　<code>&lt;details&gt;</code> / <code>??? 标题</code> → 图片里全部展开<br>'+
+      '<b style="color:#cdbcff">长代码</b>　超过 16 行自动收起 → 图片里显示完整代码<br>'+
+      '<b style="color:#cdbcff">导图分支</b>　点击节点折叠 → 图片里恢复全部节点</div>');
+    html += '<button class="btn pri full" data-act="exppng">▣ 按当前设置导出长图</button>';
   }
   else if(sheetPage==='toc'){
     T.textContent='文档目录';
@@ -2256,13 +3228,19 @@ function renderSheet(){
     html += '<div class="card" style="padding:12px 14px;margin-top:14px;font-size:11px;line-height:1.95;color:var(--a-dim)">'+
       '<b style="color:#cdbcff">扩展语法速查</b><br>'+
       '<code>==高亮==</code> · <code>++插入++</code> · <code>||剧透||</code> · <code>^上标^</code> · <code>~下标~</code><br>'+
-      '<code>:rocket:</code> Emoji · <code>[[Ctrl]]</code> 按键 · <code>*[HTML]: 全称</code> 缩写<br>'+
+      '<code>:rocket:</code> Emoji · <code>[[Ctrl]]</code> 按键 · <code>*[HTML]: 全称</code> 缩写（点击看释义）<br>'+
       '<code>[TOC]</code> 文内目录 · <code># 标题 {#id}</code> 自定义锚点<br>'+
       '<code>术语</code> + <code>: 解释</code> 定义列表 · <code>Table: 标题</code> 表标题<br>'+
       '<code>![图](url =200x80)</code> 图片尺寸 · <code>```js:app.js</code> 带名代码<br>'+
       '<code>:::tip 标题</code> / <code>!!! note</code> 提示块（可任意层嵌套）<br>'+
       '<code>??? 标题</code> 折叠容器 · <code>- [?]</code> 进行中 · <code>- [-]</code> 已取消<br>'+
-      '整行 <code>$$</code> / <code>\\[ \\]</code> 块公式，<code>~~~</code> 也可作围栏。'+
+      '整行 <code>$$</code> / <code>\\[ \\]</code> 块公式，<code>~~~</code> 也可作围栏。<br>'+
+      '<b style="color:#cdbcff">思维导图（6 种布局）</b><br>'+
+      '首行 <code>mindmap</code> + 缩进树；形状随意：<code>((圆))</code> <code>(圆角)</code> <code>[方]</code> '+
+      '<code>{{六边形}}</code> <code>))爆炸((</code> <code>)云(</code> <code>{菱形}</code> <code>&gt;旗帜]</code>，'+
+      '也支持纯中文裸文本、<code>::icon()</code>、<code>:::类</code>、<code>%%</code> 注释与不缩进写法。<br>'+
+      '布局：<code>mindmap right / left / down / up / split / radial</code>（也认中文「放射」「双侧」），'+
+      '或 <code>%%{init:{"mindmap":{"layout":"radial"}}}%%</code>；图右上角按钮可随时切换、缩放、折叠。'+
       '</div>'+
       '<p style="font-size:11px;color:var(--a-faint);line-height:1.7;margin-top:12px">点击即插入到光标位置；若已选中文字，会自动包裹所选内容。点击目录或脚注可精准跳转到对应位置。</p>';
   }
@@ -2281,6 +3259,28 @@ $('sheetBody').addEventListener('click', e=>{
     S[k]=v; applySettings();
     box.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===sg));
     return;
+  }
+  const ml=e.target.closest('[data-mmlayout]');
+  if(ml){
+    S.mmLayout=ml.dataset.mmlayout; saveSettings(); redrawMindmaps(S.mmLayout);
+    renderSheet(); toast('默认布局：'+mmLayoutName(S.mmLayout)); buzz(); return;
+  }
+  // 隐藏文本导出开关：直接更新同一面板里的开关，不重建 DOM（避免跳回顶部）
+  const rv=e.target.closest('[data-reveal]');
+  if(rv){
+    const k=rv.dataset.reveal; S.reveal[k]=!S.reveal[k]; saveSettings();
+    document.querySelectorAll('[data-reveal="'+k+'"] .sw').forEach(x=>x.classList.toggle('on',S.reveal[k]));
+    buzz(); return;
+  }
+  const rva=e.target.closest('[data-reveal-all]');
+  if(rva){
+    const v=rva.dataset.revealAll==='1';
+    REVEAL_KINDS.forEach(k=>{ S.reveal[k.k]=v; });
+    saveSettings();
+    document.querySelectorAll('[data-reveal]').forEach(row=>{
+      row.querySelector('.sw').classList.toggle('on',!!S.reveal[row.dataset.reveal]);
+    });
+    toast(v?'已设为全部显示':'已设为全部隐藏'); buzz(); return;
   }
   const tc=e.target.closest('[data-toc]');
   if(tc){ gotoHeading(tc.dataset.toc); closeSheet(); return; }
@@ -2304,9 +3304,10 @@ $('sheetBody').addEventListener('click', e=>{
     sample:()=>{ editor.value=SAMPLE; isSample=true; pushHistory(); saveDoc(); setView('edit'); render(); closeSheet(); toast('已载入示例'); },
     newdoc:()=>{ if(editor.value.trim()) saveSnap(); editor.value=''; isSample=false; pushHistory(); saveDoc(); setView('edit'); render(); closeSheet(); toast('已新建空白文档'); },
     snapshot:saveSnap,
+    reveal:()=>openSheet('reveal'),
     focus:()=>{ document.body.classList.add('focus'); setView('edit',true); closeSheet(); },
     fullscreen:()=>{ setView('preview'); closeSheet(); const p=document.querySelector('.preview-pane'); (p.requestFullscreen||p.webkitRequestFullscreen||function(){}).call(p); },
-    reset:()=>{ S=Object.assign({},DEF); applySettings(); renderSheet(); render(); toast('已恢复默认'); },
+    reset:()=>{ S=Object.assign({},DEF,{reveal:Object.assign({},DEF_REVEAL)}); applySettings(); renderSheet(); render(); toast('已恢复默认'); },
     findprev:()=>doFind(-1), findnext:()=>doFind(1), replace:()=>doReplace(false), replaceall:()=>doReplace(true),
     copytoc:()=>{ const t=tocData.map(d=>'  '.repeat(d.lv-1)+'- '+d.text).join('\n'); copyText(t).then(()=>toast('目录已复制')); }
   };
@@ -2323,6 +3324,72 @@ $('sheetBody').addEventListener('change', e=>{ if(e.target.id==='wmInput'){ S.wa
 
 /* 文档内 [TOC] / 脚注锚点：统一走精准跳转 */
 document.addEventListener('click', e=>{
+  if(!e.target.closest('abbr.pv-abbr')){
+    output.querySelectorAll('abbr.pv-abbr.open').forEach(x=>x.classList.remove('open'));
+  }
+  /* 思维导图：布局 / 缩放 / 折叠 / 高亮 */
+  const mmWrap=e.target.closest('.code-block-wrapper');
+  const mmCard=mmWrap?mmWrap.querySelector('.mermaid-card.mm-card'):null;
+  if(mmCard){
+    const lb=e.target.closest('.mm-layout-btn');
+    if(lb){
+      e.preventDefault();
+      const menu=mmCard.querySelector('.mm-menu');
+      document.querySelectorAll('.mm-menu.show').forEach(x=>{ if(x!==menu) x.classList.remove('show'); });
+      if(menu) menu.classList.toggle('show');
+      buzz(); return;
+    }
+    const mi=e.target.closest('.mm-menu [data-mm-layout]');
+    if(mi){
+      e.preventDefault();
+      mmCard.dataset.mmLayout=mi.dataset.mmLayout;
+      delete mmCard.dataset.mmScale;
+      drawMindmapCard(mmCard);
+      const menu=mmCard.querySelector('.mm-menu'); if(menu) menu.classList.remove('show');
+      toast('已切换为「'+mmLayoutName(mi.dataset.mmLayout)+'」'); buzz(); return;
+    }
+    const fitb=e.target.closest('.mm-fitb');
+    if(fitb){
+      e.preventDefault();
+      const canvas=mmCard.querySelector('.mm-canvas'), svg=canvas&&canvas.querySelector('svg');
+      if(svg){
+        const vb=(svg.getAttribute('viewBox')||'').split(/\s+/).map(Number);
+        const target=Math.min(1,Math.max(.3,(canvas.clientWidth-10)/(vb[2]||1)));
+        mmCard.dataset.mmScale=target.toFixed(3);
+        drawMindmapCard(mmCard); toast('已适应视口宽度');
+      }
+      buzz(); return;
+    }
+    const zi=e.target.closest('.mm-zoomin'), zo=e.target.closest('.mm-zoomout'), rs=e.target.closest('.mm-resetb');
+    if(zi||zo||rs){
+      e.preventDefault();
+      if(rs){
+        delete mmCard.dataset.mmScale;
+        mmCard.dataset.mmLayout=S.mmLayout||'right';
+        mmCard._mmCollapsed=new Set();
+      }else{
+        const cur=Number(mmCard.dataset.mmScale)||1;
+        mmCard.dataset.mmScale=(zi?Math.min(2.5,cur*1.25):Math.max(.3,cur/1.25)).toFixed(3);
+      }
+      drawMindmapCard(mmCard); buzz(); return;
+    }
+    const nd=e.target.closest('.mm-node');
+    if(nd){
+      const set=mmCard._mmCollapsed||(mmCard._mmCollapsed=new Set());
+      const id=nd.getAttribute('data-mm-id');
+      if(nd.getAttribute('data-mm-haskids')==='1'){
+        set.has(id)?set.delete(id):set.add(id);
+        drawMindmapCard(mmCard); buzz();
+      }else{
+        mmCard.querySelectorAll('.mm-node.on').forEach(x=>x.classList.remove('on'));
+        nd.classList.add('on');
+      }
+      return;
+    }
+  }
+  if(!e.target.closest('.mm-layout-btn') && !e.target.closest('.mm-menu')){
+    document.querySelectorAll('.mm-menu.show').forEach(m=>m.classList.remove('show'));
+  }
   const t=e.target.closest('[data-toc]');
   if(t && !t.closest('#sheetBody')){ e.preventDefault(); gotoHeading(t.dataset.toc); return; }
   const a=e.target.closest('a[href^="#"]');
@@ -2390,7 +3457,11 @@ document.addEventListener('keydown', e=>{
   if(m && ['b','i','k'].includes(k) && document.activeElement===editor){
     e.preventDefault(); insertSnippet(k==='b'?'bold':k==='i'?'italic':'link'); return;
   }
-  if(e.key==='Escape'){ closeSheet(); $('lightbox').classList.remove('show'); document.body.classList.remove('focus'); }
+  if(e.key==='Escape'){
+    closeSheet(); $('lightbox').classList.remove('show'); document.body.classList.remove('focus');
+    output.querySelectorAll('abbr.pv-abbr.open').forEach(x=>x.classList.remove('open'));
+    if(document.activeElement && document.activeElement.classList.contains('pv-abbr')) document.activeElement.blur();
+  }
 });
 
 /* 目录滚动高亮 */
