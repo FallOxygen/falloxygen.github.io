@@ -37,6 +37,8 @@
     --input-bg: rgba(255, 255, 255, .035);
     --hover-bg: rgba(255, 255, 255, .055);
     --tag-bg: rgba(255, 171, 74, .12);
+    --glow-1: rgba(255, 171, 74, .10);
+    --glow-2: rgba(79, 214, 192, .07);
     --shadow: 0 18px 50px rgba(0, 0, 0, .42);
     --shadow-sm: 0 6px 20px rgba(0, 0, 0, .22);
     --radius: 20px;
@@ -62,11 +64,12 @@
     --input-bg: rgba(18, 30, 45, .035);
     --hover-bg: rgba(18, 30, 45, .055);
     --tag-bg: rgba(198, 90, 18, .08);
+    --glow-1: rgba(198, 90, 18, .08);
+    --glow-2: rgba(14, 143, 128, .06);
     --shadow: 0 16px 40px rgba(24, 40, 66, .10);
     --shadow-sm: 0 4px 14px rgba(24, 40, 66, .07);
 }
 
-:root.day-mode .bg-pattern { opacity: .35; }
 :root.day-mode .bg-glow {
     background:
         radial-gradient(ellipse 62% 48% at 14% -6%, rgba(198, 90, 18, .11) 0%, transparent 62%),
@@ -82,46 +85,52 @@
 
 /* ---------- 2. 基础与背景 ---------- */
 * { font-family: var(--font-ui); box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
+    margin: 0;
     background: var(--bg);
     color: var(--fg);
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     transition: background .35s ease, color .35s ease;
     line-height: 1.6;
 }
 .mono { font-family: var(--font-mono); }
 .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+/* 不用 mask-image：部分 WebView 首帧会把遮罩层错误合成到内容之上，
+   必须滚动一次才重绘。改为纯透明度，视觉接近但零合成风险。 */
 .bg-pattern {
     background-image:
         linear-gradient(var(--accent-dim) 1px, transparent 1px),
         linear-gradient(90deg, var(--accent-dim) 1px, transparent 1px);
     background-size: 44px 44px;
-    opacity: .42;
-    mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+    opacity: .28;
 }
 .bg-glow {
     background:
         radial-gradient(ellipse 62% 48% at 14% -6%, rgba(255, 171, 74, .13) 0%, transparent 62%),
         radial-gradient(ellipse 52% 42% at 92% 104%, rgba(79, 214, 192, .09) 0%, transparent 58%);
 }
-.app-shell { position: static; }
+:root.day-mode .bg-pattern { opacity: .22; }
+.app-shell { position: relative; z-index: 1; }
+/* 首帧重绘兜底：少数预览类 WebView 首次合成会漏绘内容层，
+   双帧后由 JS 加上 .ui-ready，用一次几乎不可见的透明度变化强制重绘。 */
+html:not(.ui-ready) .app-shell { opacity: .999; }
 
-/* ---------- 3. 页面容器与通用排版 ---------- */
+/* ---------- 3. 页面容器与通用排版 ----------
+   采用文档流滚动：移动端浏览器地址栏伸缩时内容不会被底部工具栏吞掉。
+   顶/底内边距叠加安全区，兼容刘海屏与 Home Indicator。
+   不用 animation-fill-mode：它会在首帧把页面锁在 opacity:0。 */
 .page {
-    position: absolute;
-    inset: 0;
-    padding: 22px 18px 64px;
-    padding-top: 76px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    transition: opacity .32s ease, transform .32s ease;
+    position: relative;
+    width: 100%;
+    padding: 22px 18px calc(64px + env(safe-area-inset-bottom));
+    padding-top: calc(76px + env(safe-area-inset-top));
 }
-.page.hidden { opacity: 0; pointer-events: none; transform: translateY(14px); visibility: hidden; }
-.page.active { opacity: 1; pointer-events: auto; transform: translateY(0); visibility: visible; }
+.page.hidden { display: none; }
+.page.active { display: block; opacity: 1; visibility: visible; }
 .content { width: 100%; max-width: 760px; margin: 0 auto; }
 @media(min-width: 900px) { .content { max-width: 860px; } }
 .stack > * + * { margin-top: 18px; }
@@ -303,10 +312,15 @@ input[type="file"]::file-selector-button {
 .top-bar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 16px; gap: 8px;
-    background: var(--topbar-bg); backdrop-filter: blur(18px) saturate(1.4);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    padding: calc(9px + env(safe-area-inset-top)) 16px 9px; gap: 8px;
+    background: var(--topbar-bg);
     border-bottom: 1px solid var(--border);
+}
+/* 毛玻璃只给「宽屏 + 精确指针」的桌面浏览器：移动端 / 预览 WebView
+   首帧常把 backdrop-filter 层错误合成到内容之上，必须滚动一次才恢复。 */
+@media (min-width: 681px) and (hover: hover) and (pointer: fine) {
+    .top-bar { backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .modal-overlay { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 }
 .top-bar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .top-bar-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
@@ -347,7 +361,7 @@ input[type="file"]::file-selector-button {
 
 /* ---------- 9. 提示 / 弹窗 / 折叠 ---------- */
 .toast {
-    position: fixed; bottom: 30px; left: 50%;
+    position: fixed; bottom: calc(30px + env(safe-area-inset-bottom)); left: 50%;
     transform: translateX(-50%) translateY(130px);
     background: var(--card); border: 1px solid var(--border);
     padding: 13px 24px; border-radius: 14px; font-size: 13.5px; font-weight: 600;
@@ -359,15 +373,15 @@ input[type="file"]::file-selector-button {
 .toast.error { border-color: var(--danger); color: var(--danger); }
 .toast.info { border-color: var(--info); color: var(--info); }
 .modal-overlay {
-    position: fixed; inset: 0; background: rgba(4, 8, 13, .72);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    position: fixed; inset: 0; background: rgba(4, 8, 13, .82);
     z-index: 2000; display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity .28s; padding: 16px;
+    opacity: 0; pointer-events: none; transition: opacity .28s;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
 }
 .modal-overlay.show { opacity: 1; pointer-events: auto; }
 .modal-content {
     background: var(--card); border: 1px solid var(--border); border-radius: 22px;
-    padding: 26px; max-width: 440px; width: 100%; max-height: 88vh;
+    padding: 26px; max-width: 440px; width: 100%; max-height: 88vh; max-height: 88dvh;
     display: flex; flex-direction: column; transform: scale(.94) translateY(10px);
     transition: transform .3s cubic-bezier(.2, .9, .3, 1.1); overflow-y: auto;
     box-shadow: var(--shadow);
@@ -571,24 +585,227 @@ input[type="file"]::file-selector-button {
     .page { transition: opacity .2s; }
     .page.hidden { transform: none; }
 }
+/* ================================================================
+   16a. 合成层稳定性 · 修复「首屏发暗/空白，滑动一下才恢复」
+   预览类 App 的 WebView 首次合成时，position:fixed 背景层、
+   backdrop-filter 毛玻璃、mask 遮罩与入场 transform 会漏绘或
+   盖住内容层；滚动会强制重绘，所以看起来「滑一下就好了」。
+   判定用「窄屏 或 触摸设备」而非只看宽度：部分预览器把 CSS 视口
+   设得偏宽，只看宽度会绕过修复。触摸设备一律改用普通绘制：
+   背景画在 body 上、顶栏不透明、无毛玻璃、无入场变换。
+   ================================================================ */
+@media (max-width: 680px), (hover: none), (pointer: coarse) {
+    .bg-layer { display: none; }
+    body {
+        background-color: var(--bg);
+        background-image:
+            radial-gradient(ellipse 80% 36% at 12% 0%, var(--glow-1) 0%, transparent 72%),
+            radial-gradient(ellipse 70% 32% at 92% 100%, var(--glow-2) 0%, transparent 70%);
+        background-repeat: no-repeat;
+        background-size: 100% 560px, 100% 560px;
+        background-position: top left, bottom right;
+    }
+    .top-bar {
+        background: var(--card);
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    }
+    .modal-overlay {
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    }
+    .modal-content { transform: none !important; }
+}
+
+/* ================================================================
+   16b. 移动端：紧凑排版 + 防裁切
+   ① 文档流滚动 + 安全区：底部/顶部不再被浏览器工具栏、刘海吞掉
+   ② 表单控件统一 16px：避免 iOS 聚焦时自动放大页面造成内容被裁
+   ③ 间距、字号、卡片、弹窗整体收紧；允许换行、禁止溢出被卡片裁掉
+   ================================================================ */
 @media(max-width: 680px) {
-    .page { padding: 16px 13px 56px; padding-top: 68px; }
-    .card { padding: 17px; border-radius: 17px; }
-    .hero-title { font-size: 25px; }
-    .mode-grid { grid-template-columns: 1fr; gap: 12px; }
-    .mode-card { padding: 20px; }
-    .timer-display { font-size: 31px; padding: 13px; letter-spacing: 2px; }
-    .stat-value { font-size: 20px; }
-    .stat-label { font-size: 10.5px; }
-    .stat-card { padding: 12px 5px; }
-    .btn { padding: 10px 14px; font-size: 12.5px; }
-    .btn-lg { padding: 14px 18px; font-size: 14px; }
-    .filter-grid { grid-template-columns: 1fr; }
-    .modal-content { padding: 20px; border-radius: 18px; }
-    .wl-hint { padding-left: 0; }
-    .brand-name { max-width: 108px; }
+    :root { --radius: 14px; --radius-sm: 10px; }
+
+    /* 页面骨架 */
+    .page { padding: 12px 10px calc(28px + env(safe-area-inset-bottom)); padding-top: calc(56px + env(safe-area-inset-top)); }
+    .content { min-width: 0; }
+    .stack > * + * { margin-top: 11px; }
+    .row, .row-wrap, .row-between { gap: 7px; min-width: 0; }
+    .row { flex-wrap: wrap; }
+    .card-head .row { flex-wrap: wrap; }
+    .grid-2 { gap: 8px; }
     .grid-3 { gap: 6px; }
-    .result-display { font-size: 13px; }
+    .grid-2 > *, .grid-3 > *, .filter-grid > * { min-width: 0; }
+    .divider { margin: 11px 0; }
+    .safe-bottom { height: 12px; }
+
+    /* 顶部栏 */
+    .top-bar { padding: calc(6px + env(safe-area-inset-top)) 10px 6px; gap: 5px; }
+    .top-bar-left { gap: 6px; }
+    .top-bar-right { gap: 2px; }
+    .brand { gap: 6px; }
+    .brand-mark { width: 26px; height: 26px; border-radius: 8px; font-size: 13px; }
+    .brand-name { font-size: 12px; max-width: 92px; }
+    .settings-btn { width: 30px; height: 30px; border-radius: 8px; }
+    .mode-badge { padding: 3px 8px; font-size: 10px; gap: 4px; }
+    .mode-badge::before { width: 5px; height: 5px; }
+
+    /* 标题、卡片、标签 */
+    .hero { padding: 4px 0 12px; }
+    .hero-mark { width: 36px; height: 36px; border-radius: 11px; margin-bottom: 8px; font-size: 17px; }
+    .hero-title { font-size: 20px; margin-bottom: 5px; }
+    .hero-sub { font-size: 11.5px; }
+    .hero-line { width: 34px; height: 2px; margin: 8px auto 0; }
+    .section-head { gap: 7px; margin-bottom: 9px; }
+    .section-num { width: 20px; height: 20px; border-radius: 6px; font-size: 10.5px; }
+    .section-title { font-size: 14px; }
+    .section-sub { font-size: 11px; }
+    .card { padding: 13px; overflow: visible; }
+    .card.tight { padding: 10px; }
+    .card-head { gap: 7px; margin-bottom: 10px; }
+    .card-title { font-size: 13.5px; }
+    .card-head .card-title::before { height: 12px; width: 2px; margin-right: 6px; }
+    .note { font-size: 11px; line-height: 1.55; margin-top: 6px; word-break: break-word; }
+    .pill { padding: 2px 8px; font-size: 10.5px; }
+    .pill-row { gap: 5px; }
+    .kbd { font-size: 10px; padding: 1px 5px; }
+
+    /* 按钮：可换行、两列自适应，不再被卡片裁掉 */
+    .btn { padding: 8px 11px; font-size: 12px; gap: 5px; border-radius: 9px; white-space: normal; line-height: 1.3; min-width: 0; text-align: center; }
+    .btn-sm { padding: 6px 9px; font-size: 11.5px; border-radius: 8px; }
+    .btn-lg { padding: 11px 14px; font-size: 13px; border-radius: 11px; }
+    .btn-row { gap: 6px; }
+    .btn-row > .btn { flex: 1 1 130px; }
+
+    /* 表单：16px 防 iOS 聚焦缩放，同时压小内外边距 */
+    .input-area { padding: 7px 9px; font-size: 16px !important; line-height: 1.4; min-width: 0; }
+    textarea.input-area { min-height: 68px; line-height: 1.55; }
+    .count-input { width: 56px; padding: 6px 4px; font-size: 16px !important; }
+    .settings-item .input-area { font-size: 16px !important; max-width: 48%; }
+    .filter-select { padding: 7px 9px; font-size: 16px !important; }
+    .char-input { font-size: 16px !important; padding: 8px 9px; letter-spacing: .14em; }
+    input[type="file"] { font-size: 11px; }
+    input[type="file"]::file-selector-button { padding: 6px 9px; font-size: 11px; }
+    .field { margin-bottom: 10px; }
+    .field-label { font-size: 11px; margin-bottom: 5px; }
+    .field-hint { font-size: 11px; margin-top: 4px; line-height: 1.5; }
+    .field-row { gap: 7px; flex-wrap: wrap; }
+    .checkbox-wrap { gap: 8px; padding: 7px 8px; font-size: 12.5px; border-radius: 9px; }
+    .checkbox-box { width: 18px; height: 18px; border-radius: 6px; }
+    .switch-row { padding: 6px 0; gap: 8px; }
+    .settings-group { margin-bottom: 12px; }
+    .settings-group-title { font-size: 10px; letter-spacing: 1.5px; margin-bottom: 6px; }
+    .settings-item { padding: 6px 0; gap: 8px; flex-wrap: wrap; }
+    .settings-item-label { font-size: 12px; }
+    .settings-item-desc { font-size: 10.5px; }
+    .type-slider-row { gap: 7px; margin-bottom: 7px; }
+    .type-slider-row .ts-label { width: 60px; font-size: 11.5px; }
+    .type-slider-row .ts-val { width: 38px; font-size: 11.5px; }
+
+    /* Tabs / 弹窗 / Toast */
+    .tabs { padding: 3px; gap: 3px; border-radius: 10px; margin-bottom: 12px; }
+    .tab-btn { padding: 8px 5px; font-size: 12px; border-radius: 8px; white-space: normal; line-height: 1.3; }
+    .toast { bottom: calc(14px + env(safe-area-inset-bottom)); padding: 9px 14px; font-size: 12px; border-radius: 11px; }
+    .modal-overlay { padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom)); }
+    .modal-content { padding: 14px; border-radius: 14px; max-height: 88dvh; }
+    .modal-title { font-size: 16px; margin-bottom: 7px; }
+    .modal-text { font-size: 12px; line-height: 1.6; margin-bottom: 12px; word-break: break-word; }
+    .modal-info { padding: 8px 10px; margin-bottom: 12px; border-radius: 10px; }
+    .modal-info-item { padding: 6px 0; }
+    .modal-info-label { font-size: 11.5px; }
+    .modal-info-value { font-size: 12px; }
+    .modal-buttons { gap: 6px; padding-top: 6px; }
+    .collapse-header { padding: 8px 3px; }
+    .collapse-header .title { font-size: 12px; }
+
+    /* 曲库 / 过滤 / 列表 */
+    .file-info { gap: 8px; padding: 9px 10px; margin-bottom: 10px; border-radius: 10px; }
+    .help-box { padding: 4px 10px 8px; margin-bottom: 12px; border-radius: 10px; }
+    .format-example { padding: 9px; font-size: 11px; line-height: 1.6; margin: 6px 0; }
+    .format-note { font-size: 11px; line-height: 1.6; }
+    .filter-section { margin-bottom: 12px; padding-bottom: 10px; }
+    .filter-label { font-size: 11px; margin-bottom: 5px; }
+    .filter-grid { grid-template-columns: 1fr; gap: 8px; }
+    .filter-char-types { gap: 5px; margin-bottom: 8px; }
+    .filter-char-types .checkbox-wrap { padding: 6px 8px; font-size: 11.5px; }
+    .filter-length-row { gap: 6px; }
+    .filter-length-hint { font-size: 11px; }
+    .game-list { max-height: 210px; padding-right: 2px; }
+    .game-item { padding: 5px 4px; }
+    .game-name { font-size: 12px; }
+    .game-count { font-size: 10.5px; padding: 2px 7px; }
+    .song-edit-list { max-height: 240px; padding: 4px; }
+    .song-edit-item { padding: 6px 8px; font-size: 12px; }
+    .mode-switch { gap: 6px; margin-bottom: 12px; }
+    .mode-btn { padding: 8px 6px; font-size: 12px; }
+    .wl-section-title { margin: 12px 0 6px; padding-top: 8px; font-size: 10px; }
+    .wl-hint { font-size: 11px; padding-left: 0; }
+
+    /* 模式选择页 */
+    .mode-grid { grid-template-columns: 1fr; gap: 10px; }
+    .mode-card { padding: 14px; gap: 8px; border-radius: 14px; overflow: visible; }
+    .mode-card .mode-icon { width: 38px; height: 38px; border-radius: 11px; }
+    .mode-card .mode-title { font-size: 16px; }
+    .mode-card .mode-desc { font-size: 11.5px; line-height: 1.55; }
+    .mode-cta { font-size: 11px; }
+    .guide-steps { gap: 7px; }
+    .guide-step { gap: 8px; padding: 9px 10px; border-radius: 10px; }
+    .guide-step .n { width: 19px; height: 19px; font-size: 10px; }
+    .guide-step p { font-size: 11.5px; line-height: 1.55; }
+
+    /* 开字母 / 结果区 */
+    .page-header { gap: 9px; margin-bottom: 12px; }
+    .page-header h1 { font-size: 17px; }
+    .page-header p { font-size: 11px; }
+    .back-btn { width: 34px; height: 34px; border-radius: 10px; }
+    .timer-display { font-size: 26px; padding: 9px; letter-spacing: 2px; border-radius: 11px; }
+    .timer-controls { gap: 6px; margin-top: 8px; }
+    .stat-card { padding: 8px 4px; border-radius: 10px; }
+    .stat-value { font-size: 17px; }
+    .stat-label { font-size: 10px; margin-top: 2px; }
+    .result-display { padding: 10px; min-height: 170px; max-height: 300px; font-size: 12.5px; line-height: 1.8; border-radius: 10px; }
+    .sorted-chars { padding: 8px; min-height: 40px; gap: 5px; }
+    .char-tag { min-width: 24px; height: 25px; padding: 0 6px; font-size: 12px; }
+    .hide-stats { gap: 7px; padding: 8px 10px; font-size: 12px; margin-bottom: 10px; }
+    .chartype-stats-line { padding: 7px 9px; font-size: 11px; line-height: 1.7; margin-bottom: 8px; }
+    .force-char-box { min-width: 22px; height: 28px; margin: 2px; }
+    .result-toolbar { gap: 6px; }
+    .song-line { padding: 4px 6px; }
+    .full-reveal-hint { font-size: 10.5px; margin-left: 6px; }
+    .guesser-name { font-size: 11.5px; margin-left: 6px; }
+
+    /* 排行榜 / 查询 / 连连看 */
+    .leaderboard-item { gap: 8px; padding: 6px 8px; }
+    .leaderboard-rank { width: 24px; height: 24px; font-size: 11px; }
+    .leaderboard-name { font-size: 12px; }
+    .lookup-list { max-height: 220px; }
+    .lookup-item { gap: 7px; padding: 7px 8px; font-size: 12px; }
+    .skipped-list { max-height: 190px; padding: 6px; font-size: 11.5px; }
+    .grid-scroll { padding: 6px; border-radius: 10px; }
+    .found-item { padding: 6px 8px; margin-bottom: 5px; font-size: 12px; }
+    .preview-item { gap: 7px; padding: 6px 8px; }
+    .preview-item .preview-name { font-size: 12px; }
+    .settlement-board { max-height: 330px; padding: 8px; border-radius: 10px; }
+
+    /* 压住 HTML 内联写死的大尺寸（结算页标题、超大输入框等） */
+    .hero-title[style], .modal-title[style] { font-size: 17px !important; }
+    .hero-mark[style] { width: 36px !important; height: 36px !important; font-size: 17px !important; }
+    .hero[style] { padding: 4px 0 10px !important; }
+    textarea[style*="min-height"] { min-height: 110px !important; }
+    .card[style*="margin-top"] { margin-top: 10px !important; }
+    .btn-row[style*="margin-top"] { margin-top: 12px !important; }
+    .grid-3[style*="margin-top"] { margin-top: 10px !important; }
+    #forceRevealContainer { min-height: 56px !important; padding: 9px !important; line-height: 2 !important; }
+    #librarySelect { min-width: 0 !important; }
+    .note[style*="padding:12px"] { padding: 8px !important; }
+}
+@media(max-width: 380px) {
+    .page { padding-left: 8px; padding-right: 8px; }
+    .brand-name { max-width: 78px; }
+    .btn { padding: 7px 9px; font-size: 11.5px; }
+    .btn-row > .btn { flex: 1 1 110px; }
+    .card { padding: 11px; }
+    .hero-title { font-size: 18px; }
+    .grid-3 { gap: 4px; }
+    .char-tag { min-width: 22px; font-size: 11px; }
 }
 
     </style>
@@ -1095,7 +1312,7 @@ input[type="file"]::file-selector-button {
         <div class="stat-card"><div id="wlStatPercent" class="stat-value mono">0%</div><div class="stat-label">完成度</div></div>
       </div>
       <div class="card" style="margin-top:18px">
-        <div class="grid-scroll"><div class="grid-wrap" id="gridWrap"><div id="grid"></div><svg id="gridOverlay"></svg></div></div>
+        <div class="grid-scroll"><div class="grid-wrap" id="gridWrap"><div id="grid"></div><svg id="gridOverlay" width="0" height="0"></svg></div></div>
         <div class="row-between" style="margin-top:12px"><button id="wlHintBtn" class="btn btn-warning btn-sm">✦ &nbsp;提示一个起点</button><span id="wlHintInfo" class="note" style="margin:0"></span></div>
       </div>
       <div class="card" id="wlPreviewCard" style="margin-top:18px">
@@ -4322,9 +4539,14 @@ input[type="file"]::file-selector-button {
             const sheet = cs();
             const R = sheet.gridRows,
                 C = sheet.gridCols;
-            const maxW = Math.min(window.innerWidth - 60, 900);
+            // 以滚动容器真实可用宽度为准，避免网格宽出屏幕后被裁掉
+            const scroller = document.querySelector('.grid-scroll');
+            const avail = scroller && scroller.clientWidth > 60
+                ? scroller.clientWidth - 24
+                : window.innerWidth - 100;
+            const maxW = Math.min(avail, 900);
             let size = Math.floor(maxW / C);
-            size = Math.max(20, Math.min(size, 52));
+            size = Math.max(18, Math.min(size, 52));
             if (R > 20 || C > 20) size = Math.min(size, 36);
             if (R > 30 || C > 30) size = Math.min(size, 28);
             return size;
@@ -5286,6 +5508,17 @@ ${src}
         /* ============================================================
         页面切换
         ============================================================ */
+        /* 强制重绘：少数预览类 WebView 首帧不绘制内容层，必须滑动一次才恢复。
+           用一次肉眼不可见的透明度变化触发合成层刷新，滚动不再是必要操作。 */
+        function forceRepaint(el) {
+            try {
+                const node = el || document.querySelector('.page.active') || document.body;
+                void node.offsetHeight;
+                node.style.opacity = '0.999';
+                requestAnimationFrame(() => { node.style.opacity = ''; });
+            } catch (e) { /* 忽略：不影响业务 */ }
+        }
+
         function switchToPage(pageNum, isRestore = false) {
             state.currentPage = pageNum;
             saveState();
@@ -5339,6 +5572,7 @@ ${src}
             } else if (pageNum === 5) {
                 stopWLTimer();
             }
+            forceRepaint(el);
         }
 
         function switchTab(tabName) {
@@ -6169,6 +6403,34 @@ ${src}
         // 运行时兜底：收敛未捕获异常，避免单个渲染异常导致整页静默失效
         window.addEventListener('error', e => console.error('[SGT]', e.message));
         window.addEventListener('unhandledrejection', e => console.warn('[SGT]', e.reason));
+
+        // 旋屏 / 分屏 / 窗口宽度变化时重算格子，避免网格超出可视区域
+        let _lastGridWidth = window.innerWidth;
+        window.addEventListener('resize', () => {
+            if (Math.abs(window.innerWidth - _lastGridWidth) < 2) return;
+            _lastGridWidth = window.innerWidth;
+            try {
+                if (state && state.mode === 'wordlink' && state.currentPage === 4) renderWLGrid();
+            } catch (e) { /* 页面尚未就绪时忽略 */ }
+        });
+
+        /* 首帧重绘兜底：不依赖 init 完成，尽早刷新一次合成层；
+           双 rAF 等首帧合成结束后再改，避免改动被合并掉。 */
+        (function bootstrapRepaint() {
+            const tick = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+                document.documentElement.classList.add('ui-ready');
+                forceRepaint(document.querySelector('.page.active') || document.body);
+            }));
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', tick, { once: true });
+            } else {
+                tick();
+            }
+            // 窗口从后台/锁屏恢复时再刷一次，部分 WebView 会丢弃合成缓存
+            window.addEventListener('pageshow', () => {
+                requestAnimationFrame(() => forceRepaint(document.querySelector('.page.active') || document.body));
+            });
+        })();
 
         document.addEventListener('DOMContentLoaded', init);
 
